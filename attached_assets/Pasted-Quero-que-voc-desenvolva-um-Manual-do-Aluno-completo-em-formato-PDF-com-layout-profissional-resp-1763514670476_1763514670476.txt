@@ -1,0 +1,97 @@
+Quero que você desenvolva um Manual do Aluno completo, em formato PDF, com layout profissional, responsivo e organizado. Siga rigorosamente as instruções abaixo:
+✅ 1. Estrutura do Manual do Aluno
+O PDF deve conter:
+Capa profissional
+Nome do simulador
+Versão
+Logomarca
+Identidade visual coerente
+Design limpo e moderno
+Sumário automático
+Gerado de acordo com a estrutura do documento
+Apresentação do simulador
+Explicação do propósito educativo
+Linguagem didática e formal
+Citações indiretas fundamentadas (ex.: Drucker, Kotler, Porter, Chiavenato, etc.)
+Como funciona o jogo
+Visão geral das rodadas
+Tomada de decisão
+Pontuação e desempenho
+Papel da estratégia
+Explicações com citações indiretas fundamentadas
+Ferramentas estratégicas usadas no simulador
+SWOT
+5 Forças de Porter
+Matriz BCG
+PESTEL
+Para cada ferramenta incluir:
+Conceito explicado com citações indiretas
+Como o simulador usa a ferramenta
+Exemplos ilustrados
+Como interpretar resultados
+Fórmulas matemáticas utilizadas no simulador
+Incluir todas as fórmulas envolvidas:
+Cálculo de demanda
+Cálculo de receita
+Margem de contribuição
+Ponto de equilíbrio
+Índices de eficiência
+Fórmulas de penalização
+Fórmulas de crescimento de rodada
+Qualquer outra usada no jogo
+Apresentar em notação matemática clara, exemplo:
+Receita = Preço × Quantidade Vendida
+Exemplos de telas do simulador
+Interface de login
+Dashboard
+Telas de decisões
+Tela das ferramentas estratégicas
+Tela de envio de rodada
+Tela de resultados
+Essas telas devem ser criadas pelo Replit, ilustrativas, com layout visual moderno.
+Passo a passo para os alunos
+Como acessar
+Como montar equipe
+Como preencher decisões
+O que fazer e o que evitar
+Erros comuns
+Boas práticas
+FAQ — Perguntas Frequentes
+Exemplos:
+“O que acontece se eu não enviar as decisões?”
+“Como funciona a penalização?”
+“Posso alterar a estratégia ao longo das rodadas?”
+“Como interpretar meu desempenho?”
+Seção de Referências
+Todas as citações indiretas utilizadas
+Referências reais (não fictícias)
+Estilo: ABNT ou APA
+Deve estar ao final do PDF
+✅ 2. Requisitos técnicos do PDF
+O PDF deve obrigatoriamente:
+Ter layout profissional
+Não cortar textos ou elementos
+Ter margens adequadas
+Utilizar fontes legíveis (como Lato, Inter, Roboto, Arial)
+Inserir ícones, boxes de destaque e tabelas
+Inserir cores, mas de forma moderada
+Inserir capturas ou mockups das telas do simulador
+Ser totalmente navegável e pronto para download
+✅ 3. Requisitos de conteúdo
+Todas as partes teóricas devem conter citações indiretas reais, com autores reconhecidos (ex.: Kotler, Churchill, Porter, Mintzberg, Drucker, Hamel, Barney etc.).
+Não inventar autores ou obras.
+As explicações devem ser didáticas, objetivas e precisas.
+As fórmulas devem ser matematicamente corretas.
+O manual deve ter coerência pedagógica.
+✅ 4. Requisitos de integração com o simulador
+Utilizar o mesmo nome, identidade visual e características que já definimos para o simulador.
+As telas (mockups) devem refletir a lógica real do simulador.
+Caso falte alguma informação sobre o simulador, você (Replit) deve perguntar antes de gerar o PDF.
+✅ 5. Antes de gerar o arquivo final
+O Replit deve:
+Validar se entendeu todas as instruções.
+Apresentar a estrutura prévia do manual.
+Perguntar sobre ajustes antes de gerar o PDF final.
+Só depois gerar o PDF para download.
+⚠️ Instrução final ao Replit
+Se alguma parte das instruções acima não estiver totalmente clara, peça esclarecimentos antes de gerar o conteúdo, para evitar erros ou lacunas.

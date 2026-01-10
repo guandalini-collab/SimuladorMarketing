@@ -1,0 +1,29 @@
+Quero que você refatore a interface da página do professor do meu simulador Simula+ para ficar mais organizada, visual e intuitiva.
+Requisitos de layout e UX:
+1.	Transformar a página em um dashboard com seções bem agrupadas, usando cards, colunas e títulos claros.
+2.	Criar, no topo da página, um resumo em cards com os principais indicadores:
+o	Nº de turmas ativas
+o	Nº de equipes
+o	Rodada atual de cada turma (ou a rodada global ativa)
+o	Status das rodadas (aberta/fechada/em correção)
+3.	Abaixo, organizar o conteúdo em abas ou seções com tabs:
+o	Aba “Visão Geral”: visão consolidada das turmas e rodadas.
+o	Aba “Turmas & Equipes”: lista de turmas, com possibilidade de expandir e ver as equipes de cada turma.
+o	Aba “Rodadas”: status das rodadas, datas de início/fim, botões para abrir/fechar rodada.
+o	Aba “Resultados & KPIs”: tabelas e gráficos dos resultados por turma/equipe.
+4.	Em “Turmas & Equipes”:
+o	Agrupar por turma em cards colapsáveis (accordion), com o nome da turma, ano e curso.
+o	Ao expandir, mostrar as equipes em tabela (nome da equipe, setor, situação, link para detalhes).
+o	Incluir campo de busca e filtros (por turma, por setor, por status da equipe).
+5.	Em “Rodadas”:
+o	Exibir uma linha do tempo das rodadas (Rodada 1, 2, 3) com status (aberta/fechada) usando ícones e cores.
+o	Permitir que o professor selecione uma turma e veja em quais rodadas ela está e quais equipes já enviaram decisões.
+6.	Em “Resultados & KPIs”:
+o	Gerar uma tabela com KPIs principais (Receita, Lucro, Market share, Score de Alinhamento, NPS etc.) por equipe.
+o	Permitir ordenar colunas e aplicar filtros.
+o	Se possível, incluir gráficos simples (barras ou linhas) para comparar equipes na mesma rodada.
+7.	Padrão visual:
+o	Usar componentes visuais consistentes (cards, ícones, cores de status).
+o	Manter um layout responsivo e limpo, com espaçamento adequado entre os blocos.
+o	Títulos claros para cada seção e textos explicativos curtos quando necessário.
+Por favor, reestruture o código da página do professor (frontend) com esse design de dashboard, mantendo a lógica de dados atual, e comente o código explicando cada seção.

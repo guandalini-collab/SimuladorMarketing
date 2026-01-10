@@ -1,0 +1,141 @@
+Entendi perfeitamente o problema:
+➡️ **O sistema não está gerando automaticamente — via IA — pelo menos 1 informação válida em cada tópico/subtópico das ferramentas estratégicas.**
+Ele apenas está esperando que o usuário preencha, mas você quer que **o próprio simulador gere o mínimo obrigatório** a cada rodada, e depois **a equipe complementa**.
+
+A seguir, preparei um **PROMPT CORRIGIDO E APRIMORADO**, escrito de forma explícita para que o Replit compreenda que:
+
+* **O próprio sistema deve gerar automaticamente 1 item válido** em cada tópico da SWOT, Porter, BCG e PESTEL em TODA rodada.
+* A IA integrada deve ser acionada para gerar conteúdos coerentes com o contexto da empresa criada pela equipe.
+* A equipe complementa; se não complementar, sofre penalização.
+* O sistema deve impedir rodadas sem essa geração inicial.
+
+Este prompt está calibrado para ser lido por agentes do Replit e evitar interpretações incompletas.
+
+---
+
+# 🚀 **PROMPT REFORÇADO PARA O REPLIT — GERAÇÃO AUTOMÁTICA DAS INFORMAÇÕES MÍNIMAS**
+
+Quero que você implemente a seguinte funcionalidade no simulador empresarial:
+
+## **1. Geração automática pela IA (obrigatória em toda rodada)**
+
+O sistema deve, **por padrão**, gerar automaticamente **pelo menos 1 item válido** em **cada tópico/subtópico** das ferramentas estratégicas, logo no início de **cada rodada**, usando IA. Isto deve ocorrer sem intervenção da equipe.
+
+As ferramentas e seus tópicos são:
+
+### **SWOT**
+
+* forças
+* fraquezas
+* oportunidades
+* ameaças
+
+### **Porter**
+
+* concorrentes
+* novos entrantes
+* substitutos
+* fornecedores
+* clientes
+
+### **BCG**
+
+* justificativa obrigatória do posicionamento
+
+### **PESTEL**
+
+* político
+* econômico
+* social
+* tecnológico
+* ecológico
+* legal
+
+**Para cada um destes tópicos/subtópicos**, a IA deve gerar **uma informação relevante, coerente e contextualizada** ao negócio da equipe.
+
+## **2. Contexto para geração pela IA**
+
+A IA deve usar como base:
+
+* nome da empresa criada pela equipe
+* segmento de mercado informado
+* decisões anteriores das rodadas
+* variáveis econômicas e competitivas já existentes
+
+Se alguma informação estiver ausente, a IA deve solicitar ou gerar uma suposição razoável e coerente.
+
+## **3. Exemplo do comportamento esperado**
+
+Rodada inicia → sistema consulta IA → sistema preenche automaticamente:
+
+* SWOT (4 itens mínimos)
+* Porter (5 itens mínimos)
+* BCG (1 justificativa obrigatória)
+* PESTEL (6 itens mínimos)
+
+Total mínimo por rodada = **16 itens gerados automaticamente pela IA**.
+
+A equipe, depois disso, pode adicionar mais itens.
+
+## **4. Validação obrigatória**
+
+O sistema deve verificar:
+
+* Se todas as ferramentas possuem pelo menos 1 item gerado pela IA.
+* Se algum tópico estiver vazio, ele deve **repetir a chamada à IA** até preencher todos.
+
+A rodada **não pode iniciar sem isso preenchido**.
+
+## **5. Penalização por falta de complementação**
+
+Depois que o sistema gerar os itens mínimos:
+
+* A equipe deve **complementar** com informações adicionais.
+* Se a equipe **não** complementar nenhum dos tópicos, aplicar penalização automática:
+
+  * –10% no desempenho da rodada
+    **ou**
+  * redução de eficiência (ex.: +5% de custos / –5% de receita)
+
+A penalização deve ser registrada no banco e exibida no relatório da rodada.
+
+## **6. Banco de Dados**
+
+Armazene no PostgreSQL:
+
+* itens gerados pela IA → flag `gerado_ia = true`
+* itens adicionados pela equipe → flag `gerado_ia = false`
+
+## **7. Função obrigatória**
+
+Crie a função:
+
+```
+gerarItensEstrategicosAutomaticos(equipe_id, rodada_id)
+```
+
+Essa função deve:
+
+1. Checar se os tópicos estão vazios.
+2. Se estiverem, chamar a IA para gerar o item.
+3. Salvar no PostgreSQL.
+4. Garantir que todos os tópicos tenham 1 informação mínima.
+
+## **8. A IA do Replit deve seguir esta regra:**
+
+Sempre que houver dúvida ou falta de informação da equipe, **gerar um item coerente automaticamente**, nunca deixar o campo vazio.
+
+## **9. Antes de gerar o código**
+
+Se você (Replit) não entender alguma regra acima, **pergunte antes de programar**.
+
+---
+
+Se quiser, posso gerar também:
+
+✅ o código da função automática em Python/Node
+✅ a estrutura do banco PostgreSQL
+✅ o fluxo da rodada
+✅ o prompt interno da IA para gerar os itens estratégicos com qualidade
+
+Só pedir.

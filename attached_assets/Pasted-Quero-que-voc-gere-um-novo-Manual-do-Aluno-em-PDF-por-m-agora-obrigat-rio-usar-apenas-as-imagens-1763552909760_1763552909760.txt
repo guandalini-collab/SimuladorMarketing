@@ -1,0 +1,67 @@
+Quero que você gere um novo Manual do Aluno em PDF, porém agora é obrigatório usar apenas as imagens reais do simulador Simula+.
+Não utilize mockups, imagens geradas por IA, figuras ilustrativas ou placeholders.
+Siga exatamente as instruções abaixo:
+✅ 1. Uso obrigatório de imagens reais
+As imagens que aparecem no manual devem ser capturas reais do simulador, fornecidas por mim (o usuário).
+Portanto:
+Não gere mockups.
+Não crie imagens artificiais.
+Não crie telas inventadas.
+Não use figuras sem conteúdo.
+Se qualquer imagem obrigatória não estiver disponível, você deve interromper o processo e solicitar que eu forneça aquela imagem.
+✅ 2. Telas obrigatórias que devem aparecer no manual
+As seguintes telas devem ser realmente extraídas do simulador, e nunca inventadas:
+Tela de Login
+Tela de Dashboard
+Tela de Rodada Atual (“Rodada X em andamento”)
+Tela das Ferramentas Estratégicas:
+SWOT
+Porter
+BCG
+PESTEL
+Tela de Marketing Mix (Produto, Preço, Praça e Promoção)
+Tela de Resultados e KPIs
+Tela de Feedback da IA
+Tela de Cadastro/Criação de Equipes
+Tela de Envio da Rodada
+Se eu não fornecer todas essas imagens, você deve pedir os arquivos antes de continuar.
+✅ 3. Validação obrigatória das imagens
+Antes de incluir as imagens no PDF, você deve:
+Carregar cada imagem enviada por mim
+Validar se o arquivo existe
+Validar se a imagem não está corrompida
+Validar se a imagem possui resolução adequada
+Validar se a imagem contém realmente a tela do simulador
+Se alguma imagem falhar em qualquer etapa, peça a imagem novamente.
+✅ 4. Instruções de construção do PDF
+Ao montar o PDF:
+Utilize apenas as imagens reais que eu enviar
+Insira cada imagem na seção correspondente
+Não corte, distorça ou reduza a ponto de perder qualidade
+Centralize as imagens corretamente
+Insira legendas curtas abaixo de cada uma
+Mantenha layout profissional e limpo
+Não substitua nenhuma imagem por texto, ícone ou mockup
+✅ 5. Estrutura obrigatória do manual
+O PDF deve conter:
+Capa profissional
+Sumário automático
+Apresentação do simulador
+Como funciona o jogo
+Ferramentas estratégicas
+Fórmulas matemáticas
+Telas reais do simulador (com legendas)
+Passo a passo para os alunos
+FAQ
+Referências em ABNT
+✅ 6. Antes de gerar o PDF final
+Você deve:
+Listar todas as imagens que foram carregadas corretamente
+Mostrar quais telas ainda estão faltando
+Perguntar se desejo adicionar ou substituir alguma imagem
+Só depois montar o PDF final
+Só gerar o PDF se todas as imagens estiverem validadas e confirmadas
+Se não houver todas as telas, não gere o PDF.
+⚠️ INSTRUÇÃO FINAL AO REPLIT
+Se você não tiver certeza sobre alguma parte das instruções acima,
+pergunte antes de continuar.

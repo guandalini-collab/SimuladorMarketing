@@ -1,0 +1,1539 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  BookOpen, 
+  Lightbulb, 
+  Target, 
+  TrendingUp, 
+  Users, 
+  DollarSign,
+  Map,
+  Megaphone,
+  Shield,
+  Zap,
+  BarChart3,
+  Grid3x3,
+  AlertCircle,
+  Download,
+  ShieldAlert
+} from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useRef, useState } from "react";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+
+export default function Manual() {
+  const { toast } = useToast();
+  const manualRef = useRef<HTMLDivElement>(null);
+  const printableRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [, setLocation] = useLocation();
+
+  const { data: currentUser, isLoading } = useQuery<any>({
+    queryKey: ["/api/auth/me"],
+  });
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6 max-w-6xl">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser || currentUser.role !== "professor") {
+    return (
+      <div className="container mx-auto p-6 max-w-4xl">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <ShieldAlert className="h-10 w-10 text-destructive" />
+              <div>
+                <CardTitle>Acesso Restrito</CardTitle>
+                <CardDescription>
+                  Este conteúdo é exclusivo para professores
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4">
+              <p className="text-sm text-destructive">
+                O Manual do Simula+ é um recurso pedagógico destinado exclusivamente a professores.
+                Apenas usuários com perfil de professor têm permissão para acessar este conteúdo.
+              </p>
+            </div>
+            <Button 
+              onClick={() => setLocation("/dashboard")}
+              data-testid="button-back-dashboard"
+            >
+              Voltar ao Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const downloadPDF = async () => {
+    if (!printableRef.current) return;
+
+    setIsGeneratingPDF(true);
+    toast({
+      title: "Gerando PDF...",
+      description: "Aguarde enquanto o manual é convertido em PDF.",
+    });
+
+    try {
+      const element = printableRef.current;
+      
+      // Captura o elemento como canvas com alta qualidade
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+        compress: true,
+      });
+
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Adiciona primeira página
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Adiciona páginas adicionais se necessário
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Baixa o PDF
+      pdf.save("Manual_Simula_Plus.pdf");
+
+      toast({
+        title: "PDF gerado com sucesso!",
+        description: "O manual foi baixado no formato PDF.",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Não foi possível gerar o PDF. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-6 max-w-6xl">
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <BookOpen className="h-10 w-10 text-primary" />
+            <h1 className="text-4xl font-bold">Manual do Simula+</h1>
+          </div>
+          <Button
+            onClick={downloadPDF}
+            disabled={isGeneratingPDF}
+            data-testid="button-download-pdf"
+            variant="default"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {isGeneratingPDF ? "Gerando..." : "Baixar PDF"}
+          </Button>
+        </div>
+        <p className="text-muted-foreground">
+          Guia completo para dominar o simulador de marketing e tomar as melhores decisões estratégicas
+        </p>
+      </div>
+
+      <div ref={manualRef}>
+      <Tabs defaultValue="sistema" className="space-y-6">
+        <TabsList className="grid grid-cols-2 lg:grid-cols-4 w-full">
+          <TabsTrigger value="sistema" data-testid="tab-sistema">
+            <BookOpen className="h-4 w-4 mr-2" />
+            Como Usar
+          </TabsTrigger>
+          <TabsTrigger value="conceitos" data-testid="tab-conceitos">
+            <Lightbulb className="h-4 w-4 mr-2" />
+            Conceitos
+          </TabsTrigger>
+          <TabsTrigger value="estrategias" data-testid="tab-estrategias">
+            <Target className="h-4 w-4 mr-2" />
+            Estratégias
+          </TabsTrigger>
+          <TabsTrigger value="glossario" data-testid="tab-glossario">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Glossário
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ABA 1: COMO USAR O SISTEMA */}
+        <TabsContent value="sistema" className="space-y-6">
+          <Card data-testid="card-como-usar">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-6 w-6" />
+                Como Usar o Simula+
+              </CardTitle>
+              <CardDescription>
+                Guia passo a passo para navegar e utilizar todas as funcionalidades do simulador
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="inicio">
+                  <AccordionTrigger>1. Primeiros Passos</AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p><strong>Login:</strong> Use o email institucional (@iffarroupilha.edu.br) para acessar o sistema.</p>
+                    <p><strong>Aprovação:</strong> Após o primeiro login, aguarde a aprovação do professor. Você receberá um email quando for aprovado.</p>
+                    <p><strong>Equipe:</strong> Você faz parte de uma equipe com até 5 membros. Apenas o líder pode enviar decisões finais.</p>
+                    <p><strong>Rodadas:</strong> O jogo acontece em rodadas (períodos). Cada rodada representa um mês de vendas no mercado.</p>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="turmas-equipes">
+                  <AccordionTrigger>2. Como Entrar em uma Turma e Equipe</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <div>
+                      <p className="font-semibold mb-2">Para Alunos:</p>
+                      <p className="text-sm mb-2">Quando você faz login pela primeira vez (após ser aprovado), o sistema mostrará as turmas disponíveis:</p>
+                      <ol className="list-decimal pl-6 space-y-2 text-sm">
+                        <li><strong>Escolha uma turma:</strong> Veja as turmas criadas pelo professor e selecione aquela na qual você está matriculado</li>
+                        <li><strong>Visualize as equipes:</strong> Após selecionar a turma, você verá as equipes já criadas</li>
+                        <li><strong>Duas opções:</strong>
+                          <ul className="list-disc pl-6 mt-1 space-y-1">
+                            <li><strong>Criar nova equipe:</strong> Clique em "Criar Nova Equipe" e escolha um nome criativo</li>
+                            <li><strong>Entrar em equipe existente:</strong> Clique em "Entrar" em uma das equipes listadas</li>
+                          </ul>
+                        </li>
+                        <li><strong>Aguarde confirmação:</strong> Você receberá uma mensagem de confirmação e será automaticamente vinculado à equipe</li>
+                      </ol>
+                    </div>
+                    
+                    <div className="pt-2 border-t">
+                      <p className="font-semibold mb-2">Para Professores:</p>
+                      <p className="text-sm mb-2">Os professores também podem adicionar alunos diretamente às equipes:</p>
+                      <ol className="list-decimal pl-6 space-y-2 text-sm">
+                        <li>Acesse a página <strong>Professor</strong> no menu lateral</li>
+                        <li>Selecione a turma desejada</li>
+                        <li>Clique na equipe para expandir e visualizar os membros</li>
+                        <li>Clique no botão <strong>"Adicionar membro"</strong> (ícone de usuário com +)</li>
+                        <li>Digite o email institucional do aluno que deseja adicionar</li>
+                        <li>Clique em "Adicionar Membro" para confirmar</li>
+                      </ol>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        <em>Nota: O aluno deve estar aprovado e não pode estar em outra equipe da mesma turma.</em>
+                      </p>
+                    </div>
+
+                    <div className="mt-3 p-3 bg-muted rounded-md">
+                      <p className="text-sm"><strong>Importante:</strong></p>
+                      <ul className="list-disc pl-6 space-y-1 text-sm mt-1">
+                        <li>Você só pode estar em <strong>uma equipe por turma</strong></li>
+                        <li>Apenas alunos <strong>aprovados</strong> podem entrar em equipes</li>
+                        <li>O primeiro membro da equipe se torna automaticamente o <strong>líder</strong></li>
+                        <li>O líder pode alterar posteriormente na aba "Equipe" do dashboard</li>
+                      </ul>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="identidade">
+                  <AccordionTrigger>3. Identidade da Empresa</AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p>Na aba <strong>"Empresa"</strong>, configure:</p>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li><strong>Nome da empresa:</strong> Escolha um nome criativo e memorável</li>
+                      <li><strong>Slogan:</strong> Crie uma frase que transmita sua proposta de valor</li>
+                      <li><strong>Logomarca:</strong> Faça upload de uma imagem que represente sua marca</li>
+                      <li><strong>Categoria de produto:</strong> Escolha o tipo de produto que vai vender</li>
+                      <li><strong>Público-alvo:</strong> Defina classe social, faixa etária e perfil comportamental</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="decisoes">
+                  <AccordionTrigger>4. Tomada de Decisões (4 Ps)</AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p>Na aba <strong>"Decisões"</strong>, você define o Mix de Marketing:</p>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li><strong>Produto:</strong> Qualidade, características, design e posicionamento</li>
+                      <li><strong>Preço:</strong> Estratégia de precificação e valor de venda</li>
+                      <li><strong>Praça:</strong> Canais de distribuição e cobertura geográfica</li>
+                      <li><strong>Promoção:</strong> Mix de comunicação e investimento em marketing</li>
+                    </ul>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      <em><strong>Dica:</strong> Leia as orientações contextuais em cada aba para tomar decisões alinhadas ao mercado.</em>
+                    </p>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="analises">
+                  <AccordionTrigger>5. Ferramentas de Análise Estratégica</AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p>Na aba <strong>"Análises"</strong>, acesse:</p>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li><strong>SWOT:</strong> Avalie forças, fraquezas, oportunidades e ameaças</li>
+                      <li><strong>5 Forças de Porter:</strong> Analise a competitividade do setor</li>
+                      <li><strong>Matriz BCG:</strong> Posicione seus produtos estrategicamente</li>
+                      <li><strong>PESTEL:</strong> Identifique fatores externos que afetam seu negócio</li>
+                    </ul>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      <em><strong>Importante:</strong> Todas as 4 ferramentas são obrigatórias antes de enviar decisões!</em>
+                    </p>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="ia-analises">
+                  <AccordionTrigger>5.1 Análises Automáticas via IA</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p><strong>Como funciona:</strong></p>
+                    <p className="text-sm">O professor pode gerar análises estratégicas automáticas (SWOT, Porter, BCG, PESTEL) para todas as equipes através de Inteligência Artificial. Essas análises são personalizadas considerando:</p>
+                    <ul className="list-disc pl-6 text-sm space-y-1">
+                      <li>Setor de mercado da turma</li>
+                      <li>Contexto econômico atual (câmbio, inflação, PIB)</li>
+                      <li>Eventos de mercado ativos na rodada</li>
+                      <li>Configurações da turma (tipo de negócio, concorrência, tamanho do mercado)</li>
+                    </ul>
+                    <p className="text-sm mt-2"><strong>Recomendações dos 4 Ps:</strong></p>
+                    <p className="text-sm">Além das análises estratégicas, o sistema gera recomendações específicas para cada P do Marketing Mix:</p>
+                    <ul className="list-disc pl-6 text-sm space-y-1">
+                      <li><strong>Produto:</strong> Sugestões sobre qualidade, características e posicionamento</li>
+                      <li><strong>Preço:</strong> Orientações sobre estratégia de precificação e margens</li>
+                      <li><strong>Praça:</strong> Dicas sobre canais de distribuição e cobertura</li>
+                      <li><strong>Promoção:</strong> Conselhos sobre mix de comunicação e investimentos</li>
+                    </ul>
+                    <p className="text-sm mt-2"><strong>Visualização:</strong></p>
+                    <p className="text-sm">As recomendações aparecem em cards destacados no topo de cada aba dos 4 Ps na página de Decisões. Use essas recomendações como guia estratégico!</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      <em>Nota: Apenas o professor pode acionar a geração automática através do botão "Gerar Análises IA" na página de Controle de Rodadas.</em>
+                    </p>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="alinhamento">
+                  <AccordionTrigger>5.2 Sistema de Alinhamento Estratégico</AccordionTrigger>
+                  <AccordionContent className="space-y-4">
+                    <div>
+                      <p className="font-semibold mb-2">O que é alinhamento estratégico?</p>
+                      <p className="text-sm">O alinhamento estratégico mede o quanto suas decisões do Mix de Marketing (4 Ps) estão conectadas e coerentes com suas análises estratégicas (SWOT, Porter, BCG, PESTEL). Um alto alinhamento significa que você está tomando decisões baseadas em análise, não em "achismo".</p>
+                    </div>
+
+                    <div className="pt-3 border-t">
+                      <p className="font-semibold mb-2">Como o score é calculado (0-100 pontos):</p>
+                      <p className="text-sm mb-2">O sistema analisa automaticamente a coerência entre suas ferramentas estratégicas e decisões práticas:</p>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-start gap-2">
+                          <span className="font-semibold min-w-[120px]">SWOT × Mix:</span>
+                          <span>Decisões exploram suas forças? Minimizam fraquezas? Aproveitam oportunidades? Mitigam ameaças?</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="font-semibold min-w-[120px]">Porter × Mix:</span>
+                          <span>Estratégia de preço considera rivalidade? Produto se diferencia de substitutos? Promoção responde à pressão competitiva?</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="font-semibold min-w-[120px]">BCG × Mix:</span>
+                          <span>Investimento promocional reflete o quadrante do produto? Preço e qualidade condizem com a estratégia de portfólio?</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="font-semibold min-w-[120px]">PESTEL × Mix:</span>
+                          <span>Decisões consideram fatores econômicos? Respondem a mudanças tecnológicas? Adaptam-se ao contexto político/social?</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t">
+                      <p className="font-semibold mb-2">Níveis de alinhamento:</p>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-md font-semibold min-w-[100px] text-center">90-100</div>
+                          <span>Excelente - Estratégia e execução totalmente alinhadas</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md font-semibold min-w-[100px] text-center">70-89</div>
+                          <span>Bom - Decisões bem fundamentadas com pequenas inconsistências</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 rounded-md font-semibold min-w-[100px] text-center">50-69</div>
+                          <span>Médio - Alinhamento parcial, precisa de melhorias</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="px-3 py-1 bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 rounded-md font-semibold min-w-[100px] text-center">30-49</div>
+                          <span>Fraco - Desconexão significativa entre análise e ação</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="px-3 py-1 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-md font-semibold min-w-[100px] text-center">&lt; 30</div>
+                          <span>Crítico - Estratégia e execução completamente desalinhadas</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t">
+                      <p className="font-semibold mb-2 text-destructive">Impactos financeiros do alinhamento:</p>
+                      <p className="text-sm mb-2">O score de alinhamento afeta diretamente seus resultados financeiros na rodada:</p>
+                      <ul className="list-disc pl-6 text-sm space-y-1">
+                        <li><strong>Receita:</strong> Varia de -25% (crítico) a +15% (excelente) dependendo do alinhamento</li>
+                        <li><strong>Lucro:</strong> Varia de -35% (crítico) a +20% (excelente) - impacto amplificado</li>
+                        <li><strong>Market Share:</strong> Varia de -15% (crítico) a +10% (excelente)</li>
+                        <li><strong>Percepção de Marca:</strong> Análise SWOT bem feita aumenta até +8%; mal feita diminui até -8%</li>
+                      </ul>
+                      <p className="text-sm text-destructive mt-2">
+                        <strong>Importante:</strong> Decisões sem fundamento estratégico custam caro! Use as ferramentas de análise como base para suas escolhas.
+                      </p>
+                    </div>
+
+                    <div className="pt-3 border-t">
+                      <p className="font-semibold mb-2">Onde ver seu score de alinhamento:</p>
+                      <ul className="list-disc pl-6 text-sm space-y-1">
+                        <li><strong>Dashboard:</strong> Card de "Alinhamento Estratégico" aparece após o encerramento da rodada, mostrando seu score e problemas detectados</li>
+                        <li><strong>Página do Professor:</strong> O professor vê uma tabela comparativa com os scores de alinhamento de todas as equipes</li>
+                      </ul>
+                    </div>
+
+                    <div className="mt-4 p-4 bg-primary/10 rounded-md border border-primary/20">
+                      <p className="font-semibold text-primary mb-2 flex items-center gap-2">
+                        <Lightbulb className="h-4 w-4" />
+                        Dica para maximizar seu alinhamento:
+                      </p>
+                      <ol className="list-decimal pl-6 text-sm space-y-1">
+                        <li>Sempre complete as 4 análises estratégicas ANTES de definir o Mix de Marketing</li>
+                        <li>Revise suas análises durante a definição dos 4 Ps e faça conexões explícitas</li>
+                        <li>Personalize as análises estratégicas com insights específicos da sua equipe</li>
+                        <li>Verifique se cada decisão tem um "porquê" baseado nas análises</li>
+                        <li>Após submeter, leia o feedback de alinhamento e ajuste na próxima rodada</li>
+                      </ol>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="resultados">
+                  <AccordionTrigger>6. Acompanhamento de Resultados</AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p>No <strong>Dashboard</strong>, monitore:</p>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li><strong>KPIs:</strong> Receita, Lucro, Market Share, ROI, Satisfação do Cliente</li>
+                      <li><strong>Gráficos:</strong> Evolução dos indicadores ao longo das rodadas</li>
+                      <li><strong>Ranking:</strong> Compare seu desempenho com outras equipes</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="orcamento">
+                  <AccordionTrigger>7. Gestão de Orçamento</AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p>Na aba <strong>"Orçamento"</strong>:</p>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li>Veja seu orçamento disponível (definido pelo professor)</li>
+                      <li>Acompanhe gastos com produção, distribuição e promoção</li>
+                      <li>Planeje investimentos para as próximas rodadas</li>
+                    </ul>
+                    <p className="text-sm text-destructive mt-2">
+                      <strong>Atenção:</strong> Não gaste mais do que tem disponível!
+                    </p>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ABA 2: CONCEITOS DE MARKETING */}
+        <TabsContent value="conceitos" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lightbulb className="h-6 w-6" />
+                Fundamentos de Marketing
+              </CardTitle>
+              <CardDescription>
+                Conceitos essenciais baseados em Kotler & Armstrong
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="4ps">
+                  <AccordionTrigger className="text-lg font-semibold">
+                    <div className="flex items-center gap-2">
+                      <Grid3x3 className="h-5 w-5" />
+                      Mix de Marketing (4 Ps)
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold flex items-center gap-2 mb-2">
+                          <Target className="h-4 w-4" />
+                          Produto
+                        </h4>
+                        <p className="text-sm mb-2">
+                          Tudo o que a empresa oferece ao mercado para satisfazer necessidades ou desejos.
+                        </p>
+                        <ul className="list-disc pl-6 text-sm space-y-1">
+                          <li><strong>Qualidade:</strong> Nível de excelência e desempenho do produto</li>
+                          <li><strong>Características:</strong> Atributos que diferenciam seu produto</li>
+                          <li><strong>Design:</strong> Aparência e funcionalidade</li>
+                          <li><strong>Marca:</strong> Nome, logo e identidade visual</li>
+                          <li><strong>Embalagem:</strong> Proteção e comunicação visual</li>
+                          <li><strong>Serviços:</strong> Pós-venda, garantia, suporte</li>
+                        </ul>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          <em><strong>Exemplo:</strong> iPhone (alta qualidade + design premium + marca forte)</em>
+                        </p>
+                      </div>
+
+                      <div className="border-l-4 border-green-500 pl-4">
+                        <h4 className="font-bold flex items-center gap-2 mb-2">
+                          <DollarSign className="h-4 w-4" />
+                          Preço
+                        </h4>
+                        <p className="text-sm mb-2">
+                          Quantia que os clientes pagam pelo produto. É o único P que gera receita.
+                        </p>
+                        <ul className="list-disc pl-6 text-sm space-y-1">
+                          <li><strong>Penetração:</strong> Preço baixo para ganhar mercado rapidamente</li>
+                          <li><strong>Skimming:</strong> Preço alto inicial, reduzindo ao longo do tempo</li>
+                          <li><strong>Valor percebido:</strong> Preço baseado no quanto o cliente valoriza</li>
+                          <li><strong>Competitivo:</strong> Preço similar aos concorrentes</li>
+                          <li><strong>Custo-plus:</strong> Custo + margem de lucro desejada</li>
+                        </ul>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          <em><strong>Exemplo:</strong> Tesla usa skimming (preços altos iniciais para early adopters)</em>
+                        </p>
+                      </div>
+
+                      <div className="border-l-4 border-blue-500 pl-4">
+                        <h4 className="font-bold flex items-center gap-2 mb-2">
+                          <Map className="h-4 w-4" />
+                          Praça (Distribuição)
+                        </h4>
+                        <p className="text-sm mb-2">
+                          Como o produto chega ao cliente. Envolve canais de distribuição e logística.
+                        </p>
+                        <ul className="list-disc pl-6 text-sm space-y-1">
+                          <li><strong>Canal direto:</strong> Fabricante → Cliente (e-commerce próprio)</li>
+                          <li><strong>Canal indireto:</strong> Fabricante → Varejista → Cliente</li>
+                          <li><strong>Multicanal:</strong> Combinação de vários canais</li>
+                          <li><strong>Intensiva:</strong> Distribuição massiva (Coca-Cola)</li>
+                          <li><strong>Seletiva:</strong> Poucos pontos estratégicos (Apple Store)</li>
+                          <li><strong>Exclusiva:</strong> Distribuidor único por região (Ferrari)</li>
+                        </ul>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          <em><strong>Exemplo:</strong> Amazon combina canal direto (próprio) + marketplace (terceiros)</em>
+                        </p>
+                      </div>
+
+                      <div className="border-l-4 border-orange-500 pl-4">
+                        <h4 className="font-bold flex items-center gap-2 mb-2">
+                          <Megaphone className="h-4 w-4" />
+                          Promoção (Comunicação)
+                        </h4>
+                        <p className="text-sm mb-2">
+                          Todas as formas de comunicar e persuadir o mercado sobre o produto.
+                        </p>
+                        <ul className="list-disc pl-6 text-sm space-y-1">
+                          <li><strong>Propaganda:</strong> TV, rádio, digital, outdoor</li>
+                          <li><strong>Promoção de vendas:</strong> Descontos, cupons, brindes</li>
+                          <li><strong>Relações públicas:</strong> Eventos, assessoria de imprensa</li>
+                          <li><strong>Vendas pessoais:</strong> Equipe comercial, demonstrações</li>
+                          <li><strong>Marketing digital:</strong> Redes sociais, SEO, email marketing</li>
+                          <li><strong>Marketing de conteúdo:</strong> Blogs, vídeos, podcasts</li>
+                        </ul>
+                        
+                        <div className="mt-4 p-3 bg-muted rounded-lg">
+                          <p className="text-sm font-semibold mb-2">📺 27 Mídias Disponíveis no Simula+</p>
+                          <p className="text-xs text-muted-foreground mb-2">Você pode escolher livremente entre todas essas opções:</p>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                            <div>
+                              <p className="font-semibold text-primary mt-1">Digital/Online:</p>
+                              <ul className="list-disc pl-4 space-y-0.5">
+                                <li>Marketing Digital</li>
+                                <li>Email Marketing</li>
+                                <li>SMS Marketing</li>
+                                <li>Podcasts</li>
+                                <li>Marketing de Conteúdo</li>
+                              </ul>
+                              
+                              <p className="font-semibold text-primary mt-2">Mass Media:</p>
+                              <ul className="list-disc pl-4 space-y-0.5">
+                                <li>TV Aberta/Fechada</li>
+                                <li>Rádio</li>
+                                <li>Cinema</li>
+                                <li>Jornal e Revista</li>
+                              </ul>
+                              
+                              <p className="font-semibold text-primary mt-2">Outdoor/Rua:</p>
+                              <ul className="list-disc pl-4 space-y-0.5">
+                                <li>Outdoor e Mídia OOH</li>
+                                <li>Carro de Som</li>
+                              </ul>
+                              
+                              <p className="font-semibold text-primary mt-2">Material Impresso:</p>
+                              <ul className="list-disc pl-4 space-y-0.5">
+                                <li>Panfletos e Flyers</li>
+                                <li>Catálogos de Produtos</li>
+                              </ul>
+                            </div>
+                            
+                            <div>
+                              <p className="font-semibold text-primary mt-1">Marketing Direto:</p>
+                              <ul className="list-disc pl-4 space-y-0.5">
+                                <li>Telemarketing</li>
+                                <li>Mala Direta</li>
+                                <li>Venda Direta</li>
+                              </ul>
+                              
+                              <p className="font-semibold text-primary mt-2">Eventos & Patrocínio:</p>
+                              <ul className="list-disc pl-4 space-y-0.5">
+                                <li>Eventos e Feiras</li>
+                                <li>Patrocínio</li>
+                              </ul>
+                              
+                              <p className="font-semibold text-primary mt-2">Influência & PR:</p>
+                              <ul className="list-disc pl-4 space-y-0.5">
+                                <li>Influenciadores</li>
+                                <li>Relações Públicas</li>
+                              </ul>
+                              
+                              <p className="font-semibold text-primary mt-2">Promoções & PDV:</p>
+                              <ul className="list-disc pl-4 space-y-0.5">
+                                <li>Cupons de Desconto</li>
+                                <li>Promoções Sazonais (Black Friday, etc)</li>
+                                <li>Promoções de Vendas</li>
+                                <li>Merchandising no PDV</li>
+                              </ul>
+                              
+                              <p className="font-semibold text-primary mt-2">Estratégico:</p>
+                              <ul className="list-disc pl-4 space-y-0.5">
+                                <li>Product Placement</li>
+                                <li>Marketing de Guerrilha</li>
+                                <li>Parcerias Estratégicas</li>
+                              </ul>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2 italic">
+                            💡 Todas as mídias são opcionais. Escolha as que fazem sentido para sua estratégia!
+                          </p>
+                        </div>
+                        
+                        <p className="text-sm text-muted-foreground mt-3">
+                          <em><strong>Exemplo:</strong> Red Bull investe pesado em eventos esportivos (experiencial)</em>
+                        </p>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="swot">
+                  <AccordionTrigger className="text-lg font-semibold">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Análise SWOT (FOFA)
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p className="text-sm">
+                      Ferramenta de diagnóstico estratégico que analisa fatores internos e externos.
+                    </p>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="border rounded-lg p-4 bg-green-50 dark:bg-green-950">
+                        <h4 className="font-bold mb-2 text-green-700 dark:text-green-300">Forças (Strengths)</h4>
+                        <p className="text-sm mb-2">Vantagens internas da empresa</p>
+                        <ul className="list-disc pl-6 text-sm space-y-1">
+                          <li>Marca forte</li>
+                          <li>Tecnologia avançada</li>
+                          <li>Equipe qualificada</li>
+                          <li>Recursos financeiros</li>
+                        </ul>
+                      </div>
+                      <div className="border rounded-lg p-4 bg-red-50 dark:bg-red-950">
+                        <h4 className="font-bold mb-2 text-red-700 dark:text-red-300">Fraquezas (Weaknesses)</h4>
+                        <p className="text-sm mb-2">Limitações internas</p>
+                        <ul className="list-disc pl-6 text-sm space-y-1">
+                          <li>Falta de recursos</li>
+                          <li>Processos ineficientes</li>
+                          <li>Marca desconhecida</li>
+                          <li>Dependência de fornecedor</li>
+                        </ul>
+                      </div>
+                      <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
+                        <h4 className="font-bold mb-2 text-blue-700 dark:text-blue-300">Oportunidades (Opportunities)</h4>
+                        <p className="text-sm mb-2">Fatores externos favoráveis</p>
+                        <ul className="list-disc pl-6 text-sm space-y-1">
+                          <li>Mercado em crescimento</li>
+                          <li>Novas tecnologias</li>
+                          <li>Mudanças regulatórias</li>
+                          <li>Tendências de consumo</li>
+                        </ul>
+                      </div>
+                      <div className="border rounded-lg p-4 bg-orange-50 dark:bg-orange-950">
+                        <h4 className="font-bold mb-2 text-orange-700 dark:text-orange-300">Ameaças (Threats)</h4>
+                        <p className="text-sm mb-2">Fatores externos desfavoráveis</p>
+                        <ul className="list-disc pl-6 text-sm space-y-1">
+                          <li>Novos concorrentes</li>
+                          <li>Crise econômica</li>
+                          <li>Mudança de preferências</li>
+                          <li>Produtos substitutos</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="porter">
+                  <AccordionTrigger className="text-lg font-semibold">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-5 w-5" />
+                      5 Forças de Porter
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p className="text-sm">
+                      Modelo para analisar a competitividade e atratividade de um setor.
+                    </p>
+                    <div className="space-y-3">
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold">1. Rivalidade entre Concorrentes</h4>
+                        <p className="text-sm">Intensidade da competição no setor. Alta rivalidade reduz lucratividade.</p>
+                      </div>
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold">2. Ameaça de Novos Entrantes</h4>
+                        <p className="text-sm">Facilidade de novas empresas entrarem no mercado. Barreiras altas protegem empresas estabelecidas.</p>
+                      </div>
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold">3. Poder de Barganha dos Fornecedores</h4>
+                        <p className="text-sm">Capacidade dos fornecedores imporem condições. Poucos fornecedores = maior poder.</p>
+                      </div>
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold">4. Poder de Barganha dos Clientes</h4>
+                        <p className="text-sm">Capacidade dos clientes negociarem preços. Clientes concentrados = maior poder.</p>
+                      </div>
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold">5. Ameaça de Produtos Substitutos</h4>
+                        <p className="text-sm">Disponibilidade de alternativas. Ex: Uber substituiu táxis tradicionais.</p>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="bcg">
+                  <AccordionTrigger className="text-lg font-semibold">
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5" />
+                      Matriz BCG
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p className="text-sm">
+                      Ferramenta para gerenciar portfólio de produtos baseada em crescimento do mercado e participação relativa.
+                    </p>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="border rounded-lg p-4 bg-yellow-50 dark:bg-yellow-950">
+                        <h4 className="font-bold mb-2">Estrelas (Stars)</h4>
+                        <p className="text-sm mb-2"><strong>Alto crescimento + Alta participação</strong></p>
+                        <p className="text-sm">Produtos líderes em mercados crescentes. Requerem investimento para manter posição.</p>
+                      </div>
+                      <div className="border rounded-lg p-4 bg-green-50 dark:bg-green-950">
+                        <h4 className="font-bold mb-2">Vacas Leiteiras (Cash Cows)</h4>
+                        <p className="text-sm mb-2"><strong>Baixo crescimento + Alta participação</strong></p>
+                        <p className="text-sm">Produtos maduros que geram caixa. Investimento mínimo, lucro máximo.</p>
+                      </div>
+                      <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
+                        <h4 className="font-bold mb-2">Interrogações (Question Marks)</h4>
+                        <p className="text-sm mb-2"><strong>Alto crescimento + Baixa participação</strong></p>
+                        <p className="text-sm">Produtos com potencial, mas incertos. Decisão: investir ou abandonar?</p>
+                      </div>
+                      <div className="border rounded-lg p-4 bg-red-50 dark:bg-red-950">
+                        <h4 className="font-bold mb-2">Abacaxis (Dogs)</h4>
+                        <p className="text-sm mb-2"><strong>Baixo crescimento + Baixa participação</strong></p>
+                        <p className="text-sm">Produtos com baixo retorno. Considerar desinvestimento.</p>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="pestel">
+                  <AccordionTrigger className="text-lg font-semibold">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5" />
+                      Análise PESTEL
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p className="text-sm">
+                      Análise do macroambiente externo que afeta todas as empresas do setor.
+                    </p>
+                    <div className="space-y-2">
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold">P - Político</h4>
+                        <p className="text-sm">Estabilidade política, políticas governamentais, regulamentações</p>
+                      </div>
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold">E - Econômico</h4>
+                        <p className="text-sm">Inflação, taxa de juros, câmbio, crescimento do PIB, emprego</p>
+                      </div>
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold">S - Social</h4>
+                        <p className="text-sm">Demografia, cultura, educação, tendências de consumo</p>
+                      </div>
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold">T - Tecnológico</h4>
+                        <p className="text-sm">Inovações, automação, digitalização, P&D</p>
+                      </div>
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold">E - Ecológico/Ambiental</h4>
+                        <p className="text-sm">Sustentabilidade, mudanças climáticas, regulações ambientais</p>
+                      </div>
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold">L - Legal</h4>
+                        <p className="text-sm">Leis trabalhistas, proteção ao consumidor, propriedade intelectual</p>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="concorrencia">
+                  <AccordionTrigger className="text-lg font-semibold">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Análise de Concorrência
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p className="text-sm">
+                      Estudo sistemático dos competidores para identificar vantagens competitivas e oportunidades de diferenciação.
+                    </p>
+                    <div className="space-y-3">
+                      <div className="border rounded-lg p-4 bg-muted">
+                        <h4 className="font-bold mb-2">Etapas da Análise Competitiva</h4>
+                        <ol className="list-decimal pl-6 text-sm space-y-2">
+                          <li><strong>Identificação:</strong> Quem são seus concorrentes diretos e indiretos?</li>
+                          <li><strong>Benchmarking:</strong> Compare produtos, preços, canais e estratégias de comunicação</li>
+                          <li><strong>Posicionamento:</strong> Como cada concorrente se posiciona no mercado?</li>
+                          <li><strong>Forças e Fraquezas:</strong> Identifique vantagens e vulnerabilidades dos competidores</li>
+                          <li><strong>Market Share:</strong> Qual a participação de mercado de cada player?</li>
+                          <li><strong>Diferenciação:</strong> Como sua empresa pode se destacar?</li>
+                        </ol>
+                      </div>
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold mb-2">Tipos de Concorrentes</h4>
+                        <ul className="list-disc pl-6 text-sm space-y-1">
+                          <li><strong>Diretos:</strong> Oferecem produtos similares ao mesmo público (Ex: Coca-Cola vs Pepsi)</li>
+                          <li><strong>Indiretos:</strong> Satisfazem a mesma necessidade com produtos diferentes (Ex: Cinema vs Streaming)</li>
+                          <li><strong>Potenciais:</strong> Podem entrar no mercado no futuro</li>
+                        </ul>
+                      </div>
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold mb-2">No Simulador</h4>
+                        <p className="text-sm">
+                          Compare suas decisões de Marketing Mix com outras equipes. Observe preços, qualidade, canais e investimento promocional. 
+                          Use a análise SWOT e as 5 Forças de Porter para entender a dinâmica competitiva da sua turma.
+                        </p>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="estrategia">
+                  <AccordionTrigger className="text-lg font-semibold">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-5 w-5" />
+                      Estratégia Empresarial
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p className="text-sm">
+                      Conjunto de decisões e ações para alcançar objetivos de longo prazo e criar vantagem competitiva sustentável.
+                    </p>
+                    <div className="space-y-3">
+                      <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
+                        <h4 className="font-bold mb-2">Estratégias Genéricas de Porter</h4>
+                        <ul className="list-disc pl-6 text-sm space-y-2">
+                          <li><strong>Liderança em Custo:</strong> Ser o produtor de menor custo (Ex: Ryanair, Atacadão)</li>
+                          <li><strong>Diferenciação:</strong> Oferecer produtos únicos e superiores (Ex: Apple, Tesla)</li>
+                          <li><strong>Foco/Nicho:</strong> Atender segmento específico com excelência (Ex: Ferrari, Rolex)</li>
+                        </ul>
+                      </div>
+                      <div className="border rounded-lg p-4 bg-green-50 dark:bg-green-950">
+                        <h4 className="font-bold mb-2">Matriz Ansoff - Crescimento Estratégico</h4>
+                        <ul className="list-disc pl-6 text-sm space-y-2">
+                          <li><strong>Penetração de Mercado:</strong> Vender mais produtos atuais aos clientes atuais</li>
+                          <li><strong>Desenvolvimento de Mercado:</strong> Levar produtos atuais a novos mercados</li>
+                          <li><strong>Desenvolvimento de Produto:</strong> Criar novos produtos para clientes atuais</li>
+                          <li><strong>Diversificação:</strong> Novos produtos para novos mercados (maior risco)</li>
+                        </ul>
+                      </div>
+                      <div className="border-l-4 border-primary pl-4">
+                        <h4 className="font-bold mb-2">Elementos de uma Boa Estratégia</h4>
+                        <ul className="list-disc pl-6 text-sm space-y-1">
+                          <li><strong>Visão clara:</strong> Onde a empresa quer chegar?</li>
+                          <li><strong>Análise do ambiente:</strong> SWOT, Porter, PESTEL</li>
+                          <li><strong>Vantagem competitiva:</strong> O que torna a empresa única?</li>
+                          <li><strong>Consistência:</strong> Todos os 4 Ps devem reforçar a estratégia</li>
+                          <li><strong>Adaptabilidade:</strong> Flexibilidade para mudar quando necessário</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ABA 3: ESTRATÉGIAS E DICAS */}
+        <TabsContent value="estrategias" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-6 w-6" />
+                Estratégias e Boas Práticas
+              </CardTitle>
+              <CardDescription>
+                Dicas para tomar decisões mais assertivas no simulador
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="pesquisa">
+                  <AccordionTrigger>1. Pesquise o Mercado</AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p className="text-sm">Antes de decidir, analise:</p>
+                    <ul className="list-disc pl-6 text-sm space-y-1">
+                      <li>Dados econômicos disponíveis (inflação, câmbio, etc.)</li>
+                      <li>Informações do setor escolhido (margem média, tendências)</li>
+                      <li>Eventos de mercado ativos (crises, mudanças tecnológicas)</li>
+                      <li>Decisões anteriores e seus resultados</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="coerencia">
+                  <AccordionTrigger>2. Mantenha Coerência entre os 4 Ps</AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p className="text-sm">Seus 4 Ps devem contar a mesma história:</p>
+                    <ul className="list-disc pl-6 text-sm space-y-1">
+                      <li><strong>Produto premium?</strong> Preço alto + distribuição seletiva + comunicação sofisticada</li>
+                      <li><strong>Produto popular?</strong> Preço baixo + distribuição intensiva + promoções massivas</li>
+                      <li>Evite: Produto de luxo com preço baixo ou produto básico com preço premium</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="publico">
+                  <AccordionTrigger>3. Conheça Seu Público-Alvo</AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p className="text-sm">Adapte suas decisões ao perfil do consumidor:</p>
+                    <ul className="list-disc pl-6 text-sm space-y-1">
+                      <li><strong>Classe A/B:</strong> Valorizam qualidade, exclusividade, marca</li>
+                      <li><strong>Classe C:</strong> Buscam equilíbrio entre preço e qualidade</li>
+                      <li><strong>Classe D/E:</strong> Priorizam preço acessível</li>
+                      <li><strong>Jovens:</strong> Valorizam inovação, sustentabilidade, digital</li>
+                      <li><strong>Idosos:</strong> Preferem tradição, confiabilidade, atendimento pessoal</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="orcamento">
+                  <AccordionTrigger>4. Gerencie Bem o Orçamento</AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p className="text-sm">Dicas financeiras:</p>
+                    <ul className="list-disc pl-6 text-sm space-y-1">
+                      <li>Não gaste tudo na primeira rodada</li>
+                      <li>Reserve recursos para imprevistos e oportunidades</li>
+                      <li>Invista em marketing quando o mercado está crescendo</li>
+                      <li>Reduza custos em períodos de crise</li>
+                      <li>Lembre-se: Preço alto = margem maior, mas menos vendas</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="analise">
+                  <AccordionTrigger>5. Use as Ferramentas de Análise</AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p className="text-sm">Não ignore as análises estratégicas:</p>
+                    <ul className="list-disc pl-6 text-sm space-y-1">
+                      <li><strong>SWOT:</strong> Identifique suas vantagens e vulnerabilidades</li>
+                      <li><strong>Porter:</strong> Entenda a dinâmica competitiva do setor</li>
+                      <li><strong>BCG:</strong> Equilibre investimentos entre produtos</li>
+                      <li><strong>PESTEL:</strong> Antecipe mudanças externas</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="adaptacao">
+                  <AccordionTrigger>6. Adapte-se aos Eventos de Mercado</AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p className="text-sm">Quando eventos externos ocorrerem:</p>
+                    <ul className="list-disc pl-6 text-sm space-y-1">
+                      <li><strong>Crise econômica:</strong> Reduza preços, aumente promoções, corte custos</li>
+                      <li><strong>Nova tecnologia:</strong> Invista em inovação ou corra o risco de ficar para trás</li>
+                      <li><strong>Mudança regulatória:</strong> Adapte produtos e processos rapidamente</li>
+                      <li><strong>Novo concorrente:</strong> Fortaleça diferenciação e comunicação</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="equipe">
+                  <AccordionTrigger>7. Trabalhe em Equipe</AccordionTrigger>
+                  <AccordionContent className="space-y-2">
+                    <p className="text-sm">O sucesso depende da colaboração:</p>
+                    <ul className="list-disc pl-6 text-sm space-y-1">
+                      <li>Divida responsabilidades (cada membro analisa um P)</li>
+                      <li>Discutam decisões antes de submeter</li>
+                      <li>Aprendam com os erros das rodadas anteriores</li>
+                      <li>Analisem a concorrência e aprendam com as melhores equipes</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ABA 4: GLOSSÁRIO */}
+        <TabsContent value="glossario" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-6 w-6" />
+                Glossário de Termos
+              </CardTitle>
+              <CardDescription>
+                Definições dos principais termos de marketing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Awareness (Consciência de Marca)</h4>
+                    <p className="text-sm text-muted-foreground">Grau de conhecimento que o público tem sobre uma marca.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Barreiras de Entrada</h4>
+                    <p className="text-sm text-muted-foreground">Obstáculos que dificultam a entrada de novos concorrentes: capital, tecnologia, regulação, economias de escala.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Benchmarking</h4>
+                    <p className="text-sm text-muted-foreground">Comparação de práticas e resultados com concorrentes de referência.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Branding</h4>
+                    <p className="text-sm text-muted-foreground">Construção e gestão da marca e sua identidade.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">B2C (Business to Consumer)</h4>
+                    <p className="text-sm text-muted-foreground">Venda direta de empresas para consumidores finais.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">B2B (Business to Business)</h4>
+                    <p className="text-sm text-muted-foreground">Venda de empresas para outras empresas.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">CAC (Custo de Aquisição de Cliente)</h4>
+                    <p className="text-sm text-muted-foreground">Quanto custa, em média, conquistar um novo cliente.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Ciclo de Vida do Produto</h4>
+                    <p className="text-sm text-muted-foreground">Fases: Introdução, Crescimento, Maturidade, Declínio.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Concorrência Monopolística</h4>
+                    <p className="text-sm text-muted-foreground">Estrutura de mercado com muitas empresas oferecendo produtos diferenciados. Exemplo: Restaurantes, roupas.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Concorrência Perfeita</h4>
+                    <p className="text-sm text-muted-foreground">Mercado com muitas empresas e produtos homogêneos. Difícil diferenciação, preço determinado pelo mercado.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">CRM (Customer Relationship Management)</h4>
+                    <p className="text-sm text-muted-foreground">Gestão do relacionamento com clientes.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">CTR (Click-Through Rate)</h4>
+                    <p className="text-sm text-muted-foreground">Taxa de cliques em anúncios digitais.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Custos (Costs)</h4>
+                    <p className="text-sm text-muted-foreground">Despesas totais para produzir e comercializar o produto. Incluem matéria-prima, distribuição e promoção.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Concentração de Mercado</h4>
+                    <p className="text-sm text-muted-foreground">Grau de dominação do mercado por poucas empresas. Varia de monopólio a concorrência perfeita.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Diferenciação</h4>
+                    <p className="text-sm text-muted-foreground">Estratégia de tornar produto único em relação aos concorrentes.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Elasticidade de Preço</h4>
+                    <p className="text-sm text-muted-foreground">Sensibilidade da demanda a variações de preço.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Estrutura de Mercado</h4>
+                    <p className="text-sm text-muted-foreground">Organização competitiva do setor: monopólio, oligopólio, concorrência monopolística ou perfeita.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Fidelidade do Cliente (Customer Loyalty)</h4>
+                    <p className="text-sm text-muted-foreground">Grau de repetição de compra e lealdade à marca. Resultado de boa percepção e alta satisfação.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Força dos Concorrentes</h4>
+                    <p className="text-sm text-muted-foreground">Capacidade competitiva dos rivais: Fraca, Média, Forte ou Muito Forte. Afeta estratégias e investimentos necessários.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Funil de Vendas</h4>
+                    <p className="text-sm text-muted-foreground">Jornada do cliente: Conhecimento → Interesse → Decisão → Ação.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">KPI (Key Performance Indicator)</h4>
+                    <p className="text-sm text-muted-foreground">Indicador-chave de desempenho para medir resultados.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Lucro (Profit)</h4>
+                    <p className="text-sm text-muted-foreground">Resultado financeiro positivo. Fórmula: Receita - Custos. Indica se o negócio é viável.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">LTV (Lifetime Value)</h4>
+                    <p className="text-sm text-muted-foreground">Valor total que um cliente gera durante todo relacionamento.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Market Share (Participação de Mercado)</h4>
+                    <p className="text-sm text-muted-foreground">Percentual de vendas da empresa em relação ao mercado total.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Margem de Lucro</h4>
+                    <p className="text-sm text-muted-foreground">Percentual de lucro sobre o preço de venda. Fórmula: (Lucro / Receita) × 100.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Mix de Marketing (4 Ps)</h4>
+                    <p className="text-sm text-muted-foreground">Conjunto de decisões estratégicas: Product (Produto), Price (Preço), Place (Praça/Distribuição) e Promotion (Promoção).</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Markup</h4>
+                    <p className="text-sm text-muted-foreground">Percentual adicionado ao custo para definir o preço de venda. Fórmula: [(Preço - Custo) / Custo] × 100.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Monopólio</h4>
+                    <p className="text-sm text-muted-foreground">Estrutura de mercado dominada por uma única empresa. Alto poder de precificação e controle do mercado.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Nicho de Mercado</h4>
+                    <p className="text-sm text-muted-foreground">Segmento específico e delimitado de mercado.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Nível de Concorrência</h4>
+                    <p className="text-sm text-muted-foreground">Intensidade competitiva do mercado: Baixa, Média, Alta ou Muito Alta. Afeta diretamente estratégias e resultados.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Oligopólio</h4>
+                    <p className="text-sm text-muted-foreground">Estrutura de mercado com poucas empresas dominantes. Exemplo: Telecomunicações, aviação comercial.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Percepção de Marca (Brand Perception)</h4>
+                    <p className="text-sm text-muted-foreground">Como os consumidores veem e avaliam sua marca. Influenciada por qualidade do produto, preço e comunicação.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Penetração de Mercado</h4>
+                    <p className="text-sm text-muted-foreground">Estratégia de aumentar vendas em mercados existentes.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Posicionamento</h4>
+                    <p className="text-sm text-muted-foreground">Lugar que a marca ocupa na mente do consumidor.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Receita (Revenue)</h4>
+                    <p className="text-sm text-muted-foreground">Valor total gerado pelas vendas. Resultado direto das decisões de Marketing Mix e do orçamento investido.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">ROI (Return on Investment)</h4>
+                    <p className="text-sm text-muted-foreground">Retorno sobre investimento. Fórmula: (Lucro / Custos) × 100. Indica eficiência do investimento.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Satisfação do Cliente (Customer Satisfaction)</h4>
+                    <p className="text-sm text-muted-foreground">Grau de contentamento com o produto/serviço. Resultado de qualidade, distribuição e preço justo.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Segmentação</h4>
+                    <p className="text-sm text-muted-foreground">Divisão do mercado em grupos com características similares.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">SKU (Stock Keeping Unit)</h4>
+                    <p className="text-sm text-muted-foreground">Código único de identificação de produto.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">Target (Público-Alvo)</h4>
+                    <p className="text-sm text-muted-foreground">Grupo específico de consumidores que a empresa quer atingir.</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <h4 className="font-bold text-sm">UVP (Unique Value Proposition)</h4>
+                    <p className="text-sm text-muted-foreground">Proposta única de valor que diferencia a oferta.</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      </div>
+
+      {/* Container escondido para geração de PDF - renderiza todo o conteúdo */}
+      <div 
+        ref={printableRef}
+        style={{
+          position: 'absolute',
+          left: '-9999px',
+          top: 0,
+          width: '1200px',
+          visibility: 'visible',
+          opacity: 1
+        }}
+        className="bg-background p-8 space-y-8"
+      >
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-2">Manual do Simula+</h1>
+          <p className="text-muted-foreground">
+            Guia completo para dominar o simulador de marketing e tomar as melhores decisões estratégicas
+          </p>
+        </div>
+
+        {/* Renderizar todo o conteúdo das 4 abas sequencialmente */}
+        <div className="space-y-8">
+          {/* ABA 1 - Como Usar */}
+          <div className="space-y-4">
+            <h2 className="text-3xl font-bold border-b-2 border-primary pb-2">1. Como Usar o Simula+</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xl font-semibold mb-2">1.1 Primeiros Passos</h3>
+                <p><strong>Login:</strong> Use o email institucional (@iffarroupilha.edu.br) para acessar o sistema.</p>
+                <p><strong>Aprovação:</strong> Após o primeiro login, aguarde a aprovação do professor.</p>
+                <p><strong>Equipe:</strong> Você faz parte de uma equipe com até 5 membros.</p>
+                <p><strong>Rodadas:</strong> O jogo acontece em rodadas (períodos).</p>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-2">1.2 Como Entrar em uma Turma e Equipe</h3>
+                <p className="font-semibold">Para Alunos:</p>
+                <ol className="list-decimal pl-6 space-y-1">
+                  <li>Escolha uma turma criada pelo professor</li>
+                  <li>Visualize as equipes disponíveis</li>
+                  <li>Criar nova equipe OU entrar em existente</li>
+                  <li>Aguarde confirmação</li>
+                </ol>
+                <p className="font-semibold mt-3">Para Professores:</p>
+                <ol className="list-decimal pl-6 space-y-1">
+                  <li>Acesse a página Professor</li>
+                  <li>Selecione a turma</li>
+                  <li>Clique na equipe para expandir</li>
+                  <li>Adicione membros conforme necessário</li>
+                </ol>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-2">1.3 Identidade da Empresa</h3>
+                <p>Configure nome, slogan, logomarca, categoria de produto e público-alvo.</p>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-2">1.4 Tomada de Decisões (4 Ps)</h3>
+                <p>Na aba Decisões, defina o Mix de Marketing:</p>
+                <ul className="list-disc pl-6">
+                  <li>Produto: Qualidade, características, design</li>
+                  <li>Preço: Estratégia de precificação</li>
+                  <li>Praça: Canais de distribuição</li>
+                  <li>Promoção: Mix de comunicação</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-2">1.5 Ferramentas de Análise Estratégica</h3>
+                <p>Acesse SWOT, 5 Forças de Porter, Matriz BCG e PESTEL.</p>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-2">1.6 Acompanhamento de Resultados</h3>
+                <p>Monitore KPIs, gráficos de evolução e ranking competitivo.</p>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-2">1.7 Gestão de Orçamento</h3>
+                <p>Acompanhe orçamento disponível e planeje investimentos.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* ABA 2 - Conceitos de Marketing */}
+          <div className="space-y-4 mt-8">
+            <h2 className="text-3xl font-bold border-b-2 border-primary pb-2">2. Fundamentos de Marketing</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xl font-semibold mb-2">2.1 Mix de Marketing (4 Ps)</h3>
+                
+                <div className="space-y-3">
+                  <div className="border-l-4 border-primary pl-4">
+                    <h4 className="font-bold mb-1">Produto</h4>
+                    <p className="text-sm">Tudo o que a empresa oferece ao mercado.</p>
+                    <ul className="list-disc pl-6 text-sm">
+                      <li>Qualidade, Características, Design</li>
+                      <li>Marca, Embalagem, Serviços</li>
+                    </ul>
+                  </div>
+
+                  <div className="border-l-4 border-green-500 pl-4">
+                    <h4 className="font-bold mb-1">Preço</h4>
+                    <p className="text-sm">Quantia que os clientes pagam.</p>
+                    <ul className="list-disc pl-6 text-sm">
+                      <li>Penetração, Skimming, Valor percebido</li>
+                      <li>Competitivo, Custo-plus</li>
+                    </ul>
+                  </div>
+
+                  <div className="border-l-4 border-blue-500 pl-4">
+                    <h4 className="font-bold mb-1">Praça (Distribuição)</h4>
+                    <p className="text-sm">Como o produto chega ao cliente.</p>
+                    <ul className="list-disc pl-6 text-sm">
+                      <li>Canal direto, indireto, multicanal</li>
+                      <li>Intensiva, Seletiva, Exclusiva</li>
+                    </ul>
+                  </div>
+
+                  <div className="border-l-4 border-orange-500 pl-4">
+                    <h4 className="font-bold mb-1">Promoção (Comunicação)</h4>
+                    <p className="text-sm">Todas as formas de comunicação.</p>
+                    <p className="text-sm font-semibold mt-2">27 Mídias Disponíveis:</p>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <p className="font-semibold">Digital:</p>
+                        <p>Marketing Digital, Email, SMS, Podcasts, Conteúdo</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold">Mass Media:</p>
+                        <p>TV, Rádio, Cinema, Jornal/Revista</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold">Outros:</p>
+                        <p>Outdoor, Eventos, Influenciadores, PDV</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-2">2.2 Segmentação de Mercado</h3>
+                <p>Divisão do mercado em grupos homogêneos com características similares.</p>
+                <ul className="list-disc pl-6 text-sm">
+                  <li>Demográfica: idade, gênero, renda</li>
+                  <li>Geográfica: região, cidade, clima</li>
+                  <li>Psicográfica: estilo de vida, valores</li>
+                  <li>Comportamental: frequência, benefícios</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-2">2.3 Posicionamento de Marca</h3>
+                <p>Lugar que a marca ocupa na mente do consumidor.</p>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-2">2.4 KPIs de Marketing</h3>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="font-semibold">Financeiros:</p>
+                    <p>Receita, Custos, Lucro, Margem, Market Share, ROI</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Customer:</p>
+                    <p>Satisfação, Lealdade, Percepção, CAC, LTV, NPS</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ABA 3 - Estratégias */}
+          <div className="space-y-4 mt-8">
+            <h2 className="text-3xl font-bold border-b-2 border-primary pb-2">3. Ferramentas Estratégicas</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xl font-semibold mb-2">3.1 Análise SWOT</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="font-semibold text-green-600">Forças (Strengths)</p>
+                    <p className="text-sm">Vantagens internas da empresa</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-red-600">Fraquezas (Weaknesses)</p>
+                    <p className="text-sm">Limitações internas</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-blue-600">Oportunidades (Opportunities)</p>
+                    <p className="text-sm">Fatores externos favoráveis</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-orange-600">Ameaças (Threats)</p>
+                    <p className="text-sm">Fatores externos desfavoráveis</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-2">3.2 Cinco Forças de Porter</h3>
+                <ul className="list-disc pl-6 text-sm space-y-1">
+                  <li>Rivalidade entre concorrentes</li>
+                  <li>Ameaça de novos entrantes</li>
+                  <li>Poder de negociação dos fornecedores</li>
+                  <li>Poder de negociação dos compradores</li>
+                  <li>Ameaça de produtos substitutos</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-2">3.3 Matriz BCG</h3>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="font-semibold">Estrelas</p>
+                    <p>Alto crescimento + Alto market share</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Vacas Leiteiras</p>
+                    <p>Baixo crescimento + Alto market share</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Interrogações</p>
+                    <p>Alto crescimento + Baixo market share</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Abacaxis</p>
+                    <p>Baixo crescimento + Baixo market share</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-2">3.4 Análise PESTEL</h3>
+                <ul className="list-disc pl-6 text-sm">
+                  <li>Político: políticas governamentais, tributação</li>
+                  <li>Econômico: inflação, taxa de juros, PIB</li>
+                  <li>Social: demografia, cultura, estilo de vida</li>
+                  <li>Tecnológico: inovação, automação</li>
+                  <li>Ecológico: sustentabilidade, regulamentação ambiental</li>
+                  <li>Legal: legislação trabalhista, proteção ao consumidor</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* ABA 4 - Glossário (versão resumida) */}
+          <div className="space-y-4 mt-8">
+            <h2 className="text-3xl font-bold border-b-2 border-primary pb-2">4. Glossário de Marketing</h2>
+            
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="font-bold">Awareness</p>
+                <p className="text-muted-foreground">Consciência da marca</p>
+              </div>
+              <div>
+                <p className="font-bold">B2B / B2C</p>
+                <p className="text-muted-foreground">Business to Business / Business to Consumer</p>
+              </div>
+              <div>
+                <p className="font-bold">Benchmark</p>
+                <p className="text-muted-foreground">Referência de mercado</p>
+              </div>
+              <div>
+                <p className="font-bold">Brand Equity</p>
+                <p className="text-muted-foreground">Valor da marca</p>
+              </div>
+              <div>
+                <p className="font-bold">CAC</p>
+                <p className="text-muted-foreground">Customer Acquisition Cost</p>
+              </div>
+              <div>
+                <p className="font-bold">Churn Rate</p>
+                <p className="text-muted-foreground">Taxa de cancelamento</p>
+              </div>
+              <div>
+                <p className="font-bold">KPI</p>
+                <p className="text-muted-foreground">Key Performance Indicator</p>
+              </div>
+              <div>
+                <p className="font-bold">LTV</p>
+                <p className="text-muted-foreground">Lifetime Value</p>
+              </div>
+              <div>
+                <p className="font-bold">Market Share</p>
+                <p className="text-muted-foreground">Participação de mercado</p>
+              </div>
+              <div>
+                <p className="font-bold">NPS</p>
+                <p className="text-muted-foreground">Net Promoter Score (-100 a +100)</p>
+              </div>
+              <div>
+                <p className="font-bold">Posicionamento</p>
+                <p className="text-muted-foreground">Lugar na mente do consumidor</p>
+              </div>
+              <div>
+                <p className="font-bold">ROI</p>
+                <p className="text-muted-foreground">Return on Investment</p>
+              </div>
+              <div>
+                <p className="font-bold">Segmentação</p>
+                <p className="text-muted-foreground">Divisão do mercado em grupos</p>
+              </div>
+              <div>
+                <p className="font-bold">Target</p>
+                <p className="text-muted-foreground">Público-alvo</p>
+              </div>
+              <div>
+                <p className="font-bold">UVP</p>
+                <p className="text-muted-foreground">Unique Value Proposition</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 pt-4 border-t text-center text-sm text-muted-foreground">
+            <p>Manual do Simula+ | Simulador de Marketing no Mercado</p>
+            <p>© {new Date().getFullYear()} - Todos os direitos reservados</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,124 @@
+Implemente e configure na aba identidade da empresa o item (Produto e Público-Alvo - Configure o produto que sua empresa vai vender e o público que deseja alcançar) aparecendo a configuração de todos os produtos que precisam ser lançados, ou seja, coloque os 4 produtos em sequencia para serem configurados e depois o botão salvar rascunho e depois salvar em definitivo ao termino da configuração dos 4 produtos (depois de salvo em definitivo naquela rodada não pode mais alterar)
+
+(Com base no Guia de Mídias fornecido 
+GUIA DE MIDIAS
+*)
+Implemente no SimulaMarketing, no módulo de Promoção (P de Promoção), as seguintes determinações obrigatórias:
+1. Importação fiel do Guia de Mídias para o sistema
+O backend deve carregar na tabela midias todas as mídias, com seus nomes, formatos e valores unitários mínimos exatamente conforme o Guia de Mídias fornecido (PDF).
+A estrutura da tabela deve ser:
+Tabela: midias
+- id_midia (PK)
+- nome_midia
+- formato_midia
+- quantidade_sugerida
+- custo_unitario_minimo
+Exemplos extraídos diretamente do guia
+(os valores abaixo devem ser cadastrados exatamente como aparecem no arquivo):
+•	Mídia Impressa (p. 4)
+o	Página Inteira – 8.500,00
+o	Meia Página – 4.500,00
+o	Revista Página Inteira – 12.000,00
+•	Influenciadores (p. 7)
+o	Micro – 1.200,00
+o	Médio – 3.500,00
+o	Grande – 8.000,00
+•	E-mail Marketing (p. 8)
+o	Campanha – R$ 0,12 por envio
+•	Podcasts (p. 9)
+o	Inserção – 800
+•	OOH Exterior (p. 13)
+o	Outdoor – 1.700,00
+o	Front Light – 4.000,00
+o	Busdoor – 900
+o	Painéis Digitais – 1.400,00
+•	Rádio (p. 16)
+o	Spot 30s – 500
+o	Testemunhal – 1.200,00
+•	TV (p. 18)
+o	Comercial 15s – 18.000,00
+o	Comercial 30s – 30.000,00
+•	Cinema (p. 20)
+o	Comercial 30s – 12.000,00
+•	Carro de som (p. 21)
+o	350,00 por dia
+•	Panfletos e Flyers (p. 36)
+o	Impressão – 0,22
+o	Distribuição – 0,18
+•	Relações Públicas (p. 36)
+o	Assessoria – 3.800,00
+o	Comunicados – 280
+•	Promoções de Vendas (p. 36)
+o	Brindes – 8
+•	Product Placement (p. 37)
+o	Inserção Simples – 6.000,00
+o	Inserção Premium – 18.000,00
+(Todos os demais itens do guia devem ser cadastrados de forma idêntica.)
+2. Exibição obrigatória das mídias no frontend
+Quando o aluno acessar o P de Promoção, o sistema deve exibir:
+•	Nome da mídia
+•	Quantidade sugerida (informativa)
+•	Custo mínimo da mídia
+•	Imagem/ícone correspondente (opcional, se houver)
+•	Igual ao Guia de Mídias
+Exemplo de exibição no app:
+Outdoor Fixo – Valor mínimo: R$ 1.700,00
+Busdoor – Valor mínimo: R$ 900,00
+Influenciador Médio – Valor mínimo: R$ 3.500,00
+Comercial 30s (TV) – Valor mínimo: R$ 30.000,00
+E-mail Marketing – R$ 0,12 por envio
+3. Regra de validação obrigatória de valor mínimo
+Para toda mídia, o aluno não pode inserir nenhum valor promocional inferior ao custo unitário mínimo.
+Lógica obrigatória
+Ao receber valor_inserido no formulário:
+valor_inserido >= custo_unitario_minimo
+Se for menor → bloquear.
+Mensagem clara ao aluno
+O valor informado é inferior ao mínimo permitido para esta mídia.
+Valor mínimo: R$ X,XX — valor inserido: R$ Y,YY.
+Consulte o Guia de Mídias no sistema.
+4. Código para backend (exemplo em Python)
+def validar_valor_midia(id_midia, valor_inserido, conn):
+    query = """
+        SELECT nome_midia, custo_unitario_minimo 
+        FROM midias 
+        WHERE id_midia = %s
+    """
+    midia, minimo = conn.fetchrow(query, id_midia)
+
+    if valor_inserido < minimo:
+        raise ValueError(
+            f"O valor inserido para '{midia}' é inferior ao mínimo permitido (R$ {minimo:.2f})."
+        )
+5. Trigger de segurança no PostgreSQL
+CREATE OR REPLACE FUNCTION trg_validar_midia()
+RETURNS trigger AS $$
+DECLARE
+    minimo NUMERIC;
+BEGIN
+    SELECT custo_unitario_minimo 
+    INTO minimo 
+    FROM midias 
+    WHERE id_midia = NEW.id_midia;
+
+    IF NEW.valor_inserido < minimo THEN
+        RAISE EXCEPTION 
+        'Valor inválido: o valor para esta mídia (R$ %) não pode ser inferior ao mínimo (R$ %).',
+        NEW.valor_inserido, minimo;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER validar_midia_before_insert
+BEFORE INSERT OR UPDATE ON decisoes_promocao
+FOR EACH ROW EXECUTE FUNCTION trg_validar_midia();
+6. Regra adicional obrigatória
+Se o aluno tentar "fatiar" o valor de uma mídia (ex.: Outdoor custa R$ 2.000 e ele tenta lançar “500”), o sistema não deve aceitar, porque:
+Cada linha do Guia representa um formato fechado
+→ Não é permitido subdividir custo nem inserir valores parciais.
+7. Vinculação pedagógica
+O sistema deve reforçar ao aluno que:
+O P de Promoção é baseado em custos reais. Cada mídia possui um preço mínimo definido no mercado e o simulador segue fielmente o Guia de Mídias.
+

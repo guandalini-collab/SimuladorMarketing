@@ -1,0 +1,98 @@
+Aqui vai um **prompt direto, explícito e impossível do Replit ignorar**, garantindo que o sistema **sempre mostre às equipes qual rodada está sendo jogada**, toda vez que uma rodada termina e outra começa.
+
+Coloque isso **junto com os outros prompts do simulador** ou envie isoladamente no Replit:
+
+---
+
+# 🚀 **INSTRUÇÃO AO REPLIT — EXIBIÇÃO OBRIGATÓRIA DA RODADA ATUAL**
+
+Quero que você implemente a seguinte funcionalidade no simulador empresarial:
+
+## **1. Exibição obrigatória da rodada atual**
+
+Sempre que uma rodada terminar e uma nova rodada iniciar, o sistema deve **mostrar de forma clara, visual e automática** às equipes **qual é a rodada atual**.
+
+A exibição deve ser realizada nos seguintes locais:
+
+* **Tela inicial da equipe**
+* **Dashboard da equipe**
+* **Tela de envio das decisões**
+* **Tela das ferramentas estratégicas**
+* **Qualquer tela onde decisões são feitas**
+
+A rodada deve aparecer no formato:
+
+### **“Rodada X em andamento”**
+
+Onde **X** é o número real da rodada atual.
+
+## **2. Comportamento obrigatório ao trocar de rodada**
+
+Assim que a rodada anterior for encerrada:
+
+1. O sistema deve salvar `rodada_atual` no PostgreSQL.
+2. O backend deve atualizar o estado global da rodada.
+3. O frontend deve exibir automaticamente uma mensagem visível para a equipe:
+
+### **“A rodada X começou. Envie suas decisões.”**
+
+4. O sistema não deve permitir ações de rodada anterior.
+5. Todos os módulos devem atualizar para refletir a rodada ativa.
+
+## **3. Requisito adicional**
+
+Crie uma função padrão:
+
+```
+exibirRodadaAtual(equipe_id)
+```
+
+Essa função deve:
+
+* Consultar no banco qual é a rodada ativa.
+* Retornar um objeto contendo `rodada_numero`.
+* Exibir o valor no frontend imediatamente.
+
+## **4. Persistência**
+
+No PostgreSQL, mantenha uma tabela:
+
+```
+rodadas (id, numero_rodada, status, data_inicio, data_fim)
+```
+
+E um campo nas equipes:
+
+```
+equipes.rodada_atual
+```
+
+## **5. Elementos visuais obrigatórios**
+
+A rodada deve sempre aparecer em destaque visual no topo das telas:
+
+* Cor chamativa (ex.: azul, laranja ou destaque do tema)
+* Fonte maior
+* Componente fixo, não ocultável
+
+Exemplo no front:
+
+```
+<div class="rodada-atual">
+   Rodada 3 em andamento
+</div>
+```
+
+## **6. Se o Replit não entender**
+
+Se alguma regra sobre o funcionamento das rodadas não estiver clara, **pergunte antes de gerar o código**, para evitar erros.
+
+---
+
+Se quiser, posso criar também:
+
+✅ o código completo da função `exibirRodadaAtual()`
+✅ o componente visual da rodada (HTML/CSS/React/Vue)
+✅ o backend (Node/Python) para gerenciar rodadas
+✅ as queries SQL no PostgreSQL
+Basta pedir.

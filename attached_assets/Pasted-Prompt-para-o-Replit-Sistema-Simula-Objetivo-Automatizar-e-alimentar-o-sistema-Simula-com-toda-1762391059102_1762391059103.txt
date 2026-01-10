@@ -1,0 +1,94 @@
+Prompt para o Replit – Sistema Simula+
+Objetivo: Automatizar e alimentar o sistema Simula+ com todas as informações necessárias ao funcionamento de um simulador de marketing baseado em fundamentos teóricos clássicos e contemporâneos de Philip Kotler e Gary Armstrong.
+O sistema deve permitir que os dados sejam editáveis pelo professor e parcialmente alimentados por dados reais do mercado.
+
+Contexto do Sistema
+Crie ou atualize o sistema Simula+, mantendo o que já estiver criado, apenas alimentando com dados e automatizando processos.
+O Simula+ é um simulador de marketing voltado para o ensino e a prática de tomada de decisão empresarial, destinado a grupos de alunos e supervisionado por um professor.
+
+Estrutura de Jogo e Grupos
+•	Cada grupo poderá ter até 5 alunos.
+•	O professor define o número de rodadas (máximo de 10 rodadas).
+•	Cada rodada simula um período de decisão estratégica (ex.: trimestre ou semestre).
+•	Cada equipe deve criar:
+o	Nome da empresa
+o	Slogan
+o	Logomarca (upload ou desenho)
+Funcionalidades Essenciais
+Implemente e automatize os seguintes módulos de decisão:
+1. Análise de Mercado
+•	Dados gerais de mercado (tamanho, crescimento, tendências).
+•	Segmentação de mercado (demográfica, geográfica, psicográfica e comportamental).
+•	Perfil dos consumidores e comportamento de compra.
+•	Fatores externos que afetam o mercado (políticos, econômicos, sociais, tecnológicos, ecológicos e legais — modelo PESTEL).
+2. Análise SWOT (FOFA)
+•	Forças e fraquezas internas (recursos, equipe, tecnologia, imagem).
+•	Oportunidades e ameaças externas (mudanças de mercado, inovação, regulação).
+•	Geração automática de relatórios SWOT com base em dados inseridos pelo professor.
+3. Análise da Concorrência
+•	Identificação de concorrentes diretos e indiretos.
+•	Avaliação comparativa de preço, qualidade, distribuição e promoção.
+•	Gráficos de posicionamento competitivo.
+4. Modelo das 5 Forças de Porter
+•	Rivalidade entre concorrentes.
+•	Ameaça de novos entrantes.
+•	Poder de barganha dos fornecedores.
+•	Poder de barganha dos clientes.
+•	Ameaça de produtos substitutos.
+5. Matriz BCG
+•	Inserção dos produtos (ou linhas) nas categorias: Estrelas, Vacas Leiteiras, Interrogações e Abacaxis.
+•	Cálculo automático da participação de mercado e crescimento.
+6. Decisões Estratégicas do Mix de Marketing (4Ps)
+•	Produto: portfólio, ciclo de vida, diferenciação.
+•	Preço: estratégias de precificação (penetração, skimming, valor percebido).
+•	Praça (distribuição): canais de vendas, cobertura, logística.
+•	Promoção: comunicação integrada, orçamento de marketing, campanhas e mídias.
+7. Ambiente Dinâmico
+•	Simulação de eventos externos (inflação, taxa de câmbio, mudanças tecnológicas, novos concorrentes, crises).
+•	Esses dados podem ser inseridos manualmente pelo professor ou integrados a APIs de dados reais de mercado(como IBGE, Banco Central, etc.).
+8. Resultados e Indicadores
+•	Painel de indicadores automáticos por rodada:
+o	Receita, Lucro, Margem, Market Share, ROI de Marketing.
+o	Indicadores de percepção de marca, satisfação e fidelização do cliente.
+•	Relatórios automáticos em gráficos e tabelas.
+•	Ranqueamento dos grupos
+•	Dados interativos
+•	Feedback com inteligência artificial após cada rodada sobre o que acertaram e possíveis erros, sem informar o que devem fazer efetivamente, indicando literatura pra correção de erros.
+
+Integrações e Banco de Dados
+•	Banco de dados deve armazenar:
+o	Informações de equipes, decisões, rodadas, relatórios e desempenho.
+o	Histórico completo das rodadas e comparativos entre empresas.
+•	Dados podem ser atualizados pelo professor via painel administrativo.
+
+Fundamentos Teóricos de Referência (Kotler & Armstrong)
+Basear a modelagem dos módulos e cálculos nos seguintes conceitos clássicos:
+1.	Mix de Marketing (4Ps) – Kotler & Armstrong, Princípios de Marketing (2022)
+2.	Análise de Mercado e Segmentação – Capítulos sobre comportamento do consumidor e análise ambiental.
+3.	Planejamento Estratégico de Marketing – Definição de metas e formulação de estratégias.
+4.	SWOT e Matriz BCG – Diagnóstico estratégico interno e externo.
+5.	Modelo das 5 Forças de Porter – Avaliação estrutural da indústria.
+6.	PESTEL – Macroambiente e fatores externos.
+7.	Plano de marketing
+
+
+Automação Esperada
+O Replit deve:
+1.	Gerar automaticamente dashboards com os indicadores de desempenho.
+2.	Atualizar automaticamente os cálculos (participação de mercado, lucro, ROI).
+3.	Permitir entrada manual e automática de dados.
+4.	Gerar feedback textual sobre decisões de marketing (ex.: “Sua política de preços aumentou market share, mas reduziu margem de lucro.”).
+5.	Manter integridade dos dados das rodadas anteriores.
+
+Parâmetros do Prompt no Replit
+•	Linguagem sugerida: Python com Flask ou Node.js.
+•	Banco de dados: Supabase ou SQLite/PostgreSQL.
+•	Interface: React ou V0 by Vercel.
+•	Painel de administração: acesso restrito ao professor.
+•	Front-end amigável e gamificado para os alunos.
+
+Instrução Final ao Replit
+
+Crie ou atualize o sistema Simula+, automatizando todos os módulos descritos acima, garantindo compatibilidade com dados existentes e preservando o que já foi desenvolvido.
+Adicione as variáveis, tabelas e automações necessárias para que o simulador funcione de forma completa e interativa, seguindo a literatura de Kotler e Armstrong e as boas práticas de gestão de marketing.
+

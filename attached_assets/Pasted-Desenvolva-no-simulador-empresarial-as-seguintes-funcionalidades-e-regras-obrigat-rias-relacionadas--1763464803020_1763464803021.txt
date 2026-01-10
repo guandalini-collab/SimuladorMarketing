@@ -1,0 +1,58 @@
+Desenvolva no simulador empresarial as seguintes funcionalidades e regras obrigatórias relacionadas às Ferramentas Estratégicas. A implementação deve funcionar de forma automática e integrada ao backend em PostgreSQL, garantindo persistência dos dados mesmo após reinicialização do servidor.
+1. Ferramentas estratégicas obrigatórias
+Crie uma aba chamada ferramentas_estrategicas contendo quatro módulos:
+SWOT
+Campos obrigatórios: forças, fraquezas, oportunidades, ameaças.
+Modelo das 5 Forças de Porter
+Campos obrigatórios: concorrentes, novos_entrantes, substitutos, fornecedores, clientes.
+Matriz BCG
+Campo obrigatório: justificativa do posicionamento (texto).
+Análise PESTEL
+Campos obrigatórios: politico, economico, social, tecnologico, ecologico, legal.
+Cada campo deve permitir múltiplas entradas.
+2. Regra de preenchimento mínimo
+Implemente uma validação automática:
+Cada tópico/subtópico das ferramentas deve ter pelo menos 1 informação preenchida.
+O sistema deve impedir o envio da rodada caso haja campos obrigatórios vazios.
+Os campos devem ser salvos no PostgreSQL em tabelas separadas ou em tabelas com chaves de referência à equipe e à rodada.
+3. Complementação opcional
+Após o preenchimento mínimo, a equipe poderá adicionar quantas informações desejar.
+Esses dados extras também devem influenciar o desempenho (positivamente).
+4. Impacto direto na lógica do simulador
+Implemente lógica onde:
+SWOT altera risco, estabilidade e nível de competitividade.
+Porter ajusta pressão competitiva e limitações em preço, expansão e estratégia.
+BCG influencia decisões de portfólio e investimento.
+PESTEL altera fatores externos que afetam variáveis internas da rodada.
+Crie funções ou classes que vinculem esses itens às decisões tomadas pelas equipes.
+5. Penalização automática
+Desenvolva uma penalização caso algum tópico obrigatório esteja vazio:
+Penalidade recomendada:
+–10% no desempenho total da rodada OU
+redução automática da eficiência das decisões (ex.: +5% de custos, –5% de receita).
+A penalização deve ser calculada automaticamente pelo backend e registrada no banco de dados.
+6. Validação obrigatória antes de enviar rodada
+Crie uma função validarFerramentasEstrategicas(equipe_id, rodada_id) que:
+Consulta no banco se todos os tópicos têm pelo menos 1 item.
+Retorna:
+valido = true se tudo estiver preenchido.
+valido = false com lista dos campos vazios se houver erros.
+Se valido = false, impedir o envio da rodada e mostrar a mensagem de aviso.
+7. Mensagem automática ao usuário
+Adicionar no frontend:
+“As ferramentas estratégicas (SWOT, Porter, BCG e PESTEL) são obrigatórias. Cada tópico deve ter pelo menos 1 informação. A falta de preenchimento gera penalização automática.”
+8. Banco de Dados (PostgreSQL)
+Crie tabelas para armazenar os dados, por exemplo:
+swot (id, equipe_id, rodada_id, forcas[], fraquezas[], oportunidades[], ameaças[])
+porter (id, equipe_id, rodada_id, concorrentes[], novos_entrantes[], substitutos[], fornecedores[], clientes[])
+bcg (id, equipe_id, rodada_id, justificativa TEXT)
+pestel (id, equipe_id, rodada_id, politico[], economico[], social[], tecnologico[], ecologico[], legal[])
+A estrutura pode ser ajustada desde que:
+suporte múltiplos valores
+esteja vinculada ao equipe_id e rodada_id
+9. Mensagem interna para a IA do Replit
+O simulador deve reconhecer que as ferramentas estratégicas são parte essencial da tomada de decisão.
+Ele deve validar, penalizar e impactar as decisões automaticamente, sem exigir intervenção manual.
+10. Antes de finalizar
+Caso você (Replit) não compreenda alguma regra, peça esclarecimentos antes de gerar o código.
+Se alguma etapa depender de lógica adicional, pergunte automaticamente.
