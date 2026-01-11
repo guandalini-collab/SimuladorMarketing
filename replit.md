@@ -45,6 +45,13 @@ The application utilizes Shadcn/ui and Tailwind CSS for a modern, responsive int
 - **Intelligent Student Management System**: Professor-scoped student administration with data integrity safeguards, including automatic filtering of students by professor's classes and a robust manual duplicate cleanup method.
 - **Manual Round Management System**: Professors can add new rounds, remove the last locked round with multi-layer validation (no active/completed rounds removal, dependency checking for campaigns, marketing mixes, results, and strategic analyses), and configure the total number of rounds per class (1-20, minimum = current round). Auto-generates strategic analyses for rounds ≤3 when adding.
 - **Round Checklist System (Roteiro da Rodada)**: Visual progress tracker displayed on the student Dashboard showing completion status for all round steps (SWOT, Porter, BCG, PESTEL, Marketing Mix, Submission, Results). Includes progress bar with weighted percentages and dynamic "next action" button guiding students to the appropriate page. Handles edge cases for students without teams.
+- **Advanced Simulation Engine V2 (Feature Flag: SIM_ENGINE_V2)**: Optional enhanced market simulation with:
+  - **Price Elasticity by Sector**: Category-specific demand curves (e.g., electronics=1.8, health=0.6, education=0.5)
+  - **Diminishing Promotional Returns**: Saturation model using logarithmic function with carryover effects (20% brand memory)
+  - **Competitive Reaction System**: Virtual competitor that dynamically responds to team pricing and promotional strategies
+  - **Enhanced Event Impacts**: Market events apply multipliers to revenue, costs, and demand with detailed explanations
+  - **Full Explainability**: Results include breakdown components (priceEffect, promoEffect, placeEffect, productEffect, competitorEffect, eventEffect) with PT-BR explanations
+  - **Backward Compatible**: Set SIM_ENGINE_V2=false (default) to use original calculation engine
 
 ## External Dependencies
 - **PostgreSQL**: Primary database.

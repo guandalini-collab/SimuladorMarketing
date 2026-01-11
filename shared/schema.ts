@@ -155,6 +155,11 @@ export const results = pgTable("results", {
   alignmentIssues: text("alignment_issues").array(),
   financialBreakdown: jsonb("financial_breakdown"),
   
+  simulationBreakdown: jsonb("simulation_breakdown"),
+  competitorResponse: jsonb("competitor_response"),
+  eventImpacts: jsonb("event_impacts"),
+  engineVersion: text("engine_version"),
+  
   // DRE Completa - Demonstrativo do Resultado do Exercício
   impostos: real("impostos").notNull().default(0),
   devolucoes: real("devolucoes").notNull().default(0),

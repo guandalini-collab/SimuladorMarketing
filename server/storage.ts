@@ -124,6 +124,7 @@ export interface IStorage {
   getResult(teamId: string, roundId: string): Promise<Result | undefined>;
   getResultsByRound(roundId: string): Promise<Result[]>;
   getResultsByClassAndRound(classId: string, roundId: string): Promise<TeamResultData[]>;
+  getPreviousRoundResult(teamId: string, currentRoundId: string): Promise<Result | undefined>;
   createResult(result: InsertResult): Promise<Result>;
   updateResult(id: string, data: Partial<Result>): Promise<Result | undefined>;
   getAllResults(): Promise<Result[]>;
@@ -1093,6 +1094,23 @@ export class MemStorage implements IStorage {
     });
   }
 
+  async getPreviousRoundResult(teamId: string, currentRoundId: string): Promise<Result | undefined> {
+    const currentRound = await this.getRound(currentRoundId);
+    if (!currentRound || currentRound.roundNumber <= 1) {
+      return undefined;
+    }
+
+    const previousRoundNumber = currentRound.roundNumber - 1;
+    const rounds = await this.getRoundsByClass(currentRound.classId);
+    const previousRound = rounds.find(r => r.roundNumber === previousRoundNumber);
+    
+    if (!previousRound) {
+      return undefined;
+    }
+
+    return this.getResult(teamId, previousRound.id);
+  }
+
   async createResult(insertResult: InsertResult): Promise<Result> {
     const id = randomUUID();
     const result: Result = {
@@ -1124,6 +1142,10 @@ export class MemStorage implements IStorage {
       alignmentScore: insertResult.alignmentScore ?? null,
       alignmentIssues: insertResult.alignmentIssues ?? [],
       financialBreakdown: insertResult.financialBreakdown ?? null,
+      simulationBreakdown: insertResult.simulationBreakdown ?? null,
+      competitorResponse: insertResult.competitorResponse ?? null,
+      eventImpacts: insertResult.eventImpacts ?? null,
+      engineVersion: insertResult.engineVersion ?? null,
       impostos: insertResult.impostos ?? 0,
       devolucoes: insertResult.devolucoes ?? 0,
       descontos: insertResult.descontos ?? 0,

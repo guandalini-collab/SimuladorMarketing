@@ -18,6 +18,8 @@ const envSchema = z.object({
   REPLIT_CONNECTORS_HOSTNAME: z.string().optional(),
   REPL_IDENTITY: z.string().optional(),
   WEB_REPL_RENEWAL: z.string().optional(),
+
+  SIM_ENGINE_V2: z.enum(["true", "false"]).optional().default("false"),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

@@ -1,0 +1,69 @@
+Quero aumentar o realismo do simulador SEM quebrar compatibilidade.
+
+OBJETIVO
+Implementar no cálculo de resultados por rodada:
+1) Elasticidade-preço por categoria/produto
+2) Retorno marginal decrescente (saturação) em promoção
+3) Reação competitiva (um “concorrente”/benchmark responde às decisões)
+4) Eventos de mercado com impacto e explicação
+
+REGRAS
+- Não inventar tabelas se já existir estrutura.
+- Se precisar persistir parâmetros, crie o mínimo (com migration/drizzle se já existir).
+- Manter o cálculo atual como fallback (feature flag).
+- Tudo deve produzir “explainability” (componentes do resultado).
+
+IMPLEMENTAÇÃO (backend)
+A) Criar um módulo de simulação isolado, por exemplo:
+server/simulation/marketEngine.ts
+
+Ele deve expor:
+- computeRoundOutcome(input) -> { kpis, breakdown, competitorResponse, eventImpacts }
+Onde:
+kpis: receita, lucro, margem, marketShare, nps etc (os que seu sistema já usa)
+breakdown: lista de componentes do resultado, ex:
+  - priceEffect, promoEffect, placeEffect, productEffect
+  - competitorEffect
+  - eventEffect
+cada item com: label, deltaRevenue, deltaProfit, deltaShare, explanation (PT-BR)
+
+B) Elasticidade:
+- Definir por categoria/produto (se não houver categoria, use um default).
+- Demanda base * (precoRelativo ^ (-elasticidade)) com limites (clamp).
+- Preço relativo = preçoEquipe / preçoReferencia (referência pode ser média das equipes ou preço do concorrente).
+
+C) Saturação de promoção:
+- Efeito de promoção = a * log(1 + investimento/b)  (ou sqrt) para retorno decrescente.
+- Incluir “carryover” pequeno (ex: 20%) para refletir brand effects (se houver histórico por equipe, use; senão, calcule só na rodada).
+
+D) Reação competitiva:
+- Criar “competitorResponse” por rodada:
+  - se equipe baixar preço muito -> concorrente reduz preço um pouco
+  - se equipe aumentar promo muito -> concorrente aumenta promo moderadamente
+- O concorrente serve como benchmark para “preço referência” e “share”.
+- Persistir resposta do concorrente por rodada em resultados (se houver campo JSON; caso não, adicione campo opcional).
+
+E) Eventos de mercado:
+- Ver se já existe tabela de eventos. Se existir, use.
+- Se não existir, crie estrutura mínima:
+  - id, roundNumber, title, description, type, intensity, affectedKpiWeights(JSON)
+- Aplicar eventos como multiplicadores em componentes (ex: queda de demanda, aumento de custo, queda NPS).
+- Sempre retornar eventImpacts com explanation.
+
+F) Feature flag:
+- Variável env: SIM_ENGINE_V2=true/false (default false)
+- Se false: roda engine antiga.
+- Se true: roda marketEngine novo.
+
+G) Integração:
+- Encontre onde o sistema “fecha rodada”/“processa resultados”.
+- Encapsule a chamada do cálculo para usar o engine novo quando SIM_ENGINE_V2=true.
+- Salve junto aos resultados:
+  - breakdown (JSON)
+  - competitorResponse (JSON)
+  - eventImpacts (JSON)
+
+Ao final:
+- Liste arquivos criados/alterados
+- Mostre exemplo real de breakdown salvo em 1 resultado
+- Confirme que o sistema antigo ainda funciona com SIM_ENGINE_V2=false
