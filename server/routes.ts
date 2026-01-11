@@ -17,6 +17,7 @@ import { getAlignmentScoreLevel } from "@shared/alignmentUtils";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { getEnv, getAuthorizedProfessorEmails } from "./config";
 
 const MemoryStore = createMemoryStore(session);
 
@@ -33,10 +34,10 @@ function generateRecoveryCode(): string {
   return `${generateBlock()}-${generateBlock()}-${generateBlock()}`;
 }
 
-const AUTHORIZED_PROFESSOR_EMAILS = [
-  'guandalini@gmail.com',
-  'alexandre.bossa@iffarroupilha.edu.br'
-];
+const appEnv = getEnv();
+const AUTHORIZED_PROFESSOR_EMAILS = getAuthorizedProfessorEmails(appEnv).length > 0 
+  ? getAuthorizedProfessorEmails(appEnv) 
+  : ['guandalini@gmail.com', 'alexandre.bossa@iffarroupilha.edu.br'];
 
 declare module "express-session" {
   interface SessionData {
