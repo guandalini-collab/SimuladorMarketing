@@ -1,4 +1,5 @@
 import { KPICard } from "@/components/kpi-card";
+import { RoundChecklistCard } from "@/components/round-checklist-card";
 import { DollarSign, TrendingUp, Users, Target, Plus, UserPlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -415,6 +416,8 @@ export default function Dashboard() {
           </p>
         </div>
       </div>
+
+      <RoundChecklistCard />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <KPICard

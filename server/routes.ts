@@ -1971,6 +1971,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(team);
   });
 
+  app.get("/api/team/current-round-status", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "equipe") {
+      return res.status(403).json({ error: "Apenas alunos podem acessar este recurso" });
+    }
+    
+    const team = await storage.getTeamByUser(req.session.userId);
+    if (!team) {
+      return res.json({
+        teamId: null,
+        roundNumber: null,
+        hasSwot: false,
+        hasPorter: false,
+        hasBcg: false,
+        hasPestel: false,
+        hasMarketingMixDraft: false,
+        isSubmitted: false,
+        hasResults: false,
+        progress: 0,
+        nextAction: null,
+        noTeam: true
+      });
+    }
+
+    const currentRound = await storage.getCurrentRound(team.classId);
+    if (!currentRound) {
+      return res.status(404).json({ error: "Nenhuma rodada ativa encontrada" });
+    }
+
+    const [swotList, porterList, bcgList, pestelList, mixList, result] = await Promise.all([
+      storage.getSwotAnalysesByTeamAndRound(team.id, currentRound.id),
+      storage.getPorterAnalysesByTeamAndRound(team.id, currentRound.id),
+      storage.getBcgAnalyses(team.id, currentRound.id),
+      storage.getPestelAnalysesByTeamAndRound(team.id, currentRound.id),
+      storage.getMarketingMixesByTeamAndRound(team.id, currentRound.id),
+      storage.getResult(team.id, currentRound.id)
+    ]);
+
+    const hasSwot = swotList.length > 0;
+    const hasPorter = porterList.length > 0;
+    const hasBcg = bcgList.length > 0;
+    const hasPestel = pestelList.length > 0;
+    const hasMarketingMixDraft = mixList.length > 0;
+    const isSubmitted = mixList.some(m => m.submittedAt !== null);
+    const hasResults = result !== undefined;
+
+    const weights = { swot: 15, porter: 15, bcg: 15, pestel: 15, mix: 20, submit: 10, results: 10 };
+    let progress = 0;
+    if (hasSwot) progress += weights.swot;
+    if (hasPorter) progress += weights.porter;
+    if (hasBcg) progress += weights.bcg;
+    if (hasPestel) progress += weights.pestel;
+    if (hasMarketingMixDraft) progress += weights.mix;
+    if (isSubmitted) progress += weights.submit;
+    if (hasResults) progress += weights.results;
+
+    type NextActionKey = "swot" | "porter" | "bcg" | "pestel" | "mix" | "submit" | "results";
+    interface NextAction {
+      key: NextActionKey;
+      title: string;
+      description: string;
+      href: string;
+    }
+
+    let nextAction: NextAction;
+    if (!hasSwot) {
+      nextAction = { key: "swot", title: "Análise SWOT", description: "Identifique forças, fraquezas, oportunidades e ameaças.", href: "/analises" };
+    } else if (!hasPorter) {
+      nextAction = { key: "porter", title: "Forças de Porter", description: "Analise as 5 forças competitivas do mercado.", href: "/analises" };
+    } else if (!hasBcg) {
+      nextAction = { key: "bcg", title: "Matriz BCG", description: "Classifique seus produtos no portfólio.", href: "/analises" };
+    } else if (!hasPestel) {
+      nextAction = { key: "pestel", title: "Análise PESTEL", description: "Avalie fatores externos que impactam o negócio.", href: "/analises" };
+    } else if (!hasMarketingMixDraft) {
+      nextAction = { key: "mix", title: "Decisões 4Ps", description: "Defina produto, preço, praça e promoção.", href: "/decisoes" };
+    } else if (!isSubmitted) {
+      nextAction = { key: "submit", title: "Submeter Rodada", description: "Envie suas decisões para processamento.", href: "/decisoes" };
+    } else {
+      nextAction = { key: "results", title: "Ver Resultados", description: "Confira o desempenho da sua equipe.", href: "/" };
+    }
+
+    res.json({
+      teamId: team.id,
+      roundNumber: currentRound.roundNumber,
+      hasSwot,
+      hasPorter,
+      hasBcg,
+      hasPestel,
+      hasMarketingMixDraft,
+      isSubmitted,
+      hasResults,
+      progress,
+      nextAction
+    });
+  });
+
   app.patch("/api/team/identity", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });

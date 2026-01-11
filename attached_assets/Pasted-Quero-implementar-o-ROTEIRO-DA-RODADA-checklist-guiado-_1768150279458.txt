@@ -1,0 +1,109 @@
+Quero implementar o “ROTEIRO DA RODADA” (checklist guiado) para o aluno.
+
+Requisitos:
+- Não quero que o aluno fique perdido. Preciso de um card no Dashboard do aluno com:
+  1) Etapas claras da rodada (Diagnósticos -> Decisões 4Ps -> Submissão -> Resultados)
+  2) Itens marcados automaticamente quando o aluno completar (com base em dados reais)
+  3) Barra de progresso
+  4) “Próxima ação recomendada” + botão que leva para a tela correta
+  5) Texto curto e objetivo (PT-BR), com tom instrutivo
+- Não quebrar nada existente.
+- Usar TanStack Query no front.
+- Usar sessão para identificar o usuário logado.
+
+TAREFA A — BACKEND: criar endpoint de status real da rodada
+1) Em server/routes.ts, crie um endpoint autenticado:
+   GET /api/team/current-round-status
+
+2) O endpoint deve retornar JSON com o formato:
+
+{
+  "teamId": number,
+  "roundNumber": number,
+  "hasSwot": boolean,
+  "hasPorter": boolean,
+  "hasBcg": boolean,
+  "hasPestel": boolean,
+  "hasMarketingMixDraft": boolean,
+  "isSubmitted": boolean,
+  "hasResults": boolean,
+  "progress": number,            // 0..100
+  "nextAction": {
+    "key": "swot"|"porter"|"bcg"|"pestel"|"mix"|"submit"|"results",
+    "title": string,
+    "description": string,
+    "href": string
+  }
+}
+
+3) Como calcular:
+- Descobrir o usuário atual pela sessão (mesma lógica dos endpoints existentes).
+- Descobrir o teamId do usuário (use a estrutura já existente no projeto; se tiver "storage.getTeamByUserId" ou semelhante, use).
+- Descobrir a rodada ativa:
+   - Se o projeto já tiver "currentRound" em turma/jogo, use.
+   - Se não houver, use a última rodada existente para a equipe ou o maior roundNumber encontrado em decisões/resultados.
+- Detectar presença das análises (SWOT/Porter/BCG/PESTEL) para aquela equipe e rodada:
+   - Use métodos existentes do storage (ex.: getSwotByTeamAndRound, etc).
+   - Se não existirem métodos, implemente de forma mínima consultando o DB via qualquer helper já usado (ex.: drizzle/SQL).
+- Detectar se existe rascunho do mix (marketing mix draft) e se foi submetido:
+   - Se houver entidade/tabela de decisões 4Ps por rodada, use.
+   - "isSubmitted" deve ser true quando existir marca de submissão/lock/final para aquela rodada.
+- "hasResults" true quando existir registro de resultados daquela equipe na rodada.
+- progress:
+   - checklist completo = 100
+   - pesos sugeridos: SWOT 15, Porter 15, BCG 15, PESTEL 15, Mix 20, Submit 10, Results 10
+   - Some apenas os concluídos.
+- nextAction:
+   - se faltou SWOT -> key swot e href para a rota onde se faz SWOT
+   - depois Porter, depois BCG, depois PESTEL
+   - depois Mix (4Ps)
+   - depois Submit
+   - depois Results
+   - Se tudo concluído, nextAction = results (ver relatório/resultado)
+IMPORTANTE: os href devem apontar para rotas que já existem no projeto. Você deve inspecionar as rotas do front (wouter) para descobrir caminhos corretos. Não invente rotas.
+
+TAREFA B — FRONTEND: criar Card "Roteiro da Rodada"
+1) Crie um componente novo:
+client/src/components/round-checklist-card.tsx
+
+2) O componente deve:
+- buscar GET /api/team/current-round-status via TanStack Query
+- mostrar:
+  - título: "Roteiro da Rodada"
+  - subtítulo: "Siga estas etapas para concluir a rodada com segurança."
+  - progresso (progress %)
+  - lista de itens com check:
+     - "Diagnóstico SWOT"
+     - "Forças competitivas (Porter)"
+     - "Portfólio (BCG)"
+     - "Ambiente externo (PESTEL)"
+     - "Decisões (4Ps)"
+     - "Submeter rodada"
+     - "Ver resultados"
+  - bloco “Próxima ação” com:
+     - title/description do nextAction
+     - botão: "Ir agora" levando para nextAction.href
+- UX:
+  - se estiver carregando: skeleton simples ("Carregando roteiro...")
+  - se der erro: mensagem curta e botão "Tentar novamente"
+  - se não tiver teamId: orientar "Você precisa estar em uma equipe para jogar."
+
+3) Estilo:
+- usar shadcn/ui (Card, Button, Progress se existir) ou equivalente já usado.
+- Não adicionar dependências novas.
+
+TAREFA C — Integrar no Dashboard do aluno
+1) Abra client/src/pages/dashboard.tsx (ou página equivalente do aluno) e insira o <RoundChecklistCard /> no topo do conteúdo do dashboard.
+2) Garanta que não quebre o layout.
+
+TAREFA D — Validar
+1) Rode o projeto e confirme:
+- aluno vê o card
+- os checks mudam quando salva análises/decisões
+- o botão “Ir agora” manda para a página certa
+2) Se houver alguma rota divergente, ajuste os href para as rotas reais do projeto.
+
+Ao final:
+- liste os arquivos criados/alterados
+- mostre o JSON de exemplo retornado pelo endpoint
+- diga quais rotas foram usadas em href
