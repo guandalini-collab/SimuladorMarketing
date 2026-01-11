@@ -35,9 +35,12 @@ function generateRecoveryCode(): string {
 }
 
 const appEnv = getEnv();
-const AUTHORIZED_PROFESSOR_EMAILS = getAuthorizedProfessorEmails(appEnv).length > 0 
-  ? getAuthorizedProfessorEmails(appEnv) 
-  : ['guandalini@gmail.com', 'alexandre.bossa@iffarroupilha.edu.br'];
+const defaultProfessorEmails = ['guandalini@gmail.com', 'alexandre.bossa@iffarroupilha.edu.br'];
+const configuredEmails = getAuthorizedProfessorEmails(appEnv);
+const authorizedProfessorEmails = new Set<string>(
+  (configuredEmails.length > 0 ? configuredEmails : defaultProfessorEmails)
+    .map(e => e.trim().toLowerCase())
+);
 
 declare module "express-session" {
   interface SessionData {
@@ -46,13 +49,14 @@ declare module "express-session" {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  const isProduction = process.env.NODE_ENV === 'production';
+  const isProduction = appEnv.NODE_ENV === 'production';
   
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || "marketing-sim-secret-key-change-in-production",
-      resave: true,
-      saveUninitialized: true,
+      name: "simulamarketing.sid",
+      secret: appEnv.SESSION_SECRET || "marketing-sim-secret-key-change-in-production",
+      resave: false,
+      saveUninitialized: false,
       store: new MemoryStore({
         checkPeriod: 86400000,
       }),
@@ -107,22 +111,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/register", async (req, res) => {
     try {
       const data = insertUserSchema.parse(req.body);
+      const emailNormalized = data.email.trim().toLowerCase();
       
       if (data.role === "professor") {
         return res.status(403).json({ error: "Apenas alunos podem se cadastrar. Professores devem entrar em contato com o administrador." });
       }
       
-      const existing = await storage.getUserByEmail(data.email);
+      const existing = await storage.getUserByEmail(emailNormalized);
       if (existing) {
         return res.status(400).json({ error: "Email já cadastrado" });
       }
 
       // Verifica se é email institucional (case-insensitive)
-      const emailLowerCase = data.email.toLowerCase();
       const isInstitutionalEmail = 
-        emailLowerCase.endsWith("@iffarroupilha.edu.br") || 
-        emailLowerCase.endsWith("@aluno.iffar.edu.br") ||
-        emailLowerCase.endsWith("@aluno.iffarroupilha.edu.br");
+        emailNormalized.endsWith("@iffarroupilha.edu.br") || 
+        emailNormalized.endsWith("@aluno.iffar.edu.br") ||
+        emailNormalized.endsWith("@aluno.iffarroupilha.edu.br");
       const status = isInstitutionalEmail ? "approved" : "pending";
 
       const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -133,6 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const user = await storage.createUser({ 
         ...data, 
+        email: emailNormalized,
         password: hashedPassword, 
         role: "equipe",
         status,
@@ -167,13 +172,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email, password } = req.body;
+      const emailNormalized = String(email || "").trim().toLowerCase();
       
-      const user = await storage.getUserByEmail(email);
+      const user = await storage.getUserByEmail(emailNormalized);
       if (!user) {
         return res.status(401).json({ error: "Credenciais inválidas" });
       }
       
-      if (user.role === "professor" && !AUTHORIZED_PROFESSOR_EMAILS.includes(email)) {
+      if (user.role === "professor" && !authorizedProfessorEmails.has(emailNormalized)) {
         return res.status(403).json({ error: "Professor não autorizado. Entre em contato com o administrador." });
       }
       
@@ -446,7 +452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(403).json({ error: "Acesso negado" });
     }
     
-    if (!AUTHORIZED_PROFESSOR_EMAILS.includes(currentUser.email)) {
+    if (!authorizedProfessorEmails.has(currentUser.email.trim().toLowerCase())) {
       return res.status(403).json({ error: "Apenas professores autorizados podem criar novos professores" });
     }
     
@@ -498,8 +504,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     res.json({
-      authorizedEmails: AUTHORIZED_PROFESSOR_EMAILS,
-      isAuthorized: AUTHORIZED_PROFESSOR_EMAILS.includes(currentUser.email)
+      authorizedEmails: Array.from(authorizedProfessorEmails),
+      isAuthorized: authorizedProfessorEmails.has(currentUser.email.trim().toLowerCase())
     });
   });
 
@@ -2889,11 +2895,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     if (targetUser.role === "professor") {
-      if (AUTHORIZED_PROFESSOR_EMAILS.includes(targetUser.email)) {
+      if (authorizedProfessorEmails.has(targetUser.email.trim().toLowerCase())) {
         return res.status(400).json({ error: "Não é permitido excluir professores autorizados" });
       }
       
-      if (!AUTHORIZED_PROFESSOR_EMAILS.includes(currentUser.email)) {
+      if (!authorizedProfessorEmails.has(currentUser.email.trim().toLowerCase())) {
         return res.status(403).json({ error: "Apenas professores autorizados podem excluir outros professores" });
       }
     }
