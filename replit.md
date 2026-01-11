@@ -44,6 +44,7 @@ The application utilizes Shadcn/ui and Tailwind CSS for a modern, responsive int
 - **KPI Balancing System**: Implements a comprehensive balancing mechanism to ensure realistic market simulation results and prevent excessive rewards, including LTV formula redesign, conversion rate ceiling, market share consolidation fix, strategic modifier caps, global modifier limits, and an ROI hard cap.
 - **Intelligent Student Management System**: Professor-scoped student administration with data integrity safeguards, including automatic filtering of students by professor's classes and a robust manual duplicate cleanup method.
 - **Manual Round Management System**: Professors can add new rounds, remove the last locked round with multi-layer validation (no active/completed rounds removal, dependency checking for campaigns, marketing mixes, results, and strategic analyses), and configure the total number of rounds per class (1-20, minimum = current round). Auto-generates strategic analyses for rounds ≤3 when adding.
+- **Round Checklist System (Roteiro da Rodada)**: Visual progress tracker displayed on the student Dashboard showing completion status for all round steps (SWOT, Porter, BCG, PESTEL, Marketing Mix, Submission, Results). Includes progress bar with weighted percentages and dynamic "next action" button guiding students to the appropriate page. Handles edge cases for students without teams.
 
 ## External Dependencies
 - **PostgreSQL**: Primary database.
