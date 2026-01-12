@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ProfessorLayout } from "@/components/professor-layout";
 import Dashboard from "@/pages/dashboard";
 import Campanhas from "@/pages/campanhas";
 import Decisoes from "@/pages/decisoes";
@@ -72,15 +73,17 @@ function AuthenticatedApp() {
 
   if (user.role === "professor") {
     return (
-      <Switch>
-        <Route path="/admin" component={Admin} />
-        <Route path="/professor" component={Professor} />
-        <Route path="/professor/analytics/:classId">
-          {(params) => <ProfessorAnalytics classId={params.classId} />}
-        </Route>
-        <Route path="/aprovacoes" component={Aprovacoes} />
-        <Route path="/" component={Professor} />
-      </Switch>
+      <ProfessorLayout>
+        <Switch>
+          <Route path="/admin" component={Admin} />
+          <Route path="/professor" component={Professor} />
+          <Route path="/professor/analytics/:classId">
+            {(params) => <ProfessorAnalytics classId={params.classId} />}
+          </Route>
+          <Route path="/aprovacoes" component={Aprovacoes} />
+          <Route path="/" component={Professor} />
+        </Switch>
+      </ProfessorLayout>
     );
   }
 

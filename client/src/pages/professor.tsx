@@ -2991,6 +2991,10 @@ export default function Professor() {
 
                 {/* ======== ABA: VISÃO GERAL ======== */}
                 <TabsContent value="overview" className="mt-6 space-y-6">
+                  <div className="mb-4">
+                    <h2 className="text-lg font-semibold">Visão Geral da Turma</h2>
+                    <p className="text-sm text-muted-foreground">Configure parâmetros, visualize KPIs e gerencie a simulação.</p>
+                  </div>
                   {/* Resumo rápido com tooltips */}
                   <div className="grid gap-4 sm:grid-cols-3">
                     <Tooltip>
@@ -3103,6 +3107,10 @@ export default function Professor() {
 
                 {/* ======== ABA: EQUIPES ======== */}
                 <TabsContent value="teams" className="mt-6 space-y-6">
+                  <div className="mb-4">
+                    <h2 className="text-lg font-semibold">Equipes & Alunos</h2>
+                    <p className="text-sm text-muted-foreground">Gerencie equipes, acompanhe submissões e visualize status de cada time.</p>
+                  </div>
                   {/* Barra de busca e ações */}
                   <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                     <div className="relative flex-1 max-w-sm">
@@ -3290,6 +3298,10 @@ export default function Professor() {
 
                 {/* ======== ABA: RODADAS ======== */}
                 <TabsContent value="rounds" className="mt-6 space-y-6">
+                  <div className="mb-4">
+                    <h2 className="text-lg font-semibold">Central de Rodadas</h2>
+                    <p className="text-sm text-muted-foreground">Inicie, encerre e processe rodadas. Acompanhe o progresso da simulação.</p>
+                  </div>
                   <RoundsTimeline
                     rounds={rounds}
                     activeRound={activeRound}
@@ -3398,6 +3410,10 @@ export default function Professor() {
 
                 {/* ======== ABA: RESULTADOS ======== */}
                 <TabsContent value="results" className="mt-6 space-y-6">
+                  <div className="mb-4">
+                    <h2 className="text-lg font-semibold">Resultados & Rankings</h2>
+                    <p className="text-sm text-muted-foreground">Visualize rankings, compare desempenho entre equipes e exporte relatórios.</p>
+                  </div>
                   {/* Ranking */}
                   {rankingResults.length > 0 && lastCompletedRound && (
                     <Card>
@@ -3477,7 +3493,11 @@ export default function Professor() {
                 </TabsContent>
 
                 {/* ======== ABA: NOTAS ======== */}
-                <TabsContent value="grades" className="mt-6">
+                <TabsContent value="grades" className="mt-6 space-y-6">
+                  <div className="mb-4">
+                    <h2 className="text-lg font-semibold">Sistema de Notas</h2>
+                    <p className="text-sm text-muted-foreground">Avalie o desempenho das equipes com base nos KPIs e resultados.</p>
+                  </div>
                   <GradesRanking 
                     classId={selectedClass} 
                     teams={teams} 
@@ -3487,12 +3507,20 @@ export default function Professor() {
                 </TabsContent>
 
                 {/* ======== ABA: RELATÓRIO DE ACESSOS ======== */}
-                <TabsContent value="access-logs" className="mt-6">
+                <TabsContent value="access-logs" className="mt-6 space-y-6">
+                  <div className="mb-4">
+                    <h2 className="text-lg font-semibold">Relatório de Acessos</h2>
+                    <p className="text-sm text-muted-foreground">Monitore a atividade dos alunos e auditoria de acessos por rodada.</p>
+                  </div>
                   <AccessLogsReport classId={selectedClass} rounds={rounds} teams={teams} />
                 </TabsContent>
 
                 {/* ======== ABA: ENVIO DE EMAILS ======== */}
-                <TabsContent value="email" className="mt-6">
+                <TabsContent value="email" className="mt-6 space-y-6">
+                  <div className="mb-4">
+                    <h2 className="text-lg font-semibold">Comunicação por Email</h2>
+                    <p className="text-sm text-muted-foreground">Envie mensagens e lembretes para as equipes da turma.</p>
+                  </div>
                   <SendEmailToTeams classId={selectedClass} teams={teams} className={currentClass.name} />
                 </TabsContent>
               </Tabs>

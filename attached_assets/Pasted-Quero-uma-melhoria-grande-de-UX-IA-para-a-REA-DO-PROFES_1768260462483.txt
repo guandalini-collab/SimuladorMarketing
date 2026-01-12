@@ -1,0 +1,95 @@
+Quero uma melhoria grande de UX/IA para a ÁREA DO PROFESSOR (admin/painel do professor). Hoje estou perdido: não consigo localizar facilmente as funções e dados. Preciso que fique mais organizado, intuitivo e “autoexplicativo”.
+
+OBJETIVO
+Reorganizar o painel do professor para:
+1) Tornar as funções encontráveis (navegação clara)
+2) Organizar dados e ações por “fluxo de rodada”
+3) Reduzir poluição visual
+4) Adicionar resumos e indicadores úteis (sem inventar dados)
+5) Manter compatibilidade: não quebrar rotas/funcionalidades existentes
+
+REGRAS
+- Não adicionar dependências novas.
+- Usar a stack atual (React + TS + Vite, Shadcn/ui + Tailwind, Wouter, TanStack Query).
+- Não inventar rotas: descubra as rotas existentes no projeto e reutilize.
+- Não remover páginas antigas; apenas reorganizar e criar uma navegação melhor.
+- Se houver telas já prontas, reaproveitar e apenas “linkar”/reempacotar.
+- Preferir componentes Shadcn/ui: Tabs, Card, Button, Badge, Separator, DropdownMenu, Sheet/Drawer, Table.
+
+TAREFA A — Criar um “Professor Home” (página inicial do professor)
+1) Localize a rota atual do professor (ex.: /professor, /teacher, /admin etc) e defina uma HOME única.
+2) Na HOME, criar 4 blocos (cards) no topo, com ações rápidas:
+   - “Rodadas” (Abrir/Encerrar/Status)
+   - “Equipes & Alunos” (listar, status, pendências)
+   - “Resultados” (ranking, comparativo)
+   - “Configurações” (turma/jogo/parâmetros)
+Cada card deve ter:
+   - título + descrição curta
+   - 2 botões: “Abrir” e “Ver detalhes”
+   - ícone (lucide-react) e badges de status (quando aplicável)
+
+TAREFA B — Navegação fixa e clara
+1) Implementar uma navegação superior (Top Nav) OU lateral (Side Nav) exclusiva do professor com:
+   - Dashboard
+   - Rodadas
+   - Decisões (se existir)
+   - Resultados
+   - Equipes
+   - Relatórios/Exportações (se existir)
+   - Configurações
+2) A navegação deve mostrar o item ativo e ser responsiva (mobile).
+3) Se já existir nav do professor, substitua por uma versão mais limpa e padronizada.
+
+TAREFA C — “Central de Rodada” (fluxo guiado do professor)
+1) Criar uma página “Rodadas” com layout em Tabs:
+   - Tab 1: “Status”
+   - Tab 2: “Ações”
+   - Tab 3: “Equipes”
+   - Tab 4: “Resultados”
+2) Em “Status”, mostrar:
+   - Rodada atual (ativa/encerrada)
+   - Data/hora (se existir)
+   - Contador de equipes que submeteram vs total
+3) Em “Ações”, agrupar botões por ordem lógica:
+   - Iniciar/Abrir rodada (se existir)
+   - Encerrar rodada
+   - Processar resultados (se existir separado)
+   - Reabrir/ajustar (se existir)
+   Observação: se não existir ação, não inventar — apenas ocultar.
+4) Em “Equipes”, listar equipes com:
+   - status: submeteu? pendente?
+   - botão “ver detalhes”
+5) Em “Resultados”, mostrar atalhos para ranking e exportação.
+
+TAREFA D — Melhorar a leitura dos dados (sem inventar)
+1) Criar componentes de “Resumo” com 3–6 KPIs principais (os que já existem no sistema).
+2) Usar Card + Table e evitar textos longos.
+3) Adicionar filtros simples:
+   - seletor de rodada (dropdown)
+   - busca de equipe (input)
+4) Adicionar “Empty states” bem claros (ex.: “Ainda não há resultados nesta rodada”).
+
+TAREFA E — Padronizar UX e microcopy
+1) Substituir termos confusos por rótulos mais claros (sem mudar regra do jogo):
+   - “Ativa” / “Encerrada”
+   - “Submeteu” / “Pendente”
+2) Em cada página do professor, adicionar um subtítulo curto: “O que fazer aqui”.
+3) Incluir tooltips curtos (Shadcn Tooltip) nos botões críticos (encerrar rodada etc).
+
+TAREFA F — Encontrabilidade: “Menu de Ações” e “Mapa do Painel”
+1) No canto superior direito do professor, criar um Dropdown “Ações rápidas” com links para as ações mais usadas.
+2) Criar um modal/Sheet “Onde está o quê?”:
+   - lista as funções e para onde ir (com links)
+   - ex.: “Encerrar Rodada → Rodadas > Ações”
+   - “Ver submissões → Rodadas > Equipes”
+   Isso resolve diretamente minha reclamação “estou perdido”.
+
+VALIDAÇÃO
+- Não quebrar rotas antigas.
+- Garantir que professor consegue chegar em TODAS as funções existentes em no máximo 2 cliques a partir da HOME.
+- Garantir que o painel do professor tenha uma hierarquia clara (Home -> Rodadas/Equipes/Resultados/Config).
+
+ENTREGA
+- Liste os arquivos criados/alterados.
+- Liste as rotas do professor (as reais do projeto).
+- Mostre um print textual do “mapa do painel” (itens e links) e confirme que está acessível por um botão “Ajuda”/“Onde está o quê?” no topo.
