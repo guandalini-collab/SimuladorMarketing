@@ -1,0 +1,57 @@
+BUG CRÍTICO (deadlock): Rodada está ATIVA no painel do professor, mas o aluno vê “Aguardando orientações do professor” e não consegue tomar decisões no Mix de Marketing (4Ps). Não existe opção/botão para “liberar” decisões. Portanto, a regra correta é: SE a rodada está ATIVA, então decisões devem estar LIBERADAS automaticamente.
+
+TAREFA: Corrigir o bloqueio (backend + frontend) mantendo compatibilidade.
+
+REGRAS:
+- Não inventar estados/rotas novos.
+- Não criar “liberar decisões” (não existe e não queremos criar agora).
+- Rodada ATIVA => decisões liberadas.
+- Rodada ENCERRADA/COMPLETA => decisões bloqueadas (somente leitura).
+- Se não houver rodada ativa => mostrar estado “Sem rodada ativa” (ou manter atual, mas sem confundir).
+- Atualizar a mensagem do aluno: trocar “Aguardando orientações do professor” por mensagem correta e explícita.
+- Não adicionar dependências.
+
+PASSO 1 — Identificar a origem do bloqueio
+1) Faça busca global pelos textos/flags:
+   - "Aguardando orientações do professor"
+   - "Bloqueada"
+   - "locked"
+   - "isLocked"
+   - "decisionsOpen"
+   - "roundStatus"
+   - "currentRound"
+2) Liste os arquivos onde aparece o bloqueio no Mix de Marketing (4Ps) e em qualquer endpoint que forneça status/rodada.
+
+PASSO 2 — Corrigir BACKEND (fonte da verdade)
+1) Localize o endpoint que o frontend usa para decidir se pode editar 4Ps (pode ser o endpoint de marketing mix, de round status, ou o /api/team/current-round-status).
+2) Ajuste a regra para que:
+   - se a rodada atual está ativa (status "ACTIVE"/"ATIVA" ou equivalente), retorne explicitamente que decisões estão permitidas.
+   - se a rodada está encerrada/completa/bloqueada, retorne que decisões não estão permitidas.
+3) Se existir alguma variável como `locked`, `isLocked`, `canEdit`, `decisionsAllowed`, garanta:
+   - roundActive => canEdit/decisionsAllowed = true
+4) Não dependa de um campo de “liberação” inexistente.
+5) Atualize /api/team/current-round-status para refletir isso, adicionando (se necessário) um campo:
+   - decisionsAllowed: boolean
+   - reason?: string (opcional, para UI)
+   Obs: se já existir campo equivalente, use o existente.
+
+PASSO 3 — Corrigir FRONTEND (Mix de Marketing 4Ps)
+1) Localize a página/componente do Mix de Marketing (4Ps) que exibe “Aguardando orientações do professor”.
+2) Troque a condição de bloqueio para:
+   - Se NÃO existe rodada ativa: mostrar “Sem rodada ativa. Aguarde o professor iniciar uma rodada.”
+   - Se rodada está ativa: liberar os controles de decisão (Produto/Preço/Praça/Promoção).
+   - Se rodada encerrada: mostrar “Rodada encerrada. Consulte resultados/feedback.”
+3) A mensagem “Aguardando orientações do professor” só pode aparecer se não houver rodada ativa (ou substitua por mensagem mais clara).
+4) Garantir que a UI mostre os inputs/controles para decidir quando decisionsAllowed=true.
+
+PASSO 4 — Validar com cenário real
+1) Com a Rodada 6 ativa (como no painel do professor), faça login como aluno:
+   - entrar em Mix de Marketing (4Ps)
+   - confirmar que NÃO aparece mais “Aguardando orientações do professor”
+   - confirmar que os controles ficam ativos e permitem salvar.
+2) Se não houver rodada ativa, confirmar que aparece mensagem “Sem rodada ativa...”.
+
+ENTREGA:
+- Liste os arquivos alterados e o que mudou em cada um.
+- Mostre (copie) o trecho exato do if/condição que foi corrigido.
+- Se você adicionou decisionsAllowed no endpoint, mostre um exemplo do JSON retornado.

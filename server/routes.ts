@@ -2396,10 +2396,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     const team = await storage.getTeamByUser(req.session.userId);
     if (!team) {
-      return res.status(404).json({ error: "Equipe não encontrada" });
+      // Return a structured response even when no team exists
+      return res.json({
+        round: null,
+        decisionsAllowed: false,
+        reason: "no_team",
+        message: "Você ainda não está em uma equipe. Entre em contato com seu professor."
+      });
     }
+    
     const activeRound = await storage.getCurrentRound(team.classId);
-    res.json(activeRound || null);
+    
+    if (!activeRound) {
+      // No active round - check if there are any rounds at all
+      const allRounds = await storage.getRoundsByClass(team.classId);
+      const hasCompletedRounds = allRounds.some(r => r.status === "completed");
+      const hasLockedRounds = allRounds.some(r => r.status === "locked");
+      
+      return res.json({
+        round: null,
+        decisionsAllowed: false,
+        reason: "no_active_round",
+        message: hasCompletedRounds 
+          ? "Nenhuma rodada ativa no momento. Aguarde o professor iniciar a próxima rodada."
+          : hasLockedRounds
+            ? "A próxima rodada ainda não foi iniciada. Aguarde o professor ativar a rodada."
+            : "Nenhuma rodada configurada para esta turma. Aguarde o professor configurar as rodadas."
+      });
+    }
+    
+    // Round is active - decisions are allowed
+    res.json({
+      round: activeRound,
+      id: activeRound.id,
+      roundNumber: activeRound.roundNumber,
+      status: activeRound.status,
+      decisionsAllowed: true,
+      reason: "round_active",
+      message: `Rodada ${activeRound.roundNumber} está ativa. Você pode tomar suas decisões.`
+    });
   });
 
   app.get("/api/event-templates", async (req, res) => {

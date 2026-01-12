@@ -60,9 +60,26 @@ export default function Decisoes() {
   const [productDecisions, setProductDecisions] = useState<Record<string, ProductDecisions>>({});
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-  const { data: activeRound } = useQuery<{ id: string; roundNumber: number; status: string } | null>({
+  interface RoundStatusResponse {
+    round: { id: string; roundNumber: number; status: string } | null;
+    id?: string;
+    roundNumber?: number;
+    status?: string;
+    decisionsAllowed: boolean;
+    reason: "no_team" | "no_active_round" | "round_active";
+    message: string;
+  }
+
+  const { data: roundStatus, isLoading: isLoadingRound } = useQuery<RoundStatusResponse>({
     queryKey: ["/api/rounds/active/current"],
   });
+
+  // Backward compatibility: extract activeRound from new structure
+  const activeRound = roundStatus?.round || (roundStatus?.id ? { 
+    id: roundStatus.id, 
+    roundNumber: roundStatus.roundNumber!, 
+    status: roundStatus.status! 
+  } : null);
 
   const { data: team } = useQuery<any>({
     queryKey: ["/api/team/current"],
@@ -452,7 +469,12 @@ export default function Decisoes() {
 
   const totalPromotionBudget = Object.values(promotionBudgets).reduce((sum, val) => sum + val, 0);
 
-  const isLocked = !activeRound;
+  // Use decisionsAllowed from backend as source of truth
+  // Only lock if we have data AND decisions are not allowed
+  // During loading, don't show locked state yet
+  const isLocked = !isLoadingRound && roundStatus && !roundStatus.decisionsAllowed;
+  const lockReason = roundStatus?.reason;
+  const lockMessage = roundStatus?.message;
   
   // Derivar isSubmitted diretamente da fonte autoritativa (savedProductMixes)
   // para evitar lag entre troca de produto e atualização do estado local
@@ -505,10 +527,10 @@ export default function Decisoes() {
       </div>
 
       {isLocked && (
-        <Alert data-testid="alert-locked">
-          <Lock className="h-4 w-4" />
-          <AlertDescription>
-            Aguarde o professor liberar uma rodada de decisão para submeter seu Mix de Marketing.
+        <Alert data-testid="alert-locked" className={lockReason === "no_team" ? "border-amber-500/50 bg-amber-50 dark:bg-amber-950/20" : ""}>
+          <Lock className={`h-4 w-4 ${lockReason === "no_team" ? "text-amber-600" : ""}`} />
+          <AlertDescription className={lockReason === "no_team" ? "text-amber-800 dark:text-amber-200" : ""}>
+            {lockMessage || "Sem rodada ativa. Aguarde o professor iniciar uma rodada."}
           </AlertDescription>
         </Alert>
       )}
@@ -608,7 +630,7 @@ export default function Decisoes() {
             title="Orientações Estratégicas - Produto"
             recommendations={recommendations?.product}
             isLoading={isLoadingRecommendations}
-            emptyMessage="Aguardando orientações do professor"
+            emptyMessage="Nenhuma recomendação estratégica disponível"
             testId="card-recommendation-product"
           />
 
@@ -785,7 +807,7 @@ export default function Decisoes() {
             title="Orientações Estratégicas - Preço"
             recommendations={recommendations?.price}
             isLoading={isLoadingRecommendations}
-            emptyMessage="Aguardando orientações do professor"
+            emptyMessage="Nenhuma recomendação estratégica disponível"
             testId="card-recommendation-price"
           />
 
@@ -912,7 +934,7 @@ export default function Decisoes() {
             title="Orientações Estratégicas - Praça"
             recommendations={recommendations?.place}
             isLoading={isLoadingRecommendations}
-            emptyMessage="Aguardando orientações do professor"
+            emptyMessage="Nenhuma recomendação estratégica disponível"
             testId="card-recommendation-place"
           />
 
@@ -1036,7 +1058,7 @@ export default function Decisoes() {
             title="Orientações Estratégicas - Promoção"
             recommendations={recommendations?.promotion}
             isLoading={isLoadingRecommendations}
-            emptyMessage="Aguardando orientações do professor"
+            emptyMessage="Nenhuma recomendação estratégica disponível"
             testId="card-recommendation-promotion"
           />
 

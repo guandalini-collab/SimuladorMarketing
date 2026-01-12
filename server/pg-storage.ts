@@ -790,6 +790,23 @@ export class PgStorage implements IStorage {
     return db.select().from(results);
   }
 
+  async getPreviousRoundResult(teamId: string, currentRoundId: string): Promise<Result | undefined> {
+    const currentRound = await this.getRound(currentRoundId);
+    if (!currentRound || currentRound.roundNumber <= 1) {
+      return undefined;
+    }
+
+    const previousRoundNumber = currentRound.roundNumber - 1;
+    const roundsList = await this.getRoundsByClass(currentRound.classId);
+    const previousRound = roundsList.find(r => r.roundNumber === previousRoundNumber);
+    
+    if (!previousRound) {
+      return undefined;
+    }
+
+    return this.getResult(teamId, previousRound.id);
+  }
+
   async getSwotAnalysis(teamId: string, roundId: string, productId?: string): Promise<SwotAnalysis | undefined> {
     const baseConditions = [eq(swotAnalysis.teamId, teamId), eq(swotAnalysis.roundId, roundId)];
     const conditions = productId !== undefined
