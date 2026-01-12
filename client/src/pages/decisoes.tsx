@@ -62,24 +62,23 @@ export default function Decisoes() {
 
   interface RoundStatusResponse {
     round: { id: string; roundNumber: number; status: string } | null;
-    id?: string;
-    roundNumber?: number;
-    status?: string;
     decisionsAllowed: boolean;
     reason: "no_team" | "no_active_round" | "round_active";
     message: string;
   }
 
-  const { data: roundStatus, isLoading: isLoadingRound } = useQuery<RoundStatusResponse>({
+  const { data: roundStatus, isLoading: isLoadingRound, isFetching: isFetchingRound } = useQuery<RoundStatusResponse>({
     queryKey: ["/api/rounds/active/current"],
   });
 
-  // Backward compatibility: extract activeRound from new structure
-  const activeRound = roundStatus?.round || (roundStatus?.id ? { 
-    id: roundStatus.id, 
-    roundNumber: roundStatus.roundNumber!, 
-    status: roundStatus.status! 
-  } : null);
+  // Extract activeRound from the canonical response structure
+  const activeRound = roundStatus?.round ?? null;
+  
+  // Derive decisionsAllowed with safe default during loading
+  const decisionsAllowed = roundStatus?.decisionsAllowed ?? false;
+  
+  // Derive activeRoundId only when decisions are truly allowed - prevents queries during transition states
+  const activeRoundId = decisionsAllowed ? activeRound?.id : undefined;
 
   const { data: team } = useQuery<any>({
     queryKey: ["/api/team/current"],
@@ -173,17 +172,17 @@ export default function Decisoes() {
 
   // Buscar decisões de todos os produtos
   const { data: savedProductMixes = [] } = useQuery<any[]>({
-    queryKey: ["/api/marketing-mix/team", team?.id, "round", (activeRound as any)?.id, "products"],
-    enabled: !!team?.id && !!(activeRound as any)?.id,
+    queryKey: ["/api/marketing-mix/team", team?.id, "round", activeRoundId, "products"],
+    enabled: !!team?.id && !!activeRoundId,
   });
 
   // Buscar status das ferramentas estratégicas para validação obrigatória
   const { data: strategicTools } = useQuery<any>({
-    queryKey: ["/api/strategy", (activeRound as any)?.id],
-    enabled: !!(activeRound as any)?.id,
+    queryKey: ["/api/strategy", activeRoundId],
+    enabled: !!activeRoundId,
   });
 
-  // Buscar recomendações estratégicas automáticas via IA
+  // Buscar recomendações estratégicas automáticas via IA - only when decisions are allowed
   const { data: recommendations, isLoading: isLoadingRecommendations } = useQuery<{
     product: string[];
     price: string[];
@@ -191,8 +190,8 @@ export default function Decisoes() {
     promotion: string[];
     updatedAt: string;
   } | null>({
-    queryKey: ["/api/ai/strategic-recommendations/current"],
-    enabled: !!activeRound && !!team,
+    queryKey: ["/api/ai/strategic-recommendations/current", activeRoundId],
+    enabled: !!activeRoundId && !!team,
   });
 
   // Verificar se todas as ferramentas estratégicas foram preenchidas
@@ -273,19 +272,27 @@ export default function Decisoes() {
     mutationFn: async (data: any) => {
       if (!selectedProductId) throw new Error("Nenhum produto selecionado");
       if (!team?.id) throw new Error("Equipe não encontrada");
-      if (!(activeRound as any)?.id) throw new Error("Rodada ativa não encontrada");
+      
+      // Pull latest roundStatus from cache to avoid stale state during refetch
+      const latestRoundStatus = queryClient.getQueryData<RoundStatusResponse>(["/api/rounds/active/current"]);
+      const latestDecisionsAllowed = latestRoundStatus?.decisionsAllowed ?? false;
+      const latestRoundId = latestDecisionsAllowed ? latestRoundStatus?.round?.id : undefined;
+      
+      if (!latestDecisionsAllowed || !latestRoundId) {
+        throw new Error("Decisões não permitidas no momento. Verifique se a rodada está ativa.");
+      }
       
       const res = await apiRequest("POST", "/api/marketing-mix/product", {
         ...data,
         teamId: team.id,
-        roundId: (activeRound as any).id,
+        roundId: latestRoundId,
         productId: selectedProductId,
         isDraft: true,
       });
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/marketing-mix/team", team?.id, "round", (activeRound as any)?.id, "products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing-mix/team", team?.id, "round", activeRoundId, "products"] });
       toast({
         title: "Rascunho salvo!",
         description: `Decisões do produto ${selectedProduct?.name} foram salvas. Você pode continuar editando.`,
@@ -303,6 +310,15 @@ export default function Decisoes() {
   // Mutation para submeter decisão final de todos os produtos (bloqueia edições)
   const submitMutation = useMutation({
     mutationFn: async () => {
+      // Pull latest roundStatus from cache to avoid stale state during refetch
+      const latestRoundStatus = queryClient.getQueryData<RoundStatusResponse>(["/api/rounds/active/current"]);
+      const latestDecisionsAllowed = latestRoundStatus?.decisionsAllowed ?? false;
+      const latestRoundId = latestDecisionsAllowed ? latestRoundStatus?.round?.id : undefined;
+      
+      if (!latestDecisionsAllowed || !latestRoundId) {
+        throw new Error("Decisões não permitidas no momento. Verifique se a rodada está ativa.");
+      }
+      
       // Filtrar apenas produtos que ainda não foram submetidos
       const productsToSubmit = products.filter((product: any) => {
         const decisions = productDecisions[product.id];
@@ -322,7 +338,7 @@ export default function Decisoes() {
             const { submittedAt, ...decisionsPayload } = decisions;
             const res = await apiRequest("POST", "/api/marketing-mix/product", {
               teamId: team?.id,
-              roundId: (activeRound as any)?.id,
+              roundId: latestRoundId,
               productId: product.id,
               isDraft: false,
               ...decisionsPayload,
@@ -343,7 +359,7 @@ export default function Decisoes() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/marketing-mix/team", team?.id, "round", (activeRound as any)?.id, "products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing-mix/team", team?.id, "round", activeRoundId, "products"] });
       toast({
         title: "Decisão enviada com sucesso!",
         description: "Todas as decisões dos produtos foram submetidas e não poderão mais ser alteradas.",
@@ -435,7 +451,7 @@ export default function Decisoes() {
         
         await apiRequest("POST", "/api/marketing-mix/product", {
           teamId: team?.id,
-          roundId: (activeRound as any)?.id,
+          roundId: activeRoundId,
           productId: product.id,
           isDraft: true,
           ...decisionsPayload,
@@ -444,7 +460,7 @@ export default function Decisoes() {
 
       // Invalidar queries para recarregar dados salvos
       await queryClient.invalidateQueries({ 
-        queryKey: ["/api/marketing-mix/team", team?.id, "round", (activeRound as any)?.id, "products"] 
+        queryKey: ["/api/marketing-mix/team", team?.id, "round", activeRoundId, "products"] 
       });
 
       // Abrir dialog de confirmação
@@ -470,9 +486,12 @@ export default function Decisoes() {
   const totalPromotionBudget = Object.values(promotionBudgets).reduce((sum, val) => sum + val, 0);
 
   // Use decisionsAllowed from backend as source of truth
-  // Only lock if we have data AND decisions are not allowed
-  // During loading, don't show locked state yet
-  const isLocked = !isLoadingRound && roundStatus && !roundStatus.decisionsAllowed;
+  // Only show locked state after initial data has loaded to avoid flash
+  // During refetch (isFetching but not isLoading), keep previous state to avoid control flashes
+  const hasInitialData = !isLoadingRound && roundStatus !== undefined;
+  const isLocked = hasInitialData && !decisionsAllowed;
+  // Keep controls enabled during refetch if they were previously enabled
+  const controlsDisabled = isLoadingRound || (hasInitialData && !decisionsAllowed);
   const lockReason = roundStatus?.reason;
   const lockMessage = roundStatus?.message;
   
@@ -480,7 +499,8 @@ export default function Decisoes() {
   // para evitar lag entre troca de produto e atualização do estado local
   const savedMix = savedProductMixes.find((mix: any) => mix.productId === selectedProductId);
   const isSubmitted = !!savedMix?.submittedAt || !!currentProductDecisions.submittedAt;
-  const canEdit = !isLocked && !isSubmitted;
+  // canEdit uses controlsDisabled which properly handles loading and refetch states
+  const canEdit = !controlsDisabled && !isSubmitted;
 
   return (
     <div className="space-y-8">
@@ -518,7 +538,7 @@ export default function Decisoes() {
               {activeRound && (
                 <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg backdrop-blur-sm">
                   <Activity className="h-4 w-4 text-white" />
-                  <span className="text-sm text-white font-medium">Rodada {(activeRound as any).roundNumber}</span>
+                  <span className="text-sm text-white font-medium">Rodada {activeRound?.roundNumber}</span>
                 </div>
               )}
             </div>
@@ -526,7 +546,16 @@ export default function Decisoes() {
         </div>
       </div>
 
-      {isLocked && (
+      {isLoadingRound && (
+        <Alert data-testid="alert-loading" className="border-blue-500/50 bg-blue-50 dark:bg-blue-950/20">
+          <Activity className="h-4 w-4 text-blue-600 animate-pulse" />
+          <AlertDescription className="text-blue-800 dark:text-blue-200">
+            Carregando informações da rodada...
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!isLoadingRound && isLocked && (
         <Alert data-testid="alert-locked" className={lockReason === "no_team" ? "border-amber-500/50 bg-amber-50 dark:bg-amber-950/20" : ""}>
           <Lock className={`h-4 w-4 ${lockReason === "no_team" ? "text-amber-600" : ""}`} />
           <AlertDescription className={lockReason === "no_team" ? "text-amber-800 dark:text-amber-200" : ""}>

@@ -2426,11 +2426,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Round is active - decisions are allowed
+    // Clean canonical shape without legacy top-level fields
     res.json({
       round: activeRound,
-      id: activeRound.id,
-      roundNumber: activeRound.roundNumber,
-      status: activeRound.status,
       decisionsAllowed: true,
       reason: "round_active",
       message: `Rodada ${activeRound.roundNumber} está ativa. Você pode tomar suas decisões.`
