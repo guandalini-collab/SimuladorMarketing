@@ -11,7 +11,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Link } from "wouter";
+import { Clock, ArrowLeft } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -555,11 +557,42 @@ export default function Decisoes() {
         </Alert>
       )}
 
-      {!isLoadingRound && isLocked && (
-        <Alert data-testid="alert-locked" className={lockReason === "no_team" ? "border-amber-500/50 bg-amber-50 dark:bg-amber-950/20" : ""}>
-          <Lock className={`h-4 w-4 ${lockReason === "no_team" ? "text-amber-600" : ""}`} />
-          <AlertDescription className={lockReason === "no_team" ? "text-amber-800 dark:text-amber-200" : ""}>
-            {lockMessage || "Sem rodada ativa. Aguarde o professor iniciar uma rodada."}
+      {!isLoadingRound && isLocked && lockReason === "no_team" && (
+        <Alert data-testid="alert-locked-no-team" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800 dark:text-amber-200">Equipe não encontrada</AlertTitle>
+          <AlertDescription className="text-amber-800 dark:text-amber-200">
+            {lockMessage || "Você precisa estar em uma equipe para acessar as decisões."}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!isLoadingRound && isLocked && lockReason === "no_active_round" && (
+        <Alert data-testid="alert-locked-no-round" className="w-full border-2 border-orange-400/60 bg-orange-50 dark:bg-orange-950/30">
+          <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+          <AlertTitle className="text-lg font-semibold text-orange-800 dark:text-orange-200">
+            Rodada ainda não iniciada
+          </AlertTitle>
+          <AlertDescription className="mt-2 space-y-3">
+            <p className="text-orange-700 dark:text-orange-300">
+              Nenhuma rodada ativa no momento. Aguarde o professor iniciar a próxima rodada.
+            </p>
+            <p className="text-sm text-orange-600/80 dark:text-orange-400/80">
+              Enquanto isso, revise suas análises estratégicas (SWOT, Porter, BCG, PESTEL).
+            </p>
+            <div className="pt-2">
+              <Link href="/">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-orange-400 text-orange-700 hover:bg-orange-100 dark:border-orange-500 dark:text-orange-300 dark:hover:bg-orange-900/40"
+                  data-testid="button-back-dashboard"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar ao Dashboard
+                </Button>
+              </Link>
+            </div>
           </AlertDescription>
         </Alert>
       )}
