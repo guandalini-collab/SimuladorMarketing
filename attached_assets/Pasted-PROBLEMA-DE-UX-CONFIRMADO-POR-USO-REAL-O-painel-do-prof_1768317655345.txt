@@ -1,0 +1,110 @@
+PROBLEMA DE UX (CONFIRMADO POR USO REAL):
+O painel do professor está informativamente correto, porém excessivamente poluído.
+O professor não entende o “modo de trabalho” nem qual é a próxima ação.
+Há dados demais visíveis antes da decisão pedagógica.
+
+OBJETIVO
+Transformar o painel do professor em um PAINEL ORIENTADO POR FLUXO DE AULA,
+onde a ação vem antes do dado.
+
+PRINCÍPIO
+→ Primeiro: O QUE FAZER
+→ Depois: O QUE ANALISAR
+→ Por último: O QUE CONFIGURAR
+
+────────────────────────────
+TAREFA A — Criar “MODO PROFESSOR” (Camada de Orquestração)
+────────────────────────────
+1) No topo do Painel do Professor, criar uma seção fixa chamada:
+   **“Situação da Aula”**
+
+2) Esta seção deve conter APENAS:
+   - Turma selecionada
+   - Rodada atual (número + status)
+   - Submissões: X de Y equipes
+   - UMA pergunta clara:
+     👉 “Qual é a próxima ação?”
+
+3) Abaixo da pergunta, renderizar APENAS UM botão principal:
+   - Sem rodada → “Iniciar Rodada”
+   - Rodada ativa → “Acompanhar Submissões”
+   - Rodada encerrada → “Analisar Resultados”
+
+⚠️ Nenhum outro botão deve competir visualmente com este.
+
+────────────────────────────
+TAREFA B — Ocultar COMPLEXIDADE por padrão
+────────────────────────────
+1) Ocultar por padrão no painel principal:
+   - Rankings detalhados
+   - Tabelas grandes
+   - Eventos de mercado
+   - Logs de acesso
+   - Detalhes de decisões
+
+2) Esses conteúdos devem existir apenas:
+   - Dentro de abas secundárias
+   - Ou atrás de botões “Ver detalhes”
+
+Regra:
+→ Se não ajuda a decidir agora, NÃO aparece agora.
+
+────────────────────────────
+TAREFA C — Redesenhar abas com PAPÉIS CLAROS
+────────────────────────────
+Reorganizar semanticamente as abas:
+
+1) **Aula (default)**
+   - Situação da Aula
+   - Submissões (resumo)
+   - Botão principal
+
+2) **Acompanhar**
+   - Equipes (status: enviado / pendente)
+   - Quem precisa de atenção
+
+3) **Analisar**
+   - Resultados
+   - Rankings
+   - Notas
+
+4) **Configurar**
+   - Eventos
+   - Parâmetros
+   - Acessos
+   - Emails
+
+⚠️ Não remover abas existentes, apenas reclassificar e reagrupar.
+
+────────────────────────────
+TAREFA D — Tabelas só quando NECESSÁRIO
+────────────────────────────
+1) Substituir tabelas grandes por:
+   - contadores
+   - alertas (“X equipes sem envio”)
+   - listas compactas
+
+2) Tabelas completas só aparecem após clique explícito:
+   “Ver tabela completa”
+
+────────────────────────────
+TAREFA E — Microcopy pedagógica (obrigatória)
+────────────────────────────
+Em cada seção principal, adicionar frases como:
+- “Aqui você controla o andamento da aula.”
+- “Aqui você acompanha quem já enviou.”
+- “Aqui você analisa o desempenho após encerrar a rodada.”
+
+────────────────────────────
+VALIDAÇÃO FINAL
+────────────────────────────
+O professor deve:
+✔ entender o estado da aula em até 5 segundos  
+✔ saber o que fazer sem rolar a tela  
+✔ nunca ver mais de 1 ação principal por vez  
+✔ acessar dados detalhados apenas quando quiser  
+
+ENTREGA
+- Liste os arquivos alterados
+- Explique como ficou o fluxo visual
+- Confirme o que passou a ficar oculto por padrão

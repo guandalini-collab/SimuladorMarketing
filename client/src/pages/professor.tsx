@@ -2222,7 +2222,9 @@ export default function Professor() {
   const [, setLocation] = useLocation();
   
   // Estados de UI
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("aula");
+  const [showTeamsTable, setShowTeamsTable] = useState(false);
+  const [showRankingTable, setShowRankingTable] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isMarketDialogOpen, setIsMarketDialogOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
@@ -2327,6 +2329,83 @@ export default function Professor() {
       totalStudents: sortedAllProfessorStudents.length
     };
   }, [classes, teams, rounds, sortedAllProfessorStudents, selectedClass]);
+
+  // Submissões da rodada ativa
+  const submissionStats = useMemo(() => {
+    if (!activeRound || teams.length === 0) return { submitted: 0, total: 0, pending: [] as string[] };
+    
+    const submittedTeams = teams.filter((team: any) => team.hasSubmittedCurrentRound);
+    const pendingTeams = teams.filter((team: any) => !team.hasSubmittedCurrentRound);
+    
+    return {
+      submitted: submittedTeams.length,
+      total: teams.length,
+      pending: pendingTeams.map((t: any) => t.name)
+    };
+  }, [activeRound, teams]);
+
+  // Determinar estado da aula e próxima ação
+  const classState = useMemo(() => {
+    if (!currentClass) return { status: "no_class", label: "Nenhuma turma", action: null };
+    
+    if (teams.length === 0) {
+      return { 
+        status: "no_teams", 
+        label: "Turma sem equipes", 
+        action: { label: "Criar Equipes", tab: "acompanhar" }
+      };
+    }
+    
+    if (!activeRound && rounds.length === 0) {
+      return { 
+        status: "ready_to_start", 
+        label: "Pronta para iniciar", 
+        action: { label: "Iniciar Primeira Rodada", type: "start_round" }
+      };
+    }
+    
+    if (!activeRound && rounds.length > 0 && rounds.length < currentClass.maxRounds) {
+      const hasCompletedRounds = rounds.some(r => r.status === "completed");
+      if (hasCompletedRounds && lastCompletedRound) {
+        return { 
+          status: "between_rounds", 
+          label: `Rodada ${lastCompletedRound.roundNumber} concluída`, 
+          action: { label: "Iniciar Próxima Rodada", type: "start_round" }
+        };
+      }
+      return { 
+        status: "ready_to_continue", 
+        label: `Pronta para continuar`, 
+        action: { label: "Iniciar Próxima Rodada", type: "start_round" }
+      };
+    }
+    
+    if (activeRound) {
+      const allSubmitted = submissionStats.submitted === submissionStats.total;
+      if (allSubmitted && submissionStats.total > 0) {
+        return { 
+          status: "all_submitted", 
+          label: `Rodada ${activeRound.roundNumber} - Todas as equipes enviaram`, 
+          action: { label: "Encerrar Rodada", type: "end_round" }
+        };
+      }
+      return { 
+        status: "round_active", 
+        label: `Rodada ${activeRound.roundNumber} em andamento`, 
+        action: { label: "Acompanhar Submissões", tab: "acompanhar" }
+      };
+    }
+    
+    if (rounds.length >= currentClass.maxRounds) {
+      return { 
+        status: "finished", 
+        label: "Simulação concluída", 
+        action: { label: "Ver Resultados Finais", tab: "analisar" }
+      };
+    }
+    
+    return { status: "unknown", label: "Estado desconhecido", action: null };
+  }, [currentClass, teams, activeRound, rounds, submissionStats, lastCompletedRound]);
 
   // Filtrar equipes por busca
   const filteredTeams = useMemo(() => {
@@ -2855,40 +2934,6 @@ export default function Professor() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        {/* ======== HERO STRIP - KPIS ======== */}
-        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-          <StatCard 
-            title="Turmas" 
-            value={stats.totalClasses} 
-            icon={GraduationCap} 
-            color="primary" 
-            tooltip="Total de turmas que você gerencia"
-          />
-          <StatCard 
-            title="Equipes" 
-            value={stats.totalTeams} 
-            subtitle={currentClass?.name || "Todas"} 
-            icon={Users} 
-            color="success"
-            tooltip="Equipes na turma selecionada"
-          />
-          <StatCard 
-            title="Rodadas" 
-            value={`${stats.activeRounds} ativa${stats.activeRounds !== 1 ? 's' : ''}`} 
-            subtitle={`${stats.completedRounds} concluídas`} 
-            icon={Target} 
-            color="warning"
-            tooltip="Status das rodadas"
-          />
-          <StatCard 
-            title="Alunos" 
-            value={stats.totalStudents} 
-            icon={Users} 
-            color="primary"
-            tooltip="Total de alunos matriculados"
-          />
-        </div>
-
         {/* ======== SEM TURMA SELECIONADA ======== */}
         {!selectedClass && (
           <Card className="border-dashed">
@@ -2932,68 +2977,155 @@ export default function Professor() {
         {/* ======== CONTEÚDO DA TURMA SELECIONADA ======== */}
         {selectedClass && currentClass && (
           <>
-            {/* Navegação por Seções */}
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="h-auto p-1 bg-muted/50">
-                  <TabsTrigger value="overview" className="gap-2 data-[state=active]:bg-background" data-testid="tab-overview">
-                    <LayoutDashboard className="h-4 w-4" />
-                    Visão Geral
-                  </TabsTrigger>
-                  <TabsTrigger value="teams" className="gap-2 data-[state=active]:bg-background" data-testid="tab-teams">
-                    <Users className="h-4 w-4" />
-                    Equipes
-                    {teams.length > 0 && (
-                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">{teams.length}</Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger value="rounds" className="gap-2 data-[state=active]:bg-background" data-testid="tab-rounds">
-                    <Calendar className="h-4 w-4" />
-                    Rodadas
-                    <div className="flex items-center gap-1 ml-1">
+            {/* ======== SITUAÇÃO DA AULA - SEÇÃO PRINCIPAL ======== */}
+            <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-transparent" data-testid="card-class-situation">
+              <CardContent className="pt-6">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                  {/* Info da Aula */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <GraduationCap className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold">Situação da Aula</h2>
+                        <p className="text-sm text-muted-foreground">Aqui você controla o andamento da aula.</p>
+                      </div>
+                    </div>
+                    
+                    {/* Indicadores Compactos */}
+                    <div className="flex flex-wrap gap-3">
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">{currentClass.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {activeRound ? (
+                            <span className="font-medium text-primary">Rodada {activeRound.roundNumber} ativa</span>
+                          ) : (
+                            <span>Rodada {currentClass.currentRound}/{currentClass.maxRounds}</span>
+                          )}
+                        </span>
+                      </div>
                       {activeRound && (
-                        <Badge className="h-5 px-1.5 text-xs bg-green-500">Ativa</Badge>
-                      )}
-                      {rounds.filter(r => r.status === "completed").length > 0 && (
-                        <Badge variant="outline" className="h-5 px-1.5 text-xs">
-                          {rounds.filter(r => r.status === "completed").length} concl.
-                        </Badge>
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">
+                            <span className="font-medium">{submissionStats.submitted}</span> de {submissionStats.total} equipes enviaram
+                          </span>
+                        </div>
                       )}
                     </div>
-                  </TabsTrigger>
-                  <TabsTrigger value="results" className="gap-2 data-[state=active]:bg-background" data-testid="tab-results">
-                    <Trophy className="h-4 w-4" />
-                    Resultados
-                    {lastCompletedRound && (
-                      <Badge variant="outline" className="ml-1 h-5 px-1.5 text-xs">
-                        R{lastCompletedRound.roundNumber}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger value="grades" className="gap-2 data-[state=active]:bg-background" data-testid="tab-grades">
-                    <Award className="h-4 w-4" />
-                    Notas
-                    {rounds.filter(r => r.status === "completed" && r.roundNumber > 1).length > 0 && (
-                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-                        {rounds.filter(r => r.status === "completed" && r.roundNumber > 1).length}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger value="access-logs" className="gap-2 data-[state=active]:bg-background" data-testid="tab-access-logs">
-                    <AlertCircle className="h-4 w-4" />
-                    Acessos
-                  </TabsTrigger>
-                  <TabsTrigger value="email" className="gap-2 data-[state=active]:bg-background" data-testid="tab-email">
-                    <Mail className="h-4 w-4" />
-                    Emails
-                  </TabsTrigger>
-                </TabsList>
 
-                {/* ======== ABA: VISÃO GERAL ======== */}
-                <TabsContent value="overview" className="mt-6 space-y-6">
+                    {/* Alerta de equipes pendentes */}
+                    {activeRound && submissionStats.pending.length > 0 && submissionStats.pending.length <= 3 && (
+                      <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span>Aguardando: {submissionStats.pending.join(", ")}</span>
+                      </div>
+                    )}
+                    {activeRound && submissionStats.pending.length > 3 && (
+                      <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span>{submissionStats.pending.length} equipes ainda não enviaram</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Ação Principal */}
+                  <div className="flex flex-col items-center lg:items-end gap-3">
+                    <p className="text-sm text-muted-foreground font-medium">Qual é a próxima ação?</p>
+                    {classState.action && (
+                      <>
+                        {classState.action.type === "start_round" && (
+                          <Button 
+                            size="lg"
+                            className="min-w-[200px] h-12 text-base"
+                            onClick={() => startRoundMutation.mutate(selectedClass)}
+                            disabled={startRoundMutation.isPending}
+                            data-testid="button-main-action"
+                          >
+                            {startRoundMutation.isPending ? (
+                              <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                            ) : (
+                              <Play className="h-5 w-5 mr-2" />
+                            )}
+                            {classState.action.label}
+                          </Button>
+                        )}
+                        {classState.action.type === "end_round" && activeRound && (
+                          <Button 
+                            size="lg"
+                            variant="destructive"
+                            className="min-w-[200px] h-12 text-base"
+                            onClick={() => endRoundMutation.mutate(activeRound.id)}
+                            disabled={endRoundMutation.isPending}
+                            data-testid="button-main-action"
+                          >
+                            {endRoundMutation.isPending ? (
+                              <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                            ) : (
+                              <Pause className="h-5 w-5 mr-2" />
+                            )}
+                            {classState.action.label}
+                          </Button>
+                        )}
+                        {classState.action.tab && (
+                          <Button 
+                            size="lg"
+                            className="min-w-[200px] h-12 text-base"
+                            onClick={() => setActiveTab(classState.action!.tab!)}
+                            data-testid="button-main-action"
+                          >
+                            {classState.action.tab === "acompanhar" && <Users className="h-5 w-5 mr-2" />}
+                            {classState.action.tab === "analisar" && <BarChart3 className="h-5 w-5 mr-2" />}
+                            {classState.action.label}
+                          </Button>
+                        )}
+                      </>
+                    )}
+                    <Badge variant="outline" className="text-xs">
+                      {classState.label}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* ======== NAVEGAÇÃO POR ABAS SEMÂNTICAS ======== */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="h-auto p-1 bg-muted/50 w-full justify-start">
+                <TabsTrigger value="aula" className="gap-2 data-[state=active]:bg-background" data-testid="tab-aula">
+                  <LayoutDashboard className="h-4 w-4" />
+                  Aula
+                </TabsTrigger>
+                <TabsTrigger value="acompanhar" className="gap-2 data-[state=active]:bg-background" data-testid="tab-acompanhar">
+                  <Users className="h-4 w-4" />
+                  Acompanhar
+                  {activeRound && submissionStats.pending.length > 0 && (
+                    <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-xs">{submissionStats.pending.length}</Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="analisar" className="gap-2 data-[state=active]:bg-background" data-testid="tab-analisar">
+                  <Trophy className="h-4 w-4" />
+                  Analisar
+                  {lastCompletedRound && (
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">R{lastCompletedRound.roundNumber}</Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="configurar" className="gap-2 data-[state=active]:bg-background" data-testid="tab-configurar">
+                  <Settings className="h-4 w-4" />
+                  Configurar
+                </TabsTrigger>
+              </TabsList>
+
+                {/* ======== ABA: AULA (Controle do Andamento) ======== */}
+                <TabsContent value="aula" className="mt-6 space-y-6">
                   <div className="mb-4">
-                    <h2 className="text-lg font-semibold">Visão Geral da Turma</h2>
-                    <p className="text-sm text-muted-foreground">Configure parâmetros, visualize KPIs e gerencie a simulação.</p>
+                    <h2 className="text-lg font-semibold">Controle da Aula</h2>
+                    <p className="text-sm text-muted-foreground">Aqui você controla o andamento da aula e gerencia as rodadas.</p>
                   </div>
                   {/* Resumo rápido com tooltips */}
                   <div className="grid gap-4 sm:grid-cols-3">
@@ -3105,12 +3237,56 @@ export default function Professor() {
                   </Card>
                 </TabsContent>
 
-                {/* ======== ABA: EQUIPES ======== */}
-                <TabsContent value="teams" className="mt-6 space-y-6">
+                {/* ======== ABA: ACOMPANHAR (Submissões e Equipes) ======== */}
+                <TabsContent value="acompanhar" className="mt-6 space-y-6">
                   <div className="mb-4">
-                    <h2 className="text-lg font-semibold">Equipes & Alunos</h2>
-                    <p className="text-sm text-muted-foreground">Gerencie equipes, acompanhe submissões e visualize status de cada time.</p>
+                    <h2 className="text-lg font-semibold">Acompanhar Equipes</h2>
+                    <p className="text-sm text-muted-foreground">Aqui você acompanha quem já enviou e quem precisa de atenção.</p>
                   </div>
+                  
+                  {/* Resumo de Submissões */}
+                  {activeRound && (
+                    <Card className="border-l-4 border-l-primary">
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <h3 className="font-semibold flex items-center gap-2">
+                              <CircleDot className="h-5 w-5 text-primary animate-pulse" />
+                              Rodada {activeRound.roundNumber} em andamento
+                            </h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {submissionStats.submitted} de {submissionStats.total} equipes enviaram suas decisões
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-3xl font-bold text-primary">{Math.round((submissionStats.submitted / Math.max(submissionStats.total, 1)) * 100)}%</div>
+                            <p className="text-xs text-muted-foreground">concluído</p>
+                          </div>
+                        </div>
+                        <Progress value={(submissionStats.submitted / Math.max(submissionStats.total, 1)) * 100} className="mt-4 h-2" />
+                        
+                        {/* Equipes pendentes */}
+                        {submissionStats.pending.length > 0 && (
+                          <div className="mt-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                            <p className="text-sm font-medium text-amber-800 dark:text-amber-200 flex items-center gap-2">
+                              <AlertTriangle className="h-4 w-4" />
+                              Equipes sem envio: {submissionStats.pending.join(", ")}
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                  
+                  {!activeRound && (
+                    <Card className="border-dashed">
+                      <CardContent className="py-8 text-center">
+                        <CirclePause className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                        <p className="text-muted-foreground">Nenhuma rodada ativa no momento</p>
+                        <p className="text-sm text-muted-foreground mt-1">Inicie uma rodada para acompanhar as submissões</p>
+                      </CardContent>
+                    </Card>
+                  )}
                   {/* Barra de busca e ações */}
                   <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                     <div className="relative flex-1 max-w-sm">
@@ -3296,12 +3472,19 @@ export default function Professor() {
                   )}
                 </TabsContent>
 
-                {/* ======== ABA: RODADAS ======== */}
-                <TabsContent value="rounds" className="mt-6 space-y-6">
+                {/* ======== ABA: CONFIGURAR ======== */}
+                <TabsContent value="configurar" className="mt-6 space-y-6">
                   <div className="mb-4">
-                    <h2 className="text-lg font-semibold">Central de Rodadas</h2>
-                    <p className="text-sm text-muted-foreground">Inicie, encerre e processe rodadas. Acompanhe o progresso da simulação.</p>
+                    <h2 className="text-lg font-semibold">Configurações da Turma</h2>
+                    <p className="text-sm text-muted-foreground">Aqui você gerencia rodadas, eventos, acessos e comunicações.</p>
                   </div>
+                  
+                  {/* Seção: Gerenciamento de Rodadas */}
+                  <div className="space-y-4">
+                    <h3 className="text-base font-medium flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Gerenciamento de Rodadas
+                    </h3>
                   <RoundsTimeline
                     rounds={rounds}
                     activeRound={activeRound}
@@ -3406,13 +3589,46 @@ export default function Professor() {
                       </CardContent>
                     </Card>
                   )}
+
+                  {/* Seção: Relatório de Acessos */}
+                  <Collapsible className="border rounded-lg">
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" className="w-full justify-between p-4 h-auto" data-testid="button-expand-access-logs">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="h-5 w-5" />
+                          <span className="font-medium">Relatório de Acessos</span>
+                        </div>
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="px-4 pb-4">
+                      <AccessLogsReport classId={selectedClass} rounds={rounds} teams={teams} />
+                    </CollapsibleContent>
+                  </Collapsible>
+
+                  {/* Seção: Comunicação por Email */}
+                  <Collapsible className="border rounded-lg">
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" className="w-full justify-between p-4 h-auto" data-testid="button-expand-email">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-5 w-5" />
+                          <span className="font-medium">Enviar Email para Equipes</span>
+                        </div>
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="px-4 pb-4">
+                      <SendEmailToTeams classId={selectedClass} teams={teams} className={currentClass.name} />
+                    </CollapsibleContent>
+                  </Collapsible>
+                  </div>
                 </TabsContent>
 
-                {/* ======== ABA: RESULTADOS ======== */}
-                <TabsContent value="results" className="mt-6 space-y-6">
+                {/* ======== ABA: ANALISAR (Resultados, Rankings, Notas) ======== */}
+                <TabsContent value="analisar" className="mt-6 space-y-6">
                   <div className="mb-4">
-                    <h2 className="text-lg font-semibold">Resultados & Rankings</h2>
-                    <p className="text-sm text-muted-foreground">Visualize rankings, compare desempenho entre equipes e exporte relatórios.</p>
+                    <h2 className="text-lg font-semibold">Analisar Resultados</h2>
+                    <p className="text-sm text-muted-foreground">Aqui você analisa o desempenho após encerrar a rodada.</p>
                   </div>
                   {/* Ranking */}
                   {rankingResults.length > 0 && lastCompletedRound && (
@@ -3490,41 +3706,26 @@ export default function Professor() {
                       <p className="text-sm text-muted-foreground mt-1">Os resultados aparecerão após a primeira rodada ser encerrada</p>
                     </div>
                   )}
-                </TabsContent>
 
-                {/* ======== ABA: NOTAS ======== */}
-                <TabsContent value="grades" className="mt-6 space-y-6">
-                  <div className="mb-4">
-                    <h2 className="text-lg font-semibold">Sistema de Notas</h2>
-                    <p className="text-sm text-muted-foreground">Avalie o desempenho das equipes com base nos KPIs e resultados.</p>
-                  </div>
-                  <GradesRanking 
-                    classId={selectedClass} 
-                    teams={teams} 
-                    rounds={rounds}
-                    users={users}
-                  />
-                </TabsContent>
-
-                {/* ======== ABA: RELATÓRIO DE ACESSOS ======== */}
-                <TabsContent value="access-logs" className="mt-6 space-y-6">
-                  <div className="mb-4">
-                    <h2 className="text-lg font-semibold">Relatório de Acessos</h2>
-                    <p className="text-sm text-muted-foreground">Monitore a atividade dos alunos e auditoria de acessos por rodada.</p>
-                  </div>
-                  <AccessLogsReport classId={selectedClass} rounds={rounds} teams={teams} />
-                </TabsContent>
-
-                {/* ======== ABA: ENVIO DE EMAILS ======== */}
-                <TabsContent value="email" className="mt-6 space-y-6">
-                  <div className="mb-4">
-                    <h2 className="text-lg font-semibold">Comunicação por Email</h2>
-                    <p className="text-sm text-muted-foreground">Envie mensagens e lembretes para as equipes da turma.</p>
-                  </div>
-                  <SendEmailToTeams classId={selectedClass} teams={teams} className={currentClass.name} />
+                  {/* Sistema de Notas */}
+                  {rounds.filter(r => r.status === "completed" && r.roundNumber > 1).length > 0 && (
+                    <>
+                      <div className="pt-4 border-t">
+                        <h3 className="text-base font-medium flex items-center gap-2 mb-4">
+                          <Award className="h-5 w-5" />
+                          Sistema de Notas
+                        </h3>
+                      </div>
+                      <GradesRanking 
+                        classId={selectedClass} 
+                        teams={teams} 
+                        rounds={rounds}
+                        users={users}
+                      />
+                    </>
+                  )}
                 </TabsContent>
               </Tabs>
-            </div>
           </>
         )}
       </div>
