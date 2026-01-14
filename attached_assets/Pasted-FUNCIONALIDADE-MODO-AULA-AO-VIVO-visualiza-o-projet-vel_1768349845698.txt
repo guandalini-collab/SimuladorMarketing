@@ -1,0 +1,79 @@
+FUNCIONALIDADE: MODO AULA AO VIVO (visualização projetável)
+
+CONTEXTO
+O painel do professor já está organizado por fluxo (Aula / Acompanhar / Analisar / Configurar).
+Quero um MODO DE VISUALIZAÇÃO para uso em sala, com projetor.
+
+OBJETIVO
+Criar um “Modo Aula ao Vivo” que:
+- Mostre apenas informações agregadas e pedagógicas
+- Oculte qualquer ação administrativa ou dado sensível
+- Seja ativado/desativado por um botão (toggle)
+
+REGRAS
+- Não criar nova lógica de negócio.
+- Não criar novos endpoints (reutilizar dados existentes).
+- Não adicionar dependências.
+- Somente renderização condicional no frontend.
+
+────────────────────────
+TAREFA A — Ativação do Modo
+────────────────────────
+1) No Painel do Professor, adicionar botão:
+   “Entrar em Modo Aula ao Vivo”
+2) Implementar estado local:
+   isLiveClassMode: boolean
+
+────────────────────────
+TAREFA B — Layout do Modo Aula ao Vivo
+────────────────────────
+Quando isLiveClassMode=true, renderizar uma tela limpa com:
+
+TOPO:
+- Turma selecionada
+- Rodada atual + status
+
+CENTRO:
+- Progresso agregado:
+  “X de Y equipes já enviaram decisões”
+
+BLOCO DE MERCADO (agregado):
+- Tendências gerais:
+  - Receita média ↑ / ↓
+  - Pressão de preços ↑ / ↓
+  - Nível de concorrência
+(NUNCA mostrar valores por equipe)
+
+RODAPÉ:
+- Mensagem de status:
+  “Aguardando equipes finalizarem” ou
+  “Resultados sendo processados”
+
+────────────────────────
+TAREFA C — O que DEVE ser ocultado
+────────────────────────
+Quando em Modo Aula ao Vivo, ocultar completamente:
+- Botões de encerrar rodada
+- Configurações
+- Eventos editáveis
+- Notas
+- Rankings detalhados
+- Decisões por equipe
+- Emails e acessos
+
+────────────────────────
+TAREFA D — Saída segura
+────────────────────────
+- Botão discreto:
+  “Sair do Modo Aula ao Vivo”
+- Retorna ao painel normal exatamente onde o professor estava.
+
+VALIDAÇÃO
+- Tela segura para projeção
+- Nenhum dado sensível visível
+- Leitura clara a distância
+
+ENTREGA
+- Arquivos alterados
+- Screenshot textual do layout final
+- Lista do que fica oculto vs visível

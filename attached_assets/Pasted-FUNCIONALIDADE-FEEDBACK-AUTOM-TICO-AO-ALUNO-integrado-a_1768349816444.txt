@@ -1,0 +1,87 @@
+FUNCIONALIDADE: FEEDBACK AUTOMÁTICO AO ALUNO (integrado à aba “Analisar”)
+
+CONTEXTO
+O sistema já possui:
+- Resultados por rodada
+- Engine V2 com simulationBreakdown, competitorResponse e eventImpacts
+- Aba “Analisar” no painel do professor
+Quero aproveitar esses dados para gerar FEEDBACK PEDAGÓGICO AUTOMÁTICO ao aluno.
+
+OBJETIVO
+Para cada equipe e rodada, gerar um feedback claro, estruturado e acionável:
+1) O que aconteceu
+2) Por que aconteceu
+3) O que fazer na próxima rodada
+
+REGRAS
+- Não usar LLM externo (usar regras determinísticas).
+- Não inventar dados.
+- Linguagem em PT-BR, clara e didática.
+- Cada feedback deve citar pelo menos 1 trade-off (ex.: margem x volume).
+- Funcionar mesmo se o Engine V2 estiver desligado (fallback simples).
+
+────────────────────────
+TAREFA A — Engine de Feedback
+────────────────────────
+1) Criar um módulo:
+   server/feedback/feedbackEngine.ts
+
+2) Função principal:
+generateRoundFeedback({
+  previousResult,
+  currentResult,
+  decisions,
+  simulationBreakdown,
+  competitorResponse,
+  eventImpacts
+}) -> {
+  summary: string,
+  whatHappened: string[],
+  whyItHappened: string[],
+  recommendations: Array<{
+    area: "Produto" | "Preço" | "Praça" | "Promoção",
+    action: string,
+    rationale: string,
+    tradeoff: string
+  }>
+}
+
+3) Lógica mínima:
+- Ordenar simulationBreakdown por impacto (deltaProfit).
+- Usar os 2–3 maiores drivers para explicar o resultado.
+- Gerar recomendações baseadas em regras simples:
+  - priceEffect negativo + elasticidade alta → revisar preço
+  - promoEffect saturado → redistribuir promoção
+  - competitorEffect negativo → diferenciar produto/praça
+  - eventEffect positivo → aproveitar tendência
+
+────────────────────────
+TAREFA B — Persistência
+────────────────────────
+- Se já existir local para feedback, reutilizar.
+- Caso contrário, salvar feedback como JSON associado a:
+  - teamId
+  - roundNumber
+
+────────────────────────
+TAREFA C — Exposição ao Aluno
+────────────────────────
+1) Na tela de Resultados do aluno, adicionar seção:
+   **“Feedback da Rodada”**
+2) Estrutura visual:
+   - Resumo (summary)
+   - O que aconteceu (bullets)
+   - Por que aconteceu (bullets)
+   - O que fazer na próxima rodada (cards por 4Ps)
+3) Feedback deve aparecer automaticamente após resultados disponíveis.
+
+────────────────────────
+TAREFA D — Integração com Aba “Analisar” (Professor)
+────────────────────────
+- Professor pode visualizar o feedback de cada equipe.
+- Mostrar apenas resumo + recomendações (sem editar).
+
+ENTREGA
+- Arquivos criados/alterados
+- Exemplo real de feedback gerado (JSON)
+- Confirmação de fallback quando V2=false

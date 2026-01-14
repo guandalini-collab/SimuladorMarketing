@@ -35,7 +35,7 @@ import {
   Building2, Settings, Trash2, LogOut, Sparkles, UserPlus, ChevronDown, ChevronUp, UserMinus, 
   DollarSign, BarChart3, Clock, RefreshCw, BookOpen, Search, Filter, Calendar, Target, 
   PieChart, Layers, GraduationCap, CircleDot, CircleCheck, CirclePause, LayoutDashboard,
-  Award, Download, Info, Medal, Star, AlertCircle, Mail, Send
+  Award, Download, Info, Medal, Star, AlertCircle, Mail, Send, MessageSquare
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -76,6 +76,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { AlignmentTeamReport } from "@/components/alignment-team-report";
+import { DeterministicFeedbackCard } from "@/components/deterministic-feedback-card";
 import {
   Accordion,
   AccordionContent,
@@ -2215,6 +2216,55 @@ function GradesRanking({
 }
 
 /* ============================================
+   COMPONENTE: Accordion de Feedback com Lazy Loading
+   ============================================ */
+function FeedbackAccordionSection({ teams, roundId }: { teams: any[]; roundId: string }) {
+  const [expandedTeamId, setExpandedTeamId] = useState<string | undefined>(undefined);
+  
+  return (
+    <Card data-testid="card-feedback-accordion">
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <MessageSquare className="h-5 w-5 text-primary" />
+          Feedback Automático por Equipe
+        </CardTitle>
+        <CardDescription>
+          Análise automática baseada nos resultados de cada equipe na rodada
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Accordion 
+          type="single" 
+          collapsible 
+          className="w-full"
+          value={expandedTeamId}
+          onValueChange={setExpandedTeamId}
+        >
+          {teams.map((team) => (
+            <AccordionItem key={team.id} value={team.id} data-testid={`accordion-item-feedback-${team.id}`}>
+              <AccordionTrigger className="hover:no-underline" data-testid={`accordion-trigger-feedback-${team.id}`}>
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  <span>{team.companyName || team.name}</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                {expandedTeamId === team.id && (
+                  <DeterministicFeedbackCard
+                    teamId={team.id}
+                    roundId={roundId}
+                  />
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ============================================
    COMPONENTE PRINCIPAL: Página do Professor
    ============================================ */
 export default function Professor() {
@@ -3696,6 +3746,14 @@ export default function Professor() {
                   {/* Relatório de Alinhamento */}
                   {teams.length > 0 && (
                     <AlignmentTeamReport classId={selectedClass} lastCompletedRound={lastCompletedRound || null} />
+                  )}
+
+                  {/* Feedback Automático por Equipe */}
+                  {teams.length > 0 && lastCompletedRound && (
+                    <FeedbackAccordionSection 
+                      teams={teams} 
+                      roundId={lastCompletedRound.id} 
+                    />
                   )}
 
                   {/* Mensagem quando não há resultados */}

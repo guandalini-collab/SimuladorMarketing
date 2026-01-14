@@ -716,3 +716,25 @@ export type InsertTeamProduct = z.infer<typeof insertTeamProductSchema>;
 export type TeamProduct = typeof teamProducts.$inferSelect;
 export type RoundAccessLog = typeof roundAccessLogs.$inferSelect;
 export type InsertRoundAccessLog = typeof roundAccessLogs.$inferInsert;
+
+export const deterministicFeedback = pgTable("deterministic_feedback", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  teamId: varchar("team_id").notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  roundId: varchar("round_id").notNull().references(() => rounds.id, { onDelete: 'cascade' }),
+  summary: text("summary").notNull(),
+  whatHappened: jsonb("what_happened").notNull(),
+  whyItHappened: jsonb("why_it_happened").notNull(),
+  recommendations: jsonb("recommendations").notNull(),
+  engineVersion: text("engine_version").notNull(),
+  createdAt: timestamp("created_at").notNull().default(sql`now()`),
+}, (table) => ({
+  teamRoundIdx: uniqueIndex("deterministic_feedback_team_round_idx").on(table.teamId, table.roundId),
+}));
+
+export const insertDeterministicFeedbackSchema = createInsertSchema(deterministicFeedback).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertDeterministicFeedback = z.infer<typeof insertDeterministicFeedbackSchema>;
+export type DeterministicFeedback = typeof deterministicFeedback.$inferSelect;

@@ -203,6 +203,12 @@ export interface IStorage {
   
   // Reset all team decisions for a round
   resetTeamDecisions(teamId: string, roundId: string): Promise<{ deletedAnalyses: number; deletedMixes: number; deletedProducts: number }>;
+  
+  // Deterministic Feedback
+  getDeterministicFeedback(teamId: string, roundId: string): Promise<any | undefined>;
+  getDeterministicFeedbacksByRound(roundId: string): Promise<any[]>;
+  createDeterministicFeedback(feedback: { teamId: string; roundId: string; summary: string; whatHappened: any; whyItHappened: any; recommendations: any; engineVersion: string }): Promise<any>;
+  deleteDeterministicFeedback(teamId: string, roundId: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -230,6 +236,7 @@ export class MemStorage implements IStorage {
   private midias: Map<string, Midia>;
   private teamProducts: Map<string, TeamProduct>;
   private roundAccessLogs: Map<string, any[]>;
+  private deterministicFeedbacks: Map<string, any>;
   private professorSeeded: Promise<void>;
 
   constructor() {
@@ -257,6 +264,7 @@ export class MemStorage implements IStorage {
     this.midias = new Map();
     this.teamProducts = new Map();
     this.roundAccessLogs = new Map();
+    this.deterministicFeedbacks = new Map();
     
     this.professorSeeded = this.seedData();
   }
@@ -1717,6 +1725,32 @@ export class MemStorage implements IStorage {
   
   async resetTeamDecisions(teamId: string, roundId: string): Promise<{ deletedAnalyses: number; deletedMixes: number; deletedProducts: number }> {
     throw new Error("resetTeamDecisions not supported in MemStorage. Use PostgreSQL.");
+  }
+
+  async getDeterministicFeedback(teamId: string, roundId: string): Promise<any | undefined> {
+    const key = `${teamId}_${roundId}`;
+    return this.deterministicFeedbacks.get(key);
+  }
+
+  async getDeterministicFeedbacksByRound(roundId: string): Promise<any[]> {
+    return Array.from(this.deterministicFeedbacks.values()).filter(f => f.roundId === roundId);
+  }
+
+  async createDeterministicFeedback(feedback: { teamId: string; roundId: string; summary: string; whatHappened: any; whyItHappened: any; recommendations: any; engineVersion: string }): Promise<any> {
+    const id = randomUUID();
+    const key = `${feedback.teamId}_${feedback.roundId}`;
+    const newFeedback = {
+      id,
+      ...feedback,
+      createdAt: new Date().toISOString(),
+    };
+    this.deterministicFeedbacks.set(key, newFeedback);
+    return newFeedback;
+  }
+
+  async deleteDeterministicFeedback(teamId: string, roundId: string): Promise<boolean> {
+    const key = `${teamId}_${roundId}`;
+    return this.deterministicFeedbacks.delete(key);
   }
 }
 

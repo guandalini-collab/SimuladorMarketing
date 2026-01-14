@@ -4619,6 +4619,166 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Deterministic Feedback - Gerado automaticamente sem LLM
+  app.get("/api/deterministic-feedback/:teamId/:roundId", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+
+    try {
+      const { teamId, roundId } = req.params;
+      
+      const team = await storage.getTeam(teamId);
+      if (!team) {
+        return res.status(404).json({ error: "Equipe não encontrada" });
+      }
+
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(401).json({ error: "Usuário não encontrado" });
+      }
+
+      if (user.role === "equipe" && !team.memberIds.includes(req.session.userId)) {
+        return res.status(403).json({ error: "Você não faz parte desta equipe" });
+      }
+
+      let feedback = await storage.getDeterministicFeedback(teamId, roundId);
+      
+      // Se não existe, gera automaticamente
+      if (!feedback) {
+        const round = await storage.getRound(roundId);
+        if (!round || round.status !== "completed") {
+          // Retorna null em vez de 404 para o fetcher padrão do TanStack Query
+          return res.json(null);
+        }
+
+        const result = await storage.getResult(teamId, roundId);
+        if (!result) {
+          // Retorna null em vez de 404 para o fetcher padrão do TanStack Query
+          return res.json(null);
+        }
+
+        // Busca resultado anterior se existir
+        const previousResult = await storage.getPreviousRoundResult(teamId, roundId);
+
+        const { generateRoundFeedback, generateFallbackFeedback } = await import("./feedback/feedbackEngine");
+        
+        let generatedFeedback;
+        
+        if (result.simulationBreakdown || result.competitorResponse || result.eventImpacts) {
+          generatedFeedback = generateRoundFeedback({
+            previousResult: previousResult || null,
+            currentResult: result,
+            simulationBreakdown: result.simulationBreakdown as any,
+            competitorResponse: result.competitorResponse as any,
+            eventImpacts: result.eventImpacts as any[],
+            roundNumber: round.roundNumber,
+            teamName: team.name,
+          });
+        } else {
+          generatedFeedback = generateFallbackFeedback(result, round.roundNumber, team.name);
+        }
+
+        feedback = await storage.createDeterministicFeedback({
+          teamId,
+          roundId,
+          summary: generatedFeedback.summary,
+          whatHappened: generatedFeedback.whatHappened,
+          whyItHappened: generatedFeedback.whyItHappened,
+          recommendations: generatedFeedback.recommendations,
+          engineVersion: generatedFeedback.engineVersion,
+        });
+      }
+
+      res.json(feedback);
+    } catch (error: any) {
+      console.error("Erro ao buscar feedback determinístico:", error);
+      res.status(500).json({ error: error.message || "Erro ao buscar feedback" });
+    }
+  });
+
+  // Endpoint para professor visualizar todos os feedbacks de uma rodada
+  app.get("/api/deterministic-feedback/round/:roundId", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== "professor") {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+
+      const { roundId } = req.params;
+      const feedbacks = await storage.getDeterministicFeedbacksByRound(roundId);
+      res.json(feedbacks);
+    } catch (error: any) {
+      console.error("Erro ao buscar feedbacks da rodada:", error);
+      res.status(500).json({ error: error.message || "Erro ao buscar feedbacks" });
+    }
+  });
+
+  // Endpoint para regenerar feedback determinístico
+  app.post("/api/deterministic-feedback/regenerate/:teamId/:roundId", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+
+    try {
+      const { teamId, roundId } = req.params;
+      
+      const team = await storage.getTeam(teamId);
+      if (!team) {
+        return res.status(404).json({ error: "Equipe não encontrada" });
+      }
+
+      const round = await storage.getRound(roundId);
+      if (!round || round.status !== "completed") {
+        return res.status(404).json({ error: "Resultados não disponíveis para esta rodada" });
+      }
+
+      const result = await storage.getResult(teamId, roundId);
+      if (!result) {
+        return res.status(404).json({ error: "Resultados não encontrados" });
+      }
+
+      const previousResult = await storage.getPreviousRoundResult(teamId, roundId);
+
+      const { generateRoundFeedback, generateFallbackFeedback } = await import("./feedback/feedbackEngine");
+      
+      let generatedFeedback;
+      
+      if (result.simulationBreakdown || result.competitorResponse || result.eventImpacts) {
+        generatedFeedback = generateRoundFeedback({
+          previousResult: previousResult || null,
+          currentResult: result,
+          simulationBreakdown: result.simulationBreakdown as any,
+          competitorResponse: result.competitorResponse as any,
+          eventImpacts: result.eventImpacts as any[],
+          roundNumber: round.roundNumber,
+          teamName: team.name,
+        });
+      } else {
+        generatedFeedback = generateFallbackFeedback(result, round.roundNumber, team.name);
+      }
+
+      const feedback = await storage.createDeterministicFeedback({
+        teamId,
+        roundId,
+        summary: generatedFeedback.summary,
+        whatHappened: generatedFeedback.whatHappened,
+        whyItHappened: generatedFeedback.whyItHappened,
+        recommendations: generatedFeedback.recommendations,
+        engineVersion: generatedFeedback.engineVersion,
+      });
+
+      res.json(feedback);
+    } catch (error: any) {
+      console.error("Erro ao regenerar feedback:", error);
+      res.status(500).json({ error: error.message || "Erro ao regenerar feedback" });
+    }
+  });
+
   app.get("/api/products/class/:classId", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });

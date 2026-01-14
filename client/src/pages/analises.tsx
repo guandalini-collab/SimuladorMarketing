@@ -25,6 +25,7 @@ import { KPICard } from "@/components/kpi-card";
 import { AlignmentScoreCard } from "@/components/alignment-score-card";
 import { BcgMatrixChart } from "@/components/bcg-matrix-chart";
 import { AiFeedbackCard } from "@/components/ai-feedback-card";
+import { DeterministicFeedbackCard } from "@/components/deterministic-feedback-card";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -562,7 +563,12 @@ export default function Analises() {
             <BcgMatrixChart teamId={team.id} roundId={lastCompletedRound.id} />
           )}
 
-          {/* AI Feedback */}
+          {/* Feedback Automático Determinístico */}
+          {team && lastCompletedRound && (
+            <DeterministicFeedbackCard teamId={team.id} roundId={lastCompletedRound.id} />
+          )}
+
+          {/* AI Feedback (Gerado por LLM) */}
           {team && lastCompletedRound && (
             <AiFeedbackCard teamId={team.id} roundId={lastCompletedRound.id} />
           )}

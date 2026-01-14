@@ -64,6 +64,8 @@ import {
   midias,
   teamProducts,
   roundAccessLogs,
+  deterministicFeedback,
+  type DeterministicFeedback,
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 
@@ -1259,5 +1261,49 @@ export class PgStorage implements IStorage {
       deletedMixes: deletedMixes.length,
       deletedProducts: deletedProducts.length
     };
+  }
+
+  async getDeterministicFeedback(teamId: string, roundId: string): Promise<DeterministicFeedback | undefined> {
+    const result = await db.select().from(deterministicFeedback)
+      .where(and(
+        eq(deterministicFeedback.teamId, teamId),
+        eq(deterministicFeedback.roundId, roundId)
+      ))
+      .limit(1);
+    return result[0];
+  }
+
+  async getDeterministicFeedbacksByRound(roundId: string): Promise<DeterministicFeedback[]> {
+    return db.select().from(deterministicFeedback)
+      .where(eq(deterministicFeedback.roundId, roundId));
+  }
+
+  async createDeterministicFeedback(feedback: { teamId: string; roundId: string; summary: string; whatHappened: any; whyItHappened: any; recommendations: any; engineVersion: string }): Promise<DeterministicFeedback> {
+    const existing = await this.getDeterministicFeedback(feedback.teamId, feedback.roundId);
+    if (existing) {
+      const updated = await db.update(deterministicFeedback)
+        .set({
+          summary: feedback.summary,
+          whatHappened: feedback.whatHappened,
+          whyItHappened: feedback.whyItHappened,
+          recommendations: feedback.recommendations,
+          engineVersion: feedback.engineVersion,
+        })
+        .where(eq(deterministicFeedback.id, existing.id))
+        .returning();
+      return updated[0];
+    }
+    const result = await db.insert(deterministicFeedback).values(feedback).returning();
+    return result[0];
+  }
+
+  async deleteDeterministicFeedback(teamId: string, roundId: string): Promise<boolean> {
+    const result = await db.delete(deterministicFeedback)
+      .where(and(
+        eq(deterministicFeedback.teamId, teamId),
+        eq(deterministicFeedback.roundId, roundId)
+      ))
+      .returning();
+    return result.length > 0;
   }
 }
