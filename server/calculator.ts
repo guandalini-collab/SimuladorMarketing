@@ -945,8 +945,8 @@ export function applyStrategicImpacts(
     adjustedKPIs.razaoLtvCac = adjustedKPIs.cac > 0 ? adjustedKPIs.ltv / adjustedKPIs.cac : 0;
   }
   
-  // Arredondar todos os valores
-  return addAccountingDefaults({
+  // Arredondar todos os valores incluindo DRE e Balanço
+  return {
     revenue: Math.round(adjustedKPIs.revenue * 100) / 100,
     costs: Math.round(adjustedKPIs.costs * 100) / 100,
     profit: Math.round(adjustedKPIs.profit * 100) / 100,
@@ -966,7 +966,39 @@ export function applyStrategicImpacts(
     margemContribuicao: Math.round(adjustedKPIs.margemContribuicao * 100) / 100,
     receitaBruta: Math.round(adjustedKPIs.receitaBruta * 100) / 100,
     receitaLiquida: Math.round(adjustedKPIs.receitaLiquida * 100) / 100,
-  });
+    impostos: Math.round((adjustedKPIs.impostos ?? 0) * 100) / 100,
+    devolucoes: Math.round((adjustedKPIs.devolucoes ?? 0) * 100) / 100,
+    descontos: Math.round((adjustedKPIs.descontos ?? 0) * 100) / 100,
+    cpv: Math.round((adjustedKPIs.cpv ?? 0) * 100) / 100,
+    lucroBruto: Math.round((adjustedKPIs.lucroBruto ?? 0) * 100) / 100,
+    despesasVendas: Math.round((adjustedKPIs.despesasVendas ?? 0) * 100) / 100,
+    despesasAdmin: Math.round((adjustedKPIs.despesasAdmin ?? 0) * 100) / 100,
+    despesasFinanc: Math.round((adjustedKPIs.despesasFinanc ?? 0) * 100) / 100,
+    outrasDespesas: Math.round((adjustedKPIs.outrasDespesas ?? 0) * 100) / 100,
+    ebitda: Math.round((adjustedKPIs.ebitda ?? 0) * 100) / 100,
+    depreciacao: Math.round((adjustedKPIs.depreciacao ?? 0) * 100) / 100,
+    lair: Math.round((adjustedKPIs.lair ?? 0) * 100) / 100,
+    irCsll: Math.round((adjustedKPIs.irCsll ?? 0) * 100) / 100,
+    lucroLiquido: Math.round((adjustedKPIs.lucroLiquido ?? 0) * 100) / 100,
+    caixa: Math.round((adjustedKPIs.caixa ?? 0) * 100) / 100,
+    contasReceber: Math.round((adjustedKPIs.contasReceber ?? 0) * 100) / 100,
+    estoques: Math.round((adjustedKPIs.estoques ?? 0) * 100) / 100,
+    ativoCirculante: Math.round((adjustedKPIs.ativoCirculante ?? 0) * 100) / 100,
+    imobilizado: Math.round((adjustedKPIs.imobilizado ?? 0) * 100) / 100,
+    intangivel: Math.round((adjustedKPIs.intangivel ?? 0) * 100) / 100,
+    ativoNaoCirculante: Math.round((adjustedKPIs.ativoNaoCirculante ?? 0) * 100) / 100,
+    ativoTotal: Math.round((adjustedKPIs.ativoTotal ?? 0) * 100) / 100,
+    fornecedores: Math.round((adjustedKPIs.fornecedores ?? 0) * 100) / 100,
+    obrigFiscais: Math.round((adjustedKPIs.obrigFiscais ?? 0) * 100) / 100,
+    outrasObrig: Math.round((adjustedKPIs.outrasObrig ?? 0) * 100) / 100,
+    passivoCirculante: Math.round((adjustedKPIs.passivoCirculante ?? 0) * 100) / 100,
+    financiamentosLP: Math.round((adjustedKPIs.financiamentosLP ?? 0) * 100) / 100,
+    passivoNaoCirculante: Math.round((adjustedKPIs.passivoNaoCirculante ?? 0) * 100) / 100,
+    capitalSocial: Math.round((adjustedKPIs.capitalSocial ?? 0) * 100) / 100,
+    lucrosAcumulados: Math.round((adjustedKPIs.lucrosAcumulados ?? 0) * 100) / 100,
+    patrimonioLiquido: Math.round((adjustedKPIs.patrimonioLiquido ?? 0) * 100) / 100,
+    passivoPlTotal: Math.round((adjustedKPIs.passivoPlTotal ?? 0) * 100) / 100,
+  };
 }
 
 export function applyAlignmentPenalties(
@@ -1006,7 +1038,7 @@ export function applyAlignmentPenalties(
   // Aplicar clamp de ROI após alignment penalties
   applyROIClamp(penalizedKPIs, kpis, priceValue);
   
-  const roundedKPIs: ResultCoreMetrics = addAccountingDefaults({
+  const roundedKPIs: ResultCoreMetrics = {
     revenue: Math.round(penalizedKPIs.revenue * 100) / 100,
     costs: Math.round(penalizedKPIs.costs * 100) / 100,
     profit: Math.round(penalizedKPIs.profit * 100) / 100,
@@ -1026,7 +1058,39 @@ export function applyAlignmentPenalties(
     margemContribuicao: Math.round(penalizedKPIs.margemContribuicao * 100) / 100,
     receitaBruta: Math.round(penalizedKPIs.receitaBruta * 100) / 100,
     receitaLiquida: Math.round(penalizedKPIs.receitaLiquida * 100) / 100,
-  });
+    impostos: Math.round((penalizedKPIs.impostos ?? 0) * 100) / 100,
+    devolucoes: Math.round((penalizedKPIs.devolucoes ?? 0) * 100) / 100,
+    descontos: Math.round((penalizedKPIs.descontos ?? 0) * 100) / 100,
+    cpv: Math.round((penalizedKPIs.cpv ?? 0) * 100) / 100,
+    lucroBruto: Math.round((penalizedKPIs.lucroBruto ?? 0) * 100) / 100,
+    despesasVendas: Math.round((penalizedKPIs.despesasVendas ?? 0) * 100) / 100,
+    despesasAdmin: Math.round((penalizedKPIs.despesasAdmin ?? 0) * 100) / 100,
+    despesasFinanc: Math.round((penalizedKPIs.despesasFinanc ?? 0) * 100) / 100,
+    outrasDespesas: Math.round((penalizedKPIs.outrasDespesas ?? 0) * 100) / 100,
+    ebitda: Math.round((penalizedKPIs.ebitda ?? 0) * 100) / 100,
+    depreciacao: Math.round((penalizedKPIs.depreciacao ?? 0) * 100) / 100,
+    lair: Math.round((penalizedKPIs.lair ?? 0) * 100) / 100,
+    irCsll: Math.round((penalizedKPIs.irCsll ?? 0) * 100) / 100,
+    lucroLiquido: Math.round((penalizedKPIs.lucroLiquido ?? 0) * 100) / 100,
+    caixa: Math.round((penalizedKPIs.caixa ?? 0) * 100) / 100,
+    contasReceber: Math.round((penalizedKPIs.contasReceber ?? 0) * 100) / 100,
+    estoques: Math.round((penalizedKPIs.estoques ?? 0) * 100) / 100,
+    ativoCirculante: Math.round((penalizedKPIs.ativoCirculante ?? 0) * 100) / 100,
+    imobilizado: Math.round((penalizedKPIs.imobilizado ?? 0) * 100) / 100,
+    intangivel: Math.round((penalizedKPIs.intangivel ?? 0) * 100) / 100,
+    ativoNaoCirculante: Math.round((penalizedKPIs.ativoNaoCirculante ?? 0) * 100) / 100,
+    ativoTotal: Math.round((penalizedKPIs.ativoTotal ?? 0) * 100) / 100,
+    fornecedores: Math.round((penalizedKPIs.fornecedores ?? 0) * 100) / 100,
+    obrigFiscais: Math.round((penalizedKPIs.obrigFiscais ?? 0) * 100) / 100,
+    outrasObrig: Math.round((penalizedKPIs.outrasObrig ?? 0) * 100) / 100,
+    passivoCirculante: Math.round((penalizedKPIs.passivoCirculante ?? 0) * 100) / 100,
+    financiamentosLP: Math.round((penalizedKPIs.financiamentosLP ?? 0) * 100) / 100,
+    passivoNaoCirculante: Math.round((penalizedKPIs.passivoNaoCirculante ?? 0) * 100) / 100,
+    capitalSocial: Math.round((penalizedKPIs.capitalSocial ?? 0) * 100) / 100,
+    lucrosAcumulados: Math.round((penalizedKPIs.lucrosAcumulados ?? 0) * 100) / 100,
+    patrimonioLiquido: Math.round((penalizedKPIs.patrimonioLiquido ?? 0) * 100) / 100,
+    passivoPlTotal: Math.round((penalizedKPIs.passivoPlTotal ?? 0) * 100) / 100,
+  };
   
   return {
     kpis: roundedKPIs,

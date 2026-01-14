@@ -16,11 +16,12 @@ import {
   PolarRadiusAxis,
   Radar,
 } from "recharts";
-import { TrendingUp, DollarSign, TrendingDown, Award, Users, Heart, Target, Sparkles, Percent, ShoppingCart, TrendingUpDown, Star, Clock, BarChart3, Coins, Download, FileSpreadsheet, Building2 } from "lucide-react";
+import { TrendingUp, DollarSign, TrendingDown, Award, Users, Heart, Target, Sparkles, Percent, ShoppingCart, TrendingUpDown, Star, Clock, BarChart3, Coins, Download, FileSpreadsheet, Building2, ChevronDown, Wallet, Receipt, Scale } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { KPICard } from "@/components/kpi-card";
 import { AlignmentScoreCard } from "@/components/alignment-score-card";
 import { BcgMatrixChart } from "@/components/bcg-matrix-chart";
@@ -447,6 +448,265 @@ export default function Analises() {
               testId="text-loyalty"
             />
           </div>
+
+          {/* KPIs Completos - Seção Colapsável */}
+          <Accordion type="single" collapsible className="w-full" data-testid="accordion-kpis-completos">
+            <AccordionItem value="kpis-completos" className="border rounded-lg">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline" data-testid="accordion-trigger-kpis-completos">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-lg font-semibold">KPIs Completos</h3>
+                    <p className="text-sm text-muted-foreground">Clientes, DRE e Balanço Patrimonial detalhados</p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-6">
+                <div className="space-y-6">
+                  {/* Grupo: Clientes */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-5 w-5 text-primary" />
+                      <h4 className="text-base font-semibold">Indicadores de Clientes</h4>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-4">
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-cac">
+                        <p className="text-sm text-muted-foreground">CAC</p>
+                        <p className="text-xl font-bold">
+                          {(currentResult.cac ?? 0) > 0 
+                            ? `R$ ${currentResult.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
+                            : <span className="text-muted-foreground">R$ 0,00</span>}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-ltv">
+                        <p className="text-sm text-muted-foreground">LTV</p>
+                        <p className="text-xl font-bold">
+                          {(currentResult.ltv ?? 0) > 0 
+                            ? `R$ ${currentResult.ltv.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
+                            : <span className="text-muted-foreground">R$ 0,00</span>}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-razao-ltv-cac">
+                        <p className="text-sm text-muted-foreground">LTV/CAC</p>
+                        <p className="text-xl font-bold">
+                          {(currentResult.razaoLtvCac ?? 0) > 0 
+                            ? currentResult.razaoLtvCac.toFixed(2) 
+                            : <span className="text-muted-foreground">0,00</span>}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-taxa-conversao">
+                        <p className="text-sm text-muted-foreground">Taxa de Conversão</p>
+                        <p className="text-xl font-bold">
+                          {(currentResult.taxaConversao ?? 0) > 0 
+                            ? `${currentResult.taxaConversao.toFixed(1)}%` 
+                            : <span className="text-muted-foreground">0,0%</span>}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-ticket-medio">
+                        <p className="text-sm text-muted-foreground">Ticket Médio</p>
+                        <p className="text-xl font-bold">
+                          {(currentResult.ticketMedio ?? 0) > 0 
+                            ? `R$ ${currentResult.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
+                            : <span className="text-muted-foreground">R$ 0,00</span>}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-nps">
+                        <p className="text-sm text-muted-foreground">NPS</p>
+                        <p className="text-xl font-bold">
+                          {(currentResult.nps ?? 0) !== 0 
+                            ? currentResult.nps.toFixed(0) 
+                            : <span className="text-muted-foreground">0</span>}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-tempo-conversao">
+                        <p className="text-sm text-muted-foreground">Tempo Médio Conversão</p>
+                        <p className="text-xl font-bold">
+                          {(currentResult.tempoMedioConversao ?? 0) > 0 
+                            ? `${currentResult.tempoMedioConversao.toFixed(1)} dias` 
+                            : <span className="text-muted-foreground">0 dias</span>}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Grupo: DRE */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Receipt className="h-5 w-5 text-primary" />
+                      <h4 className="text-base font-semibold">DRE - Demonstração do Resultado</h4>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-4">
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-receita-bruta">
+                        <p className="text-sm text-muted-foreground">Receita Bruta</p>
+                        <p className="text-xl font-bold">
+                          R$ {(currentResult.receitaBruta ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-impostos">
+                        <p className="text-sm text-muted-foreground">(-) Impostos</p>
+                        <p className="text-xl font-bold text-destructive">
+                          R$ {(currentResult.impostos ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-receita-liquida">
+                        <p className="text-sm text-muted-foreground">Receita Líquida</p>
+                        <p className="text-xl font-bold">
+                          R$ {(currentResult.receitaLiquida ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-cpv">
+                        <p className="text-sm text-muted-foreground">(-) CPV</p>
+                        <p className="text-xl font-bold text-destructive">
+                          R$ {(currentResult.cpv ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-lucro-bruto">
+                        <p className="text-sm text-muted-foreground">Lucro Bruto</p>
+                        <p className={`text-xl font-bold ${(currentResult.lucroBruto ?? 0) >= 0 ? '' : 'text-destructive'}`}>
+                          R$ {(currentResult.lucroBruto ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-despesas-vendas">
+                        <p className="text-sm text-muted-foreground">(-) Desp. Vendas</p>
+                        <p className="text-xl font-bold text-destructive">
+                          R$ {(currentResult.despesasVendas ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-despesas-admin">
+                        <p className="text-sm text-muted-foreground">(-) Desp. Admin</p>
+                        <p className="text-xl font-bold text-destructive">
+                          R$ {(currentResult.despesasAdmin ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-ebitda">
+                        <p className="text-sm text-muted-foreground">EBITDA</p>
+                        <p className={`text-xl font-bold ${(currentResult.ebitda ?? 0) >= 0 ? '' : 'text-destructive'}`}>
+                          R$ {(currentResult.ebitda ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-depreciacao">
+                        <p className="text-sm text-muted-foreground">(-) Depreciação</p>
+                        <p className="text-xl font-bold text-destructive">
+                          R$ {(currentResult.depreciacao ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-lair">
+                        <p className="text-sm text-muted-foreground">LAIR</p>
+                        <p className={`text-xl font-bold ${(currentResult.lair ?? 0) >= 0 ? '' : 'text-destructive'}`}>
+                          R$ {(currentResult.lair ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-ir-csll">
+                        <p className="text-sm text-muted-foreground">(-) IR/CSLL</p>
+                        <p className="text-xl font-bold text-destructive">
+                          R$ {(currentResult.irCsll ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-primary/10 border-2 border-primary/20" data-testid="kpi-lucro-liquido">
+                        <p className="text-sm text-muted-foreground">Lucro Líquido</p>
+                        <p className={`text-xl font-bold ${(currentResult.lucroLiquido ?? 0) >= 0 ? 'text-chart-3' : 'text-destructive'}`}>
+                          R$ {(currentResult.lucroLiquido ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Grupo: Balanço Patrimonial */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Scale className="h-5 w-5 text-primary" />
+                      <h4 className="text-base font-semibold">Balanço Patrimonial</h4>
+                    </div>
+                    <div className="grid gap-6 lg:grid-cols-2">
+                      {/* Ativo */}
+                      <div className="space-y-3">
+                        <h5 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Ativo</h5>
+                        <div className="space-y-2">
+                          <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-caixa">
+                            <span className="text-sm">Caixa</span>
+                            <span className="font-semibold">R$ {(currentResult.caixa ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-contas-receber">
+                            <span className="text-sm">Contas a Receber</span>
+                            <span className="font-semibold">R$ {(currentResult.contasReceber ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-estoques">
+                            <span className="text-sm">Estoques</span>
+                            <span className="font-semibold">R$ {(currentResult.estoques ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-primary/5 flex justify-between border" data-testid="kpi-ativo-circulante">
+                            <span className="text-sm font-medium">Ativo Circulante</span>
+                            <span className="font-bold">R$ {(currentResult.ativoCirculante ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-imobilizado">
+                            <span className="text-sm">Imobilizado</span>
+                            <span className="font-semibold">R$ {(currentResult.imobilizado ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-intangivel">
+                            <span className="text-sm">Intangível</span>
+                            <span className="font-semibold">R$ {(currentResult.intangivel ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-primary/5 flex justify-between border" data-testid="kpi-ativo-nao-circulante">
+                            <span className="text-sm font-medium">Ativo Não Circulante</span>
+                            <span className="font-bold">R$ {(currentResult.ativoNaoCirculante ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-primary/10 flex justify-between border-2 border-primary/20" data-testid="kpi-ativo-total">
+                            <span className="text-sm font-semibold">ATIVO TOTAL</span>
+                            <span className="font-bold text-lg">R$ {(currentResult.ativoTotal ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Passivo + PL */}
+                      <div className="space-y-3">
+                        <h5 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Passivo + Patrimônio Líquido</h5>
+                        <div className="space-y-2">
+                          <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-fornecedores">
+                            <span className="text-sm">Fornecedores</span>
+                            <span className="font-semibold">R$ {(currentResult.fornecedores ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-obrig-fiscais">
+                            <span className="text-sm">Obrigações Fiscais</span>
+                            <span className="font-semibold">R$ {(currentResult.obrigFiscais ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-primary/5 flex justify-between border" data-testid="kpi-passivo-circulante">
+                            <span className="text-sm font-medium">Passivo Circulante</span>
+                            <span className="font-bold">R$ {(currentResult.passivoCirculante ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-financiamentos-lp">
+                            <span className="text-sm">Financiamentos LP</span>
+                            <span className="font-semibold">R$ {(currentResult.financiamentosLP ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-primary/5 flex justify-between border" data-testid="kpi-passivo-nao-circulante">
+                            <span className="text-sm font-medium">Passivo Não Circulante</span>
+                            <span className="font-bold">R$ {(currentResult.passivoNaoCirculante ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-capital-social">
+                            <span className="text-sm">Capital Social</span>
+                            <span className="font-semibold">R$ {(currentResult.capitalSocial ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-lucros-acumulados">
+                            <span className="text-sm">Lucros Acumulados</span>
+                            <span className="font-semibold">R$ {(currentResult.lucrosAcumulados ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-primary/5 flex justify-between border" data-testid="kpi-patrimonio-liquido">
+                            <span className="text-sm font-medium">Patrimônio Líquido</span>
+                            <span className="font-bold">R$ {(currentResult.patrimonioLiquido ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-primary/10 flex justify-between border-2 border-primary/20" data-testid="kpi-passivo-pl-total">
+                            <span className="text-sm font-semibold">PASSIVO + PL TOTAL</span>
+                            <span className="font-bold text-lg">R$ {(currentResult.passivoPlTotal ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
           {/* Strategic Alignment Score - Highlighted Section */}
           {team && lastCompletedRound && (

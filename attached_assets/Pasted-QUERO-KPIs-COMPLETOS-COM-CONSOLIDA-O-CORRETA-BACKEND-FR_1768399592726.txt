@@ -1,0 +1,100 @@
+QUERO KPIs COMPLETOS COM CONSOLIDAÇÃO CORRETA (BACKEND + FRONTEND)
+
+PROBLEMA ATUAL (confirmado no código):
+Em server/routes.ts, durante POST /api/rounds/:roundId/process, o objeto consolidatedKPIs preenche vários campos com 0 (cac, ltv, nps, ticketMedio, DRE e Balanço). Porém, cada produto já tem KPIs completos (calculateResults + applyStrategicImpacts). O erro é a CONSOLIDAÇÃO FINAL.
+
+OBJETIVO
+1) Consolidar TODOS os KPIs do resultado da equipe a partir dos KPIs por produto (ajustados).
+2) Remover os placeholders “0” e calcular corretamente:
+   - KPIs de performance (CAC, LTV, conversão, ticket, NPS etc.)
+   - DRE completa
+   - Balanço patrimonial (totais consistentes)
+3) Exibir “KPIs completos” na página de Análises do aluno (sem poluição: colapsável).
+
+REGRAS
+- Não inventar novos dados.
+- Não usar LLM.
+- Não adicionar dependências.
+- Manter compatibilidade com Engine V1 e V2.
+- Se algum KPI não for calculável (divisão por zero), retornar 0 de forma segura.
+
+────────────────────────────────────────
+TAREFA A — BACKEND: Consolidar KPIs por produto corretamente
+────────────────────────────────────────
+1) Em server/routes.ts, na rota POST /api/rounds/:roundId/process:
+   - Dentro do loop `for (const productMix of submittedProducts)`, após:
+     `const adjustedProductKPIs = applyStrategicImpacts(...)`
+     armazene os KPIs em um array:
+     `const productKpisList: ResultCoreMetrics[] = []`
+     `productKpisList.push(adjustedProductKPIs)`
+
+2) Substituir a construção atual de `consolidatedKPIs = { ... zeros ... }` por uma função de consolidação.
+
+3) Criar helper novo:
+   - Arquivo: server/utils/consolidateKpis.ts
+   - Função:
+     `export function consolidateKpis(productKpisList: ResultCoreMetrics[]) : ResultCoreMetrics`
+   - Estratégia de agregação:
+     A) Campos monetários (somar):
+        revenue, costs, profit,
+        receitaBruta, receitaLiquida,
+        impostos, devolucoes, descontos, cpv, lucroBruto,
+        despesasVendas, despesasAdmin, despesasFinanc, outrasDespesas,
+        ebitda, depreciacao, lair, irCsll, lucroLiquido,
+        caixa, contasReceber, estoques, imobilizado, intangivel,
+        fornecedores, obrigFiscais, outrasObrig, financiamentosLP,
+        capitalSocial, lucrosAcumulados
+     B) Campos percentuais/índices (média ponderada por revenue):
+        brandPerception, customerSatisfaction, customerLoyalty,
+        marketShare, taxaConversao, ticketMedio, nps, tempoMedioConversao,
+        cac, ltv
+        - Se soma de revenue = 0, usar média simples.
+     C) Campos derivados (recalcular a partir dos consolidados):
+        margin = profit/revenue*100 (se revenue>0)
+        roi = profit/costs*100 (se costs>0)
+        razaoLtvCac = ltv/cac (se cac>0)
+        margemContribuicao = margin (ou recalcular se existir regra específica)
+     D) Totais do balanço (recalcular para consistência):
+        ativoCirculante = caixa + contasReceber + estoques
+        ativoNaoCirculante = imobilizado + intangivel
+        ativoTotal = ativoCirculante + ativoNaoCirculante
+        passivoCirculante = fornecedores + obrigFiscais + outrasObrig
+        passivoNaoCirculante = financiamentosLP
+        patrimonioLiquido = capitalSocial + lucrosAcumulados
+        passivoPlTotal = passivoCirculante + passivoNaoCirculante + patrimonioLiquido
+
+4) Em routes.ts:
+   - Importar e usar:
+     `const consolidatedKPIs = consolidateKpis(productKpisList);`
+   - Garantir que o resultado final da equipe (storage.createResult) utilize `...consolidatedKPIs` e NÃO valores “0”.
+
+5) Validar:
+   - Rodada com 2+ produtos: CAC/LTV/NPS deixam de ser 0
+   - DRE e Balanço passam a ter totais coerentes (ativos = passivo+PL se possível; ao menos totals calculados)
+
+────────────────────────────────────────
+TAREFA B — FRONTEND: Mostrar “KPIs completos” ao aluno sem poluir
+────────────────────────────────────────
+1) Em client/src/pages/analises.tsx:
+   - Manter os 6 KPIs principais no topo (já existentes).
+   - Adicionar abaixo uma seção colapsável:
+     Título: “KPIs completos”
+     Componente: Accordion/Collapsible (shadcn/ui)
+2) Dentro do colapsável, renderizar KPIs em 3 grupos:
+   - “Clientes” (cac, ltv, taxaConversao, ticketMedio, razaoLtvCac, nps, tempoMedioConversao)
+   - “DRE” (receitaBruta, receitaLiquida, cpv, lucroBruto, despesas*, ebitda, irCsll, lucroLiquido)
+   - “Balanço” (caixa, contasReceber, estoques, ativo*, fornecedores, obrig*, passivo*, patrimonioLiquido)
+3) Formatação:
+   - Monetários: R$ com pt-BR
+   - Percentuais: 1 casa
+   - Índices/score: 0–100 quando aplicável
+4) Se algum campo vier undefined/null, mostrar 0 com estilo discreto.
+
+ENTREGA
+- Listar arquivos alterados:
+  server/routes.ts
+  server/utils/consolidateKpis.ts (novo)
+  client/src/pages/analises.tsx
+- Colar o código da função consolidateKpis
+- Colar o trecho substituído do consolidatedKPIs em routes.ts
+- Mostrar um exemplo real do JSON final de uma equipe após processar rodada (com CAC/LTV/NPS não-zero quando aplicável)

@@ -23,6 +23,7 @@ The application utilizes Shadcn/ui and Tailwind CSS for a modern, responsive int
 - **Authentication & Authorization**: Role-based access control (professor, equipe) with email validations, secure HttpOnly session cookies, and password recovery.
 - **Data Schemas**: Zod ensures data integrity.
 - **KPI Calculation**: A backend module calculates 19 key performance indicators based on student decisions, market events, and budget.
+- **KPI Consolidation System**: Multi-product KPIs are consolidated using revenue-weighted averaging for percentage metrics (marketShare, CAC, LTV, NPS, margemContribuicao) and sum aggregation for monetary fields (revenue, costs, DRE/Balance Sheet items). The frontend displays consolidated KPIs in a collapsible "KPIs Completos" accordion with three groups: Customer Metrics, DRE (Income Statement), and Balance Sheet. Implementation in `server/utils/consolidateKpis.ts`.
 - **Strategic Tools**: Implements SWOT, Porter's Five Forces, BCG Matrix, and PESTEL analysis, all mandatory before marketing mix submission and directly impacting KPIs.
 - **Progressive AI Assistance System**: Provides educational scaffolding with three levels of AI assistance that decrease over rounds to foster student autonomy.
 - **Strategic Alignment Scoring System**: Automatically calculates an alignment score between strategic analyses and marketing mix decisions, impacting financial results via KPI modifiers.

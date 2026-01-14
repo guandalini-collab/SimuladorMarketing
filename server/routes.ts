@@ -7,6 +7,7 @@ import session from "express-session";
 import bcrypt from "bcryptjs";
 import createMemoryStore from "memorystore";
 import { calculateResults, calculateMarketingSpend, applyStrategicImpacts, applyAlignmentPenalties } from "./calculator";
+import { consolidateKpis, type ResultCoreMetrics } from "./utils/consolidateKpis";
 import { marketSectors, targetAudiences, businessTypes, competitionLevels } from "./data/marketData";
 import { z } from "zod";
 import { generateMarketEvents, type EventGenerationParams } from "./services/aiEventGenerator";
@@ -1555,13 +1556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           pestel: pestel || null,
         };
 
-        let consolidatedRevenue = 0;
-        let consolidatedCosts = 0;
-        let consolidatedProfit = 0;
-        let consolidatedMarketShare = 0;
-        let weightedBrandPerception = 0;
-        let weightedCustomerSat = 0;
-        let weightedCustomerLoyalty = 0;
+        const productKpisList: ResultCoreMetrics[] = [];
 
         for (const productMix of submittedProducts) {
           const productBudget = productMix.estimatedCost || calculateMarketingSpend(productMix);
@@ -1585,14 +1580,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           const adjustedProductKPIs = applyStrategicImpacts(productKPIs, analyses, productMix.priceValue);
-
-          consolidatedRevenue += adjustedProductKPIs.revenue;
-          consolidatedCosts += adjustedProductKPIs.costs;
-          consolidatedProfit += adjustedProductKPIs.profit;
-          consolidatedMarketShare += adjustedProductKPIs.marketShare;
-          weightedBrandPerception += adjustedProductKPIs.brandPerception * adjustedProductKPIs.revenue;
-          weightedCustomerSat += adjustedProductKPIs.customerSatisfaction * adjustedProductKPIs.revenue;
-          weightedCustomerLoyalty += adjustedProductKPIs.customerLoyalty * adjustedProductKPIs.revenue;
+          
+          productKpisList.push(adjustedProductKPIs);
 
           await storage.createProductResult({
             teamId: team.id,
@@ -1609,69 +1598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           processedProducts++;
         }
 
-        const consolidatedMargin = consolidatedRevenue > 0 ? (consolidatedProfit / consolidatedRevenue) * 100 : 0;
-        const consolidatedROI = consolidatedCosts > 0 ? (consolidatedProfit / consolidatedCosts) * 100 : 0;
-        const avgBrandPerception = consolidatedRevenue > 0 ? weightedBrandPerception / consolidatedRevenue : 50;
-        const avgCustomerSat = consolidatedRevenue > 0 ? weightedCustomerSat / consolidatedRevenue : 50;
-        const avgCustomerLoyalty = consolidatedRevenue > 0 ? weightedCustomerLoyalty / consolidatedRevenue : 50;
-
-        const consolidatedKPIs = {
-          revenue: consolidatedRevenue,
-          costs: consolidatedCosts,
-          profit: consolidatedProfit,
-          margin: consolidatedMargin,
-          marketShare: consolidatedMarketShare / submittedProducts.length,
-          roi: consolidatedROI,
-          brandPerception: avgBrandPerception,
-          customerSatisfaction: avgCustomerSat,
-          customerLoyalty: avgCustomerLoyalty,
-          cac: 0,
-          ltv: 0,
-          taxaConversao: 0,
-          ticketMedio: 0,
-          razaoLtvCac: 0,
-          nps: 0,
-          tempoMedioConversao: 0,
-          margemContribuicao: 0,
-          receitaBruta: consolidatedRevenue,
-          receitaLiquida: consolidatedRevenue,
-          
-          // DRE Completa - valores consolidados (zerados para simplificação)
-          impostos: 0,
-          devolucoes: 0,
-          descontos: 0,
-          cpv: consolidatedCosts * 0.60,
-          lucroBruto: consolidatedRevenue - (consolidatedCosts * 0.60),
-          despesasVendas: consolidatedCosts * 0.25,
-          despesasAdmin: consolidatedCosts * 0.10,
-          despesasFinanc: consolidatedCosts * 0.03,
-          outrasDespesas: consolidatedCosts * 0.02,
-          ebitda: consolidatedProfit,
-          depreciacao: consolidatedCosts * 0.03,
-          lair: consolidatedProfit,
-          irCsll: consolidatedProfit > 0 ? consolidatedProfit * 0.34 : 0,
-          lucroLiquido: consolidatedProfit,
-          
-          // Balanço Patrimonial - valores consolidados (zerados para simplificação)
-          caixa: consolidatedProfit,
-          contasReceber: consolidatedRevenue * 0.25,
-          estoques: consolidatedCosts * 0.10,
-          ativoCirculante: consolidatedProfit + (consolidatedRevenue * 0.25) + (consolidatedCosts * 0.10),
-          imobilizado: consolidatedCosts * 0.40,
-          intangivel: 0,
-          ativoNaoCirculante: consolidatedCosts * 0.40,
-          ativoTotal: 0,
-          fornecedores: consolidatedCosts * 0.20,
-          obrigFiscais: consolidatedProfit > 0 ? consolidatedProfit * 0.34 : 0,
-          outrasObrig: consolidatedCosts * 0.10,
-          passivoCirculante: 0,
-          financiamentosLP: 0,
-          passivoNaoCirculante: 0,
-          capitalSocial: 0,
-          lucrosAcumulados: 0,
-          patrimonioLiquido: 0,
-          passivoPlTotal: 0,
-        };
+        const consolidatedKPIs = consolidateKpis(productKpisList);
 
         const firstProduct = submittedProducts[0];
         const { kpis: finalKPIs, alignmentScore, alignmentIssues } = applyAlignmentPenalties(
