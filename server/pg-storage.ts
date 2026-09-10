@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import { eq, and, desc, isNull, inArray, asc } from "drizzle-orm";
 import {
   type User,
@@ -73,8 +73,8 @@ const databaseUrl = process.env.DATABASE_URL || process.env.DATABASE_URL_DEV;
 if (!databaseUrl) {
   throw new Error("DATABASE_URL não configurada.");
 }
-const sql = neon(databaseUrl);
-const db = drizzle(sql);
+const pool = new Pool({ connectionString: databaseUrl });
+const db = drizzle(pool);
 
 // Fallback para DATABASE_URL de desenvolvimento se estiver em produção mas sem dados
 if (process.env.NODE_ENV === "production" && !process.env.DATABASE_URL?.includes("neon.tech")) {
