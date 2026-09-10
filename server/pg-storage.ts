@@ -1,5 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import pg from "pg";
+const { Pool } = pg;
 import { eq, and, desc, isNull, inArray, asc } from "drizzle-orm";
 import {
   type User,
