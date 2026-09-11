@@ -2312,6 +2312,7 @@ export default function Professor() {
   const { data: businessTypes = [] } = useQuery<any[]>({ queryKey: ["/api/market/business-types"] });
   const { data: competitionLevels = [] } = useQuery<any[]>({ queryKey: ["/api/market/competition-levels"] });
   const { data: rounds = [] } = useQuery<Round[]>({ queryKey: ["/api/rounds", selectedClass], enabled: !!selectedClass });
+  const { data: sectorProducts = [] } = useQuery<any[]>({ queryKey: ["/api/products/class", selectedClass], enabled: !!selectedClass });
   const { data: teams = [] } = useQuery<any[]>({ queryKey: ["/api/classes", selectedClass, "teams"], enabled: !!selectedClass });
   const { data: economicData } = useQuery<any>({ queryKey: ["/api/economic/latest"] });
   const { data: users = [] } = useQuery<any[]>({ queryKey: ["/api/admin/users"] });
@@ -2594,7 +2595,9 @@ export default function Professor() {
 
   const startRoundMutation = useMutation({
     mutationFn: async (classId: string) => {
-      const res = await apiRequest("POST", `/api/rounds/${classId}/start`);
+      const res = await apiRequest("POST", `/api/rounds/${classId}/start`, {
+        productCount: nextRoundProductCount,
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -2606,6 +2609,20 @@ export default function Professor() {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     },
   });
+
+  // Quantidade de produtos escolhida pelo professor para a próxima rodada.
+  const [nextRoundProductCount, setNextRoundProductCount] = useState<number>(1);
+  const previousRoundProductCount = useMemo(() => {
+    if (rounds.length === 0) return 1;
+    return [...rounds].sort((a, b) => b.roundNumber - a.roundNumber)[0]?.productCount ?? 1;
+  }, [rounds]);
+  const maxRoundProducts = sectorProducts.length > 0 ? sectorProducts.length : 1;
+
+  // Sempre que trocar de turma ou a rodada anterior mudar, a sugestão volta a
+  // ser "manter a mesma quantidade de produtos da rodada anterior".
+  useEffect(() => {
+    setNextRoundProductCount(previousRoundProductCount);
+  }, [selectedClass, previousRoundProductCount]);
 
   const scheduleRoundMutation = useMutation({
     mutationFn: async (data: { roundId: string; scheduledStartAt?: string; scheduledEndAt?: string }) => {
@@ -3090,20 +3107,45 @@ export default function Professor() {
                     {classState.action && (
                       <>
                         {classState.action.type === "start_round" && (
-                          <Button 
-                            size="lg"
-                            className="min-w-[200px] h-12 text-base"
-                            onClick={() => startRoundMutation.mutate(selectedClass)}
-                            disabled={startRoundMutation.isPending}
-                            data-testid="button-main-action"
-                          >
-                            {startRoundMutation.isPending ? (
-                              <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
-                            ) : (
-                              <Play className="h-5 w-5 mr-2" />
+                          <div className="flex flex-col items-center lg:items-end gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">Produtos nesta rodada:</span>
+                              <Select
+                                value={String(nextRoundProductCount)}
+                                onValueChange={(value) => setNextRoundProductCount(Number(value))}
+                              >
+                                <SelectTrigger className="w-[80px]" data-testid="select-round-product-count">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Array.from({ length: maxRoundProducts }, (_, i) => i + 1).map((n) => (
+                                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {nextRoundProductCount !== previousRoundProductCount && (
+                              <p className="text-xs text-amber-600 dark:text-amber-400">
+                                {nextRoundProductCount > previousRoundProductCount
+                                  ? `Orçamento das equipes será reduzido em ${(nextRoundProductCount - previousRoundProductCount) * 10}%`
+                                  : `Orçamento das equipes será restaurado proporcionalmente (${(previousRoundProductCount - nextRoundProductCount) * 10}%)`}
+                              </p>
                             )}
-                            {classState.action.label}
-                          </Button>
+                            <Button
+                              size="lg"
+                              className="min-w-[200px] h-12 text-base"
+                              onClick={() => startRoundMutation.mutate(selectedClass)}
+                              disabled={startRoundMutation.isPending}
+                              data-testid="button-main-action"
+                            >
+                              {startRoundMutation.isPending ? (
+                                <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                              ) : (
+                                <Play className="h-5 w-5 mr-2" />
+                              )}
+                              {classState.action.label}
+                            </Button>
+                          </div>
                         )}
                         {classState.action.type === "end_round" && activeRound && (
                           <Button 

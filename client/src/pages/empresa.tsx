@@ -63,7 +63,10 @@ export default function Empresa() {
   });
 
   const { data: classProducts } = useQuery<any[]>({
-    queryKey: ["/api/products/class", team?.classId],
+    queryKey: [
+      "/api/products/class",
+      team?.classId ? `${team.classId}${activeRound?.id ? `?roundId=${activeRound.id}` : ""}` : undefined,
+    ],
     enabled: !!team?.classId,
   });
 

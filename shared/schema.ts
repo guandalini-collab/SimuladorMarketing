@@ -73,6 +73,11 @@ export const rounds = pgTable("rounds", {
   scheduledStartAt: timestamp("scheduled_start_at"),
   scheduledEndAt: timestamp("scheduled_end_at"),
   aiAssistanceLevel: integer("ai_assistance_level").notNull().default(1),
+  // Quantidade de produtos que as equipes gerenciam nesta rodada (1 a N).
+  // Definida pelo professor ao iniciar a rodada. Aumentar em relação à rodada
+  // anterior reduz o orçamento das equipes em 10% por produto adicional
+  // (e restaura proporcionalmente se for reduzida) — ver rota de início de rodada.
+  productCount: integer("product_count").notNull().default(1),
 });
 
 export const campaigns = pgTable("campaigns", {

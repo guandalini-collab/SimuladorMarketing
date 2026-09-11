@@ -35,6 +35,55 @@ function generateRecoveryCode(): string {
   return `${generateBlock()}-${generateBlock()}-${generateBlock()}`;
 }
 
+// Percentual de impacto no orçamento por produto adicional/removido entre rodadas.
+const PRODUCT_COUNT_BUDGET_IMPACT = 0.10;
+
+// Quando a quantidade de produtos da turma muda de uma rodada para outra,
+// ajusta o orçamento de todas as equipes da turma: -10% por produto adicional
+// (e o inverso, proporcional, caso a quantidade diminua).
+async function applyProductCountBudgetAdjustment(
+  classId: string,
+  previousProductCount: number,
+  newProductCount: number
+): Promise<void> {
+  if (previousProductCount === newProductCount) return;
+
+  const delta = newProductCount - previousProductCount;
+  const multiplier = delta > 0
+    ? 1 - PRODUCT_COUNT_BUDGET_IMPACT * delta
+    : 1 / (1 - PRODUCT_COUNT_BUDGET_IMPACT * Math.abs(delta));
+
+  const classTeams = await storage.getTeamsByClass(classId);
+  for (const team of classTeams) {
+    const adjustedBudget = Math.max(0, Math.round(team.budget * multiplier));
+    await storage.updateTeam(team.id, { budget: adjustedBudget });
+  }
+}
+
+// Determina a quantidade de produtos válida para uma nova rodada da turma:
+// usa o valor pedido pelo professor (limitado entre 1 e o total de produtos
+// do setor), ou repete a quantidade da rodada anterior caso nada seja informado.
+async function resolveRoundProductCount(
+  classId: string,
+  sector: string | null,
+  requestedProductCount: unknown
+): Promise<{ productCount: number; previousProductCount: number }> {
+  const classRounds = await storage.getRoundsByClass(classId);
+  const previousRound = classRounds.sort((a, b) => b.roundNumber - a.roundNumber)[0];
+  const previousProductCount = previousRound?.productCount ?? 1;
+
+  const sectorProducts = sector ? await storage.getProductsBySector(sector) : [];
+  const maxProducts = sectorProducts.length > 0 ? sectorProducts.length : 1;
+
+  let productCount = typeof requestedProductCount === "number" && Number.isFinite(requestedProductCount)
+    ? Math.round(requestedProductCount)
+    : previousProductCount;
+
+  productCount = Math.min(Math.max(productCount, 1), maxProducts);
+
+  return { productCount, previousProductCount };
+}
+
 const appEnv = getEnv();
 const defaultProfessorEmails = ['guandalini@gmail.com', 'alexandre.bossa@iffarroupilha.edu.br'];
 const configuredEmails = getAuthorizedProfessorEmails(appEnv);
@@ -1067,14 +1116,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Número máximo de rodadas atingido" });
     }
 
+    const { productCount, previousProductCount } = await resolveRoundProductCount(
+      req.params.classId,
+      classData.sector ?? null,
+      req.body?.productCount
+    );
+
     const round = await storage.createRound({
       classId: req.params.classId,
       roundNumber: nextRoundNumber,
       status: "active",
+      productCount,
     });
 
     await storage.updateRound(round.id, { startedAt: new Date() });
     await storage.updateClass(req.params.classId, { currentRound: nextRoundNumber });
+    await applyProductCountBudgetAdjustment(req.params.classId, previousProductCount, productCount);
 
     // Gerar análises estratégicas mínimas automaticamente para todas as equipes
     // APENAS nas primeiras 3 rodadas (conforme regras do sistema)
@@ -1127,14 +1184,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Número máximo de rodadas atingido" });
     }
 
+    const { productCount, previousProductCount } = await resolveRoundProductCount(
+      req.params.classId,
+      classData.sector ?? null,
+      req.body?.productCount
+    );
+
     const round = await storage.createRound({
       classId: req.params.classId,
       roundNumber: nextRoundNumber,
       status: "active",
+      productCount,
     });
 
     await storage.updateRound(round.id, { startedAt: new Date() });
     await storage.updateClass(req.params.classId, { currentRound: nextRoundNumber });
+    await applyProductCountBudgetAdjustment(req.params.classId, previousProductCount, productCount);
 
     // Gerar análises estratégicas mínimas automaticamente para todas as equipes
     // APENAS nas primeiras 3 rodadas (conforme regras do sistema)
@@ -4738,9 +4803,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Buscar produtos do banco de dados pelo setor da turma
-      const products = await storage.getProductsBySector(classData.sector);
-      
-      res.json(products);
+      const sectorProducts = await storage.getProductsBySector(classData.sector);
+      const orderedProducts = [...sectorProducts].sort((a, b) => a.orderIndex - b.orderIndex);
+
+      // Se a requisição informar a rodada, limita aos N produtos liberados
+      // nela (productCount definido pelo professor ao iniciar a rodada).
+      const roundId = typeof req.query.roundId === "string" ? req.query.roundId : undefined;
+      if (roundId) {
+        const round = await storage.getRound(roundId);
+        if (round && round.classId === req.params.classId) {
+          res.json(orderedProducts.slice(0, round.productCount));
+          return;
+        }
+      }
+
+      res.json(orderedProducts);
     } catch (error: any) {
       console.error("Erro ao buscar produtos:", error);
       res.status(500).json({ error: error.message || "Erro ao buscar produtos" });

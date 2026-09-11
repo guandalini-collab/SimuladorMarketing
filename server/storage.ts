@@ -698,6 +698,7 @@ export class MemStorage implements IStorage {
       scheduledStartAt: insertRound.scheduledStartAt ?? null,
       scheduledEndAt: insertRound.scheduledEndAt ?? null,
       aiAssistanceLevel: insertRound.aiAssistanceLevel ?? 1,
+      productCount: insertRound.productCount ?? 1,
     };
     this.rounds.set(id, round);
     return round;

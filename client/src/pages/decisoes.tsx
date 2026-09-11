@@ -101,7 +101,10 @@ export default function Decisoes() {
   });
 
   const { data: products = [] } = useQuery<any[]>({
-    queryKey: ["/api/products/class", currentClass?.id],
+    queryKey: [
+      "/api/products/class",
+      currentClass?.id ? `${currentClass.id}${activeRoundId ? `?roundId=${activeRoundId}` : ""}` : undefined,
+    ],
     enabled: !!currentClass?.id,
   });
 
