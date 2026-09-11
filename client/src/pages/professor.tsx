@@ -3713,6 +3713,35 @@ export default function Professor() {
                       <SendEmailToTeams classId={selectedClass} teams={teams} className={currentClass.name} />
                     </CollapsibleContent>
                   </Collapsible>
+
+                  {/* Seção: Zona de Perigo */}
+                  <Card className="border-destructive/50">
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2 text-destructive">
+                        <AlertTriangle className="h-5 w-5" />
+                        Zona de Perigo
+                      </CardTitle>
+                      <CardDescription>
+                        Ações irreversíveis. Exclua esta turma apenas se tiver certeza — todos os dados (equipes, alunos, rodadas e decisões) serão apagados permanentemente.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between gap-4 flex-wrap">
+                        <div>
+                          <p className="text-sm font-medium">Excluir turma "{currentClass.name}"</p>
+                          <p className="text-sm text-muted-foreground">Esta ação não pode ser desfeita.</p>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          onClick={() => setClassToDelete(selectedClass)}
+                          data-testid="button-delete-class"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Excluir Turma
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                   </div>
                 </TabsContent>
 
@@ -4122,8 +4151,10 @@ export default function Professor() {
       <AlertDialog open={!!classToDelete} onOpenChange={(open) => !open && setClassToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>Tem certeza que deseja excluir esta turma? Esta ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogTitle>Confirmar exclusão da turma</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a turma "{classes.find((c) => c.id === classToDelete)?.name ?? ""}"? Todas as equipes, alunos, rodadas e decisões associadas serão apagados permanentemente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel data-testid="button-cancel-delete-class">Cancelar</AlertDialogCancel>
