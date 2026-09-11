@@ -2302,8 +2302,8 @@ export default function Professor() {
   const [viewDecisionsTeam, setViewDecisionsTeam] = useState<{teamId: string; teamName: string; classId: string} | null>(null);
   const [newClass, setNewClass] = useState({ 
     name: "", maxRounds: 10, defaultBudget: 100000, sector: "", businessType: "",
-    marketSize: 0, marketGrowthRate: 0, competitionLevel: "", numberOfCompetitors: null as number | null,
-    marketConcentration: "", competitorStrength: "", targetConsumers: 0,
+    marketSize: null as number | null, marketGrowthRate: 0, competitionLevel: "", numberOfCompetitors: null as number | null,
+    marketConcentration: "", competitorStrength: "", targetConsumers: null as number | null,
   });
 
   // Queries
@@ -2477,8 +2477,8 @@ export default function Professor() {
       toast({ title: "Turma criada!", description: "A turma foi criada com sucesso." });
       setIsDialogOpen(false);
       setNewClass({ name: "", maxRounds: 10, defaultBudget: 100000, sector: "", businessType: "",
-        marketSize: 0, marketGrowthRate: 0, competitionLevel: "", numberOfCompetitors: null,
-        marketConcentration: "", competitorStrength: "", targetConsumers: 0 });
+        marketSize: null, marketGrowthRate: 0, competitionLevel: "", numberOfCompetitors: null,
+        marketConcentration: "", competitorStrength: "", targetConsumers: null });
     },
     onError: (error: any) => {
       toast({ title: "Erro ao criar turma", description: error.message, variant: "destructive" });
