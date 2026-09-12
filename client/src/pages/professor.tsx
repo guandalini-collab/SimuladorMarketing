@@ -689,7 +689,7 @@ function TeamCard({
         <div className="flex flex-wrap gap-3 mt-3">
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
-            <p className="text-sm font-medium">R$ {team.budget.toLocaleString()}</p>
+            <p className="text-sm font-medium">R$ {team.budget.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -1568,7 +1568,7 @@ function MarketingMixOverview({ classId }: { classId: string }) {
                       <TableCell className="capitalize">{mix.productFeatures}</TableCell>
                       <TableCell className="capitalize">{mix.brandPositioning}</TableCell>
                       <TableCell className="capitalize">{mix.priceStrategy}</TableCell>
-                      <TableCell>R$ {mix.priceValue}</TableCell>
+                      <TableCell>R$ {Number(mix.priceValue).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                       <TableCell>
                         <div className="text-xs">{mix.distributionChannels?.join(", ")}</div>
                       </TableCell>
@@ -2850,17 +2850,16 @@ export default function Professor() {
   return (
     <div className="min-h-screen bg-background">
       {/* ======== HEADER COMPACTO ======== */}
-      <div className="border-b bg-card">
+      <div className="bg-gradient-to-r from-[#2c2a9e] to-[#6d28d9] text-white">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <LayoutDashboard className="h-5 w-5 text-primary" />
+              <div className="flex flex-col gap-1">
+                <h1 className="text-xl font-bold tracking-tight">Simula+</h1>
+                <div className="h-1 w-11 rounded-full bg-[#ffcc00]" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold">Painel do Professor</h1>
-                <p className="text-xs text-muted-foreground">Simula+</p>
-              </div>
+              <div className="hidden sm:block h-8 w-px bg-white/20 mx-1" />
+              <p className="hidden sm:block text-sm text-white/80">Painel do Professor</p>
             </div>
             <div className="flex items-center gap-2">
               <Tooltip>
@@ -2891,7 +2890,7 @@ export default function Professor() {
                 </TooltipTrigger>
                 <TooltipContent>Manual do Professor</TooltipContent>
               </Tooltip>
-              <Button size="sm" onClick={() => setIsDialogOpen(true)} data-testid="button-create-class">
+              <Button size="sm" className="bg-white text-[#2c2a9e] border-transparent hover:bg-white/90" onClick={() => setIsDialogOpen(true)} data-testid="button-create-class">
                 <Plus className="h-4 w-4 mr-1" />
                 Nova Turma
               </Button>
@@ -3045,40 +3044,41 @@ export default function Professor() {
         {selectedClass && currentClass && (
           <>
             {/* ======== SITUAÇÃO DA AULA - SEÇÃO PRINCIPAL ======== */}
-            <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-transparent" data-testid="card-class-situation">
+            <Card className="border-0 bg-gradient-to-br from-[#2c2a9e] to-[#7c3aed] text-white shadow-lg shadow-[#6d28d9]/25" data-testid="card-class-situation">
               <CardContent className="pt-6">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                   {/* Info da Aula */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <GraduationCap className="h-6 w-6 text-primary" />
+                      <div className="h-12 w-12 rounded-xl bg-white/15 flex items-center justify-center">
+                        <GraduationCap className="h-6 w-6 text-white" />
                       </div>
                       <div>
                         <h2 className="text-xl font-bold">Situação da Aula</h2>
-                        <p className="text-sm text-muted-foreground">Aqui você controla o andamento da aula.</p>
+                        <div className="h-1 w-10 rounded-full bg-[#ffcc00] mt-1 mb-1" />
+                        <p className="text-sm text-white/75">Aqui você controla o andamento da aula.</p>
                       </div>
                     </div>
-                    
+
                     {/* Indicadores Compactos */}
                     <div className="flex flex-wrap gap-3">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/15">
+                        <Building2 className="h-4 w-4 text-white/80" />
                         <span className="text-sm font-medium">{currentClass.name}</span>
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/15">
+                        <Calendar className="h-4 w-4 text-white/80" />
                         <span className="text-sm">
                           {activeRound ? (
-                            <span className="font-medium text-primary">Rodada {activeRound.roundNumber} ativa</span>
+                            <span className="font-medium text-[#ffcc00]">Rodada {activeRound.roundNumber} ativa</span>
                           ) : (
                             <span>Rodada {currentClass.currentRound}/{currentClass.maxRounds}</span>
                           )}
                         </span>
                       </div>
                       {activeRound && (
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
-                          <Users className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/15">
+                          <Users className="h-4 w-4 text-white/80" />
                           <span className="text-sm">
                             <span className="font-medium">{submissionStats.submitted}</span> de {submissionStats.total} equipes enviaram
                           </span>
@@ -3088,13 +3088,13 @@ export default function Professor() {
 
                     {/* Alerta de equipes pendentes */}
                     {activeRound && submissionStats.pending.length > 0 && submissionStats.pending.length <= 3 && (
-                      <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+                      <div className="flex items-center gap-2 text-sm text-[#ffe28a]">
                         <AlertTriangle className="h-4 w-4" />
                         <span>Aguardando: {submissionStats.pending.join(", ")}</span>
                       </div>
                     )}
                     {activeRound && submissionStats.pending.length > 3 && (
-                      <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+                      <div className="flex items-center gap-2 text-sm text-[#ffe28a]">
                         <AlertTriangle className="h-4 w-4" />
                         <span>{submissionStats.pending.length} equipes ainda não enviaram</span>
                       </div>
@@ -3103,13 +3103,13 @@ export default function Professor() {
 
                   {/* Ação Principal */}
                   <div className="flex flex-col items-center lg:items-end gap-3">
-                    <p className="text-sm text-muted-foreground font-medium">Qual é a próxima ação?</p>
+                    <p className="text-sm text-white/75 font-medium">Qual é a próxima ação?</p>
                     {classState.action && (
                       <>
                         {classState.action.type === "start_round" && (
                           <div className="flex flex-col items-center lg:items-end gap-2">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">Produtos nesta rodada:</span>
+                              <span className="text-sm text-white/75">Produtos nesta rodada:</span>
                               <Select
                                 value={String(nextRoundProductCount)}
                                 onValueChange={(value) => setNextRoundProductCount(Number(value))}
@@ -3125,7 +3125,7 @@ export default function Professor() {
                               </Select>
                             </div>
                             {nextRoundProductCount !== previousRoundProductCount && (
-                              <p className="text-xs text-amber-600 dark:text-amber-400">
+                              <p className="text-xs text-[#ffe28a]">
                                 {nextRoundProductCount > previousRoundProductCount
                                   ? `Orçamento das equipes será reduzido em ${(nextRoundProductCount - previousRoundProductCount) * 10}%`
                                   : `Orçamento das equipes será restaurado proporcionalmente (${(previousRoundProductCount - nextRoundProductCount) * 10}%)`}
@@ -3133,7 +3133,7 @@ export default function Professor() {
                             )}
                             <Button
                               size="lg"
-                              className="min-w-[200px] h-12 text-base"
+                              className="min-w-[200px] h-12 text-base bg-white text-[#2c2a9e] border-transparent hover:bg-white/90"
                               onClick={() => startRoundMutation.mutate(selectedClass)}
                               disabled={startRoundMutation.isPending}
                               data-testid="button-main-action"
@@ -3165,9 +3165,9 @@ export default function Professor() {
                           </Button>
                         )}
                         {classState.action.tab && (
-                          <Button 
+                          <Button
                             size="lg"
-                            className="min-w-[200px] h-12 text-base"
+                            className="min-w-[200px] h-12 text-base bg-white text-[#2c2a9e] border-transparent hover:bg-white/90"
                             onClick={() => setActiveTab(classState.action!.tab!)}
                             data-testid="button-main-action"
                           >
@@ -3178,7 +3178,7 @@ export default function Professor() {
                         )}
                       </>
                     )}
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-xs border-white/30 text-white/85 bg-white/10">
                       {classState.label}
                     </Badge>
                   </div>
@@ -3187,32 +3187,49 @@ export default function Professor() {
             </Card>
 
             {/* ======== NAVEGAÇÃO POR ABAS SEMÂNTICAS ======== */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="h-auto p-1 bg-muted/50 w-full justify-start">
-                <TabsTrigger value="aula" className="gap-2 data-[state=active]:bg-background" data-testid="tab-aula">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col lg:flex-row gap-6 items-start">
+              <TabsList className="flex lg:flex-col h-auto w-full lg:w-56 shrink-0 gap-2 rounded-2xl bg-[#2f2a8f] p-4 justify-start overflow-x-auto lg:overflow-visible">
+                <TabsTrigger
+                  value="aula"
+                  className="gap-2 justify-start rounded-full border border-white/20 px-4 py-2.5 text-sm font-semibold text-white/75 hover:text-white data-[state=active]:border-transparent data-[state=active]:bg-white data-[state=active]:text-[#2f2a8f] data-[state=active]:shadow-md"
+                  data-testid="tab-aula"
+                >
                   <LayoutDashboard className="h-4 w-4" />
                   Aula
                 </TabsTrigger>
-                <TabsTrigger value="acompanhar" className="gap-2 data-[state=active]:bg-background" data-testid="tab-acompanhar">
+                <TabsTrigger
+                  value="acompanhar"
+                  className="gap-2 justify-start rounded-full border border-white/20 px-4 py-2.5 text-sm font-semibold text-white/75 hover:text-white data-[state=active]:border-transparent data-[state=active]:bg-white data-[state=active]:text-[#2f2a8f] data-[state=active]:shadow-md"
+                  data-testid="tab-acompanhar"
+                >
                   <Users className="h-4 w-4" />
                   Acompanhar
                   {activeRound && submissionStats.pending.length > 0 && (
                     <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-xs">{submissionStats.pending.length}</Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="analisar" className="gap-2 data-[state=active]:bg-background" data-testid="tab-analisar">
+                <TabsTrigger
+                  value="analisar"
+                  className="gap-2 justify-start rounded-full border border-white/20 px-4 py-2.5 text-sm font-semibold text-white/75 hover:text-white data-[state=active]:border-transparent data-[state=active]:bg-white data-[state=active]:text-[#2f2a8f] data-[state=active]:shadow-md"
+                  data-testid="tab-analisar"
+                >
                   <Trophy className="h-4 w-4" />
                   Analisar
                   {lastCompletedRound && (
                     <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">R{lastCompletedRound.roundNumber}</Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="configurar" className="gap-2 data-[state=active]:bg-background" data-testid="tab-configurar">
+                <TabsTrigger
+                  value="configurar"
+                  className="gap-2 justify-start rounded-full border border-white/20 px-4 py-2.5 text-sm font-semibold text-white/75 hover:text-white data-[state=active]:border-transparent data-[state=active]:bg-white data-[state=active]:text-[#2f2a8f] data-[state=active]:shadow-md"
+                  data-testid="tab-configurar"
+                >
                   <Settings className="h-4 w-4" />
                   Configurar
                 </TabsTrigger>
               </TabsList>
 
+              <div className="flex-1 w-full min-w-0">
                 {/* ======== ABA: AULA (Controle do Andamento) ======== */}
                 <TabsContent value="aula" className="mt-6 space-y-6">
                   <div className="mb-4">
@@ -3223,15 +3240,15 @@ export default function Professor() {
                   <div className="grid gap-4 sm:grid-cols-3">
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Card className="hover-elevate cursor-help" data-testid="card-kpi-teams">
+                        <Card className="hover-elevate cursor-help border-0 bg-[#1447e6] text-white shadow-md shadow-[#1447e6]/25" data-testid="card-kpi-teams">
                           <CardContent className="pt-4">
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                <Users className="h-5 w-5 text-blue-600" />
+                              <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+                                <Users className="h-5 w-5 text-white" />
                               </div>
                               <div>
                                 <p className="text-2xl font-bold" data-testid="text-kpi-teams">{teams.length}</p>
-                                <p className="text-sm text-muted-foreground">Equipes</p>
+                                <p className="text-sm text-white/75">Equipes</p>
                               </div>
                             </div>
                           </CardContent>
@@ -3241,15 +3258,15 @@ export default function Professor() {
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Card className="hover-elevate cursor-help" data-testid="card-kpi-active-round">
+                        <Card className="hover-elevate cursor-help border-0 bg-[#1aa15c] text-white shadow-md shadow-[#1aa15c]/25" data-testid="card-kpi-active-round">
                           <CardContent className="pt-4">
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                                <Target className="h-5 w-5 text-green-600" />
+                              <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+                                <Target className="h-5 w-5 text-white" />
                               </div>
                               <div>
                                 <p className="text-2xl font-bold" data-testid="text-kpi-active-round">{rounds.filter(r => r.status === "active").length}</p>
-                                <p className="text-sm text-muted-foreground">Rodada Ativa</p>
+                                <p className="text-sm text-white/75">Rodada Ativa</p>
                               </div>
                             </div>
                           </CardContent>
@@ -3259,15 +3276,15 @@ export default function Professor() {
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Card className="hover-elevate cursor-help" data-testid="card-kpi-budget">
+                        <Card className="hover-elevate cursor-help border-0 bg-[#ff8c1a] text-white shadow-md shadow-[#ff8c1a]/25" data-testid="card-kpi-budget">
                           <CardContent className="pt-4">
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                                <DollarSign className="h-5 w-5 text-purple-600" />
+                              <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+                                <DollarSign className="h-5 w-5 text-white" />
                               </div>
                               <div>
-                                <p className="text-2xl font-bold" data-testid="text-kpi-budget">R$ {(currentClass.defaultBudget / 1000).toFixed(0)}k</p>
-                                <p className="text-sm text-muted-foreground">Orçamento Base</p>
+                                <p className="text-2xl font-bold" data-testid="text-kpi-budget">R$ {currentClass.defaultBudget.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                <p className="text-sm text-white/75">Orçamento Base</p>
                               </div>
                             </div>
                           </CardContent>
@@ -3854,7 +3871,8 @@ export default function Professor() {
                     </>
                   )}
                 </TabsContent>
-              </Tabs>
+              </div>
+            </Tabs>
           </>
         )}
       </div>
