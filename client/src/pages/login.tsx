@@ -15,7 +15,7 @@ import {
 import { TrendingUp, Target, BarChart3, Users, GraduationCap, Lightbulb, AlertTriangle, Eye, EyeOff, Copy, CheckCircle2, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import logoImage from "@assets/generated_images/Vibrant_marketing_logo_Simula+_e9b50ad9.png";
+import logoImage from "@assets/generated_images/Simula_logo_navy_dourado_final.png";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -236,22 +236,21 @@ export default function Login() {
   return (
     <div className="min-h-screen flex">
       {/* Left Hero Section - Hidden on mobile */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-12 flex-col justify-between relative overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-32 h-32 border-4 border-white rounded-full animate-pulse"></div>
-          <div className="absolute bottom-40 right-20 w-48 h-48 border-4 border-white rounded-lg rotate-45 animate-pulse delay-75"></div>
-          <div className="absolute top-1/2 left-1/3 w-24 h-24 border-4 border-white rounded-full animate-pulse delay-150"></div>
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#0a1830] via-[#0d2348] to-[#0a1830] p-12 flex-col justify-between relative overflow-hidden">
+        {/* Decorative Background Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-20 w-32 h-32 border-4 border-white/10 rounded-full"></div>
+          <div className="absolute bottom-40 right-20 w-48 h-48 border-4 border-[#ffcc00]/15 rounded-2xl rotate-45"></div>
+          <div className="absolute top-1/2 left-1/3 w-24 h-24 border-4 border-white/10 rounded-full"></div>
         </div>
 
         {/* Content */}
         <div className="relative z-10">
-          <div className="flex items-center gap-6 mb-12">
-            <img src={logoImage} alt="Simula+" className="h-24 w-24 drop-shadow-2xl" data-testid="img-logo-hero" />
-            <div>
-              <h1 className="text-6xl font-bold text-white font-accent drop-shadow-lg" data-testid="text-app-title-hero">Simula +</h1>
-              <p className="text-primary-foreground/90 text-base mt-1" data-testid="text-app-subtitle-hero">Simulador de Marketing no Mercado</p>
+          <div className="mb-12">
+            <div className="inline-block bg-white rounded-2xl px-6 py-4 shadow-2xl mb-4">
+              <img src={logoImage} alt="Simula+" className="h-14 w-auto" data-testid="img-logo-hero" />
             </div>
+            <p className="text-white/80 text-base" data-testid="text-app-subtitle-hero">Simulador de Marketing no Mercado</p>
           </div>
 
           <div className="space-y-6 text-white/95">
@@ -267,25 +266,33 @@ export default function Login() {
         {/* Feature Cards */}
         <div className="relative z-10 grid grid-cols-2 gap-4">
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20" data-testid="card-feature-kpis">
-            <TrendingUp className="h-8 w-8 text-white mb-2" />
+            <div className="h-9 w-9 rounded-lg bg-[#1447e6] flex items-center justify-center mb-2.5">
+              <TrendingUp className="h-5 w-5 text-white" />
+            </div>
             <h3 className="text-white font-semibold mb-1">Análises em Tempo Real</h3>
             <p className="text-white/70 text-sm">19 KPIs automáticos de performance</p>
           </div>
-          
+
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20" data-testid="card-feature-decisions">
-            <Target className="h-8 w-8 text-white mb-2" />
+            <div className="h-9 w-9 rounded-lg bg-[#ffcc00] flex items-center justify-center mb-2.5">
+              <Target className="h-5 w-5 text-[#0a1830]" />
+            </div>
             <h3 className="text-white font-semibold mb-1">Decisões Estratégicas</h3>
             <p className="text-white/70 text-sm">4 Ps do Marketing + Ferramentas</p>
           </div>
-          
+
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20" data-testid="card-feature-insights">
-            <BarChart3 className="h-8 w-8 text-white mb-2" />
+            <div className="h-9 w-9 rounded-lg bg-[#1aa15c] flex items-center justify-center mb-2.5">
+              <BarChart3 className="h-5 w-5 text-white" />
+            </div>
             <h3 className="text-white font-semibold mb-1">Insights de Mercado</h3>
             <p className="text-white/70 text-sm">12 setores brasileiros simulados</p>
           </div>
-          
+
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20" data-testid="card-feature-ai">
-            <Lightbulb className="h-8 w-8 text-white mb-2" />
+            <div className="h-9 w-9 rounded-lg bg-[#ff8c1a] flex items-center justify-center mb-2.5">
+              <Lightbulb className="h-5 w-5 text-white" />
+            </div>
             <h3 className="text-white font-semibold mb-1">Feedback Inteligente</h3>
             <p className="text-white/70 text-sm">Análise educacional personalizada</p>
           </div>
@@ -298,8 +305,7 @@ export default function Login() {
           {/* Mobile Logo */}
           <div className="lg:hidden flex justify-center mb-10">
             <div className="text-center">
-              <img src={logoImage} alt="Simula+" className="h-28 w-28 mx-auto mb-4 drop-shadow-xl" data-testid="img-logo-mobile" />
-              <h1 className="text-4xl font-bold font-accent mb-2" data-testid="text-app-title-mobile">Simula +</h1>
+              <img src={logoImage} alt="Simula+" className="h-16 w-auto mx-auto mb-3" data-testid="img-logo-mobile" />
               <p className="text-muted-foreground" data-testid="text-app-subtitle-mobile">Simulador de Marketing no Mercado</p>
             </div>
           </div>

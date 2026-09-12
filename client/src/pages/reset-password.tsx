@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Lock, CheckCircle2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import logoImage from "@assets/generated_images/Vibrant_marketing_logo_Simula+_e9b50ad9.png";
+import logoImage from "@assets/generated_images/Simula_logo_navy_dourado_final.png";
 
 export default function ResetPassword() {
   const { toast } = useToast();
@@ -91,16 +91,18 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0a1830] via-[#0d2348] to-[#0a1830] p-4">
         <div className="w-full max-w-md">
           <div className="flex justify-center mb-8">
             <Link href="/">
+              <div className="inline-block bg-white rounded-2xl px-5 py-3 shadow-xl hover:scale-105 transition-transform">
               <img 
                 src={logoImage} 
                 alt="Simula+" 
-                className="h-20 w-20 drop-shadow-2xl cursor-pointer hover:scale-105 transition-transform" 
+                className="h-14 w-auto drop-shadow-md" 
                 data-testid="img-logo"
               />
+            </div>
             </Link>
           </div>
 
@@ -139,16 +141,18 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0a1830] via-[#0d2348] to-[#0a1830] p-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <Link href="/">
-            <img 
+            <div className="inline-block bg-white rounded-2xl px-5 py-3 shadow-xl hover:scale-105 transition-transform">
+              <img 
               src={logoImage} 
               alt="Simula+" 
-              className="h-20 w-20 drop-shadow-2xl cursor-pointer hover:scale-105 transition-transform" 
+              className="h-14 w-auto drop-shadow-md" 
               data-testid="img-logo"
             />
+            </div>
           </Link>
         </div>
 
