@@ -1007,7 +1007,7 @@ function TeamDecisionsViewer({
                       <Card data-testid="card-swot">
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            <CheckCircle2 className="h-4 w-4 text-[#1aa15c]" />
                             SWOT
                           </CardTitle>
                         </CardHeader>
@@ -1023,7 +1023,7 @@ function TeamDecisionsViewer({
                       <Card data-testid="card-porter">
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                            <CheckCircle2 className="h-4 w-4 text-[#1447e6]" />
                             Porter's 5 Forças
                           </CardTitle>
                         </CardHeader>
@@ -1040,7 +1040,7 @@ function TeamDecisionsViewer({
                       <Card data-testid="card-bcg">
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-purple-600" />
+                            <CheckCircle2 className="h-4 w-4 text-[#6d28d9]" />
                             BCG Matrix ({strategies.bcg.length} produtos)
                           </CardTitle>
                         </CardHeader>
@@ -1057,7 +1057,7 @@ function TeamDecisionsViewer({
                       <Card data-testid="card-pestel">
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-orange-600" />
+                            <CheckCircle2 className="h-4 w-4 text-[#ff8c1a]" />
                             PESTEL
                           </CardTitle>
                         </CardHeader>
@@ -1142,7 +1142,7 @@ function FeedbackButton({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="sm" disabled data-testid={`button-feedback-generated-${teamId}`}>
-              <CheckCircle2 className="h-4 w-4 text-green-600 mr-1" />
+              <CheckCircle2 className="h-4 w-4 text-[#1aa15c] mr-1" />
               Gerado
             </Button>
           </TooltipTrigger>
@@ -1960,17 +1960,17 @@ function GradesRanking({
   };
   
   const getGradeColor = (grade: number): string => {
-    if (grade >= 90) return "text-green-600";
-    if (grade >= 70) return "text-blue-600";
-    if (grade >= 50) return "text-yellow-600";
-    return "text-red-600";
+    if (grade >= 90) return "text-[#1aa15c]";
+    if (grade >= 70) return "text-[#1447e6]";
+    if (grade >= 50) return "text-[#c9871a]";
+    return "text-[#e5352b]";
   };
-  
+
   const getGradeBadge = (grade: number): { label: string; color: string } => {
-    if (grade >= 90) return { label: "Excelente", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" };
-    if (grade >= 70) return { label: "Bom", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" };
-    if (grade >= 50) return { label: "Regular", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" };
-    return { label: "Insuficiente", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" };
+    if (grade >= 90) return { label: "Excelente", color: "bg-[#e6f7ee] text-[#0f7a44] dark:bg-green-900/30 dark:text-green-400" };
+    if (grade >= 70) return { label: "Bom", color: "bg-[#eef2ff] text-[#1447e6] dark:bg-blue-900/30 dark:text-blue-400" };
+    if (grade >= 50) return { label: "Regular", color: "bg-[#fff3d6] text-[#7a5300] dark:bg-yellow-900/30 dark:text-yellow-400" };
+    return { label: "Insuficiente", color: "bg-[#fde8e6] text-[#a3241c] dark:bg-red-900/30 dark:text-red-400" };
   };
   
   const teamGrades = useMemo(() => {
@@ -2061,7 +2061,7 @@ function GradesRanking({
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#ffcc00] to-[#ff8c1a] flex items-center justify-center shadow-md">
                 <Award className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -2186,26 +2186,26 @@ function GradesRanking({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Star className="h-4 w-4 text-yellow-500" />
+            <Star className="h-4 w-4 text-[#ffcc00]" />
             Legenda de Notas
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-green-50 dark:bg-green-900/20">
-              <div className="h-3 w-3 rounded-full bg-green-500" />
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-[#e6f7ee] dark:bg-green-900/20">
+              <div className="h-3 w-3 rounded-full bg-[#1aa15c]" />
               <span className="text-sm">90-100: Excelente</span>
             </div>
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-              <div className="h-3 w-3 rounded-full bg-blue-500" />
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-[#eef2ff] dark:bg-blue-900/20">
+              <div className="h-3 w-3 rounded-full bg-[#1447e6]" />
               <span className="text-sm">70-89: Bom</span>
             </div>
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
-              <div className="h-3 w-3 rounded-full bg-yellow-500" />
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-[#fff3d6] dark:bg-yellow-900/20">
+              <div className="h-3 w-3 rounded-full bg-[#ffcc00]" />
               <span className="text-sm">50-69: Regular</span>
             </div>
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-red-50 dark:bg-red-900/20">
-              <div className="h-3 w-3 rounded-full bg-red-500" />
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-[#fde8e6] dark:bg-red-900/20">
+              <div className="h-3 w-3 rounded-full bg-[#e5352b]" />
               <span className="text-sm">0-49: Insuficiente</span>
             </div>
           </div>
@@ -3312,9 +3312,9 @@ export default function Professor() {
                           <div>
                             <p className="text-sm text-muted-foreground">Tendência</p>
                             <div className="flex items-center gap-2">
-                              {economicData.analysis?.trend === "up" && <TrendingUp className="h-5 w-5 text-green-600" />}
-                              {economicData.analysis?.trend === "down" && <TrendingDown className="h-5 w-5 text-red-600" />}
-                              {economicData.analysis?.trend === "stable" && <Minus className="h-5 w-5 text-blue-600" />}
+                              {economicData.analysis?.trend === "up" && <TrendingUp className="h-5 w-5 text-[#1aa15c]" />}
+                              {economicData.analysis?.trend === "down" && <TrendingDown className="h-5 w-5 text-[#e5352b]" />}
+                              {economicData.analysis?.trend === "stable" && <Minus className="h-5 w-5 text-[#1447e6]" />}
                               <span className="font-medium capitalize">{economicData.analysis?.trend}</span>
                             </div>
                           </div>
@@ -3773,7 +3773,7 @@ export default function Professor() {
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-base flex items-center gap-2">
-                          <Trophy className="h-5 w-5 text-yellow-500" />
+                          <Trophy className="h-5 w-5 text-[#ffcc00]" />
                           Ranking - Rodada {lastCompletedRound.roundNumber}
                         </CardTitle>
                       </CardHeader>
@@ -3795,7 +3795,7 @@ export default function Professor() {
                               {[...rankingResults].sort((a, b) => b.profit - a.profit).map((result: any, index: number) => (
                                 <TableRow key={result.id}>
                                   <TableCell className="font-medium">
-                                    {index === 0 && <Trophy className="h-4 w-4 text-yellow-600 inline mr-1" />}
+                                    {index === 0 && <Trophy className="h-4 w-4 text-[#c9871a] inline mr-1" />}
                                     {index + 1}
                                   </TableCell>
                                   <TableCell>
@@ -3806,7 +3806,7 @@ export default function Professor() {
                                   </TableCell>
                                   <TableCell className="text-right">R$ {result.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                                   <TableCell className="text-right">
-                                    <span className={result.profit > 0 ? "text-green-600" : "text-red-600"}>
+                                    <span className={result.profit > 0 ? "text-[#1aa15c]" : "text-[#e5352b]"}>
                                       R$ {result.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                     </span>
                                   </TableCell>
@@ -4241,7 +4241,7 @@ export default function Professor() {
         <AlertDialogContent data-testid="dialog-reset-decisions">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <RefreshCw className="h-5 w-5 text-orange-600" />
+              <RefreshCw className="h-5 w-5 text-[#ff8c1a]" />
               Resetar Decisões
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
@@ -4254,7 +4254,7 @@ export default function Professor() {
             <AlertDialogAction
               onClick={() => teamToReset && resetTeamDecisionsMutation.mutate({ teamId: teamToReset.teamId, roundId: teamToReset.roundId })}
               disabled={resetTeamDecisionsMutation.isPending}
-              className="bg-orange-600 text-white hover:bg-orange-700"
+              className="bg-[#ff8c1a] text-white hover:bg-[#e07800]"
               data-testid="button-confirm-reset"
             >
               {resetTeamDecisionsMutation.isPending ? "Resetando..." : "Confirmar Reset"}
@@ -4309,7 +4309,7 @@ export default function Professor() {
       <Dialog open={!!generatedPassword} onOpenChange={(open) => !open && setGeneratedPassword(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-green-600">
+            <DialogTitle className="flex items-center gap-2 text-[#1aa15c]">
               <CheckCircle2 className="h-5 w-5" />
               Senha Temporária Gerada
             </DialogTitle>
@@ -4328,7 +4328,7 @@ export default function Professor() {
             </div>
             <div className="text-sm text-muted-foreground space-y-1">
               <p className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-orange-500" />
+                <AlertTriangle className="h-4 w-4 text-[#ff8c1a]" />
                 A senha expira em 1 hora
               </p>
               <p className="text-xs">
