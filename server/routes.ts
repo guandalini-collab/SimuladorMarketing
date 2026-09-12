@@ -1428,6 +1428,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(logs);
   });
 
+  // Exportação em CSV do log de atividades (auditoria) — opcionalmente filtrado por equipe e/ou rodada
+  app.get("/api/classes/:classId/round-access-logs/export", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "professor") {
+      return res.status(403).json({ error: "Acesso negado" });
+    }
+
+    const classData = await storage.getClass(req.params.classId);
+    if (!classData) {
+      return res.status(404).json({ error: "Turma não encontrada" });
+    }
+
+    if (classData.professorId !== user.id) {
+      return res.status(403).json({ error: "Você não tem permissão para acessar este relatório" });
+    }
+
+    const { teamId, roundNumber } = req.query;
+    let logs = await storage.getRoundAccessLogs(req.params.classId);
+
+    if (teamId && typeof teamId === "string") {
+      logs = logs.filter((log: any) => log.teamId === teamId);
+    }
+    if (roundNumber && typeof roundNumber === "string") {
+      logs = logs.filter((log: any) => String(log.roundNumber) === roundNumber);
+    }
+
+    // Ordena cronologicamente (mais antigo primeiro) para leitura como linha do tempo
+    logs = [...logs].sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    const escapeCsv = (value: any): string => {
+      const str = value === null || value === undefined ? "" : String(value);
+      if (str.includes(",") || str.includes("\"") || str.includes("\n")) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const header = ["Data/Hora", "Rodada", "Equipe", "Usuário", "Papel na Equipe", "Ação"];
+    const rows = logs.map((log: any) => [
+      log.timestamp ? new Date(log.timestamp).toLocaleString("pt-BR") : "",
+      log.roundNumber,
+      log.teamName || "Sem equipe",
+      log.userName || "",
+      log.isLeader ? "Líder" : "Membro",
+      log.action,
+    ]);
+
+    const csvLines = [header, ...rows].map(cols => cols.map(escapeCsv).join(","));
+    const csv = "﻿" + csvLines.join("\r\n"); // BOM para acentuação correta no Excel
+
+    const teamLabel = rows.length > 0 && teamId ? rows[0][2] : "turma";
+    const filename = `log-atividades-${teamLabel}${roundNumber ? `-rodada-${roundNumber}` : ""}.csv`.replace(/[^a-zA-Z0-9_.-]/g, "_");
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(csv);
+  });
+
   // Enviar email para equipes
   app.post("/api/classes/:classId/send-email", async (req, res) => {
     if (!req.session.userId) {
@@ -2659,6 +2720,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      await storage.logRoundAccess(activeRound.id, team.classId, req.session.userId, "equipe", "marketing_mix_draft_saved");
+
       res.json(result);
     } catch (error) {
       res.status(400).json({ error: "Dados inválidos" });
@@ -2808,6 +2871,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         estimatedCost: Math.round(estimatedCost * 100) / 100,
         submittedAt: new Date(),
       });
+
+      await storage.logRoundAccess(activeRound.id, team.classId, req.session.userId, "equipe", "round_submitted");
 
       // Envia email de confirmação
       const leader = await storage.getUser(req.session.userId);
@@ -3851,6 +3916,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         swot = await storage.createSwotAnalysis({ ...data, teamId: team.id });
       }
 
+      await storage.logRoundAccess(data.roundId, team.classId, req.session.userId, "equipe", "swot_saved");
+
       res.json(swot);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -3878,6 +3945,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         porter = await storage.createPorterAnalysis({ ...data, teamId: team.id });
       }
 
+      await storage.logRoundAccess(data.roundId, team.classId, req.session.userId, "equipe", "porter_saved");
+
       res.json(porter);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -3897,6 +3966,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const data = insertBcgSchema.parse(req.body);
       const bcg = await storage.createBcgAnalysis({ ...data, teamId: team.id });
+      await storage.logRoundAccess(data.roundId, team.classId, req.session.userId, "equipe", "bcg_saved");
       res.json(bcg);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -3927,6 +3997,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Análise não encontrada" });
     }
 
+    await storage.logRoundAccess(bcg.roundId, team.classId, req.session.userId, "equipe", "bcg_deleted");
+
     res.json({ success: true });
   });
 
@@ -3950,6 +4022,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         pestel = await storage.createPestelAnalysis({ ...data, teamId: team.id });
       }
+
+      await storage.logRoundAccess(data.roundId, team.classId, req.session.userId, "equipe", "pestel_saved");
 
       res.json(pestel);
     } catch (error: any) {
@@ -5117,6 +5191,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           submittedAt: isDraft === false ? new Date() : undefined,
         } as any);
       }
+
+      await storage.logRoundAccess(
+        roundId,
+        team.classId,
+        req.session.userId,
+        "equipe",
+        isDraft === false ? `marketing_mix_product_submitted:${productId}` : `marketing_mix_product_draft_saved:${productId}`
+      );
 
       res.json(result);
     } catch (error: any) {

@@ -106,7 +106,9 @@ interface AccessLog {
   userRole: string;
   action: string;
   roundNumber: number;
+  teamId?: string;
   teamName: string;
+  isLeader?: boolean;
   userName?: string;
   timestamp: string;
 }
@@ -141,9 +143,40 @@ function AccessLogsReport({ classId, rounds, teams }: { classId: string; rounds:
         return { label: "Resultados", description: "Acessou a página de Resultados e KPIs da rodada" };
       case "products_access":
         return { label: "Produtos", description: "Acessou a página de configuração de Produtos" };
+      case "swot_saved":
+        return { label: "SWOT salva", description: "Salvou/atualizou a Análise SWOT da equipe" };
+      case "porter_saved":
+        return { label: "Porter salvo", description: "Salvou/atualizou as 5 Forças de Porter da equipe" };
+      case "bcg_saved":
+        return { label: "BCG salva", description: "Salvou/atualizou um item da Matriz BCG da equipe" };
+      case "bcg_deleted":
+        return { label: "BCG excluída", description: "Excluiu um item da Matriz BCG da equipe" };
+      case "pestel_saved":
+        return { label: "PESTEL salva", description: "Salvou/atualizou a Análise PESTEL da equipe" };
+      case "marketing_mix_draft_saved":
+        return { label: "Rascunho salvo", description: "Salvou um rascunho das decisões de Mix de Marketing (ainda não enviado)" };
+      case "round_submitted":
+        return { label: "Rodada enviada", description: "Enviou (finalizou) as decisões da rodada" };
       default:
+        if (action.startsWith("marketing_mix_product_submitted:")) {
+          const productId = action.split(":")[1] || "";
+          return { label: "Produto enviado", description: `Enviou as decisões do produto ${productId}` };
+        }
+        if (action.startsWith("marketing_mix_product_draft_saved:")) {
+          const productId = action.split(":")[1] || "";
+          return { label: "Rascunho de produto", description: `Salvou rascunho das decisões do produto ${productId}` };
+        }
         return { label: action, description: action };
     }
+  };
+
+  const handleDownloadCsv = () => {
+    const params = new URLSearchParams();
+    if (selectedRound && selectedRound !== "all") {
+      params.set("roundNumber", selectedRound);
+    }
+    const url = `/api/classes/${classId}/round-access-logs/export${params.toString() ? `?${params.toString()}` : ""}`;
+    window.open(url, "_blank");
   };
 
   // Ordenar logs por nome da equipe (alfabético) e depois por timestamp
@@ -196,12 +229,24 @@ function AccessLogsReport({ classId, rounds, teams }: { classId: string; rounds:
               Histórico completo de acessos para fins de auditoria
             </CardDescription>
           </div>
-          {lastUpdate && (
-            <Badge variant="outline" className="text-xs gap-1">
-              <RefreshCw className="h-3 w-3" />
-              Atualizado: {lastUpdate}
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {lastUpdate && (
+              <Badge variant="outline" className="text-xs gap-1">
+                <RefreshCw className="h-3 w-3" />
+                Atualizado: {lastUpdate}
+              </Badge>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              onClick={handleDownloadCsv}
+              data-testid="button-download-access-logs-csv"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Baixar CSV
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -257,6 +302,7 @@ function AccessLogsReport({ classId, rounds, teams }: { classId: string; rounds:
                             <TableRow>
                               <TableHead>Equipe</TableHead>
                               <TableHead>Usuário</TableHead>
+                              <TableHead>Papel</TableHead>
                               <TableHead>Local Acessado</TableHead>
                               <TableHead>Descrição</TableHead>
                               <TableHead>Data/Hora</TableHead>
@@ -269,6 +315,16 @@ function AccessLogsReport({ classId, rounds, teams }: { classId: string; rounds:
                                 <TableRow key={log.id || idx} data-testid={`row-access-log-round-${roundNum}-${idx}`}>
                                   <TableCell className="font-semibold">{log.teamName || "Sem equipe"}</TableCell>
                                   <TableCell>{log.userName}</TableCell>
+                                  <TableCell>
+                                    {log.teamId && (
+                                      <Badge
+                                        variant="outline"
+                                        className={log.isLeader ? "bg-[#e6f7ee] text-[#0f7a44] border-transparent" : "bg-muted text-muted-foreground border-transparent"}
+                                      >
+                                        {log.isLeader ? "Líder" : "Membro"}
+                                      </Badge>
+                                    )}
+                                  </TableCell>
                                   <TableCell>
                                     <Badge variant="secondary">
                                       {actionInfo.label}
@@ -298,6 +354,7 @@ function AccessLogsReport({ classId, rounds, teams }: { classId: string; rounds:
                     <TableRow>
                       <TableHead>Equipe</TableHead>
                       <TableHead>Usuário</TableHead>
+                      <TableHead>Papel</TableHead>
                       <TableHead>Local Acessado</TableHead>
                       <TableHead>Descrição</TableHead>
                       <TableHead>Data/Hora</TableHead>
@@ -310,6 +367,16 @@ function AccessLogsReport({ classId, rounds, teams }: { classId: string; rounds:
                         <TableRow key={log.id || idx} data-testid={`row-access-log-${idx}`}>
                           <TableCell className="font-semibold">{log.teamName || "Sem equipe"}</TableCell>
                           <TableCell>{log.userName}</TableCell>
+                          <TableCell>
+                            {log.teamId && (
+                              <Badge
+                                variant="outline"
+                                className={log.isLeader ? "bg-[#e6f7ee] text-[#0f7a44] border-transparent" : "bg-muted text-muted-foreground border-transparent"}
+                              >
+                                {log.isLeader ? "Líder" : "Membro"}
+                              </Badge>
+                            )}
+                          </TableCell>
                           <TableCell>
                             <Badge variant="secondary">
                               {actionInfo.label}
@@ -2360,6 +2427,7 @@ export default function Professor() {
     !enrolledStudents.some((enrolled: any) => enrolled.id === student.id)
   ).sort((a: any, b: any) => (a.name || "").localeCompare(b.name || ""));
   const sortedEnrolledStudents = [...enrolledStudents].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || ""));
+  const getStudentTeam = (studentId: string) => teams.find((t: any) => t.memberIds?.includes(studentId));
   const sortedAllProfessorStudents = [...allProfessorStudents].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || ""));
 
   // Estatísticas do dashboard
@@ -3445,6 +3513,10 @@ export default function Professor() {
                       <CardTitle className="text-base">Alunos Matriculados</CardTitle>
                       <CardDescription>
                         {sortedEnrolledStudents.length} alunos na turma
+                        {(() => {
+                          const semEquipe = sortedEnrolledStudents.filter((s: any) => !getStudentTeam(s.id)).length;
+                          return semEquipe > 0 ? ` · ${semEquipe} sem equipe` : "";
+                        })()}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -3476,14 +3548,33 @@ export default function Professor() {
                               <TableRow>
                                 <TableHead>Nome</TableHead>
                                 <TableHead>Email</TableHead>
+                                <TableHead>Equipe</TableHead>
                                 <TableHead className="text-right">Ações</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {sortedEnrolledStudents.map((student: any) => (
+                              {sortedEnrolledStudents.map((student: any) => {
+                                const studentTeam = getStudentTeam(student.id);
+                                return (
                                 <TableRow key={student.id}>
                                   <TableCell className="font-medium">{student.name}</TableCell>
                                   <TableCell className="text-muted-foreground">{student.email}</TableCell>
+                                  <TableCell>
+                                    {studentTeam ? (
+                                      <Badge variant="outline" className="gap-1 bg-[#e6f7ee] text-[#0f7a44] border-transparent">
+                                        <Users className="h-3 w-3" />
+                                        {studentTeam.name}
+                                        {studentTeam.leaderId === student.id && (
+                                          <span className="ml-1 text-[10px] font-semibold">(líder)</span>
+                                        )}
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="gap-1 bg-[#fff3d6] text-[#7a5300] border-transparent">
+                                        <AlertTriangle className="h-3 w-3" />
+                                        Sem equipe
+                                      </Badge>
+                                    )}
+                                  </TableCell>
                                   <TableCell className="text-right">
                                     <div className="flex items-center justify-end gap-1">
                                       <Tooltip>
@@ -3515,7 +3606,8 @@ export default function Professor() {
                                     </div>
                                   </TableCell>
                                 </TableRow>
-                              ))}
+                                );
+                              })}
                             </TableBody>
                           </Table>
                         </div>

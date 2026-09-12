@@ -1,12 +1,14 @@
-import { Switch, Route, Redirect } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { Switch, Route, Redirect, useLocation } from "wouter";
+import { apiRequest, queryClient } from "./lib/queryClient";
+import { QueryClientProvider, useMutation, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ProfessorLayout } from "@/components/professor-layout";
+import { LogOut } from "lucide-react";
 import Dashboard from "@/pages/dashboard";
 import Campanhas from "@/pages/campanhas";
 import Decisoes from "@/pages/decisoes";
@@ -44,6 +46,8 @@ interface Team {
 }
 
 function AuthenticatedApp() {
+  const [, setLocation] = useLocation();
+
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ["user"],
     queryFn: async () => {
@@ -57,6 +61,17 @@ function AuthenticatedApp() {
   const { data: team } = useQuery<Team>({
     queryKey: ["/api/team/current"],
     enabled: !!user && user.role === "equipe",
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/auth/logout");
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(["user"], null);
+      queryClient.invalidateQueries();
+      setLocation("/");
+    },
   });
 
   if (isLoading) {
@@ -107,6 +122,16 @@ function AuthenticatedApp() {
                 </p>
               </div>
               <ThemeToggle />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
+                data-testid="button-logout"
+                aria-label="Sair"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
             </div>
           </header>
           <main className="flex-1 overflow-auto p-8">

@@ -6,7 +6,6 @@ import {
   TrendingUp,
   Building2,
   Target,
-  LogOut,
   BookOpen,
   Sparkles,
   Tv,
@@ -26,9 +25,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Link, useLocation } from "wouter";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
 import logoImage from "@assets/generated_images/Simula_logo_navy_dourado_final.png";
 
 const menuItems = [
@@ -95,18 +91,7 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
-  const [location, setLocation] = useLocation();
-
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest("POST", "/api/auth/logout");
-    },
-    onSuccess: () => {
-      queryClient.setQueryData(["user"], null);
-      queryClient.invalidateQueries();
-      setLocation("/");
-    },
-  });
+  const [location] = useLocation();
 
   return (
     <Sidebar>
@@ -142,25 +127,13 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-6">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-white/70">Nível</span>
-              <span className="font-semibold text-white">3</span>
-            </div>
-            <Progress value={65} className="h-2 bg-white/15 [&>div]:bg-[#ffcc00]" />
-            <p className="text-xs text-white/70">350 / 500 XP</p>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-white/70">Nível</span>
+            <span className="font-semibold text-white">3</span>
           </div>
-          <Button
-            variant="outline"
-            className="w-full border-white/25 text-white hover:bg-white/10"
-            onClick={() => logoutMutation.mutate()}
-            disabled={logoutMutation.isPending}
-            data-testid="button-logout"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Sair</span>
-          </Button>
+          <Progress value={65} className="h-2 bg-white/15 [&>div]:bg-[#ffcc00]" />
+          <p className="text-xs text-white/70">350 / 500 XP</p>
         </div>
       </SidebarFooter>
     </Sidebar>

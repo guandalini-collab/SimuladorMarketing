@@ -1,6 +1,5 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import pg from "pg";
-const { Pool } = pg;
+import { drizzle } from "drizzle-orm/neon-http";
+import { neon } from "@neondatabase/serverless";
 import { eq, and, desc, isNull, inArray, asc } from "drizzle-orm";
 import {
   type User,
@@ -74,8 +73,8 @@ const databaseUrl = process.env.DATABASE_URL || process.env.DATABASE_URL_DEV;
 if (!databaseUrl) {
   throw new Error("DATABASE_URL não configurada.");
 }
-const pool = new Pool({ connectionString: databaseUrl });
-const db = drizzle(pool);
+const sql = neon(databaseUrl);
+const db = drizzle(sql);
 
 // Fallback para DATABASE_URL de desenvolvimento se estiver em produção mas sem dados
 if (process.env.NODE_ENV === "production" && !process.env.DATABASE_URL?.includes("neon.tech")) {
@@ -633,23 +632,28 @@ export class PgStorage implements IStorage {
       .where(eq(roundAccessLogs.classId, classId))
       .orderBy(desc(roundAccessLogs.timestamp));
     
-    // Buscar equipes da turma para mapear userId -> teamName
-    const classTeams = await db.select({ id: teams.id, name: teams.name, memberIds: teams.memberIds }).from(teams).where(eq(teams.classId, classId));
-    
-    // Criar mapa de userId para teamName
-    const userTeamMap = new Map<string, string>();
+    // Buscar equipes da turma para mapear userId -> equipe (nome, id e se é líder)
+    const classTeams = await db.select({ id: teams.id, name: teams.name, memberIds: teams.memberIds, leaderId: teams.leaderId }).from(teams).where(eq(teams.classId, classId));
+
+    // Criar mapa de userId -> { teamId, teamName, isLeader }
+    const userTeamMap = new Map<string, { teamId: string; teamName: string; isLeader: boolean }>();
     for (const team of classTeams) {
       if (team.memberIds) {
         for (const memberId of team.memberIds) {
-          userTeamMap.set(memberId, team.name);
+          userTeamMap.set(memberId, { teamId: team.id, teamName: team.name, isLeader: team.leaderId === memberId });
         }
       }
     }
-    
-    return logs.map(log => ({
-      ...log,
-      teamName: userTeamMap.get(log.userId) || "Sem equipe"
-    }));
+
+    return logs.map(log => {
+      const teamInfo = userTeamMap.get(log.userId);
+      return {
+        ...log,
+        teamId: teamInfo?.teamId,
+        teamName: teamInfo?.teamName || "Sem equipe",
+        isLeader: teamInfo?.isLeader || false,
+      };
+    });
   }
 
   async getCampaign(id: string): Promise<Campaign | undefined> {

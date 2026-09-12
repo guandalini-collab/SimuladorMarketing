@@ -1038,7 +1038,7 @@ export class MemStorage implements IStorage {
     const round = await this.getRound(roundId);
     const user = await this.getUser(userId);
     const team = await this.getTeamByUser(userId);
-    
+
     logs.push({
       id: randomUUID(),
       roundId,
@@ -1047,10 +1047,13 @@ export class MemStorage implements IStorage {
       userRole,
       action,
       roundNumber: round?.roundNumber || 0,
+      teamId: team?.id,
       teamName: team?.name || user?.name || 'Desconhecido',
+      userName: user?.name || 'Desconhecido',
+      isLeader: team?.leaderId === userId,
       timestamp: new Date().toISOString(),
     });
-    
+
     this.roundAccessLogs.set(classId, logs);
   }
 
