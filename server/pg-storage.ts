@@ -1343,7 +1343,37 @@ export class PgStorage implements IStorage {
     return result[0];
   }
 
+  // Garante que as colunas/tabelas da Rodada 0 existam no banco, mesmo que o
+  // passo de "drizzle-kit push" no predeploy do Railway seja interrompido por
+  // um erro pré-existente e não relacionado (em ai_feedback), que impede as
+  // alterações pendentes seguintes de serem aplicadas. Tudo aqui é
+  // idempotente (IF NOT EXISTS), seguro de rodar em todo boot do servidor.
+  private async ensureRodada0SchemaExists(): Promise<void> {
+    try {
+      await pool.query('ALTER TABLE teams ADD COLUMN IF NOT EXISTS ready_confirmed_at timestamp');
+      await pool.query('ALTER TABLE teams ADD COLUMN IF NOT EXISTS tutorial_completed_at timestamp');
+      await pool.query(`CREATE TABLE IF NOT EXISTS practice_rounds (
+        id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
+        team_id varchar NOT NULL UNIQUE REFERENCES teams(id) ON DELETE CASCADE,
+        status text NOT NULL DEFAULT 'em_andamento',
+        started_at timestamp NOT NULL DEFAULT now(),
+        completed_at timestamp,
+        decisions jsonb NOT NULL DEFAULT '{}'::jsonb,
+        result_summary jsonb
+      )`);
+      await pool.query(`CREATE TABLE IF NOT EXISTS system_flags (
+        key text PRIMARY KEY,
+        value text,
+        set_at timestamp NOT NULL DEFAULT now()
+      )`);
+    } catch (error) {
+      console.error("[MIGRATION] Falha ao garantir schema da Rodada 0:", error);
+    }
+  }
+
   async runLegacyTeamsTutorialBackfillOnce(): Promise<void> {
+    await this.ensureRodada0SchemaExists();
+
     const FLAG_KEY = "legacy_teams_tutorial_backfilled";
     const existing = await db.select().from(systemFlags).where(eq(systemFlags.key, FLAG_KEY)).limit(1);
     if (existing.length > 0) return;
