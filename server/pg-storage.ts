@@ -533,7 +533,9 @@ export class PgStorage implements IStorage {
   }
 
   async getRoundsByClass(classId: string): Promise<Round[]> {
-    return db.select().from(rounds).where(eq(rounds.classId, classId));
+    return db.select().from(rounds)
+      .where(eq(rounds.classId, classId))
+      .orderBy(asc(rounds.roundNumber));
   }
 
   async getCurrentRound(classId: string): Promise<Round | undefined> {

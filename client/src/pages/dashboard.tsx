@@ -13,15 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import heroBanner from "@assets/generated_images/Marketing_dashboard_hero_banner_7c645c89.png";
 
-const performanceData = [
-  { name: "Jan", vendas: 4000, campanhas: 2400 },
-  { name: "Fev", vendas: 3000, campanhas: 1398 },
-  { name: "Mar", vendas: 2000, campanhas: 9800 },
-  { name: "Abr", vendas: 2780, campanhas: 3908 },
-  { name: "Mai", vendas: 1890, campanhas: 4800 },
-  { name: "Jun", vendas: 2390, campanhas: 3800 },
-];
-
 interface Team {
   id: string;
   name: string;
@@ -60,6 +51,37 @@ export default function Dashboard() {
   const { data: team, isLoading: teamLoading } = useQuery<any>({
     queryKey: ["/api/team/current"],
   });
+
+  // Dados reais para os KPIs do painel — antes "ROI Médio", "Alcance Total" e
+  // "Campanhas Ativas" eram valores fixos no código, iguais para qualquer
+  // equipe/rodada. Agora vêm dos resultados reais de rodadas concluídas.
+  const { data: teamResults = [] } = useQuery<any[]>({
+    queryKey: ["/api/results/team", team?.id],
+    enabled: !!team,
+  });
+
+  const completedRounds = rounds.filter((r) => r.status === "completed");
+  const lastCompletedRound = completedRounds[completedRounds.length - 1];
+  const latestResult = teamResults.find((r) => r.roundId === lastCompletedRound?.id);
+  const avgRoi = teamResults.length > 0
+    ? teamResults.reduce((sum: number, r: any) => sum + (r.roi || 0), 0) / teamResults.length
+    : null;
+
+  // Evolução real por rodada concluída (substitui o antigo performanceData
+  // fixo de "Jan" a "Jun", que era igual para qualquer equipe).
+  const evolutionData = teamResults
+    .map((r: any) => {
+      const round = rounds.find((rd: any) => rd.id === r.roundId);
+      return {
+        name: `R${round?.roundNumber ?? "?"}`,
+        roundNumber: round?.roundNumber ?? 0,
+        receita: r.revenue,
+        lucro: r.profit,
+        roi: r.roi,
+        marketShare: r.marketShare,
+      };
+    })
+    .sort((a: any, b: any) => a.roundNumber - b.roundNumber);
 
   const { data: users = [] } = useQuery<any[]>({
     queryKey: ["/api/team/members"],
@@ -429,23 +451,23 @@ export default function Dashboard() {
         />
         <KPICard
           title="ROI Médio"
-          value="124%"
-          trend={{ value: 8, isPositive: true }}
+          value={avgRoi !== null ? `${avgRoi.toFixed(1)}%` : "—"}
+          description={avgRoi !== null ? "Média de todas as rodadas concluídas" : "Sem rodadas concluídas ainda"}
           icon={TrendingUp}
           testId="text-roi"
           color="blue"
         />
         <KPICard
-          title="Alcance Total"
-          value="45.2K"
-          trend={{ value: 15, isPositive: true }}
+          title="Participação de Mercado"
+          value={latestResult ? `${latestResult.marketShare.toFixed(1)}%` : "—"}
+          description={latestResult ? `Última rodada concluída (Rodada ${lastCompletedRound?.roundNumber})` : "Sem rodadas concluídas ainda"}
           icon={Users}
           testId="text-reach"
           color="violet"
         />
         <KPICard
-          title="Campanhas Ativas"
-          value="3"
+          title="Rodadas Concluídas"
+          value={completedRounds.length}
           icon={Target}
           testId="text-active-campaigns"
           color="orange"
@@ -523,20 +545,26 @@ export default function Dashboard() {
               <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
                 <TrendingUp className="h-5 w-5 text-white" />
               </div>
-              <CardTitle className="text-lg">Desempenho Mensal</CardTitle>
+              <CardTitle className="text-lg">Receita e Lucro por Rodada</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="vendas" fill="#1447e6" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="campanhas" fill="#ffcc00" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {evolutionData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={evolutionData}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="receita" name="Receita" fill="#1447e6" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="lucro" name="Lucro" fill="#ffcc00" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground text-center px-6">
+                Os gráficos aparecem aqui assim que a primeira rodada da sua equipe for concluída.
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -546,32 +574,40 @@ export default function Dashboard() {
               <div className="h-10 w-10 rounded-lg bg-[#1aa15c] flex items-center justify-center">
                 <Target className="h-5 w-5 text-white" />
               </div>
-              <CardTitle className="text-lg">Tendência de Crescimento</CardTitle>
+              <CardTitle className="text-lg">Tendência de ROI e Participação de Mercado</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="vendas"
-                  stroke="#1447e6"
-                  strokeWidth={3}
-                  dot={{ r: 5 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="campanhas"
-                  stroke="#1aa15c"
-                  strokeWidth={3}
-                  dot={{ r: 5 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {evolutionData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={evolutionData}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="roi"
+                    name="ROI (%)"
+                    stroke="#1447e6"
+                    strokeWidth={3}
+                    dot={{ r: 5 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="marketShare"
+                    name="Participação de Mercado (%)"
+                    stroke="#1aa15c"
+                    strokeWidth={3}
+                    dot={{ r: 5 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground text-center px-6">
+                Os gráficos aparecem aqui assim que a primeira rodada da sua equipe for concluída.
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

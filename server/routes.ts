@@ -3907,8 +3907,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const data = insertSwotSchema.parse(req.body);
+
+      const round = await storage.getRound(data.roundId);
+      if (!round) {
+        return res.status(404).json({ error: "Rodada não encontrada" });
+      }
+      if (round.status !== "active") {
+        return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
+      }
+
       const existing = await storage.getSwotAnalysis(team.id, data.roundId);
-      
+
       let swot;
       if (existing) {
         swot = await storage.updateSwotAnalysis(existing.id, data);
@@ -3936,8 +3945,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const data = insertPorterSchema.parse(req.body);
+
+      const round = await storage.getRound(data.roundId);
+      if (!round) {
+        return res.status(404).json({ error: "Rodada não encontrada" });
+      }
+      if (round.status !== "active") {
+        return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
+      }
+
       const existing = await storage.getPorterAnalysis(team.id, data.roundId);
-      
+
       let porter;
       if (existing) {
         porter = await storage.updatePorterAnalysis(existing.id, data);
@@ -3965,6 +3983,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const data = insertBcgSchema.parse(req.body);
+
+      const round = await storage.getRound(data.roundId);
+      if (!round) {
+        return res.status(404).json({ error: "Rodada não encontrada" });
+      }
+      if (round.status !== "active") {
+        return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
+      }
+
       const bcg = await storage.createBcgAnalysis({ ...data, teamId: team.id });
       await storage.logRoundAccess(data.roundId, team.classId, req.session.userId, "equipe", "bcg_saved");
       res.json(bcg);
@@ -3992,6 +4019,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(403).json({ error: "Você não tem permissão para deletar esta análise" });
     }
 
+    const bcgRound = await storage.getRound(bcg.roundId);
+    if (bcgRound && bcgRound.status !== "active") {
+      return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
+    }
+
     const deleted = await storage.deleteBcgAnalysis(req.params.id);
     if (!deleted) {
       return res.status(404).json({ error: "Análise não encontrada" });
@@ -4014,8 +4046,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const data = insertPestelSchema.parse(req.body);
+
+      const round = await storage.getRound(data.roundId);
+      if (!round) {
+        return res.status(404).json({ error: "Rodada não encontrada" });
+      }
+      if (round.status !== "active") {
+        return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
+      }
+
       const existing = await storage.getPestelAnalysis(team.id, data.roundId);
-      
+
       let pestel;
       if (existing) {
         pestel = await storage.updatePestelAnalysis(existing.id, data);
@@ -5106,26 +5147,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // ⚠️ VALIDAÇÃO OBRIGATÓRIA: Verificar se todas as análises estratégicas foram completadas
-      const [swot, porter, bcgList, pestel] = await Promise.all([
-        storage.getSwotAnalysis(team.id, roundId),
-        storage.getPorterAnalysis(team.id, roundId),
-        storage.getBcgAnalyses(team.id, roundId),
-        storage.getPestelAnalysis(team.id, roundId),
-      ]);
+      // Só se aplica ao envio final (isDraft === false) — um rascunho pode ser salvo a
+      // qualquer momento, mesmo com as análises estratégicas ainda incompletas.
+      if (isDraft === false) {
+        const [swot, porter, bcgList, pestel] = await Promise.all([
+          storage.getSwotAnalysis(team.id, roundId),
+          storage.getPorterAnalysis(team.id, roundId),
+          storage.getBcgAnalyses(team.id, roundId),
+          storage.getPestelAnalysis(team.id, roundId),
+        ]);
 
-      const missingAnalyses = [];
-      if (!swot) missingAnalyses.push("Análise SWOT");
-      if (!porter) missingAnalyses.push("5 Forças de Porter");
-      if (!bcgList || bcgList.length === 0) missingAnalyses.push("Matriz BCG");
-      if (!pestel) missingAnalyses.push("Análise PESTEL");
+        const missingAnalyses = [];
+        if (!swot) missingAnalyses.push("Análise SWOT");
+        if (!porter) missingAnalyses.push("5 Forças de Porter");
+        if (!bcgList || bcgList.length === 0) missingAnalyses.push("Matriz BCG");
+        if (!pestel) missingAnalyses.push("Análise PESTEL");
 
-      if (missingAnalyses.length > 0) {
-        return res.status(400).json({ 
-          error: "⚠️ ETAPA OBRIGATÓRIA: Complete todas as Análises Estratégicas primeiro!",
-          details: `Você deve completar as seguintes análises antes de configurar qualquer produto: ${missingAnalyses.join(", ")}.`,
-          missingAnalyses,
-          nextStep: "Acesse 'Análises Estratégicas' no menu e complete todas as 4 ferramentas: SWOT, Porter, BCG e PESTEL."
-        });
+        if (missingAnalyses.length > 0) {
+          return res.status(400).json({
+            error: "⚠️ ETAPA OBRIGATÓRIA: Complete todas as Análises Estratégicas primeiro!",
+            details: `Você deve completar as seguintes análises antes de configurar qualquer produto: ${missingAnalyses.join(", ")}.`,
+            missingAnalyses,
+            nextStep: "Acesse 'Análises Estratégicas' no menu e complete todas as 4 ferramentas: SWOT, Porter, BCG e PESTEL."
+          });
+        }
       }
 
       const data = insertMarketingMixSchema.parse({

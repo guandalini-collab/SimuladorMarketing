@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { formatarNumeroBR, capturarNumeroPuro, sanitizarInputNumerico } from '@/lib/formatters';
+import { formatarNumeroBR, capturarNumeroPuro, sanitizarInputNumerico, sanitizarDigitacaoMonetaria } from '@/lib/formatters';
 
 interface FormattedMoneyInputProps {
   id?: string;
@@ -40,13 +40,13 @@ export function FormattedMoneyInput({
     
     // Remove 'R$' e espaços para permitir digitação limpa
     const semSimbolos = input.replace(/R\$/g, '').trim();
-    
-    // Sanitiza o input
-    const sanitizado = sanitizarInputNumerico(semSimbolos);
-    
+
+    // Sanitiza o input (ponto digitado é ignorado — só a vírgula é decimal)
+    const sanitizado = sanitizarDigitacaoMonetaria(semSimbolos);
+
     // Captura o número puro
     const numero = capturarNumeroPuro(sanitizado);
-    
+
     // Atualiza o estado interno com formatação parcial
     setDisplayValue(`R$ ${sanitizado}`);
     

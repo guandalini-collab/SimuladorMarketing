@@ -112,6 +112,39 @@ export function capturarNumeroPuro(valorFormatado: string): number {
  * sanitizarInputNumerico("1.234.567") // "1234567" (múltiplos pontos = milhares)
  * sanitizarInputNumerico("abc123") // "123" (remove letras)
  */
+/**
+ * Sanitiza a digitação em um campo monetário, mantendo apenas dígitos e uma
+ * única vírgula decimal (no máximo 2 casas). Ao contrário de
+ * sanitizarInputNumerico, esta função NUNCA reinterpreta um "." digitado
+ * como separador decimal: em um campo de moeda no padrão brasileiro, o
+ * ponto só existe como separador de milhar (reaplicado na formatação final,
+ * ao perder o foco — ver FormattedMoneyInput) e a vírgula é sempre o
+ * separador decimal. Isso evita que, ao digitar "1.200" caractere por
+ * caractere, o "." seja convertido prematuramente em vírgula assim que só
+ * há 0-2 dígitos depois dele — o que fazia o valor virar R$ 1,20 em vez de
+ * R$ 1.200,00.
+ * @example
+ * sanitizarDigitacaoMonetaria("1.200") // "1200" (ponto é ignorado durante a digitação)
+ * sanitizarDigitacaoMonetaria("1200,5") // "1200,5"
+ * sanitizarDigitacaoMonetaria("12,345") // "12,34" (máximo 2 casas decimais)
+ */
+export function sanitizarDigitacaoMonetaria(valor: string): string {
+  if (!valor) return '';
+
+  // Mantém apenas dígitos e vírgula
+  let limpo = valor.replace(/[^\d,]/g, '');
+
+  // Garante uma única vírgula decimal, com no máximo 2 casas
+  const primeiraVirgula = limpo.indexOf(',');
+  if (primeiraVirgula !== -1) {
+    const inteiro = limpo.slice(0, primeiraVirgula);
+    const decimais = limpo.slice(primeiraVirgula + 1).replace(/,/g, '');
+    limpo = inteiro + ',' + decimais.slice(0, 2);
+  }
+
+  return limpo;
+}
+
 export function sanitizarInputNumerico(valor: string): string {
   if (!valor) return '';
   

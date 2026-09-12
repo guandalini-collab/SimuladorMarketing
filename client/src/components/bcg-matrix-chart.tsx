@@ -23,32 +23,39 @@ interface BcgAnalysis {
   notes: string | null;
 }
 
-const QUADRANT_COLORS = {
-  stars: "#1aa15c",
-  cash_cows: "#1447e6",
-  question_marks: "#ff8c1a",
-  dogs: "#e5352b",
+// Os quadrantes são salvos em português (ver getQuadrant em estrategia.tsx),
+// por isso as chaves aqui usam os mesmos rótulos — não "stars"/"cash_cows"
+// em inglês, que nunca combinavam com o valor real salvo no banco.
+const QUADRANT_COLORS: Record<string, string> = {
+  "Estrela": "#1aa15c",
+  "Vaca Leiteira": "#1447e6",
+  "Ponto de Interrogação": "#ff8c1a",
+  "Abacaxi": "#e5352b",
 };
 
-const QUADRANT_LABELS = {
-  stars: "Estrelas",
-  cash_cows: "Vacas Leiteiras",
-  question_marks: "Interrogações",
-  dogs: "Abacaxis",
+const QUADRANT_LABELS: Record<string, string> = {
+  "Estrela": "Estrelas",
+  "Vaca Leiteira": "Vacas Leiteiras",
+  "Ponto de Interrogação": "Interrogações",
+  "Abacaxi": "Abacaxis",
 };
 
-const QUADRANT_ICONS = {
-  stars: Zap,
-  cash_cows: DollarSign,
-  question_marks: HelpCircle,
-  dogs: TrendingUp,
+const QUADRANT_ICONS: Record<string, typeof Zap> = {
+  "Estrela": Zap,
+  "Vaca Leiteira": DollarSign,
+  "Ponto de Interrogação": HelpCircle,
+  "Abacaxi": TrendingUp,
 };
 
 export function BcgMatrixChart({ teamId, roundId }: BcgMatrixChartProps) {
-  const { data: bcgData, isLoading } = useQuery<BcgAnalysis[]>({
-    queryKey: [`/api/bcg/${teamId}/${roundId}`],
+  // Reaproveita a mesma rota que a página Estratégia usa (/api/strategy/:roundId,
+  // que resolve a equipe pela sessão) — a rota /api/bcg/:teamId/:roundId nunca
+  // existiu no backend, então esta seção sempre ficava vazia.
+  const { data: strategyData, isLoading } = useQuery<{ bcg: BcgAnalysis[] }>({
+    queryKey: ["/api/strategy", roundId],
     enabled: !!teamId && !!roundId,
   });
+  const bcgData = strategyData?.bcg;
 
   if (isLoading) {
     return (

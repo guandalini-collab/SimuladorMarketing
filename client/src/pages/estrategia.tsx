@@ -273,7 +273,7 @@ function SwotTab({ roundId, roundNumber, roundStatus, data }: { roundId: string;
               </div>
             ))}
           </div>
-          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || roundStatus !== "active"}>
             Salvar Análise SWOT
           </Button>
         </CardContent>
@@ -386,7 +386,7 @@ function PorterTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
             />
           </div>
         ))}
-        <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+        <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || roundStatus !== "active"}>
           Salvar Análise Porter
         </Button>
       </CardContent>
@@ -432,9 +432,13 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
   });
 
   function getQuadrant(growth: number, share: number) {
-    if (growth >= 5 && share >= 50) return "Estrela";
-    if (growth < 5 && share >= 50) return "Vaca Leiteira";
-    if (growth >= 5 && share < 50) return "Ponto de Interrogação";
+    // Limiar de crescimento (10%) alinhado com a linha de referência do
+    // gráfico (BcgMatrixChart usa y={10}) — antes a classificação usava 5%,
+    // fazendo produtos com crescimento entre 5% e 10% ficarem com um
+    // quadrante/cor que não correspondia à posição real no gráfico.
+    if (growth >= 10 && share >= 50) return "Estrela";
+    if (growth < 10 && share >= 50) return "Vaca Leiteira";
+    if (growth >= 10 && share < 50) return "Ponto de Interrogação";
     return "Abacaxi";
   }
 
@@ -503,7 +507,7 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
                 />
               </div>
             </div>
-            <Button onClick={() => addMutation.mutate()} disabled={!newProduct.productName || addMutation.isPending}>
+            <Button onClick={() => addMutation.mutate()} disabled={!newProduct.productName || addMutation.isPending || roundStatus !== "active"}>
               <Plus className="h-4 w-4 mr-2" />
               Adicionar Produto
             </Button>
@@ -524,7 +528,7 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
                           <Badge className="mt-1">{product.quadrant}</Badge>
                         </div>
                       </div>
-                      <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(product.id)}>
+                      <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(product.id)} disabled={roundStatus !== "active"}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -678,7 +682,7 @@ function PestelTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
             </div>
           ))}
         </div>
-        <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+        <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || roundStatus !== "active"}>
           Salvar Análise PESTEL
         </Button>
       </CardContent>

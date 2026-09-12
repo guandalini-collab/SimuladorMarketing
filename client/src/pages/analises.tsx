@@ -993,7 +993,7 @@ export default function Analises() {
                   R$ {currentResult.costs.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {((currentResult.costs / team!.budget) * 100).toFixed(1)}% do orçamento
+                  {team!.budget > 0 ? ((currentResult.costs / team!.budget) * 100).toFixed(1) : "0.0"}% do orçamento
                 </p>
               </CardContent>
             </Card>

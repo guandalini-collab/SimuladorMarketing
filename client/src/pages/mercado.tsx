@@ -443,7 +443,7 @@ export default function Mercado() {
                                 </li>
                               </>
                             )}
-                            {currentClass.competitionLevel === "alta" || currentClass.competitionLevel === "muito_alta" && (
+                            {(currentClass.competitionLevel === "alta" || currentClass.competitionLevel === "muito_alta") && (
                               <>
                                 <li className="flex items-start gap-2">
                                   <span className="text-primary mt-0.5">•</span>
@@ -703,6 +703,3 @@ export default function Mercado() {
     </div>
   );
 }
-            <CardHeader>
-              <CardTitle>Tendências por Segmento</CardTitle>
-            </CardHeader>
