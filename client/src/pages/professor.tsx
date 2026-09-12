@@ -640,7 +640,7 @@ function TeamCard({
       <div className="p-4 border-2 border-slate-200 dark:border-slate-800 rounded-lg hover-elevate transition-all">
         <div className="flex items-center justify-between">
           <CollapsibleTrigger className="flex items-center gap-3 flex-1 text-left">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center shadow-md flex-shrink-0">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#6d28d9] to-[#1447e6] flex items-center justify-center shadow-md flex-shrink-0">
               <Users className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -688,16 +688,16 @@ function TeamCard({
         </div>
         <div className="flex flex-wrap gap-3 mt-3">
           <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <DollarSign className="h-4 w-4 text-[#1aa15c]" />
             <p className="text-sm font-medium">R$ {team.budget.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <Users className="h-4 w-4 text-[#1447e6]" />
             <p className="text-sm font-medium">{memberCount} {memberCount === 1 ? 'membro' : 'membros'}</p>
           </div>
           {leader && (
             <div className="flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              <Trophy className="h-4 w-4 text-[#ffcc00]" />
               <Badge variant="default" className="text-xs">{leader.name}</Badge>
             </div>
           )}
@@ -715,7 +715,7 @@ function TeamCard({
               {teamMembers.map((member) => (
                 <div key={member.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-950 rounded-lg border hover-elevate transition-all">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-300 to-cyan-300 flex items-center justify-center shadow flex-shrink-0">
+                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#7c3aed] to-[#1447e6] flex items-center justify-center shadow flex-shrink-0">
                       <span className="text-sm font-bold text-white">{member.name.charAt(0).toUpperCase()}</span>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -1626,16 +1626,16 @@ function RoundsTimeline({
 }) {
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "active": return <CircleDot className="h-5 w-5 text-green-500" />;
-      case "completed": return <CircleCheck className="h-5 w-5 text-blue-500" />;
+      case "active": return <CircleDot className="h-5 w-5 text-[#1aa15c]" />;
+      case "completed": return <CircleCheck className="h-5 w-5 text-[#1447e6]" />;
       default: return <CirclePause className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active": return "bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700";
-      case "completed": return "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800";
+      case "active": return "bg-[#e6f7ee] dark:bg-green-900/30 border-[#1aa15c]/40 dark:border-green-700";
+      case "completed": return "bg-[#eef2ff] dark:bg-blue-900/20 border-[#1447e6]/30 dark:border-blue-800";
       default: return "bg-muted/30 border-muted";
     }
   };
@@ -1672,7 +1672,7 @@ function RoundsTimeline({
       </div>
 
       {/* Configurar número total de rodadas */}
-      <div className="flex flex-wrap items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+      <div className="flex flex-wrap items-center gap-3 p-4 bg-[#eef2ff] dark:bg-blue-900/20 rounded-lg border border-[#1447e6]/30 dark:border-blue-800">
         <div className="flex items-center gap-2">
           <Label htmlFor="maxRounds" className="text-sm font-medium">Total de Rodadas:</Label>
           <Input
@@ -1763,7 +1763,7 @@ function RoundsTimeline({
             <div
               key={round.id}
               className={`p-4 border-2 rounded-lg ${getStatusColor(round.status)} ${
-                round.id === lastRound?.id && canRemoveRound ? "ring-2 ring-orange-300 dark:ring-orange-700" : ""
+                round.id === lastRound?.id && canRemoveRound ? "ring-2 ring-[#ff8c1a]/50 dark:ring-orange-700" : ""
               }`}
               data-testid={`round-card-${round.id}`}
             >
@@ -1782,7 +1782,7 @@ function RoundsTimeline({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 text-orange-600 hover:text-orange-700 hover:bg-orange-100"
+                          className="h-6 w-6 text-[#ff8c1a] hover:text-[#e07800] hover:bg-[#ff8c1a]/10"
                           onClick={() => onRemoveRound(round.roundNumber)}
                           disabled={removeRoundPending}
                           data-testid={`button-remove-round-${round.roundNumber}`}
@@ -3355,12 +3355,12 @@ export default function Professor() {
                   
                   {/* Resumo de Submissões */}
                   {activeRound && (
-                    <Card className="border-l-4 border-l-primary">
+                    <Card className="border-0 shadow-sm">
                       <CardContent className="pt-6">
                         <div className="flex items-center justify-between gap-4">
                           <div>
-                            <h3 className="font-semibold flex items-center gap-2">
-                              <CircleDot className="h-5 w-5 text-primary animate-pulse" />
+                            <h3 className="font-semibold flex items-center gap-2 text-[#1447e6]">
+                              <CircleDot className="h-5 w-5 animate-pulse" />
                               Rodada {activeRound.roundNumber} em andamento
                             </h3>
                             <p className="text-sm text-muted-foreground mt-1">
@@ -3368,16 +3368,16 @@ export default function Professor() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <div className="text-3xl font-bold text-primary">{Math.round((submissionStats.submitted / Math.max(submissionStats.total, 1)) * 100)}%</div>
+                            <div className="text-3xl font-bold text-[#1447e6]">{Math.round((submissionStats.submitted / Math.max(submissionStats.total, 1)) * 100)}%</div>
                             <p className="text-xs text-muted-foreground">concluído</p>
                           </div>
                         </div>
-                        <Progress value={(submissionStats.submitted / Math.max(submissionStats.total, 1)) * 100} className="mt-4 h-2" />
-                        
+                        <Progress value={(submissionStats.submitted / Math.max(submissionStats.total, 1)) * 100} className="mt-4 h-2 bg-[#e4ebff] [&>div]:bg-[#1447e6]" />
+
                         {/* Equipes pendentes */}
                         {submissionStats.pending.length > 0 && (
-                          <div className="mt-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                            <p className="text-sm font-medium text-amber-800 dark:text-amber-200 flex items-center gap-2">
+                          <div className="mt-4 p-3 rounded-lg bg-[#fff3d6] border border-[#ffcc00]/50">
+                            <p className="text-sm font-medium text-[#7a5300] flex items-center gap-2">
                               <AlertTriangle className="h-4 w-4" />
                               Equipes sem envio: {submissionStats.pending.join(", ")}
                             </p>
