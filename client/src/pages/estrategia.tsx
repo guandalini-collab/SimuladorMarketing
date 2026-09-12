@@ -78,15 +78,15 @@ export default function Estrategia() {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Hero Section */}
-      <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
+      <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-[#0a1830] via-[#0d2348] to-[#0a1830] p-8">
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-10 right-20 w-32 h-32 border-4 border-white rounded-full animate-pulse"></div>
           <div className="absolute bottom-10 left-20 w-40 h-40 border-4 border-white rounded-lg rotate-45 animate-pulse delay-75"></div>
         </div>
-        
+
         <div className="relative z-10">
           <div className="flex items-center gap-4 mb-3">
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center shadow-lg">
+            <div className="h-16 w-16 rounded-full bg-[#7c3aed] flex items-center justify-center shadow-lg">
               <Target className="h-8 w-8 text-white" />
             </div>
             <div>
@@ -102,7 +102,7 @@ export default function Estrategia() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-slate-100 dark:bg-slate-900">
+        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted">
           <TabsTrigger 
             value="swot"
             className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
@@ -229,9 +229,12 @@ function SwotTab({ roundId, roundNumber, roundStatus, data }: { roundId: string;
           </AlertDescription>
         </Alert>
       )}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      <Card className="border-2 border-slate-200 dark:border-slate-800">
+        <CardHeader className="bg-muted/30">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
+              <Target className="h-5 w-5 text-white" />
+            </div>
             <div>
               <CardTitle>Análise SWOT</CardTitle>
               <CardDescription>Identifique Forças, Fraquezas, Oportunidades e Ameaças</CardDescription>
@@ -349,9 +352,12 @@ function PorterTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
           </AlertDescription>
         </Alert>
       )}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      <Card className="border-2 border-slate-200 dark:border-slate-800">
+        <CardHeader className="bg-muted/30">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-[#7c3aed] flex items-center justify-center">
+              <Shield className="h-5 w-5 text-white" />
+            </div>
             <div>
               <CardTitle>5 Forças de Porter</CardTitle>
               <CardDescription>Avalie a intensidade das forças competitivas (1 = Baixa, 10 = Alta)</CardDescription>
@@ -453,9 +459,12 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
           </AlertDescription>
         </Alert>
       )}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      <Card className="border-2 border-slate-200 dark:border-slate-800">
+        <CardHeader className="bg-muted/30">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-[#1aa15c] flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-white" />
+            </div>
             <div>
               <CardTitle>Matriz BCG</CardTitle>
               <CardDescription>Posicione seus produtos na matriz de crescimento-participação</CardDescription>
@@ -625,9 +634,12 @@ function PestelTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
           </AlertDescription>
         </Alert>
       )}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      <Card className="border-2 border-slate-200 dark:border-slate-800">
+        <CardHeader className="bg-muted/30">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-[#ff8c1a] flex items-center justify-center">
+              <Globe className="h-5 w-5 text-white" />
+            </div>
             <div>
               <CardTitle>Análise PESTEL</CardTitle>
               <CardDescription>Identifique fatores macro-ambientais que afetam seu negócio</CardDescription>

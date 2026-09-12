@@ -32,10 +32,10 @@ export function AlignmentTeamReport({ classId, lastCompletedRound }: AlignmentTe
   if (!lastCompletedRound) {
     return (
       <Card data-testid="card-alignment-report">
-        <CardHeader>
+        <CardHeader className="bg-muted/30">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-primary/10 rounded-lg">
-              <Target className="h-6 w-6 text-primary" />
+            <div className="h-12 w-12 rounded-lg bg-[#1447e6] flex items-center justify-center shadow-md">
+              <Target className="h-6 w-6 text-white" />
             </div>
             <div>
               <CardTitle>Relatório de Alinhamento Estratégico</CardTitle>
@@ -79,10 +79,10 @@ export function AlignmentTeamReport({ classId, lastCompletedRound }: AlignmentTe
 
   return (
     <Card data-testid="card-alignment-report">
-      <CardHeader>
+      <CardHeader className="bg-muted/30">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg">
-            <Target className="h-6 w-6 text-primary" />
+          <div className="h-12 w-12 rounded-lg bg-[#1447e6] flex items-center justify-center shadow-md">
+            <Target className="h-6 w-6 text-white" />
           </div>
           <div className="flex-1">
             <CardTitle>Relatório de Alinhamento Estratégico</CardTitle>
@@ -97,48 +97,48 @@ export function AlignmentTeamReport({ classId, lastCompletedRound }: AlignmentTe
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 hover-elevate cursor-help">
+              <div className="p-3 rounded-lg bg-[#fde8e6] dark:bg-red-900/20 border border-[#a3241c]/20 dark:border-red-800 hover-elevate cursor-help">
                 <div className="flex items-center gap-2">
-                  <XCircle className="h-4 w-4 text-red-500" />
-                  <span className="text-sm font-medium text-red-700 dark:text-red-400">Crítico</span>
+                  <XCircle className="h-4 w-4 text-[#a3241c] dark:text-red-400" />
+                  <span className="text-sm font-medium text-[#a3241c] dark:text-red-400">Crítico</span>
                 </div>
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{criticalTeams.length}</p>
+                <p className="text-2xl font-bold text-[#a3241c] dark:text-red-400 mt-1">{criticalTeams.length}</p>
               </div>
             </TooltipTrigger>
             <TooltipContent>Score de alinhamento &lt; 30</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 hover-elevate cursor-help">
+              <div className="p-3 rounded-lg bg-[#ff8c1a]/10 border border-[#ff8c1a]/30 hover-elevate cursor-help">
                 <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-orange-500" />
-                  <span className="text-sm font-medium text-orange-700 dark:text-orange-400">Fraco</span>
+                  <AlertCircle className="h-4 w-4 text-[#ff8c1a]" />
+                  <span className="text-sm font-medium text-[#ff8c1a]">Fraco</span>
                 </div>
-                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">{weakTeams.length}</p>
+                <p className="text-2xl font-bold text-[#ff8c1a] mt-1">{weakTeams.length}</p>
               </div>
             </TooltipTrigger>
             <TooltipContent>Score de alinhamento 30-49</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="p-3 rounded-lg bg-gray-500/10 border border-gray-500/20 hover-elevate cursor-help">
+              <div className="p-3 rounded-lg bg-muted/50 border border-muted-foreground/20 hover-elevate cursor-help">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-400">Sem dados</span>
+                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">Sem dados</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-600 dark:text-gray-400 mt-1">{noSubmissionTeams.length}</p>
+                <p className="text-2xl font-bold text-muted-foreground mt-1">{noSubmissionTeams.length}</p>
               </div>
             </TooltipTrigger>
             <TooltipContent>Equipes sem análises ou decisões</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 hover-elevate cursor-help">
+              <div className="p-3 rounded-lg bg-[#1aa15c]/10 border border-[#1aa15c]/30 hover-elevate cursor-help">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium text-green-700 dark:text-green-400">OK</span>
+                  <CheckCircle2 className="h-4 w-4 text-[#1aa15c]" />
+                  <span className="text-sm font-medium text-[#1aa15c]">OK</span>
                 </div>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{goodTeams.length}</p>
+                <p className="text-2xl font-bold text-[#1aa15c] mt-1">{goodTeams.length}</p>
               </div>
             </TooltipTrigger>
             <TooltipContent>Score de alinhamento ≥ 50</TooltipContent>
@@ -195,13 +195,13 @@ export function AlignmentTeamReport({ classId, lastCompletedRound }: AlignmentTe
                     <TableRow 
                       key={team.teamId} 
                       data-testid={`row-team-alignment-${team.teamId}`}
-                      className={isCritical ? "bg-red-500/5" : isWeak ? "bg-orange-500/5" : noData ? "bg-gray-500/5" : ""}
+                      className={isCritical ? "bg-[#fde8e6]/50 dark:bg-red-900/10" : isWeak ? "bg-[#ff8c1a]/5" : noData ? "bg-muted/30" : ""}
                     >
                       <TableCell className="w-8">
-                        {isCritical && <XCircle className="h-4 w-4 text-red-500" />}
-                        {isWeak && <AlertCircle className="h-4 w-4 text-orange-500" />}
-                        {noData && <AlertTriangle className="h-4 w-4 text-gray-400" />}
-                        {!isCritical && !isWeak && !noData && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                        {isCritical && <XCircle className="h-4 w-4 text-[#a3241c] dark:text-red-400" />}
+                        {isWeak && <AlertCircle className="h-4 w-4 text-[#ff8c1a]" />}
+                        {noData && <AlertTriangle className="h-4 w-4 text-muted-foreground" />}
+                        {!isCritical && !isWeak && !noData && <CheckCircle2 className="h-4 w-4 text-[#1aa15c]" />}
                       </TableCell>
                       <TableCell className="font-medium">{team.teamName}</TableCell>
                       <TableCell className="text-center">

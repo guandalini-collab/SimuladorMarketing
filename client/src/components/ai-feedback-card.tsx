@@ -111,10 +111,10 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
   if (!feedback) {
     return (
       <Card data-testid="card-ai-feedback">
-        <CardHeader>
+        <CardHeader className="bg-muted/30">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Sparkles className="h-5 w-5 text-primary" />
+            <div className="h-10 w-10 rounded-lg bg-[#7c3aed] flex items-center justify-center">
+              <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
               <CardTitle className="text-xl">Feedback Inteligente com IA</CardTitle>
@@ -137,17 +137,17 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
   }
 
   return (
-    <Card data-testid="card-ai-feedback" className="border-2 border-primary/20">
-      <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5">
+    <Card data-testid="card-ai-feedback" className="border-2 border-[#7c3aed]/20">
+      <CardHeader className="bg-muted/30">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
+            <div className="h-12 w-12 rounded-lg bg-[#7c3aed] flex items-center justify-center shadow-lg">
               <Sparkles className="h-6 w-6 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <CardTitle className="text-2xl">Feedback Inteligente</CardTitle>
-                <Badge variant="secondary" className="gap-1">
+                <Badge className="gap-1 bg-[#fff3d6] text-[#7a5300] dark:bg-yellow-900/30 dark:text-yellow-400 border-0">
                   <Sparkles className="h-3 w-3" />
                   IA
                 </Badge>
@@ -164,7 +164,7 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
         {/* Overall Analysis */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-primary" />
+            <Target className="h-5 w-5 text-[#2f2a8f]" />
             <h3 className="text-lg font-semibold">Visão Geral</h3>
           </div>
           <p className="text-muted-foreground leading-relaxed" data-testid="text-overall-analysis">
@@ -179,8 +179,8 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
             <AccordionItem value="strengths">
               <AccordionTrigger className="hover:no-underline" data-testid="trigger-strengths">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-chart-3/10 flex items-center justify-center">
-                    <Award className="h-4 w-4 text-chart-3" />
+                  <div className="h-8 w-8 rounded-lg bg-[#1aa15c] flex items-center justify-center">
+                    <Award className="h-4 w-4 text-white" />
                   </div>
                   <span className="font-semibold">Pontos Fortes</span>
                   <Badge variant="outline" className="ml-2">{feedback.strengths.length}</Badge>
@@ -190,7 +190,7 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
                 <ul className="space-y-3 mt-2">
                   {feedback.strengths.map((strength, index) => (
                     <li key={index} className="flex gap-3" data-testid={`text-strength-${index}`}>
-                      <TrendingUp className="h-5 w-5 text-chart-3 flex-shrink-0 mt-0.5" />
+                      <TrendingUp className="h-5 w-5 text-[#1aa15c] flex-shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">{strength}</span>
                     </li>
                   ))}
@@ -204,8 +204,8 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
             <AccordionItem value="weaknesses">
               <AccordionTrigger className="hover:no-underline" data-testid="trigger-weaknesses">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                    <TrendingDown className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
+                  <div className="h-8 w-8 rounded-lg bg-[#ff8c1a] flex items-center justify-center">
+                    <TrendingDown className="h-4 w-4 text-white" />
                   </div>
                   <span className="font-semibold">Oportunidades de Aprendizado</span>
                   <Badge variant="outline" className="ml-2">{feedback.weaknesses.length}</Badge>
@@ -215,7 +215,7 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
                 <ul className="space-y-3 mt-2">
                   {feedback.weaknesses.map((weakness, index) => (
                     <li key={index} className="flex gap-3" data-testid={`text-weakness-${index}`}>
-                      <Info className="h-5 w-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5" />
+                      <Info className="h-5 w-5 text-[#ff8c1a] flex-shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">{weakness}</span>
                     </li>
                   ))}
@@ -229,8 +229,8 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
             <AccordionItem value="suggestions">
               <AccordionTrigger className="hover:no-underline" data-testid="trigger-suggestions">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Lightbulb className="h-4 w-4 text-primary" />
+                  <div className="h-8 w-8 rounded-lg bg-[#1447e6] flex items-center justify-center">
+                    <Lightbulb className="h-4 w-4 text-white" />
                   </div>
                   <span className="font-semibold">Sugestões para Reflexão</span>
                   <Badge variant="outline" className="ml-2">{feedback.suggestions.length}</Badge>
@@ -240,7 +240,7 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
                 <ul className="space-y-3 mt-2">
                   {feedback.suggestions.map((suggestion, index) => (
                     <li key={index} className="flex gap-3" data-testid={`text-suggestion-${index}`}>
-                      <Lightbulb className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <Lightbulb className="h-5 w-5 text-[#1447e6] flex-shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">{suggestion}</span>
                     </li>
                   ))}
@@ -254,8 +254,8 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
             <AccordionItem value="literature">
               <AccordionTrigger className="hover:no-underline" data-testid="trigger-literature">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-500" />
+                  <div className="h-8 w-8 rounded-lg bg-[#2f2a8f] flex items-center justify-center">
+                    <BookOpen className="h-4 w-4 text-white" />
                   </div>
                   <span className="font-semibold">Leituras Recomendadas</span>
                   <Badge variant="outline" className="ml-2">{feedback.literatureRecommendations.length}</Badge>
@@ -270,7 +270,7 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
                       data-testid={`card-literature-${index}`}
                     >
                       <div className="flex items-start gap-3">
-                        <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-500 flex-shrink-0 mt-1" />
+                        <BookOpen className="h-5 w-5 text-[#2f2a8f] flex-shrink-0 mt-1" />
                         <div className="flex-1">
                           <p className="font-medium" data-testid={`text-book-title-${index}`}>
                             {book.title}
@@ -292,8 +292,8 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
           )}
         </Accordion>
 
-        <Alert data-testid="alert-socratic-method">
-          <Sparkles className="h-4 w-4" />
+        <Alert data-testid="alert-socratic-method" className="border-[#7c3aed]/30 bg-[#7c3aed]/5">
+          <Sparkles className="h-4 w-4 text-[#7c3aed]" />
           <AlertDescription className="text-xs">
             <strong>Método Socrático:</strong> Este feedback usa perguntas reflexivas para estimular seu pensamento crítico. 
             Não esperamos respostas prontas, mas que você investigue, discuta com sua equipe e chegue às suas próprias conclusões. 

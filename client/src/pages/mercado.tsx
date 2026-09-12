@@ -1,4 +1,5 @@
 import { MarketEventCard } from "@/components/market-event-card";
+import { KPICard } from "@/components/kpi-card";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, TrendingDown, Minus, Users, Target, Zap, Activity, DollarSign, Package, Building2, Lightbulb, AlertTriangle } from "lucide-react";
@@ -8,6 +9,25 @@ import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { Team, Class, MarketEvent } from "@shared/schema";
+
+function capitalizeFirst(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function competitionBadgeClass(level?: string | null): string {
+  switch (level) {
+    case "muito_alta":
+      return "bg-[#fde8e6] text-[#a3241c] border-transparent";
+    case "alta":
+      return "bg-[#ffe8d1] text-[#8a4b00] border-transparent";
+    case "media":
+      return "bg-[#eef2ff] text-[#1447e6] border-transparent";
+    case "baixa":
+      return "bg-[#e6f7ee] text-[#0f7a44] border-transparent";
+    default:
+      return "bg-[#eef2ff] text-[#1447e6] border-transparent";
+  }
+}
 
 export default function Mercado() {
   const { data: team } = useQuery<Team>({
@@ -61,70 +81,59 @@ export default function Mercado() {
 
       {currentClass?.sector && (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tamanho do Mercado</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {new Intl.NumberFormat('pt-BR', { 
-                  style: 'currency', 
-                  currency: 'BRL',
-                  notation: 'compact',
-                  compactDisplay: 'short'
-                }).format(currentClass?.marketSize || 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {(currentClass?.marketGrowthRate ?? 0) > 0 ? '+' : ''}{currentClass?.marketGrowthRate ?? 0}% vs ano anterior
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Taxa de Crescimento</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{marketSector?.growthRate || currentClass?.marketGrowthRate}%</div>
-              <p className="text-xs text-muted-foreground">Anual projetado</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Consumidores Potenciais</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {new Intl.NumberFormat('pt-BR', { 
-                  notation: 'compact',
-                  compactDisplay: 'short'
-                }).format(currentClass?.targetConsumers || 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">No mercado-alvo</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Concorrência</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold capitalize">{marketSector?.competitionLevel || currentClass?.competitionLevel || 'Média'}</div>
-              <p className="text-xs text-muted-foreground">Nível de intensidade</p>
-            </CardContent>
-          </Card>
+          <KPICard
+            title="Tamanho do Mercado"
+            value={new Intl.NumberFormat('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+              notation: 'compact',
+              compactDisplay: 'short'
+            }).format(currentClass?.marketSize || 0)}
+            icon={Target}
+            description={`${(currentClass?.marketGrowthRate ?? 0) > 0 ? '+' : ''}${currentClass?.marketGrowthRate ?? 0}% vs ano anterior`}
+            color="blue"
+          />
+          <KPICard
+            title="Taxa de Crescimento"
+            value={`${marketSector?.growthRate || currentClass?.marketGrowthRate}%`}
+            icon={TrendingUp}
+            description="Anual projetado"
+            color="green"
+          />
+          <KPICard
+            title="Consumidores Potenciais"
+            value={new Intl.NumberFormat('pt-BR', {
+              notation: 'compact',
+              compactDisplay: 'short'
+            }).format(currentClass?.targetConsumers || 0)}
+            icon={Users}
+            description="No mercado-alvo"
+            color="violet"
+          />
+          <KPICard
+            title="Concorrência"
+            value={capitalizeFirst(marketSector?.competitionLevel || currentClass?.competitionLevel || 'Média')}
+            icon={Activity}
+            description="Nível de intensidade"
+            color="orange"
+          />
         </div>
       )}
 
       {marketEvents.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Eventos de Mercado Ativos</CardTitle>
-            <CardDescription>
-              Eventos que podem influenciar suas decisões nesta rodada
-            </CardDescription>
+          <CardHeader className="bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#ff8c1a] flex items-center justify-center">
+                <Zap className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <CardTitle>Eventos de Mercado Ativos</CardTitle>
+                <CardDescription>
+                  Eventos que podem influenciar suas decisões nesta rodada
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2">
@@ -158,14 +167,18 @@ export default function Mercado() {
           {marketSector ? (
             <>
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5" />
-                    {marketSector.name}
-                  </CardTitle>
-                  <CardDescription>{marketSector.description}</CardDescription>
+                <CardHeader className="bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-[#2f2a8f] flex items-center justify-center">
+                      <Building2 className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle>{marketSector.name}</CardTitle>
+                      <CardDescription>{marketSector.description}</CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 pt-6">
                   <div className="grid gap-4 md:grid-cols-3">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Tamanho do Setor</p>
@@ -190,14 +203,18 @@ export default function Mercado() {
               </Card>
 
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    Categorias de Produtos
-                  </CardTitle>
-                  <CardDescription>Principais categorias disponíveis no setor</CardDescription>
+                <CardHeader className="bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
+                      <Package className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle>Categorias de Produtos</CardTitle>
+                      <CardDescription>Principais categorias disponíveis no setor</CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <div className="grid gap-2 md:grid-cols-3">
                     {marketSector.categories?.map((category: any, idx: number) => (
                       <Badge key={idx} variant="secondary" className="justify-center py-2">
@@ -210,17 +227,19 @@ export default function Mercado() {
 
               <div className="grid gap-6 md:grid-cols-2">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5" />
-                      Tendências do Setor
-                    </CardTitle>
+                  <CardHeader className="bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-[#1aa15c] flex items-center justify-center">
+                        <TrendingUp className="h-5 w-5 text-white" />
+                      </div>
+                      <CardTitle>Tendências do Setor</CardTitle>
+                    </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-6">
                     <ul className="space-y-2">
                       {marketSector.trends?.map((trend: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-[#1aa15c] mt-1">•</span>
                           <span className="text-sm">{trend}</span>
                         </li>
                       ))}
@@ -229,17 +248,19 @@ export default function Mercado() {
                 </Card>
 
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5" />
-                      Desafios
-                    </CardTitle>
+                  <CardHeader className="bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-[#ff8c1a] flex items-center justify-center">
+                        <AlertTriangle className="h-5 w-5 text-white" />
+                      </div>
+                      <CardTitle>Desafios</CardTitle>
+                    </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-6">
                     <ul className="space-y-2">
                       {marketSector.challenges?.map((challenge: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-destructive mt-1">•</span>
+                          <span className="text-[#e5352b] mt-1">•</span>
                           <span className="text-sm">{challenge}</span>
                         </li>
                       ))}
@@ -248,17 +269,19 @@ export default function Mercado() {
                 </Card>
 
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Lightbulb className="h-5 w-5" />
-                      Oportunidades
-                    </CardTitle>
+                  <CardHeader className="bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-[#ffcc00] flex items-center justify-center">
+                        <Lightbulb className="h-5 w-5 text-[#0a1830]" />
+                      </div>
+                      <CardTitle>Oportunidades</CardTitle>
+                    </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-6">
                     <ul className="space-y-2">
                       {marketSector.opportunities?.map((opportunity: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-green-600 mt-1">•</span>
+                          <span className="text-[#1aa15c] mt-1">•</span>
                           <span className="text-sm">{opportunity}</span>
                         </li>
                       ))}
@@ -267,21 +290,22 @@ export default function Mercado() {
                 </Card>
 
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Informações Adicionais</CardTitle>
+                  <CardHeader className="bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-[#7c3aed] flex items-center justify-center">
+                        <Activity className="h-5 w-5 text-white" />
+                      </div>
+                      <CardTitle className="text-base">Informações Adicionais</CardTitle>
+                    </div>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-3 pt-6">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Tipo de Comércio</p>
                       <p className="text-base font-semibold capitalize">{currentClass?.businessType || 'Não definido'}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Nível de Concorrência</p>
-                      <Badge variant={
-                        marketSector.competitionLevel === 'muito_alta' ? 'destructive' :
-                        marketSector.competitionLevel === 'alta' ? 'default' :
-                        'secondary'
-                      }>
+                      <Badge className={competitionBadgeClass(marketSector.competitionLevel)}>
                         {marketSector.competitionLevel?.replace('_', ' ').toUpperCase()}
                       </Badge>
                     </div>
@@ -302,16 +326,20 @@ export default function Mercado() {
           {currentClass ? (
             <>
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5" />
-                    Panorama Competitivo
-                  </CardTitle>
-                  <CardDescription>
-                    Análise do ambiente concorrencial do mercado
-                  </CardDescription>
+                <CardHeader className="bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-[#7c3aed] flex items-center justify-center">
+                      <Activity className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle>Panorama Competitivo</CardTitle>
+                      <CardDescription>
+                        Análise do ambiente concorrencial do mercado
+                      </CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <div className="grid gap-6 md:grid-cols-2">
                     <div>
                       <h3 className="font-semibold text-sm mb-3">Estrutura de Mercado</h3>
@@ -319,11 +347,7 @@ export default function Mercado() {
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Nível de Concorrência</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <Badge variant={
-                              currentClass.competitionLevel === "baixa" ? "default" :
-                              currentClass.competitionLevel === "media" ? "secondary" :
-                              currentClass.competitionLevel === "alta" ? "outline" : "destructive"
-                            }>
+                            <Badge className={competitionBadgeClass(currentClass.competitionLevel)}>
                               {currentClass.competitionLevel === "baixa" ? "Baixa" :
                                currentClass.competitionLevel === "media" ? "Média" :
                                currentClass.competitionLevel === "alta" ? "Alta" :
@@ -471,14 +495,18 @@ export default function Mercado() {
             <>
               <div className="grid gap-6 md:grid-cols-3">
                 <Card data-testid="card-exchange-rate">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <DollarSign className="h-5 w-5" />
-                      Câmbio USD/BRL
-                    </CardTitle>
-                    <CardDescription>Taxa de câmbio atual</CardDescription>
+                  <CardHeader className="bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-[#1aa15c] flex items-center justify-center">
+                        <DollarSign className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">Câmbio USD/BRL</CardTitle>
+                        <CardDescription>Taxa de câmbio atual</CardDescription>
+                      </div>
+                    </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-6">
                     <div className="text-3xl font-bold">
                       R$ {economicData.exchangeRateUSD?.toFixed(2) || "N/A"}
                     </div>
@@ -489,38 +517,42 @@ export default function Mercado() {
                 </Card>
 
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Activity className="h-5 w-5" />
-                      Tendência
-                    </CardTitle>
-                    <CardDescription>Movimento do mercado</CardDescription>
+                  <CardHeader className="bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
+                        <Activity className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">Tendência</CardTitle>
+                        <CardDescription>Movimento do mercado</CardDescription>
+                      </div>
+                    </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-6">
                     <div className="flex items-center gap-3">
                       {economicData.analysis?.trend === "up" && (
                         <>
-                          <TrendingUp className="h-8 w-8 text-green-600" />
+                          <TrendingUp className="h-8 w-8 text-[#1aa15c]" />
                           <div>
-                            <p className="text-xl font-bold text-green-600">Alta</p>
+                            <p className="text-xl font-bold text-[#1aa15c]">Alta</p>
                             <p className="text-xs text-muted-foreground">Dólar valorizando</p>
                           </div>
                         </>
                       )}
                       {economicData.analysis?.trend === "down" && (
                         <>
-                          <TrendingDown className="h-8 w-8 text-red-600" />
+                          <TrendingDown className="h-8 w-8 text-[#e5352b]" />
                           <div>
-                            <p className="text-xl font-bold text-red-600">Queda</p>
+                            <p className="text-xl font-bold text-[#e5352b]">Queda</p>
                             <p className="text-xs text-muted-foreground">Dólar desvalorizando</p>
                           </div>
                         </>
                       )}
                       {economicData.analysis?.trend === "stable" && (
                         <>
-                          <Minus className="h-8 w-8 text-blue-600" />
+                          <Minus className="h-8 w-8 text-[#1447e6]" />
                           <div>
-                            <p className="text-xl font-bold text-blue-600">Estável</p>
+                            <p className="text-xl font-bold text-[#1447e6]">Estável</p>
                             <p className="text-xs text-muted-foreground">Sem variações</p>
                           </div>
                         </>
@@ -530,20 +562,26 @@ export default function Mercado() {
                 </Card>
 
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Condição Econômica</CardTitle>
-                    <CardDescription>Análise de cenário</CardDescription>
+                  <CardHeader className="bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-[#2f2a8f] flex items-center justify-center">
+                        <Target className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">Condição Econômica</CardTitle>
+                        <CardDescription>Análise de cenário</CardDescription>
+                      </div>
+                    </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-6">
                     <Badge
-                      variant={
+                      className={
                         economicData.analysis?.condition === "favorable"
-                          ? "default"
+                          ? "bg-[#e6f7ee] text-[#0f7a44] border-transparent text-base px-4 py-2"
                           : economicData.analysis?.condition === "unfavorable"
-                          ? "destructive"
-                          : "secondary"
+                          ? "bg-[#fde8e6] text-[#a3241c] border-transparent text-base px-4 py-2"
+                          : "bg-[#eef2ff] text-[#1447e6] border-transparent text-base px-4 py-2"
                       }
-                      className="text-base px-4 py-2"
                     >
                       {economicData.analysis?.condition === "favorable" && "Favorável"}
                       {economicData.analysis?.condition === "unfavorable" && "Desfavorável"}
@@ -563,17 +601,24 @@ export default function Mercado() {
 
               {economicHistory.length > 0 && (
                 <Card data-testid="card-economic-history">
-                  <CardHeader>
-                    <CardTitle>Histórico de Câmbio (Últimos 10 registros)</CardTitle>
-                    <CardDescription>Evolução da taxa USD/BRL</CardDescription>
+                  <CardHeader className="bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-[#7c3aed] flex items-center justify-center">
+                        <TrendingUp className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle>Histórico de Câmbio (Últimos 10 registros)</CardTitle>
+                        <CardDescription>Evolução da taxa USD/BRL</CardDescription>
+                      </div>
+                    </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-6">
                     <ResponsiveContainer width="100%" height={300}>
                       <LineChart data={economicHistory}>
-                        <CartesianGrid strokeDasharray="3 3" />
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                         <XAxis dataKey="data" />
                         <YAxis domain={["auto", "auto"]} />
-                        <Tooltip 
+                        <Tooltip
                           formatter={(value: number) => [`R$ ${value.toFixed(2)}`, "Taxa"]}
                           labelStyle={{ color: "hsl(var(--foreground))" }}
                           contentStyle={{
@@ -584,9 +629,9 @@ export default function Mercado() {
                         <Line
                           type="monotone"
                           dataKey="taxa"
-                          stroke="hsl(var(--primary))"
+                          stroke="#1447e6"
                           strokeWidth={2}
-                          dot={{ fill: "hsl(var(--primary))", r: 4 }}
+                          dot={{ fill: "#1447e6", r: 4 }}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -595,10 +640,15 @@ export default function Mercado() {
               )}
 
               <Card>
-                <CardHeader>
-                  <CardTitle>Impactos nas Decisões de Marketing</CardTitle>
+                <CardHeader className="bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-[#ff8c1a] flex items-center justify-center">
+                      <Zap className="h-5 w-5 text-white" />
+                    </div>
+                    <CardTitle>Impactos nas Decisões de Marketing</CardTitle>
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <div className="space-y-4">
                     <div>
                       <p className="font-semibold text-sm mb-2">Produto</p>

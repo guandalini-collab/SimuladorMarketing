@@ -510,16 +510,16 @@ export default function Decisoes() {
   return (
     <div className="space-y-8">
       {/* Hero Section */}
-      <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
+      <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-[#0a1830] via-[#0d2348] to-[#0a1830] p-8">
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-10 right-20 w-32 h-32 border-4 border-white rounded-full animate-pulse"></div>
           <div className="absolute bottom-10 left-20 w-40 h-40 border-4 border-white rounded-lg rotate-45 animate-pulse delay-75"></div>
         </div>
-        
+
         <div className="relative z-10">
           <div className="flex items-center gap-4 mb-4">
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center shadow-lg">
-              <Megaphone className="h-8 w-8 text-white" />
+            <div className="h-16 w-16 rounded-full bg-[#ffcc00] flex items-center justify-center shadow-lg">
+              <Megaphone className="h-8 w-8 text-[#0a1830]" />
             </div>
             <div>
               <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
@@ -552,43 +552,43 @@ export default function Decisoes() {
       </div>
 
       {isLoadingRound && (
-        <Alert data-testid="alert-loading" className="border-blue-500/50 bg-blue-50 dark:bg-blue-950/20">
-          <Activity className="h-4 w-4 text-blue-600 animate-pulse" />
-          <AlertDescription className="text-blue-800 dark:text-blue-200">
+        <Alert data-testid="alert-loading" className="border-[#1447e6]/40 bg-[#eef2ff] dark:bg-blue-950/20">
+          <Activity className="h-4 w-4 text-[#1447e6] animate-pulse" />
+          <AlertDescription className="text-[#1447e6] dark:text-blue-200">
             Carregando informações da rodada...
           </AlertDescription>
         </Alert>
       )}
 
       {!isLoadingRound && isLocked && lockReason === "no_team" && (
-        <Alert data-testid="alert-locked-no-team" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
-          <AlertTriangle className="h-4 w-4 text-amber-600" />
-          <AlertTitle className="text-amber-800 dark:text-amber-200">Equipe não encontrada</AlertTitle>
-          <AlertDescription className="text-amber-800 dark:text-amber-200">
+        <Alert data-testid="alert-locked-no-team" className="border-[#ffcc00]/50 bg-[#fff3d6] dark:bg-amber-950/20">
+          <AlertTriangle className="h-4 w-4 text-[#7a5300]" />
+          <AlertTitle className="text-[#7a5300] dark:text-amber-200">Equipe não encontrada</AlertTitle>
+          <AlertDescription className="text-[#7a5300] dark:text-amber-200">
             {lockMessage || "Você precisa estar em uma equipe para acessar as decisões."}
           </AlertDescription>
         </Alert>
       )}
 
       {!isLoadingRound && isLocked && lockReason === "no_active_round" && (
-        <Alert data-testid="alert-locked-no-round" className="w-full border-2 border-orange-400/60 bg-orange-50 dark:bg-orange-950/30">
-          <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-          <AlertTitle className="text-lg font-semibold text-orange-800 dark:text-orange-200">
+        <Alert data-testid="alert-locked-no-round" className="w-full border-2 border-[#ff8c1a]/50 bg-[#fff0e2] dark:bg-orange-950/30">
+          <Clock className="h-5 w-5 text-[#ff8c1a]" />
+          <AlertTitle className="text-lg font-semibold text-[#8a4a00] dark:text-orange-200">
             Rodada ainda não iniciada
           </AlertTitle>
           <AlertDescription className="mt-2 space-y-3">
-            <p className="text-orange-700 dark:text-orange-300">
+            <p className="text-[#8a4a00] dark:text-orange-300">
               Nenhuma rodada ativa no momento. Aguarde o professor iniciar a próxima rodada.
             </p>
-            <p className="text-sm text-orange-600/80 dark:text-orange-400/80">
+            <p className="text-sm text-[#8a4a00]/80 dark:text-orange-400/80">
               Enquanto isso, revise suas análises estratégicas (SWOT, Porter, BCG, PESTEL).
             </p>
             <div className="pt-2">
               <Link href="/">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-orange-400 text-orange-700 hover:bg-orange-100 dark:border-orange-500 dark:text-orange-300 dark:hover:bg-orange-900/40"
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-[#ff8c1a] text-[#8a4a00] hover:bg-[#ffe4c7] dark:border-orange-500 dark:text-orange-300 dark:hover:bg-orange-900/40"
                   data-testid="button-back-dashboard"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
@@ -601,9 +601,9 @@ export default function Decisoes() {
       )}
 
       {isSubmitted && (
-        <Alert data-testid="alert-submitted" className="border-green-500/50 bg-green-50 dark:bg-green-950/20">
-          <Lock className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800 dark:text-green-200">
+        <Alert data-testid="alert-submitted" className="border-[#1aa15c]/40 bg-[#e6f7ee] dark:bg-green-950/20">
+          <Lock className="h-4 w-4 text-[#0f7a44]" />
+          <AlertDescription className="text-[#0f7a44] dark:text-green-200">
             <strong>Decisão já enviada!</strong> Suas decisões de Mix de Marketing para o produto {selectedProduct?.name} foram submetidas com sucesso. 
             Não é possível fazer alterações até a próxima rodada.
             {currentProductDecisions.submittedAt && (
@@ -619,7 +619,9 @@ export default function Decisoes() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
+              <div className="h-8 w-8 rounded-lg bg-[#1447e6] flex items-center justify-center">
+                <Package className="h-4 w-4 text-white" />
+              </div>
               Selecione o Produto
             </CardTitle>
             <CardDescription>Defina o Mix de Marketing para cada produto individualmente</CardDescription>
@@ -649,13 +651,13 @@ export default function Decisoes() {
           <Package className="h-4 w-4 text-primary" />
           <AlertDescription className="text-sm">
             <strong>Produto Selecionado:</strong> {selectedProduct.name}
-            {isSubmitted && <span className="ml-2 text-green-600 dark:text-green-400">(Decisão Submetida)</span>}
+            {isSubmitted && <span className="ml-2 text-[#0f7a44] dark:text-green-400">(Decisão Submetida)</span>}
           </AlertDescription>
         </Alert>
       )}
 
       <Tabs defaultValue="produto" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-slate-100 dark:bg-slate-900">
+        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted/50">
           <TabsTrigger 
             value="produto" 
             data-testid="tab-produto"
@@ -713,9 +715,9 @@ export default function Decisoes() {
           
           <div className="grid gap-6 lg:grid-cols-2">
             <Card className="border-2 border-slate-200 dark:border-slate-800">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-white dark:from-blue-950/30 dark:to-slate-950">
+              <CardHeader className="bg-muted/30">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
                     <Package className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -766,9 +768,9 @@ export default function Decisoes() {
             </Card>
 
             <Card className="border-2 border-slate-200 dark:border-slate-800">
-              <CardHeader className="bg-gradient-to-r from-cyan-50 to-white dark:from-cyan-950/30 dark:to-slate-950">
+              <CardHeader className="bg-muted/30">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-lg bg-[#1aa15c] flex items-center justify-center">
                     <Package className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -819,9 +821,9 @@ export default function Decisoes() {
             </Card>
 
             <Card className="lg:col-span-2 border-2 border-slate-200 dark:border-slate-800">
-              <CardHeader className="bg-gradient-to-r from-purple-50 to-white dark:from-purple-950/30 dark:to-slate-950">
+              <CardHeader className="bg-muted/30">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-lg bg-[#7c3aed] flex items-center justify-center">
                     <Package className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -948,9 +950,9 @@ export default function Decisoes() {
             </Card>
 
             <Card className="border-2 border-slate-200 dark:border-slate-800">
-              <CardHeader className="bg-gradient-to-r from-cyan-50 to-white dark:from-cyan-950/30 dark:to-slate-950">
+              <CardHeader className="bg-muted/30">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-lg bg-[#ff8c1a] flex items-center justify-center">
                     <DollarSign className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -1180,7 +1182,7 @@ export default function Decisoes() {
                                 <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
                                   <span>Preço unitário: R$ {(midia.custoUnitarioMinimo || 0).toFixed(2)}</span>
                                   <span>•</span>
-                                  <span className="text-amber-600 font-medium">Investimento mínimo: R$ {(midia.valorMinimo || midia.custoUnitarioMinimo || 0).toFixed(2)}</span>
+                                  <span className="text-[#7a5300] dark:text-amber-500 font-medium">Investimento mínimo: R$ {(midia.valorMinimo || midia.custoUnitarioMinimo || 0).toFixed(2)}</span>
                                 </div>
                               </div>
                             </Label>
@@ -1267,7 +1269,9 @@ export default function Decisoes() {
         <Card className="border-2" data-testid="card-strategic-tools-status">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
+              <div className="h-8 w-8 rounded-lg bg-[#ff8c1a] flex items-center justify-center">
+                <AlertTriangle className="h-4 w-4 text-white" />
+              </div>
               Ferramentas Estratégicas Obrigatórias
             </CardTitle>
             <CardDescription>
@@ -1277,11 +1281,11 @@ export default function Decisoes() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className={`flex items-center gap-2 p-3 rounded-lg ${isSwotComplete ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}`} data-testid={`status-swot-${isSwotComplete ? 'complete' : 'incomplete'}`}>
+              <div className={`flex items-center gap-2 p-3 rounded-lg ${isSwotComplete ? 'bg-[#e6f7ee] dark:bg-green-950' : 'bg-[#fde8e6] dark:bg-red-950'}`} data-testid={`status-swot-${isSwotComplete ? 'complete' : 'incomplete'}`}>
                 {isSwotComplete ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <CheckCircle2 className="h-5 w-5 text-[#0f7a44]" />
                 ) : (
-                  <XCircle className="h-5 w-5 text-red-600" />
+                  <XCircle className="h-5 w-5 text-[#a3241c]" />
                 )}
                 <div>
                   <p className="font-medium">Análise SWOT</p>
@@ -1291,11 +1295,11 @@ export default function Decisoes() {
                 </div>
               </div>
 
-              <div className={`flex items-center gap-2 p-3 rounded-lg ${isPorterComplete ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}`} data-testid={`status-porter-${isPorterComplete ? 'complete' : 'incomplete'}`}>
+              <div className={`flex items-center gap-2 p-3 rounded-lg ${isPorterComplete ? 'bg-[#e6f7ee] dark:bg-green-950' : 'bg-[#fde8e6] dark:bg-red-950'}`} data-testid={`status-porter-${isPorterComplete ? 'complete' : 'incomplete'}`}>
                 {isPorterComplete ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <CheckCircle2 className="h-5 w-5 text-[#0f7a44]" />
                 ) : (
-                  <XCircle className="h-5 w-5 text-red-600" />
+                  <XCircle className="h-5 w-5 text-[#a3241c]" />
                 )}
                 <div>
                   <p className="font-medium">5 Forças de Porter</p>
@@ -1305,11 +1309,11 @@ export default function Decisoes() {
                 </div>
               </div>
 
-              <div className={`flex items-center gap-2 p-3 rounded-lg ${isBcgComplete ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}`} data-testid={`status-bcg-${isBcgComplete ? 'complete' : 'incomplete'}`}>
+              <div className={`flex items-center gap-2 p-3 rounded-lg ${isBcgComplete ? 'bg-[#e6f7ee] dark:bg-green-950' : 'bg-[#fde8e6] dark:bg-red-950'}`} data-testid={`status-bcg-${isBcgComplete ? 'complete' : 'incomplete'}`}>
                 {isBcgComplete ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <CheckCircle2 className="h-5 w-5 text-[#0f7a44]" />
                 ) : (
-                  <XCircle className="h-5 w-5 text-red-600" />
+                  <XCircle className="h-5 w-5 text-[#a3241c]" />
                 )}
                 <div>
                   <p className="font-medium">Matriz BCG</p>
@@ -1319,11 +1323,11 @@ export default function Decisoes() {
                 </div>
               </div>
 
-              <div className={`flex items-center gap-2 p-3 rounded-lg ${isPestelComplete ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}`} data-testid={`status-pestel-${isPestelComplete ? 'complete' : 'incomplete'}`}>
+              <div className={`flex items-center gap-2 p-3 rounded-lg ${isPestelComplete ? 'bg-[#e6f7ee] dark:bg-green-950' : 'bg-[#fde8e6] dark:bg-red-950'}`} data-testid={`status-pestel-${isPestelComplete ? 'complete' : 'incomplete'}`}>
                 {isPestelComplete ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <CheckCircle2 className="h-5 w-5 text-[#0f7a44]" />
                 ) : (
-                  <XCircle className="h-5 w-5 text-red-600" />
+                  <XCircle className="h-5 w-5 text-[#a3241c]" />
                 )}
                 <div>
                   <p className="font-medium">Análise PESTEL</p>
@@ -1385,7 +1389,7 @@ export default function Decisoes() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              <AlertTriangle className="h-5 w-5 text-[#ff8c1a]" />
               Confirmar Envio de Decisão Final
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">

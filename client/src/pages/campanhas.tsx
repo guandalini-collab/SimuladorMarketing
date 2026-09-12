@@ -129,7 +129,10 @@ export default function Campanhas() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent data-testid="dialog-create-campaign">
           <DialogHeader>
-            <DialogTitle>Nova Campanha</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-[#1447e6]" />
+              Nova Campanha
+            </DialogTitle>
             <DialogDescription>
               Preencha as informações para criar uma nova campanha de marketing
             </DialogDescription>

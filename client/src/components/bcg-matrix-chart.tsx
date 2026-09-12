@@ -24,10 +24,10 @@ interface BcgAnalysis {
 }
 
 const QUADRANT_COLORS = {
-  stars: "hsl(var(--chart-3))",
-  cash_cows: "hsl(var(--chart-1))",
-  question_marks: "hsl(var(--chart-5))",
-  dogs: "hsl(var(--chart-4))",
+  stars: "#1aa15c",
+  cash_cows: "#1447e6",
+  question_marks: "#ff8c1a",
+  dogs: "#e5352b",
 };
 
 const QUADRANT_LABELS = {
@@ -68,8 +68,8 @@ export function BcgMatrixChart({ teamId, roundId }: BcgMatrixChartProps) {
       <Card data-testid="card-bcg-matrix">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <TrendingUp className="h-4 w-4 text-primary" />
+            <div className="h-8 w-8 rounded-lg bg-[#2f2a8f] flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-white" />
             </div>
             Matriz BCG - Posicionamento de Produtos
           </CardTitle>
@@ -131,12 +131,12 @@ export function BcgMatrixChart({ teamId, roundId }: BcgMatrixChartProps) {
   }, {} as Record<string, number>);
 
   return (
-    <Card data-testid="card-bcg-matrix">
-      <CardHeader>
+    <Card className="border-2 border-slate-200 dark:border-slate-800" data-testid="card-bcg-matrix">
+      <CardHeader className="bg-muted/30">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-primary" />
+            <div className="h-10 w-10 rounded-lg bg-[#2f2a8f] flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-white" />
             </div>
             <div>
               <CardTitle className="text-xl">Matriz BCG - Posicionamento de Produtos</CardTitle>

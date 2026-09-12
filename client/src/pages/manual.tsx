@@ -79,7 +79,9 @@ export default function Manual() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <BookOpen className="h-10 w-10 text-primary" />
+            <div className="h-12 w-12 rounded-xl bg-[#2f2a8f] flex items-center justify-center shadow-lg">
+              <BookOpen className="h-6 w-6 text-white" />
+            </div>
             <h1 className="text-4xl font-bold">Manual do Aluno - Simula+</h1>
           </div>
           <Button
@@ -120,9 +122,11 @@ export default function Manual() {
         {/* ABA 1: COMO USAR O SISTEMA */}
         <TabsContent value="sistema" className="space-y-6">
           <Card data-testid="card-como-usar">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-6 w-6" />
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
+                  <BookOpen className="h-5 w-5 text-white" />
+                </div>
                 Como Usar o Simula+
               </CardTitle>
               <CardDescription>
@@ -272,7 +276,7 @@ export default function Manual() {
                 <AccordionItem value="produtos-publico">
                   <AccordionTrigger>3.1 Configuração de Produtos e Público-Alvo</AccordionTrigger>
                   <AccordionContent className="space-y-4">
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-l-4 border-green-500 p-4 rounded-md">
+                    <div className="bg-[#1aa15c]/10 dark:bg-[#1aa15c]/15 border-l-4 border-[#1aa15c] p-4 rounded-md">
                       <p className="font-semibold text-green-900 dark:text-green-100 mb-2">📦 Sistema de 4 Produtos Independentes</p>
                       <p className="text-sm text-green-800 dark:text-green-200">
                         No Simula+, sua empresa gerencia um <strong>portfólio de 4 produtos distintos</strong>. Cada produto pode ter configurações completamente diferentes de público-alvo, permitindo estratégias de segmentação diversificadas dentro da mesma empresa.
@@ -373,7 +377,7 @@ export default function Manual() {
                 <AccordionItem value="decisoes">
                   <AccordionTrigger>4. Tomada de Decisões (Marketing Mix - 4 Ps)</AccordionTrigger>
                   <AccordionContent className="space-y-4">
-                    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950 border-l-4 border-purple-500 p-4 rounded-md">
+                    <div className="bg-[#7c3aed]/10 dark:bg-[#7c3aed]/15 border-l-4 border-[#7c3aed] p-4 rounded-md">
                       <p className="font-semibold text-purple-900 dark:text-purple-100 mb-2">🎯 Sistema Multi-Produto: Decisões Independentes</p>
                       <p className="text-sm text-purple-800 dark:text-purple-200">
                         No Simula+, você toma decisões de Marketing Mix (4 Ps) <strong>separadamente para cada um dos 4 produtos</strong>. 
@@ -499,7 +503,7 @@ export default function Manual() {
                 <AccordionItem value="ia-analises">
                   <AccordionTrigger>5.1 Análises Automáticas via IA</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-l-4 border-blue-500 p-4 rounded-md mb-4">
+                    <div className="bg-[#1447e6]/10 dark:bg-[#1447e6]/15 border-l-4 border-[#1447e6] p-4 rounded-md mb-4">
                       <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">✨ Geração Automática nas Rodadas 1, 2 e 3</p>
                       <p className="text-sm text-blue-800 dark:text-blue-200">
                         O sistema gera automaticamente análises estratégicas (SWOT, Porter, BCG, PESTEL) quando as 3 primeiras rodadas são liberadas. 
@@ -645,7 +649,7 @@ export default function Manual() {
                 <AccordionItem value="ciclo-decisao">
                   <AccordionTrigger>6. Ciclo de Decisão Estratégica</AccordionTrigger>
                   <AccordionContent className="space-y-4">
-                    <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/5 border-l-4 border-primary rounded-md mb-4">
+                    <div className="p-4 bg-primary/10 border-l-4 border-primary rounded-md mb-4">
                       <p className="font-semibold text-primary mb-2">📊 Fluxo Obrigatório de Cada Rodada</p>
                       <p className="text-sm">
                         O Simula+ exige um processo sequencial de decisão baseado em metodologia científica de planejamento estratégico. 
@@ -801,9 +805,11 @@ export default function Manual() {
         {/* ABA 2: CONCEITOS DE MARKETING */}
         <TabsContent value="conceitos" className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="h-6 w-6" />
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-[#ffcc00] flex items-center justify-center">
+                  <Lightbulb className="h-5 w-5 text-[#0a1830]" />
+                </div>
                 Fundamentos de Marketing
               </CardTitle>
               <CardDescription>
@@ -814,8 +820,10 @@ export default function Manual() {
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="4ps">
                   <AccordionTrigger className="text-lg font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Grid3x3 className="h-5 w-5" />
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-md bg-[#1447e6] flex items-center justify-center shrink-0">
+                        <Grid3x3 className="h-4 w-4 text-white" />
+                      </div>
                       Mix de Marketing (4 Ps)
                     </div>
                   </AccordionTrigger>
@@ -1016,8 +1024,10 @@ export default function Manual() {
 
                 <AccordionItem value="swot">
                   <AccordionTrigger className="text-lg font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-5 w-5" />
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-md bg-[#1aa15c] flex items-center justify-center shrink-0">
+                        <Shield className="h-4 w-4 text-white" />
+                      </div>
                       Análise SWOT (FOFA)
                     </div>
                   </AccordionTrigger>
@@ -1118,8 +1128,10 @@ export default function Manual() {
 
                 <AccordionItem value="porter">
                   <AccordionTrigger className="text-lg font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-5 w-5" />
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-md bg-[#ff8c1a] flex items-center justify-center shrink-0">
+                        <Zap className="h-4 w-4 text-white" />
+                      </div>
                       5 Forças de Porter
                     </div>
                   </AccordionTrigger>
@@ -1198,8 +1210,10 @@ export default function Manual() {
 
                 <AccordionItem value="bcg">
                   <AccordionTrigger className="text-lg font-semibold">
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5" />
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-md bg-[#7c3aed] flex items-center justify-center shrink-0">
+                        <BarChart3 className="h-4 w-4 text-white" />
+                      </div>
                       Matriz BCG
                     </div>
                   </AccordionTrigger>
@@ -1275,8 +1289,10 @@ export default function Manual() {
 
                 <AccordionItem value="pestel">
                   <AccordionTrigger className="text-lg font-semibold">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5" />
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-md bg-[#ffcc00] flex items-center justify-center shrink-0">
+                        <AlertCircle className="h-4 w-4 text-[#0a1830]" />
+                      </div>
                       Análise PESTEL
                     </div>
                   </AccordionTrigger>
@@ -1362,8 +1378,10 @@ export default function Manual() {
 
                 <AccordionItem value="concorrencia">
                   <AccordionTrigger className="text-lg font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-md bg-[#2f2a8f] flex items-center justify-center shrink-0">
+                        <Users className="h-4 w-4 text-white" />
+                      </div>
                       Análise de Concorrência
                     </div>
                   </AccordionTrigger>
@@ -1404,8 +1422,10 @@ export default function Manual() {
 
                 <AccordionItem value="estrategia">
                   <AccordionTrigger className="text-lg font-semibold">
-                    <div className="flex items-center gap-2">
-                      <Target className="h-5 w-5" />
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-md bg-[#1447e6] flex items-center justify-center shrink-0">
+                        <Target className="h-4 w-4 text-white" />
+                      </div>
                       Estratégia Empresarial
                     </div>
                   </AccordionTrigger>
@@ -1455,9 +1475,11 @@ export default function Manual() {
         {/* ABA 3: ESTRATÉGIAS E DICAS */}
         <TabsContent value="estrategias" className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-6 w-6" />
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-[#ff8c1a] flex items-center justify-center">
+                  <Target className="h-5 w-5 text-white" />
+                </div>
                 Estratégias e Boas Práticas
               </CardTitle>
               <CardDescription>
@@ -1565,9 +1587,11 @@ export default function Manual() {
         {/* ABA 4: KPIs E FÓRMULAS */}
         <TabsContent value="glossario" className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-6 w-6" />
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-[#7c3aed] flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-white" />
+                </div>
                 KPIs e Fórmulas de Marketing
               </CardTitle>
               <CardDescription>
@@ -2090,7 +2114,7 @@ export default function Manual() {
               </Accordion>
 
               {/* SEÇÃO DE REFERÊNCIAS BIBLIOGRÁFICAS */}
-              <div className="mt-8 p-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-lg border-2 border-blue-300 dark:border-blue-700">
+              <div className="mt-8 p-6 bg-[#2f2a8f]/5 dark:bg-[#2f2a8f]/15 rounded-lg border-2 border-[#2f2a8f]/30 dark:border-[#2f2a8f]/50">
                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                   📚 Referências Bibliográficas
                 </h3>
@@ -2166,7 +2190,7 @@ export default function Manual() {
               </div>
 
               {/* GLOSSÁRIO DE TERMOS DE MARKETING */}
-              <div className="mt-8 p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 rounded-lg border-2 border-purple-300 dark:border-purple-700">
+              <div className="mt-8 p-6 bg-[#7c3aed]/5 dark:bg-[#7c3aed]/15 rounded-lg border-2 border-[#7c3aed]/30 dark:border-[#7c3aed]/50">
                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                   📖 Glossário de Termos de Marketing
                 </h3>

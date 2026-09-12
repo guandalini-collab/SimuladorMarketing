@@ -69,10 +69,10 @@ export function AlignmentScoreCard({ teamId, roundId }: AlignmentScoreCardProps)
 
   return (
     <Card className="border-2" data-testid="card-alignment-score">
-      <CardHeader>
+      <CardHeader className="bg-muted/30">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg">
-            <Target className="h-6 w-6 text-primary" />
+          <div className="h-12 w-12 rounded-lg bg-[#1447e6] flex items-center justify-center shadow-md">
+            <Target className="h-6 w-6 text-white" />
           </div>
           <div className="flex-1">
             <CardTitle className="text-xl">Alinhamento Estratégico</CardTitle>
@@ -166,9 +166,9 @@ export function AlignmentScoreCard({ teamId, roundId }: AlignmentScoreCardProps)
 
         {/* Success Message */}
         {issues.length === 0 && score >= 90 && (
-          <Alert className="bg-chart-3/10 border-chart-3">
-            <CheckCircle2 className="h-4 w-4 text-chart-3" />
-            <AlertDescription className="text-chart-3">
+          <Alert className="bg-[#1aa15c]/10 border-[#1aa15c]">
+            <CheckCircle2 className="h-4 w-4 text-[#1aa15c]" />
+            <AlertDescription className="text-[#1aa15c]">
               <strong>Bônus aplicado:</strong> Receita +15%, Lucro +20%, Market Share +10%
             </AlertDescription>
           </Alert>

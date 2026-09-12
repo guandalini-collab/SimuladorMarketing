@@ -215,28 +215,28 @@ export default function InsightsMercado() {
   const getLevelBadge = (level: string) => {
     switch (level) {
       case "excelente":
-        return <Badge className="bg-green-600 hover:bg-green-700" data-testid="badge-excellent">Excelente</Badge>;
+        return <Badge className="bg-[#e6f7ee] text-[#0f7a44] border-transparent" data-testid="badge-excellent">Excelente</Badge>;
       case "bom":
-        return <Badge className="bg-blue-600 hover:bg-blue-700" data-testid="badge-good">Bom</Badge>;
+        return <Badge className="bg-[#eef2ff] text-[#1447e6] border-transparent" data-testid="badge-good">Bom</Badge>;
       case "regular":
-        return <Badge className="bg-yellow-600 hover:bg-yellow-700" data-testid="badge-regular">Regular</Badge>;
+        return <Badge className="bg-[#fff3d6] text-[#7a5300] border-transparent" data-testid="badge-regular">Regular</Badge>;
       case "baixo":
-        return <Badge className="bg-red-600 hover:bg-red-700" data-testid="badge-low">Baixo</Badge>;
+        return <Badge className="bg-[#fde8e6] text-[#a3241c] border-transparent" data-testid="badge-low">Baixo</Badge>;
       default:
-        return <Badge data-testid="badge-neutral">Neutro</Badge>;
+        return <Badge variant="secondary" data-testid="badge-neutral">Neutro</Badge>;
     }
   };
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case "alta":
-        return <AlertTriangle className="h-5 w-5 text-red-600" />;
+        return <AlertTriangle className="h-5 w-5 text-[#e5352b]" />;
       case "media":
-        return <Target className="h-5 w-5 text-yellow-600" />;
+        return <Target className="h-5 w-5 text-[#7a5300]" />;
       case "baixa":
-        return <CheckCircle2 className="h-5 w-5 text-green-600" />;
+        return <CheckCircle2 className="h-5 w-5 text-[#1aa15c]" />;
       default:
-        return <Info className="h-5 w-5" />;
+        return <Info className="h-5 w-5 text-[#1447e6]" />;
     }
   };
 
@@ -251,14 +251,18 @@ export default function InsightsMercado() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card data-testid="card-sector-info">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Informações do Setor
-            </CardTitle>
-            <CardDescription>{insights.sectorInfo.name}</CardDescription>
+          <CardHeader className="bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#2f2a8f] flex items-center justify-center">
+                <BarChart3 className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <CardTitle>Informações do Setor</CardTitle>
+                <CardDescription>{insights.sectorInfo.name}</CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-6">
             <div>
               <p className="text-sm text-muted-foreground mb-2" data-testid="text-sector-description">
                 {insights.sectorInfo.description}
@@ -267,13 +271,13 @@ export default function InsightsMercado() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium">Margem Média</p>
-                <p className="text-2xl font-bold text-chart-1" data-testid="text-sector-margin">
+                <p className="text-2xl font-bold text-[#1447e6]" data-testid="text-sector-margin">
                   {insights.sectorInfo.averageMargin.toFixed(1)}%
                 </p>
               </div>
               <div>
                 <p className="text-sm font-medium">Tendência</p>
-                <Badge variant="outline" className="mt-1" data-testid="badge-growth-trend">
+                <Badge className="mt-1 bg-[#eef2ff] text-[#1447e6] border-transparent" data-testid="badge-growth-trend">
                   {insights.sectorInfo.growthTrend}
                 </Badge>
               </div>
@@ -283,7 +287,7 @@ export default function InsightsMercado() {
               <ul className="space-y-1">
                 {insights.sectorInfo.mainChallenges.map((challenge, index) => (
                   <li key={index} className="text-sm text-muted-foreground flex items-start gap-2" data-testid={`text-challenge-${index}`}>
-                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0 text-yellow-600" />
+                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0 text-[#ff8c1a]" />
                     {challenge}
                   </li>
                 ))}
@@ -294,7 +298,7 @@ export default function InsightsMercado() {
               <ul className="space-y-1">
                 {insights.sectorInfo.opportunities.map((opportunity, index) => (
                   <li key={index} className="text-sm text-muted-foreground flex items-start gap-2" data-testid={`text-opportunity-${index}`}>
-                    <TrendingUp className="h-4 w-4 mt-0.5 flex-shrink-0 text-green-600" />
+                    <TrendingUp className="h-4 w-4 mt-0.5 flex-shrink-0 text-[#1aa15c]" />
                     {opportunity}
                   </li>
                 ))}
@@ -304,14 +308,18 @@ export default function InsightsMercado() {
         </Card>
 
         <Card data-testid="card-team-performance">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" />
-              Performance da Equipe
-            </CardTitle>
-            <CardDescription>Avaliação em relação ao mercado</CardDescription>
+          <CardHeader className="bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
+                <Target className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <CardTitle>Performance da Equipe</CardTitle>
+                <CardDescription>Avaliação em relação ao mercado</CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-6">
             <div className="grid grid-cols-2 gap-4">
               <div data-testid="metric-profitability">
                 <p className="text-sm text-muted-foreground mb-1">Lucratividade</p>
@@ -359,11 +367,18 @@ export default function InsightsMercado() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card data-testid="card-sector-comparison">
-          <CardHeader>
-            <CardTitle>Comparação com o Setor</CardTitle>
-            <CardDescription>Sua performance vs. média do mercado</CardDescription>
+          <CardHeader className="bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#1aa15c] flex items-center justify-center">
+                <BarChart3 className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <CardTitle>Comparação com o Setor</CardTitle>
+                <CardDescription>Sua performance vs. média do mercado</CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <ResponsiveContainer width="100%" height={300}>
               <RadarChart data={sectorData}>
                 <PolarGrid />
@@ -372,15 +387,15 @@ export default function InsightsMercado() {
                 <Radar
                   name="Sua Equipe"
                   dataKey="value"
-                  stroke="hsl(var(--chart-1))"
-                  fill="hsl(var(--chart-1))"
+                  stroke="#1447e6"
+                  fill="#1447e6"
                   fillOpacity={0.6}
                 />
                 <Radar
                   name="Benchmark Setor"
                   dataKey="benchmark"
-                  stroke="hsl(var(--chart-2))"
-                  fill="hsl(var(--chart-2))"
+                  stroke="#ffcc00"
+                  fill="#ffcc00"
                   fillOpacity={0.3}
                 />
                 <Tooltip />
@@ -390,11 +405,18 @@ export default function InsightsMercado() {
         </Card>
 
         <Card data-testid="card-comparative-indicators">
-          <CardHeader>
-            <CardTitle>Indicadores Comparativos</CardTitle>
-            <CardDescription>Margem, ROI e Market Share</CardDescription>
+          <CardHeader className="bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#7c3aed] flex items-center justify-center">
+                <Target className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <CardTitle>Indicadores Comparativos</CardTitle>
+                <CardDescription>Margem, ROI e Market Share</CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={performanceComparison}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -402,9 +424,9 @@ export default function InsightsMercado() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="margem" fill="hsl(var(--chart-1))" name="Margem (%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="roi" fill="hsl(var(--chart-2))" name="ROI (%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="marketShare" fill="hsl(var(--chart-3))" name="Market Share (%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="margem" fill="#1447e6" name="Margem (%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="roi" fill="#ffcc00" name="ROI (%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="marketShare" fill="#1aa15c" name="Market Share (%)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -412,13 +434,15 @@ export default function InsightsMercado() {
       </div>
 
       <Card data-testid="card-recommendations" className="border-primary/20">
-        <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
+        <CardHeader className="bg-muted/30">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5" />
-              Recomendações Estratégicas
-            </CardTitle>
-            <Badge className="bg-primary/90 hover:bg-primary" data-testid="badge-ai-generated">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#ffcc00] flex items-center justify-center">
+                <Lightbulb className="h-5 w-5 text-[#0a1830]" />
+              </div>
+              <CardTitle>Recomendações Estratégicas</CardTitle>
+            </div>
+            <Badge className="bg-[#7c3aed] text-white border-transparent hover:bg-[#7c3aed]" data-testid="badge-ai-generated">
               <span className="mr-1">✨</span> Gerado por IA
             </Badge>
           </div>
@@ -446,11 +470,11 @@ export default function InsightsMercado() {
                       <Badge variant="outline" className="text-xs" data-testid={`badge-category-${index}`}>
                         {rec.category}
                       </Badge>
-                      <Badge 
+                      <Badge
                         className={
-                          rec.priority === "alta" ? "bg-red-600 hover:bg-red-700" :
-                          rec.priority === "media" ? "bg-yellow-600 hover:bg-yellow-700" :
-                          "bg-green-600 hover:bg-green-700"
+                          rec.priority === "alta" ? "bg-[#fde8e6] text-[#a3241c] border-transparent" :
+                          rec.priority === "media" ? "bg-[#fff3d6] text-[#7a5300] border-transparent" :
+                          "bg-[#e6f7ee] text-[#0f7a44] border-transparent"
                         }
                         data-testid={`badge-priority-${index}`}
                       >

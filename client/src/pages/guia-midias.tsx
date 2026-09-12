@@ -54,7 +54,9 @@ export default function GuiaMidias() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <Tv className="h-10 w-10 text-primary" />
+            <div className="h-12 w-12 rounded-xl bg-[#1447e6] flex items-center justify-center shadow-lg">
+              <Tv className="h-6 w-6 text-white" />
+            </div>
             <h1 className="text-4xl font-bold">Guia de Mídias - Simula+</h1>
           </div>
           <Button
@@ -74,9 +76,11 @@ export default function GuiaMidias() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
         <Card data-testid="card-midias-tradicionais">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+          <CardHeader className="bg-muted/30">
+            <CardTitle className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#ff8c1a] flex items-center justify-center">
+                <FileText className="h-5 w-5 text-white" />
+              </div>
               Mídias Tradicionais
             </CardTitle>
           </CardHeader>
@@ -92,9 +96,11 @@ export default function GuiaMidias() {
         </Card>
 
         <Card data-testid="card-midias-digitais">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
+          <CardHeader className="bg-muted/30">
+            <CardTitle className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-white" />
+              </div>
               Mídias Digitais
             </CardTitle>
           </CardHeader>
@@ -110,9 +116,11 @@ export default function GuiaMidias() {
         </Card>
 
         <Card data-testid="card-midias-diretas">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
+          <CardHeader className="bg-muted/30">
+            <CardTitle className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#1aa15c] flex items-center justify-center">
+                <Users className="h-5 w-5 text-white" />
+              </div>
               Marketing Direto
             </CardTitle>
           </CardHeader>
@@ -128,10 +136,12 @@ export default function GuiaMidias() {
         </Card>
       </div>
 
-      <Card className="bg-primary/5 border-primary/20">
+      <Card className="bg-[#ffcc00]/5 border-[#ffcc00]/30 dark:bg-[#ffcc00]/10">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-6 w-6 text-primary" />
+          <CardTitle className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-[#ffcc00] flex items-center justify-center">
+              <DollarSign className="h-5 w-5 text-[#0a1830]" />
+            </div>
             Informações Detalhadas no PDF
           </CardTitle>
           <CardDescription>

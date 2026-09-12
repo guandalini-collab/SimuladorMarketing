@@ -88,21 +88,28 @@ export default function Perfil() {
 
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold font-accent" data-testid="text-title">
-          Meu Perfil
-        </h1>
-        <p className="text-muted-foreground mt-1" data-testid="text-description">
-          Gerencie suas informações pessoais e configurações de segurança
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="h-12 w-12 rounded-xl bg-[#2f2a8f] flex items-center justify-center shadow-lg text-white font-bold text-lg shrink-0" data-testid="avatar-user-initial">
+          {(user.name?.[0] || user.email?.[0] || "?").toUpperCase()}
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold font-accent" data-testid="text-title">
+            Meu Perfil
+          </h1>
+          <p className="text-muted-foreground mt-1" data-testid="text-description">
+            Gerencie suas informações pessoais e configurações de segurança
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Informações Pessoais */}
         <Card data-testid="card-personal-info">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
+          <CardHeader className="bg-muted/30">
+            <CardTitle className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
+                <User className="h-5 w-5 text-white" />
+              </div>
               Informações Pessoais
             </CardTitle>
             <CardDescription>Suas informações de cadastro</CardDescription>
@@ -148,9 +155,11 @@ export default function Perfil() {
 
         {/* Alterar Senha */}
         <Card data-testid="card-change-password">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5" />
+          <CardHeader className="bg-muted/30">
+            <CardTitle className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#1aa15c] flex items-center justify-center">
+                <Lock className="h-5 w-5 text-white" />
+              </div>
               Segurança
             </CardTitle>
             <CardDescription>Altere sua senha de acesso</CardDescription>
@@ -219,14 +228,16 @@ export default function Perfil() {
       </div>
 
       {/* Dicas de Segurança */}
-      <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
+      <Card className="border-[#ff8c1a]/30 bg-[#ff8c1a]/5 dark:bg-[#ff8c1a]/10 dark:border-[#ff8c1a]/40">
         <CardHeader>
-          <CardTitle className="text-blue-800 dark:text-blue-300 flex items-center gap-2">
-            <Shield className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-[#ff8c1a] flex items-center justify-center">
+              <Shield className="h-5 w-5 text-white" />
+            </div>
             Dicas de Segurança
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-blue-700 dark:text-blue-400 space-y-2">
+        <CardContent className="text-sm text-muted-foreground space-y-2">
           <ul className="list-disc list-inside space-y-1">
             <li>Use uma senha forte com no mínimo 8 caracteres</li>
             <li>Combine letras maiúsculas, minúsculas, números e símbolos</li>

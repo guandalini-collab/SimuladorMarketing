@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, ArrowRight, AlertCircle, Users } from "lucide-react";
+import { CheckCircle2, Circle, ArrowRight, AlertCircle, Users, ListChecks } from "lucide-react";
 import { Link } from "wouter";
 
 interface NextAction {
@@ -113,18 +113,23 @@ export function RoundChecklistCard() {
   return (
     <Card data-testid="card-round-checklist">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center justify-between">
-          <span>Roteiro da Rodada {data.roundNumber}</span>
-          <span className="text-sm font-normal text-muted-foreground">
-            {data.progress}% concluído
-          </span>
-        </CardTitle>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center shrink-0">
+            <ListChecks className="h-5 w-5 text-white" />
+          </div>
+          <CardTitle className="text-lg flex-1 flex items-center justify-between">
+            <span>Roteiro da Rodada {data.roundNumber}</span>
+            <span className="text-sm font-normal text-muted-foreground">
+              {data.progress}% concluído
+            </span>
+          </CardTitle>
+        </div>
         <p className="text-sm text-muted-foreground">
           Siga estas etapas para concluir a rodada com segurança.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Progress value={data.progress} className="h-2" data-testid="progress-round" />
+        <Progress value={data.progress} className="h-2 [&>div]:bg-[#1447e6]" data-testid="progress-round" />
         
         <ul className="space-y-2">
           {checklistItems.map((item) => (
@@ -134,7 +139,7 @@ export function RoundChecklistCard() {
               data-testid={`checklist-item-${item.key}`}
             >
               {item.completed ? (
-                <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-[#1aa15c] shrink-0" />
               ) : (
                 <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
               )}

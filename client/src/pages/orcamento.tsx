@@ -3,6 +3,7 @@ import { AlertCircle, TrendingUp, TrendingDown, DollarSign, Wallet } from "lucid
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { KPICard } from "@/components/kpi-card";
 
 export default function Orcamento() {
   const { data: team } = useQuery<any>({
@@ -15,6 +16,7 @@ export default function Orcamento() {
   });
   
   const currentBudget = team?.budget || 0;
+  const accumulatedResult = (results || []).reduce((sum, r) => sum + (r.profitImpact || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -26,63 +28,32 @@ export default function Orcamento() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Wallet className="h-5 w-5" />
-              Orçamento Atual
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-chart-1" data-testid="text-current-budget">
-              R$ {currentBudget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Disponível para investimentos nas próximas rodadas
-            </p>
-          </CardContent>
-        </Card>
+        <KPICard
+          title="Orçamento Atual"
+          value={`R$ ${currentBudget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          icon={Wallet}
+          description="Disponível para investimentos nas próximas rodadas"
+          testId="text-current-budget"
+          color="blue"
+        />
 
         {results && results.length > 0 && (
           <>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <DollarSign className="h-5 w-5" />
-                  Orçamento Inicial
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">
-                  R$ {(results[0]?.budgetBefore || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Definido no início da simulação
-                </p>
-              </CardContent>
-            </Card>
+            <KPICard
+              title="Orçamento Inicial"
+              value={`R$ ${(results[0]?.budgetBefore || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={DollarSign}
+              description="Definido no início da simulação"
+              color="gold"
+            />
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <TrendingUp className="h-5 w-5" />
-                  Resultado Acumulado
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className={`text-3xl font-bold ${
-                  results.reduce((sum, r) => sum + (r.profitImpact || 0), 0) >= 0 
-                    ? "text-green-600" 
-                    : "text-red-600"
-                }`}>
-                  {results.reduce((sum, r) => sum + (r.profitImpact || 0), 0) >= 0 ? "+" : ""}
-                  R$ {results.reduce((sum, r) => sum + (r.profitImpact || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Lucro/Prejuízo total ao longo das rodadas
-                </p>
-              </CardContent>
-            </Card>
+            <KPICard
+              title="Resultado Acumulado"
+              value={`${accumulatedResult >= 0 ? "+" : ""}R$ ${accumulatedResult.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={accumulatedResult >= 0 ? TrendingUp : TrendingDown}
+              description="Lucro/Prejuízo total ao longo das rodadas"
+              color={accumulatedResult >= 0 ? "green" : "orange"}
+            />
           </>
         )}
       </div>
@@ -90,7 +61,9 @@ export default function Orcamento() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+            <div className="h-8 w-8 rounded-lg bg-[#2f2a8f] flex items-center justify-center">
+              <DollarSign className="h-4 w-4 text-white" />
+            </div>
             Histórico de Fluxo de Caixa
           </CardTitle>
           <CardDescription>
@@ -132,7 +105,7 @@ export default function Orcamento() {
                           </span>
                         </td>
                         <td className="text-right py-3 px-4">
-                          <span className={result.profitImpact >= 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+                          <span className={result.profitImpact >= 0 ? "text-[#0f7a44] font-semibold" : "text-[#a3241c] font-semibold"}>
                             {result.profitImpact >= 0 ? "+" : ""}
                             R$ {(result.profitImpact || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
@@ -144,12 +117,12 @@ export default function Orcamento() {
                         </td>
                         <td className="text-center py-3 px-4">
                           {result.profitImpact >= 0 ? (
-                            <Badge variant="default" className="bg-green-600">
+                            <Badge variant="outline" className="bg-[#e6f7ee] text-[#0f7a44] border-[#1aa15c]/30 dark:bg-green-900/30 dark:text-green-400">
                               <TrendingUp className="h-3 w-3 mr-1" />
                               Lucro
                             </Badge>
                           ) : (
-                            <Badge variant="destructive">
+                            <Badge variant="outline" className="bg-[#fde8e6] text-[#a3241c] border-[#a3241c]/30 dark:bg-red-900/30 dark:text-red-400">
                               <TrendingDown className="h-3 w-3 mr-1" />
                               Prejuízo
                             </Badge>

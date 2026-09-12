@@ -78,18 +78,20 @@ export default function FeedbackPage() {
   if (feedbacks.length === 0) {
     return (
       <div className="container mx-auto p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Sparkles className="h-8 w-8 text-primary" />
-            Feedback Inteligente
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Análises personalizadas das suas decisões de marketing
-          </p>
+        <div className="mb-6 flex items-center gap-4">
+          <div className="h-12 w-12 rounded-lg bg-[#7c3aed] flex items-center justify-center shadow-md">
+            <Sparkles className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Feedback Inteligente</h1>
+            <p className="text-muted-foreground mt-1">
+              Análises personalizadas das suas decisões de marketing
+            </p>
+          </div>
         </div>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="bg-muted/30">
             <CardTitle>Nenhum Feedback Disponível</CardTitle>
             <CardDescription>
               Ainda não há feedbacks gerados para sua equipe. O professor gerará análises inteligentes após o encerramento das rodadas.
@@ -97,7 +99,9 @@ export default function FeedbackPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center justify-center p-8 text-center">
-              <Sparkles className="h-16 w-16 text-muted-foreground mb-4" />
+              <div className="h-16 w-16 rounded-full bg-[#7c3aed]/10 flex items-center justify-center mb-4">
+                <Sparkles className="h-8 w-8 text-[#7c3aed]" />
+              </div>
               <p className="text-sm text-muted-foreground max-w-md">
                 Quando um feedback for gerado, você verá uma análise educacional completa das suas decisões, 
                 incluindo pontos fortes, oportunidades de melhoria e sugestões de literatura.
@@ -116,37 +120,41 @@ export default function FeedbackPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6" data-testid="page-feedback">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <Sparkles className="h-8 w-8 text-primary" />
-          Feedback Inteligente
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Análises personalizadas para impulsionar seu aprendizado em marketing
-        </p>
+      <div className="mb-6 flex items-center gap-4">
+        <div className="h-12 w-12 rounded-lg bg-[#7c3aed] flex items-center justify-center shadow-md">
+          <Sparkles className="h-6 w-6 text-white" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Feedback Inteligente</h1>
+          <p className="text-muted-foreground mt-1">
+            Análises personalizadas para impulsionar seu aprendizado em marketing
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-6">
         {feedbacksWithRounds.map((feedback) => (
           <Card key={feedback.id} className="overflow-hidden" data-testid={`feedback-card-${feedback.roundNumber}`}>
-            <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5" />
-                    Rodada {feedback.roundNumber}
-                  </CardTitle>
-                  <CardDescription className="mt-1">
-                    Análise gerada em {new Date(feedback.createdAt).toLocaleDateString('pt-BR', {
-                      day: '2-digit',
-                      month: 'long',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </CardDescription>
+            <CardHeader className="bg-muted/30">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-[#7c3aed] flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle>Rodada {feedback.roundNumber}</CardTitle>
+                    <CardDescription className="mt-1">
+                      Análise gerada em {new Date(feedback.createdAt).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </CardDescription>
+                  </div>
                 </div>
-                <Badge variant="secondary" className="text-sm">
+                <Badge className="text-sm bg-[#fff3d6] text-[#7a5300] dark:bg-yellow-900/30 dark:text-yellow-400 border-0">
                   Educacional
                 </Badge>
               </div>
@@ -156,7 +164,7 @@ export default function FeedbackPage() {
               {/* Overall Analysis */}
               <div className="space-y-3" data-testid="section-analysis">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5 text-primary" />
+                  <Lightbulb className="h-5 w-5 text-[#2f2a8f]" />
                   Análise Geral
                 </h3>
                 <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
@@ -170,17 +178,17 @@ export default function FeedbackPage() {
               {feedback.strengths.length > 0 && (
                 <div className="space-y-3" data-testid="section-strengths">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-green-600" />
+                    <TrendingUp className="h-5 w-5 text-[#1aa15c]" />
                     Pontos Fortes
                   </h3>
                   <ul className="space-y-2">
                     {feedback.strengths.map((strength, idx) => (
-                      <li 
-                        key={idx} 
+                      <li
+                        key={idx}
                         className="flex gap-3 text-sm"
                         data-testid={`strength-${idx}`}
                       >
-                        <span className="text-green-600 font-bold">✓</span>
+                        <span className="text-[#1aa15c] font-bold">✓</span>
                         <span className="leading-relaxed">{strength}</span>
                       </li>
                     ))}
@@ -194,17 +202,17 @@ export default function FeedbackPage() {
               {feedback.weaknesses.length > 0 && (
                 <div className="space-y-3" data-testid="section-weaknesses">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-amber-600" />
+                    <AlertCircle className="h-5 w-5 text-[#ff8c1a]" />
                     Oportunidades de Melhoria
                   </h3>
                   <ul className="space-y-2">
                     {feedback.weaknesses.map((weakness, idx) => (
-                      <li 
-                        key={idx} 
+                      <li
+                        key={idx}
                         className="flex gap-3 text-sm"
                         data-testid={`weakness-${idx}`}
                       >
-                        <span className="text-amber-600 font-bold">?</span>
+                        <span className="text-[#ff8c1a] font-bold">?</span>
                         <span className="leading-relaxed text-muted-foreground">{weakness}</span>
                       </li>
                     ))}
@@ -218,17 +226,17 @@ export default function FeedbackPage() {
               {feedback.suggestions.length > 0 && (
                 <div className="space-y-3" data-testid="section-suggestions">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <Lightbulb className="h-5 w-5 text-blue-600" />
+                    <Lightbulb className="h-5 w-5 text-[#1447e6]" />
                     Sugestões para Próximas Rodadas
                   </h3>
                   <ul className="space-y-2">
                     {feedback.suggestions.map((suggestion, idx) => (
-                      <li 
-                        key={idx} 
+                      <li
+                        key={idx}
                         className="flex gap-3 text-sm"
                         data-testid={`suggestion-${idx}`}
                       >
-                        <span className="text-blue-600 font-bold">→</span>
+                        <span className="text-[#1447e6] font-bold">→</span>
                         <span className="leading-relaxed text-muted-foreground">{suggestion}</span>
                       </li>
                     ))}
@@ -242,7 +250,7 @@ export default function FeedbackPage() {
                   <Separator />
                   <div className="space-y-4" data-testid="section-literature">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
-                      <BookOpen className="h-5 w-5 text-purple-600" />
+                      <BookOpen className="h-5 w-5 text-[#7c3aed]" />
                       Literatura Recomendada
                     </h3>
                     <div className="grid gap-4">

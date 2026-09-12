@@ -1,6 +1,5 @@
 import {
   LayoutDashboard,
-  Megaphone,
   Lightbulb,
   BarChart3,
   Wallet,
@@ -30,6 +29,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import logoImage from "@assets/generated_images/Simula_logo_navy_dourado_final.png";
 
 const menuItems = [
   {
@@ -111,14 +111,8 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="p-6">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <Megaphone className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h2 className="font-accent font-bold text-lg">Simula +</h2>
-            <p className="text-xs text-muted-foreground">Simulador de Marketing no Mercado</p>
-          </div>
+        <div className="bg-white rounded-xl px-3 py-2.5 shadow-md">
+          <img src={logoImage} alt="Simula+" className="h-8 w-auto" data-testid="img-logo-sidebar" />
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -151,15 +145,15 @@ export function AppSidebar() {
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Nível</span>
-              <span className="font-semibold">3</span>
+              <span className="text-white/70">Nível</span>
+              <span className="font-semibold text-white">3</span>
             </div>
-            <Progress value={65} className="h-2" />
-            <p className="text-xs text-muted-foreground">350 / 500 XP</p>
+            <Progress value={65} className="h-2 bg-white/15 [&>div]:bg-[#ffcc00]" />
+            <p className="text-xs text-white/70">350 / 500 XP</p>
           </div>
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full border-white/25 text-white hover:bg-white/10"
             onClick={() => logoutMutation.mutate()}
             disabled={logoutMutation.isPending}
             data-testid="button-logout"

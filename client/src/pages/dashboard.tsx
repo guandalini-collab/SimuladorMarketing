@@ -234,9 +234,9 @@ export default function Dashboard() {
     return (
       <div className="space-y-6">
         <Card className="border-2 border-slate-200 dark:border-slate-800">
-          <CardHeader className="bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
+          <CardHeader className="bg-muted/30">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
+              <div className="h-14 w-14 rounded-xl bg-[#1447e6] flex items-center justify-center shadow-lg">
                 <Users className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -257,7 +257,7 @@ export default function Dashboard() {
                 {teams.length > 0 && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center">
+                      <div className="h-8 w-8 rounded-lg bg-[#1447e6] flex items-center justify-center">
                         <Users className="h-4 w-4 text-white" />
                       </div>
                       <h3 className="font-bold text-xl">Equipes Disponíveis</h3>
@@ -265,9 +265,9 @@ export default function Dashboard() {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                       {teams.map((t: any) => (
                         <Card key={t.id} className="hover-elevate border-2 border-slate-200 dark:border-slate-800 transition-all">
-                          <CardHeader className="bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
+                          <CardHeader className="bg-muted/30">
                             <div className="flex items-center gap-2 mb-2">
-                              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center shadow-md">
+                              <div className="h-10 w-10 rounded-full bg-[#1447e6] flex items-center justify-center shadow-md">
                                 <Users className="h-5 w-5 text-white" />
                               </div>
                               <CardTitle className="text-lg">{t.name}</CardTitle>
@@ -308,9 +308,9 @@ export default function Dashboard() {
                     </Button>
                   ) : (
                     <Card className="border-2 border-blue-200 dark:border-blue-800">
-                      <CardHeader className="bg-gradient-to-r from-blue-50 to-white dark:from-blue-950/30 dark:to-slate-950">
+                      <CardHeader className="bg-muted/30">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                          <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
                             <Plus className="h-5 w-5 text-white" />
                           </div>
                           <div>
@@ -376,17 +376,17 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Hero Section - Professional Gradient */}
-      <div className="relative h-64 rounded-xl overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-10 right-20 w-32 h-32 border-4 border-white rounded-full animate-pulse"></div>
-          <div className="absolute bottom-20 left-20 w-40 h-40 border-4 border-white rounded-lg rotate-45 animate-pulse delay-75"></div>
+      {/* Hero Section */}
+      <div className="relative h-64 rounded-xl overflow-hidden bg-gradient-to-br from-[#0a1830] via-[#0d2348] to-[#0a1830]">
+        {/* Decorative Background Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-10 right-20 w-32 h-32 border-4 border-white/10 rounded-full"></div>
+          <div className="absolute bottom-20 left-20 w-40 h-40 border-4 border-[#ffcc00]/15 rounded-2xl rotate-45"></div>
         </div>
-        
+
         <div className="relative z-10 h-full flex flex-col justify-center px-8 md:px-12">
           <div className="flex items-center gap-4 mb-4">
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg overflow-hidden">
+            <div className="h-16 w-16 rounded-full bg-[#1447e6] flex items-center justify-center shadow-lg overflow-hidden">
               {team.logoUrl ? (
                 <img 
                   src={team.logoUrl} 
@@ -425,6 +425,7 @@ export default function Dashboard() {
           value={`R$ ${team.budget?.toLocaleString('pt-BR') || '0'}`}
           icon={DollarSign}
           testId="text-budget"
+          color="green"
         />
         <KPICard
           title="ROI Médio"
@@ -432,6 +433,7 @@ export default function Dashboard() {
           trend={{ value: 8, isPositive: true }}
           icon={TrendingUp}
           testId="text-roi"
+          color="blue"
         />
         <KPICard
           title="Alcance Total"
@@ -439,20 +441,22 @@ export default function Dashboard() {
           trend={{ value: 15, isPositive: true }}
           icon={Users}
           testId="text-reach"
+          color="violet"
         />
         <KPICard
           title="Campanhas Ativas"
           value="3"
           icon={Target}
           testId="text-active-campaigns"
+          color="orange"
         />
       </div>
 
       {/* Team Management Section */}
       <Card className="border-2 border-slate-200 dark:border-slate-800">
-        <CardHeader className="bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
+        <CardHeader className="bg-muted/30">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-md">
+            <div className="h-12 w-12 rounded-lg bg-[#1447e6] flex items-center justify-center shadow-md">
               <Users className="h-6 w-6 text-white" />
             </div>
             <div>
@@ -477,7 +481,7 @@ export default function Dashboard() {
                   className="flex items-center justify-between p-4 border-2 rounded-lg hover-elevate transition-all"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center shadow-md">
+                    <div className="h-12 w-12 rounded-full bg-[#1447e6] flex items-center justify-center shadow-md">
                       <span className="text-lg font-bold text-white">
                         {member.name.charAt(0).toUpperCase()}
                       </span>
@@ -514,9 +518,9 @@ export default function Dashboard() {
       {/* Performance Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="border-2 border-slate-200 dark:border-slate-800">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-white dark:from-blue-950/30 dark:to-slate-950">
+          <CardHeader className="bg-muted/30">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
                 <TrendingUp className="h-5 w-5 text-white" />
               </div>
               <CardTitle className="text-lg">Desempenho Mensal</CardTitle>
@@ -529,17 +533,17 @@ export default function Dashboard() {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="vendas" fill="hsl(var(--chart-1))" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="campanhas" fill="hsl(var(--chart-2))" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="vendas" fill="#1447e6" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="campanhas" fill="#ffcc00" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         <Card className="border-2 border-slate-200 dark:border-slate-800">
-          <CardHeader className="bg-gradient-to-r from-cyan-50 to-white dark:from-cyan-950/30 dark:to-slate-950">
+          <CardHeader className="bg-muted/30">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-lg bg-[#1aa15c] flex items-center justify-center">
                 <Target className="h-5 w-5 text-white" />
               </div>
               <CardTitle className="text-lg">Tendência de Crescimento</CardTitle>
@@ -555,14 +559,14 @@ export default function Dashboard() {
                 <Line
                   type="monotone"
                   dataKey="vendas"
-                  stroke="hsl(var(--chart-1))"
+                  stroke="#1447e6"
                   strokeWidth={3}
                   dot={{ r: 5 }}
                 />
                 <Line
                   type="monotone"
                   dataKey="campanhas"
-                  stroke="hsl(var(--chart-3))"
+                  stroke="#1aa15c"
                   strokeWidth={3}
                   dot={{ r: 5 }}
                 />

@@ -376,15 +376,15 @@ export default function Analises() {
   return (
     <div className="space-y-8">
       {/* Hero Section */}
-      <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
+      <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-[#0a1830] via-[#0d2348] to-[#0a1830] p-8">
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-10 right-20 w-32 h-32 border-4 border-white rounded-full animate-pulse"></div>
           <div className="absolute bottom-10 left-20 w-40 h-40 border-4 border-white rounded-lg rotate-45 animate-pulse delay-75"></div>
         </div>
-        
+
         <div className="relative z-10">
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg">
+            <div className="h-16 w-16 rounded-full bg-[#1aa15c] flex items-center justify-center shadow-lg">
               <BarChart3 className="h-8 w-8 text-white" />
             </div>
             <div>
@@ -412,6 +412,7 @@ export default function Analises() {
               value={`R$ ${currentResult.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
               icon={DollarSign}
               testId="text-revenue"
+              color="green"
             />
             <KPICard
               title="Lucro"
@@ -422,30 +423,35 @@ export default function Analises() {
               }}
               icon={currentResult.profit > 0 ? TrendingUp : TrendingDown}
               testId="text-profit"
+              color="blue"
             />
             <KPICard
               title="Margem"
               value={`${currentResult.margin.toFixed(1)}%`}
               icon={TrendingUp}
               testId="text-margin"
+              color="violet"
             />
             <KPICard
               title="ROI"
               value={`${currentResult.roi.toFixed(1)}%`}
               icon={Award}
               testId="text-roi"
+              color="orange"
             />
             <KPICard
               title="Market Share"
               value={`${currentResult.marketShare.toFixed(1)}%`}
               icon={Users}
               testId="text-market-share"
+              color="green"
             />
             <KPICard
               title="Fidelização"
               value={`${currentResult.customerLoyalty.toFixed(0)}/100`}
               icon={Heart}
               testId="text-loyalty"
+              color="blue"
             />
           </div>
 
@@ -454,8 +460,8 @@ export default function Analises() {
             <AccordionItem value="kpis-completos" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline" data-testid="accordion-trigger-kpis-completos">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <BarChart3 className="h-5 w-5 text-primary" />
+                  <div className="h-10 w-10 rounded-lg bg-[#2f2a8f] flex items-center justify-center">
+                    <BarChart3 className="h-5 w-5 text-white" />
                   </div>
                   <div className="text-left">
                     <h3 className="text-lg font-semibold">KPIs Completos</h3>
@@ -606,7 +612,7 @@ export default function Analises() {
                       </div>
                       <div className="p-4 rounded-lg bg-primary/10 border-2 border-primary/20" data-testid="kpi-lucro-liquido">
                         <p className="text-sm text-muted-foreground">Lucro Líquido</p>
-                        <p className={`text-xl font-bold ${(currentResult.lucroLiquido ?? 0) >= 0 ? 'text-chart-3' : 'text-destructive'}`}>
+                        <p className={`text-xl font-bold ${(currentResult.lucroLiquido ?? 0) >= 0 ? 'text-[#1aa15c]' : 'text-destructive'}`}>
                           R$ {(currentResult.lucroLiquido ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </p>
                       </div>
@@ -728,8 +734,8 @@ export default function Analises() {
             <>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Target className="h-5 w-5 text-primary" />
+                  <div className="h-10 w-10 rounded-lg bg-[#7c3aed] flex items-center justify-center">
+                    <Target className="h-5 w-5 text-white" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold">Desempenho por Produto</h2>
@@ -765,7 +771,7 @@ export default function Analises() {
                             <div>
                               <p className="text-muted-foreground">Lucro</p>
                               <p 
-                                className={`font-semibold ${product.profit > 0 ? 'text-chart-3' : 'text-destructive'}`}
+                                className={`font-semibold ${product.profit > 0 ? 'text-[#1aa15c]' : 'text-destructive'}`}
                                 data-testid={`text-product-profit-${index}`}
                               >
                                 R$ {product.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -791,9 +797,14 @@ export default function Analises() {
                 </div>
               </div>
 
-              <Card data-testid="card-products-comparison">
-                <CardHeader>
-                  <CardTitle>Comparação Financeira entre Produtos</CardTitle>
+              <Card className="border-2 border-slate-200 dark:border-slate-800" data-testid="card-products-comparison">
+                <CardHeader className="bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-[#1aa15c] flex items-center justify-center">
+                      <Coins className="h-5 w-5 text-white" />
+                    </div>
+                    <CardTitle>Comparação Financeira entre Produtos</CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
@@ -808,9 +819,9 @@ export default function Analises() {
                       <YAxis />
                       <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
                       <Legend />
-                      <Bar dataKey="receita" fill="hsl(var(--chart-1))" name="Receita" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="custos" fill="hsl(var(--chart-4))" name="Custos" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="lucro" fill="hsl(var(--chart-2))" name="Lucro" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="receita" fill="#1447e6" name="Receita" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="custos" fill="#ff8c1a" name="Custos" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="lucro" fill="#1aa15c" name="Lucro" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -834,9 +845,14 @@ export default function Analises() {
           )}
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Evolução Financeira</CardTitle>
+            <Card className="border-2 border-slate-200 dark:border-slate-800">
+              <CardHeader className="bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
+                    <TrendingUp className="h-5 w-5 text-white" />
+                  </div>
+                  <CardTitle>Evolução Financeira</CardTitle>
+                </div>
               </CardHeader>
               <CardContent>
                 {evolutionData.length > 0 ? (
@@ -850,7 +866,7 @@ export default function Analises() {
                       <Line
                         type="monotone"
                         dataKey="receita"
-                        stroke="hsl(var(--chart-1))"
+                        stroke="#1447e6"
                         strokeWidth={2}
                         dot={{ r: 4 }}
                         name="Receita"
@@ -858,7 +874,7 @@ export default function Analises() {
                       <Line
                         type="monotone"
                         dataKey="lucro"
-                        stroke="hsl(var(--chart-2))"
+                        stroke="#1aa15c"
                         strokeWidth={2}
                         dot={{ r: 4 }}
                         name="Lucro"
@@ -873,9 +889,14 @@ export default function Analises() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Análise de Marca e Mercado</CardTitle>
+            <Card className="border-2 border-slate-200 dark:border-slate-800">
+              <CardHeader className="bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-[#7c3aed] flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 text-white" />
+                  </div>
+                  <CardTitle>Análise de Marca e Mercado</CardTitle>
+                </div>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -886,8 +907,8 @@ export default function Analises() {
                     <Radar
                       name="Desempenho"
                       dataKey="value"
-                      stroke="hsl(var(--chart-3))"
-                      fill="hsl(var(--chart-3))"
+                      stroke="#7c3aed"
+                      fill="#7c3aed"
                       fillOpacity={0.6}
                     />
                     <Tooltip />
@@ -897,9 +918,14 @@ export default function Analises() {
             </Card>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Performance por Rodada</CardTitle>
+          <Card className="border-2 border-slate-200 dark:border-slate-800">
+            <CardHeader className="bg-muted/30">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-[#2f2a8f] flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-white" />
+                </div>
+                <CardTitle>Performance por Rodada</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               {evolutionData.length > 0 ? (
@@ -914,14 +940,14 @@ export default function Analises() {
                     <Bar
                       yAxisId="left"
                       dataKey="marketShare"
-                      fill="hsl(var(--chart-1))"
+                      fill="#2f2a8f"
                       name="Market Share (%)"
                       radius={[4, 4, 0, 0]}
                     />
                     <Bar
                       yAxisId="right"
                       dataKey="roi"
-                      fill="hsl(var(--chart-2))"
+                      fill="#ffcc00"
                       name="ROI (%)"
                       radius={[4, 4, 0, 0]}
                     />
@@ -941,7 +967,7 @@ export default function Analises() {
                 <CardTitle className="text-base">Percepção de Marca</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold text-chart-1" data-testid="text-brand-perception">
+                <p className="text-3xl font-bold text-[#1447e6]" data-testid="text-brand-perception">
                   {currentResult.brandPerception.toFixed(1)}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">de 100 pontos</p>
@@ -952,7 +978,7 @@ export default function Analises() {
                 <CardTitle className="text-base">Satisfação do Cliente</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold text-chart-2" data-testid="text-satisfaction">
+                <p className="text-3xl font-bold text-[#1aa15c]" data-testid="text-satisfaction">
                   {currentResult.customerSatisfaction.toFixed(1)}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">de 100 pontos</p>
@@ -963,7 +989,7 @@ export default function Analises() {
                 <CardTitle className="text-base">Custos Totais</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold text-chart-3" data-testid="text-costs">
+                <p className="text-3xl font-bold text-[#ff8c1a]" data-testid="text-costs">
                   R$ {currentResult.costs.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -988,6 +1014,7 @@ export default function Analises() {
                 icon={Target}
                 description="Custo de Aquisição por Cliente"
                 testId="text-cac"
+                color="green"
               />
               <KPICard
                 title="LTV"
@@ -995,6 +1022,7 @@ export default function Analises() {
                 icon={Sparkles}
                 description="Lifetime Value do Cliente"
                 testId="text-ltv"
+                color="blue"
               />
               <KPICard
                 title="Razão LTV/CAC"
@@ -1006,6 +1034,7 @@ export default function Analises() {
                   isPositive: currentResult.razaoLtvCac >= 3,
                 }}
                 testId="text-ltv-cac-ratio"
+                color="violet"
               />
               <KPICard
                 title="Taxa de Conversão"
@@ -1013,6 +1042,7 @@ export default function Analises() {
                 icon={Percent}
                 description="Conversão de leads em clientes"
                 testId="text-conversion-rate"
+                color="orange"
               />
               <KPICard
                 title="Ticket Médio"
@@ -1020,6 +1050,7 @@ export default function Analises() {
                 icon={ShoppingCart}
                 description="Valor médio por compra"
                 testId="text-average-ticket"
+                color="green"
               />
             </div>
           </div>
@@ -1043,6 +1074,7 @@ export default function Analises() {
                   isPositive: currentResult.nps >= 0,
                 }}
                 testId="text-nps"
+                color="green"
               />
               <KPICard
                 title="Tempo de Conversão"
@@ -1050,6 +1082,7 @@ export default function Analises() {
                 icon={Clock}
                 description="Tempo médio até fechar venda"
                 testId="text-conversion-time"
+                color="blue"
               />
               <KPICard
                 title="Margem de Contribuição"
@@ -1061,6 +1094,7 @@ export default function Analises() {
                   isPositive: currentResult.margemContribuicao >= 30,
                 }}
                 testId="text-contribution-margin"
+                color="violet"
               />
               <KPICard
                 title="Receita Líquida"
@@ -1068,6 +1102,7 @@ export default function Analises() {
                 icon={Coins}
                 description={`Bruta: R$ ${currentResult.receitaBruta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                 testId="text-net-revenue"
+                color="orange"
               />
             </div>
           </div>
@@ -1088,10 +1123,12 @@ export default function Analises() {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="lg:col-span-2">
-              <CardHeader>
+            <Card className="lg:col-span-2 border-2 border-slate-200 dark:border-slate-800">
+              <CardHeader className="bg-muted/30">
                 <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-green-500" />
+                  <div className="h-8 w-8 rounded-lg bg-[#1aa15c] flex items-center justify-center">
+                    <DollarSign className="h-4 w-4 text-white" />
+                  </div>
                   DRE Completa - Demonstrativo do Resultado do Exercício
                 </CardTitle>
                 <CardDescription>Estrutura contábil completa conforme práticas brasileiras</CardDescription>
@@ -1279,10 +1316,12 @@ export default function Analises() {
             </CardContent>
             </Card>
 
-            <Card className="lg:col-span-2">
-              <CardHeader>
+            <Card className="lg:col-span-2 border-2 border-slate-200 dark:border-slate-800">
+              <CardHeader className="bg-muted/30">
                 <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-blue-500" />
+                  <div className="h-8 w-8 rounded-lg bg-[#1447e6] flex items-center justify-center">
+                    <Building2 className="h-4 w-4 text-white" />
+                  </div>
                   Balanço Patrimonial
                 </CardTitle>
                 <CardDescription>Demonstração da posição patrimonial e financeira</CardDescription>
@@ -1291,7 +1330,7 @@ export default function Analises() {
                 <div className="grid gap-6 lg:grid-cols-2">
                   <div>
                     <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-green-500" />
+                      <TrendingUp className="h-4 w-4 text-[#1aa15c]" />
                       ATIVO
                     </h3>
                     <Table>

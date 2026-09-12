@@ -38,10 +38,10 @@ const areaIcons = {
 };
 
 const areaColors = {
-  Produto: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
-  Preço: "bg-green-500/10 text-green-700 dark:text-green-400",
-  Praça: "bg-purple-500/10 text-purple-700 dark:text-purple-400",
-  Promoção: "bg-orange-500/10 text-orange-700 dark:text-orange-400",
+  Produto: "bg-[#1447e6]/10 text-[#1447e6] dark:text-blue-400",
+  Preço: "bg-[#1aa15c]/10 text-[#1aa15c] dark:text-green-400",
+  Praça: "bg-[#7c3aed]/10 text-[#7c3aed] dark:text-violet-400",
+  Promoção: "bg-[#ff8c1a]/10 text-[#ff8c1a] dark:text-orange-400",
 };
 
 export function DeterministicFeedbackCard({ teamId, roundId, compact = false }: DeterministicFeedbackCardProps) {
@@ -100,10 +100,10 @@ export function DeterministicFeedbackCard({ teamId, roundId, compact = false }: 
 
   if (compact) {
     return (
-      <Card data-testid="card-deterministic-feedback-compact" className="border-l-4 border-l-primary">
+      <Card data-testid="card-deterministic-feedback-compact" className="border-l-4 border-l-[#1447e6]">
         <CardContent className="pt-4">
           <div className="flex items-start gap-3">
-            <MessageSquare className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+            <MessageSquare className="h-5 w-5 text-[#1447e6] mt-0.5 flex-shrink-0" />
             <div className="space-y-2">
               <p className="text-sm font-medium">{feedback.summary}</p>
               {feedback.recommendations.length > 0 && (
@@ -121,10 +121,10 @@ export function DeterministicFeedbackCard({ teamId, roundId, compact = false }: 
 
   return (
     <Card data-testid="card-deterministic-feedback">
-      <CardHeader>
+      <CardHeader className="bg-muted/30">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <MessageSquare className="h-5 w-5 text-primary" />
+          <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
+            <MessageSquare className="h-5 w-5 text-white" />
           </div>
           <div>
             <CardTitle className="text-xl">Feedback da Rodada</CardTitle>
@@ -135,14 +135,14 @@ export function DeterministicFeedbackCard({ teamId, roundId, compact = false }: 
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="p-4 rounded-lg bg-muted/50 border-l-4 border-l-primary">
+        <div className="p-4 rounded-lg bg-muted/50 border-l-4 border-l-[#1447e6]">
           <p className="text-base leading-relaxed">{feedback.summary}</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
+              <TrendingUp className="h-5 w-5 text-[#1aa15c]" />
               <h3 className="font-semibold">O que aconteceu</h3>
             </div>
             <ul className="space-y-2">
@@ -157,7 +157,7 @@ export function DeterministicFeedbackCard({ teamId, roundId, compact = false }: 
 
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <TrendingDown className="h-5 w-5 text-blue-600" />
+              <TrendingDown className="h-5 w-5 text-[#2f2a8f]" />
               <h3 className="font-semibold">Por que aconteceu</h3>
             </div>
             <ul className="space-y-2">
@@ -174,7 +174,7 @@ export function DeterministicFeedbackCard({ teamId, roundId, compact = false }: 
         {feedback.recommendations.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-amber-500" />
+              <Lightbulb className="h-5 w-5 text-[#ff8c1a]" />
               <h3 className="font-semibold">O que fazer na próxima rodada</h3>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">

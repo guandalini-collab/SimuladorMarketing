@@ -373,14 +373,18 @@ export default function Empresa() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Nome da Empresa
-            </CardTitle>
-            <CardDescription>
-              Escolha um nome criativo e memorável para sua empresa
-            </CardDescription>
+          <CardHeader className="bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
+                <Building2 className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <CardTitle>Nome da Empresa</CardTitle>
+                <CardDescription>
+                  Escolha um nome criativo e memorável para sua empresa
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -427,14 +431,18 @@ export default function Empresa() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Image className="h-5 w-5" />
-              Logomarca
-            </CardTitle>
-            <CardDescription>
-              Envie uma imagem do seu computador ou cole a URL de uma imagem online
-            </CardDescription>
+          <CardHeader className="bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#7c3aed] flex items-center justify-center">
+                <Image className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <CardTitle>Logomarca</CardTitle>
+                <CardDescription>
+                  Envie uma imagem do seu computador ou cole a URL de uma imagem online
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {(team?.logoUrl || logoUrl) && (
@@ -532,23 +540,27 @@ export default function Empresa() {
 
       {classProducts && classProducts.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Produtos e Público-Alvo
-            </CardTitle>
-            <CardDescription>
-              Configure cada um dos 4 produtos individualmente com nome, descrição e público-alvo específico.
-              {!activeRound ? (
-                <span className="block mt-2 text-amber-600 font-medium">
-                  ⚠️ Você pode salvar rascunhos agora, mas só poderá finalizar quando o professor liberar uma rodada de decisão.
-                </span>
-              ) : (
-                <span className="block mt-2 text-blue-600 font-medium">
-                  ✓ Rodada {activeRound.roundNumber} ativa - Você pode finalizar as configurações.
-                </span>
-              )}
-            </CardDescription>
+          <CardHeader className="bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#2f2a8f] flex items-center justify-center">
+                <Package className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <CardTitle>Produtos e Público-Alvo</CardTitle>
+                <CardDescription>
+                  Configure cada um dos 4 produtos individualmente com nome, descrição e público-alvo específico.
+                </CardDescription>
+              </div>
+            </div>
+            {!activeRound ? (
+              <span className="inline-block mt-3 px-2.5 py-1 rounded-md text-sm font-medium bg-[#fff3d6] text-[#7a5300]">
+                ⚠️ Você pode salvar rascunhos agora, mas só poderá finalizar quando o professor liberar uma rodada de decisão.
+              </span>
+            ) : (
+              <span className="inline-block mt-3 px-2.5 py-1 rounded-md text-sm font-medium bg-[#eef2ff] text-[#1447e6]">
+                ✓ Rodada {activeRound.roundNumber} ativa - Você pode finalizar as configurações.
+              </span>
+            )}
           </CardHeader>
           <CardContent>
             <Tabs defaultValue={classProducts[0]?.id} className="w-full">
@@ -565,7 +577,7 @@ export default function Empresa() {
                       className="flex items-center gap-2 text-xs sm:text-sm"
                     >
                       {isSubmitted ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        <CheckCircle2 className="h-4 w-4 text-[#1aa15c] flex-shrink-0" />
                       ) : (
                         <Circle className="h-4 w-4 flex-shrink-0" />
                       )}
@@ -784,11 +796,13 @@ export default function Empresa() {
 
       {team.companyName && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Resumo da Identidade
-            </CardTitle>
+          <CardHeader className="bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#ffcc00] flex items-center justify-center">
+                <FileText className="h-5 w-5 text-[#0a1830]" />
+              </div>
+              <CardTitle>Resumo da Identidade</CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-3">

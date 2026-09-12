@@ -12,24 +12,32 @@ interface MarketEventCardProps {
 
 const severityConfig = {
   baixo: {
-    variant: "secondary" as const,
     icon: Info,
-    color: "text-blue-500",
+    chipBg: "#1aa15c",
+    chipIconColor: "text-white",
+    badgeClass: "bg-[#e6f7ee] text-[#0f7a44] border-transparent",
+    label: "Baixo",
   },
   medio: {
-    variant: "default" as const,
     icon: TrendingUp,
-    color: "text-yellow-500",
+    chipBg: "#ffcc00",
+    chipIconColor: "text-[#0a1830]",
+    badgeClass: "bg-[#fff3d6] text-[#7a5300] border-transparent",
+    label: "Médio",
   },
   alto: {
-    variant: "default" as const,
     icon: AlertTriangle,
-    color: "text-orange-500",
+    chipBg: "#ff8c1a",
+    chipIconColor: "text-white",
+    badgeClass: "bg-[#ffe8d1] text-[#8a4b00] border-transparent",
+    label: "Alto",
   },
   critico: {
-    variant: "destructive" as const,
     icon: Zap,
-    color: "text-destructive",
+    chipBg: "#e5352b",
+    chipIconColor: "text-white",
+    badgeClass: "bg-[#fde8e6] text-[#a3241c] border-transparent",
+    label: "Crítico",
   },
 };
 
@@ -54,17 +62,17 @@ export function MarketEventCard({
 
   return (
     <Card className="hover-elevate">
-      <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3">
+      <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3 bg-muted/30">
         <div className="flex items-start gap-3">
-          <div className={`p-2 rounded-lg bg-muted ${config.color}`}>
-            <Icon className="h-5 w-5" />
+          <div className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: config.chipBg }}>
+            <Icon className={`h-5 w-5 ${config.chipIconColor}`} />
           </div>
           <div>
             <h3 className="font-semibold text-base">{title}</h3>
             <p className="text-sm text-muted-foreground">{typeLabels[type] || type}</p>
           </div>
         </div>
-        <Badge variant={config.variant}>{severity}</Badge>
+        <Badge className={config.badgeClass}>{config.label}</Badge>
       </CardHeader>
       <CardContent className="space-y-2">
         <p className="text-sm">{description}</p>
