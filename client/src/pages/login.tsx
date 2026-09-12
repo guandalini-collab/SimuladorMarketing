@@ -43,22 +43,10 @@ export default function Login() {
   const [registeredUserData, setRegisteredUserData] = useState<any>(null);
   const [codeCopied, setCodeCopied] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Lê os valores diretamente do formulário no momento do envio, em vez
-      // de confiar apenas no estado do React. Em alguns casos o Safari
-      // preenche os campos via autopreenchimento (senha salva) sem disparar
-      // o evento "input"/"change" que o React usa para atualizar o estado —
-      // o campo aparece preenchido na tela, mas o app envia um valor vazio
-      // ou desatualizado. Ler do FormData evita esse problema, pois reflete
-      // o valor real do campo no DOM, não o estado do React.
-      const formValues = new FormData(e.currentTarget);
-      const credentials = {
-        email: String(formValues.get("email") ?? loginData.email ?? ""),
-        password: String(formValues.get("password") ?? loginData.password ?? ""),
-      };
-      const res = await apiRequest("POST", "/api/auth/login", credentials);
+      const res = await apiRequest("POST", "/api/auth/login", loginData);
       
       if (!res.ok) {
         const errorData = await res.json();
@@ -341,14 +329,12 @@ export default function Login() {
                 </TabsList>
 
                 <TabsContent value="login">
-                  <form onSubmit={handleLogin} className="space-y-4" autoComplete="on">
+                  <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="login-email">Email</Label>
                       <Input
                         id="login-email"
-                        name="email"
                         type="email"
-                        autoComplete="username"
                         placeholder="seu@email.com"
                         value={loginData.email}
                         onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
@@ -362,9 +348,7 @@ export default function Login() {
                       <div className="relative">
                         <Input
                           id="login-password"
-                          name="password"
                           type={showLoginPassword ? "text" : "password"}
-                          autoComplete="current-password"
                           placeholder="••••••••"
                           value={loginData.password}
                           onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
