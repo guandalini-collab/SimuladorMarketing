@@ -9,6 +9,8 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ProfessorLayout } from "@/components/professor-layout";
 import { LogOut } from "lucide-react";
+import { RodadaZero } from "@/components/rodada-zero";
+import type { Team } from "@shared/schema";
 import Dashboard from "@/pages/dashboard";
 import Campanhas from "@/pages/campanhas";
 import Decisoes from "@/pages/decisoes";
@@ -36,13 +38,6 @@ interface User {
   email: string;
   name: string;
   role: string;
-}
-
-interface Team {
-  id: string;
-  name: string;
-  classId: string;
-  budget: number;
 }
 
 function AuthenticatedApp() {
@@ -135,22 +130,26 @@ function AuthenticatedApp() {
             </div>
           </header>
           <main className="flex-1 overflow-auto p-8">
-            <Switch>
-              <Route path="/" component={Dashboard} />
-              <Route path="/empresa" component={Empresa} />
-              <Route path="/campanhas" component={Campanhas} />
-              <Route path="/decisoes" component={Decisoes} />
-              <Route path="/mercado" component={Mercado} />
-              <Route path="/estrategia" component={Estrategia} />
-              <Route path="/analises" component={Analises} />
-              <Route path="/insights" component={InsightsMercado} />
-              <Route path="/orcamento" component={Orcamento} />
-              <Route path="/feedback" component={FeedbackPage} />
-              <Route path="/manual" component={Manual} />
-              <Route path="/guia-midias" component={GuiaMidias} />
-              <Route path="/perfil" component={Perfil} />
-              <Route component={NotFound} />
-            </Switch>
+            {team && !team.tutorialCompletedAt ? (
+              <RodadaZero team={team} isLeader={team.leaderId === user.id} />
+            ) : (
+              <Switch>
+                <Route path="/" component={Dashboard} />
+                <Route path="/empresa" component={Empresa} />
+                <Route path="/campanhas" component={Campanhas} />
+                <Route path="/decisoes" component={Decisoes} />
+                <Route path="/mercado" component={Mercado} />
+                <Route path="/estrategia" component={Estrategia} />
+                <Route path="/analises" component={Analises} />
+                <Route path="/insights" component={InsightsMercado} />
+                <Route path="/orcamento" component={Orcamento} />
+                <Route path="/feedback" component={FeedbackPage} />
+                <Route path="/manual" component={Manual} />
+                <Route path="/guia-midias" component={GuiaMidias} />
+                <Route path="/perfil" component={Perfil} />
+                <Route component={NotFound} />
+              </Switch>
+            )}
           </main>
         </div>
       </div>

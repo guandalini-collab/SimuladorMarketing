@@ -66,6 +66,9 @@ import {
   roundAccessLogs,
   deterministicFeedback,
   type DeterministicFeedback,
+  practiceRounds,
+  type PracticeRound,
+  systemFlags,
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 
@@ -1313,5 +1316,48 @@ export class PgStorage implements IStorage {
       ))
       .returning();
     return result.length > 0;
+  }
+
+  // Rodada 0 (treino/tutorial isolado por equipe)
+  async getPracticeRound(teamId: string): Promise<PracticeRound | undefined> {
+    const result = await db.select().from(practiceRounds)
+      .where(eq(practiceRounds.teamId, teamId))
+      .limit(1);
+    return result[0];
+  }
+
+  async createPracticeRound(teamId: string): Promise<PracticeRound> {
+    const existing = await this.getPracticeRound(teamId);
+    if (existing) return existing;
+    const result = await db.insert(practiceRounds)
+      .values({ teamId })
+      .returning();
+    return result[0];
+  }
+
+  async updatePracticeRound(teamId: string, data: Partial<PracticeRound>): Promise<PracticeRound | undefined> {
+    const result = await db.update(practiceRounds)
+      .set(data)
+      .where(eq(practiceRounds.teamId, teamId))
+      .returning();
+    return result[0];
+  }
+
+  async runLegacyTeamsTutorialBackfillOnce(): Promise<void> {
+    const FLAG_KEY = "legacy_teams_tutorial_backfilled";
+    const existing = await db.select().from(systemFlags).where(eq(systemFlags.key, FLAG_KEY)).limit(1);
+    if (existing.length > 0) return;
+
+    // Dá como "treino já concluído" toda equipe que já existia antes deste
+    // deploy, para não bloquear equipes que já estavam jogando. Só roda uma
+    // vez: a linha em system_flags impede que rode de novo em reinícios
+    // futuros do servidor (o que travaria equipes novas em treino).
+    const result = await db.update(teams)
+      .set({ tutorialCompletedAt: new Date() })
+      .where(isNull(teams.tutorialCompletedAt))
+      .returning({ id: teams.id });
+
+    await db.insert(systemFlags).values({ key: FLAG_KEY, value: String(result.length) }).onConflictDoNothing();
+    console.log(`[MIGRATION] Rodada 0: ${result.length} equipe(s) existente(s) marcada(s) como já treinada(s).`);
   }
 }

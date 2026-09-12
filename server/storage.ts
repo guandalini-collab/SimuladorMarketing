@@ -39,6 +39,7 @@ import {
   type InsertMidia,
   type TeamProduct,
   type InsertTeamProduct,
+  type PracticeRound,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -209,6 +210,14 @@ export interface IStorage {
   getDeterministicFeedbacksByRound(roundId: string): Promise<any[]>;
   createDeterministicFeedback(feedback: { teamId: string; roundId: string; summary: string; whatHappened: any; whyItHappened: any; recommendations: any; engineVersion: string }): Promise<any>;
   deleteDeterministicFeedback(teamId: string, roundId: string): Promise<boolean>;
+
+  // Rodada 0 (treino/tutorial isolado por equipe)
+  getPracticeRound(teamId: string): Promise<PracticeRound | undefined>;
+  createPracticeRound(teamId: string): Promise<PracticeRound>;
+  updatePracticeRound(teamId: string, data: Partial<PracticeRound>): Promise<PracticeRound | undefined>;
+  // Migração única: marca como "treino já concluído" as equipes que já
+  // existiam antes do lançamento da Rodada 0, para não bloqueá-las.
+  runLegacyTeamsTutorialBackfillOnce(): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -237,6 +246,7 @@ export class MemStorage implements IStorage {
   private teamProducts: Map<string, TeamProduct>;
   private roundAccessLogs: Map<string, any[]>;
   private deterministicFeedbacks: Map<string, any>;
+  private practiceRounds: Map<string, PracticeRound>;
   private professorSeeded: Promise<void>;
 
   constructor() {
@@ -265,7 +275,8 @@ export class MemStorage implements IStorage {
     this.teamProducts = new Map();
     this.roundAccessLogs = new Map();
     this.deterministicFeedbacks = new Map();
-    
+    this.practiceRounds = new Map();
+
     this.professorSeeded = this.seedData();
   }
   
@@ -347,8 +358,10 @@ export class MemStorage implements IStorage {
       targetAudienceAge: null,
       targetAudienceProfile: null,
       createdAt: new Date(),
+      readyConfirmedAt: null,
+      tutorialCompletedAt: null,
     };
-    
+
     this.teams.set(teamId, team);
   }
 
@@ -591,10 +604,49 @@ export class MemStorage implements IStorage {
     return team;
   }
 
+  async getPracticeRound(teamId: string): Promise<PracticeRound | undefined> {
+    return this.practiceRounds.get(teamId);
+  }
+
+  async createPracticeRound(teamId: string): Promise<PracticeRound> {
+    const existing = this.practiceRounds.get(teamId);
+    if (existing) return existing;
+    const practiceRound: PracticeRound = {
+      id: randomUUID(),
+      teamId,
+      status: "em_andamento",
+      startedAt: new Date(),
+      completedAt: null,
+      decisions: {},
+      resultSummary: null,
+    };
+    this.practiceRounds.set(teamId, practiceRound);
+    return practiceRound;
+  }
+
+  async updatePracticeRound(teamId: string, data: Partial<PracticeRound>): Promise<PracticeRound | undefined> {
+    const existing = this.practiceRounds.get(teamId);
+    if (!existing) return undefined;
+    const updated = { ...existing, ...data };
+    this.practiceRounds.set(teamId, updated);
+    return updated;
+  }
+
+  private legacyTeamsBackfilled = false;
+  async runLegacyTeamsTutorialBackfillOnce(): Promise<void> {
+    if (this.legacyTeamsBackfilled) return;
+    for (const [id, team] of Array.from(this.teams.entries())) {
+      if (!team.tutorialCompletedAt) {
+        this.teams.set(id, { ...team, tutorialCompletedAt: team.createdAt || new Date() });
+      }
+    }
+    this.legacyTeamsBackfilled = true;
+  }
+
   async removeMemberFromTeam(teamId: string, userId: string): Promise<Team | undefined> {
     const team = this.teams.get(teamId);
     if (!team) return undefined;
-    
+
     // Remove o usuário dos membros
     team.memberIds = team.memberIds.filter(id => id !== userId);
     
