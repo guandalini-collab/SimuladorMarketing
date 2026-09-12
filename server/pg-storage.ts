@@ -1371,8 +1371,38 @@ export class PgStorage implements IStorage {
     }
   }
 
+  // DIAGNÓSTICO TEMPORÁRIO — investigar por que o predeploy do Railway trava
+  // ao tentar `ALTER TABLE ai_feedback DROP CONSTRAINT ai_feedback_id_not_null`
+  // (erro 42P16, "column is in a primary key"). Só lê o catálogo do Postgres,
+  // não altera nada. Remover depois que a causa raiz for corrigida.
+  private async diagnoseAiFeedbackConstraint(): Promise<void> {
+    try {
+      const constraints = await pool.query(`
+        SELECT conrelid::regclass::text AS table_name, conname, contype, pg_get_constraintdef(oid) AS definition
+        FROM pg_constraint
+        WHERE conrelid IN ('ai_feedback'::regclass, 'teams'::regclass, 'password_reset_tokens'::regclass)
+        ORDER BY table_name, contype
+      `);
+      console.log("[DIAG] pg_constraint (ai_feedback vs teams vs password_reset_tokens):", JSON.stringify(constraints.rows));
+
+      const columns = await pool.query(`
+        SELECT table_name, column_name, is_nullable, column_default, data_type, is_identity
+        FROM information_schema.columns
+        WHERE table_name IN ('ai_feedback', 'teams', 'password_reset_tokens') AND column_name = 'id'
+        ORDER BY table_name
+      `);
+      console.log("[DIAG] information_schema.columns (id):", JSON.stringify(columns.rows));
+
+      const pgVersion = await pool.query('SHOW server_version');
+      console.log("[DIAG] Postgres server_version:", JSON.stringify(pgVersion.rows));
+    } catch (error) {
+      console.error("[DIAG] Falha ao diagnosticar constraint de ai_feedback:", error);
+    }
+  }
+
   async runLegacyTeamsTutorialBackfillOnce(): Promise<void> {
     await this.ensureRodada0SchemaExists();
+    await this.diagnoseAiFeedbackConstraint();
 
     const FLAG_KEY = "legacy_teams_tutorial_backfilled";
     const existing = await db.select().from(systemFlags).where(eq(systemFlags.key, FLAG_KEY)).limit(1);
