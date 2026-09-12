@@ -2,7 +2,6 @@ import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { storage } from "./storage";
 
 const app = express();
 
@@ -51,15 +50,6 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Migração única: equipes que já existiam antes do lançamento da Rodada 0
-  // são marcadas como "treino já concluído", para não travar equipes que já
-  // estavam em jogo. Não deve impedir o boot do servidor se falhar.
-  try {
-    await storage.runLegacyTeamsTutorialBackfillOnce();
-  } catch (error) {
-    console.error("[MIGRATION] Falha ao rodar backfill de Rodada 0:", error);
-  }
-
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

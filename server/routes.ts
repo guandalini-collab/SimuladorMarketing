@@ -38,71 +38,6 @@ function generateRecoveryCode(): string {
 // Percentual de impacto no orçamento por produto adicional/removido entre rodadas.
 const PRODUCT_COUNT_BUDGET_IMPACT = 0.10;
 
-// ---------------------------------------------------------------------
-// Rodada 0 (treino/tutorial): gera um feedback simulado simples, apenas
-// para fins didáticos. NÃO usa o motor de simulação real (calculator.ts),
-// que compara o desempenho de várias equipes entre si — aqui a equipe
-// está sozinha, então o resultado é calculado com uma fórmula própria e
-// isolada, só para dar ao aluno uma ideia de causa e efeito.
-// ---------------------------------------------------------------------
-const PRACTICE_CHANNEL_REACH_FACTOR: Record<string, number> = {
-  digital: 1.3,
-  redes_sociais: 1.5,
-  influenciadores: 1.4,
-  tv: 1.0,
-  ponto_de_venda: 0.8,
-};
-
-// Alinhamento (0-100) entre qualidade do produto e estratégia de preço.
-function practiceAlignmentScore(quality: string, priceStrategy: string): number {
-  const matrix: Record<string, Record<string, number>> = {
-    alta: { premium: 90, competitivo: 65, economico: 35 },
-    media: { premium: 55, competitivo: 80, economico: 60 },
-    baixa: { premium: 25, competitivo: 55, economico: 75 },
-  };
-  return matrix[quality]?.[priceStrategy] ?? 50;
-}
-
-function buildPracticeResultSummary(decisions: Record<string, any>) {
-  const totalBudget: number = decisions?.budget?.totalBudget ?? 100000;
-  const marketingAllocation: number = Math.min(
-    Math.max(decisions?.budget?.marketingAllocation ?? 0, 0),
-    totalBudget
-  );
-  const channel: string = decisions?.campaign?.channel ?? "digital";
-  const duration: number = decisions?.campaign?.duration ?? 4;
-  const quality: string = decisions?.product?.quality ?? "media";
-  const priceStrategy: string = decisions?.product?.priceStrategy ?? "competitivo";
-
-  const reachFactor = PRACTICE_CHANNEL_REACH_FACTOR[channel] ?? 1.0;
-  const alignment = practiceAlignmentScore(quality, priceStrategy);
-
-  const alcanceEstimado = Math.round((marketingAllocation / 10) * reachFactor * (1 + duration / 20));
-  const engajamentoEstimado = Math.round(Math.min(95, 30 + alignment * 0.5 + reachFactor * 5));
-  const eficienciaOrcamento = totalBudget > 0 ? marketingAllocation / totalBudget : 0;
-  const roiEstimado = Math.round((engajamentoEstimado * 0.8) - (eficienciaOrcamento * 15));
-
-  const dicas: string[] = [];
-  if (alignment < 50) {
-    dicas.push("A qualidade do produto e a estratégia de preço escolhidas não combinam muito bem — pense em alinhar as duas em rodadas futuras.");
-  } else {
-    dicas.push("Qualidade e preço ficaram bem alinhados, isso ajuda a percepção de valor da marca.");
-  }
-  if (eficienciaOrcamento > 0.7) {
-    dicas.push("Você investiu uma fatia grande do orçamento em marketing — em rodadas reais, isso reduz a sobra de caixa para outras decisões.");
-  } else if (eficienciaOrcamento < 0.15) {
-    dicas.push("O investimento em marketing ficou baixo, o que tende a limitar o alcance da campanha.");
-  }
-  dicas.push("Esses números são só uma simulação de treino — na Rodada 1 valendo de verdade, o resultado depende também das decisões das outras equipes.");
-
-  return {
-    alcanceEstimado,
-    engajamentoEstimado,
-    roiEstimado,
-    dicas,
-  };
-}
-
 // Quando a quantidade de produtos da turma muda de uma rodada para outra,
 // ajusta o orçamento de todas as equipes da turma: -10% por produto adicional
 // (e o inverso, proporcional, caso a quantidade diminua).
@@ -1030,8 +965,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         targetAudienceClass: null,
         targetAudienceAge: null,
         targetAudienceProfile: null,
-        readyConfirmedAt: null,
-        tutorialCompletedAt: null,
       });
       res.json(team);
     } catch (error) {
@@ -1905,8 +1838,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         targetAudienceClass: null,
         targetAudienceAge: null,
         targetAudienceProfile: null,
-        readyConfirmedAt: null,
-        tutorialCompletedAt: null,
       });
       res.json(team);
     } catch (error) {
@@ -1952,126 +1883,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(403).json({ error: "Você só pode entrar em equipes da mesma turma em que está matriculado" });
     }
 
-    if (team.memberIds.length >= 4) {
-      return res.status(400).json({ error: "Esta equipe já está completa (máximo de 4 membros)" });
-    }
-
     try {
       const updatedTeam = await storage.addMemberToTeam(teamId, req.session.userId);
       res.json(updatedTeam);
     } catch (error) {
       res.status(400).json({ error: "Erro ao entrar na equipe" });
     }
-  });
-
-  // Rodada 0 (treino/tutorial isolado por equipe) -----------------------
-
-  // Líder confirma que a equipe está completa (3-4 membros) e libera a Rodada 0.
-  app.post("/api/teams/:teamId/confirm-ready", async (req, res) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-
-    const team = await storage.getTeam(req.params.teamId);
-    if (!team) {
-      return res.status(404).json({ error: "Equipe não encontrada" });
-    }
-
-    if (team.leaderId !== req.session.userId) {
-      return res.status(403).json({ error: "Apenas o líder da equipe pode confirmar a equipe" });
-    }
-
-    if (team.readyConfirmedAt) {
-      return res.json(team);
-    }
-
-    if (team.memberIds.length < 3) {
-      return res.status(400).json({ error: "A equipe precisa de pelo menos 3 membros para ser confirmada" });
-    }
-
-    const updatedTeam = await storage.updateTeam(team.id, { readyConfirmedAt: new Date() });
-    await storage.createPracticeRound(team.id);
-    res.json(updatedTeam);
-  });
-
-  // Estado atual da Rodada 0 da equipe do usuário logado.
-  app.get("/api/practice/current", async (req, res) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-
-    const team = await storage.getTeamByUser(req.session.userId);
-    if (!team) {
-      return res.status(404).json({ error: "Você não está em nenhuma equipe" });
-    }
-
-    if (!team.readyConfirmedAt) {
-      return res.json({ team, practiceRound: null });
-    }
-
-    let practiceRound = await storage.getPracticeRound(team.id);
-    if (!practiceRound) {
-      practiceRound = await storage.createPracticeRound(team.id);
-    }
-
-    res.json({ team, practiceRound });
-  });
-
-  // Salva o progresso das decisões da Rodada 0 (mescla com o que já existe).
-  app.patch("/api/practice/decisions", async (req, res) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-
-    const team = await storage.getTeamByUser(req.session.userId);
-    if (!team) {
-      return res.status(404).json({ error: "Você não está em nenhuma equipe" });
-    }
-
-    const practiceRound = await storage.getPracticeRound(team.id);
-    if (!practiceRound || practiceRound.status === "concluida") {
-      return res.status(400).json({ error: "Rodada 0 não está disponível para esta equipe" });
-    }
-
-    const mergedDecisions = {
-      ...(practiceRound.decisions as Record<string, unknown> || {}),
-      ...(req.body || {}),
-    };
-
-    const updated = await storage.updatePracticeRound(team.id, { decisions: mergedDecisions });
-    res.json(updated);
-  });
-
-  // Conclui a Rodada 0: gera um feedback simulado simples e marca a equipe como treinada.
-  app.post("/api/practice/complete", async (req, res) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-
-    const team = await storage.getTeamByUser(req.session.userId);
-    if (!team) {
-      return res.status(404).json({ error: "Você não está em nenhuma equipe" });
-    }
-
-    const practiceRound = await storage.getPracticeRound(team.id);
-    if (!practiceRound) {
-      return res.status(400).json({ error: "Rodada 0 não foi iniciada para esta equipe" });
-    }
-
-    if (practiceRound.status === "concluida") {
-      return res.json(practiceRound);
-    }
-
-    const resultSummary = buildPracticeResultSummary(practiceRound.decisions as Record<string, any>);
-
-    const updated = await storage.updatePracticeRound(team.id, {
-      status: "concluida",
-      completedAt: new Date(),
-      resultSummary,
-    });
-    await storage.updateTeam(team.id, { tutorialCompletedAt: new Date() });
-
-    res.json(updated);
   });
 
   app.get("/api/teams/:teamId", async (req, res) => {

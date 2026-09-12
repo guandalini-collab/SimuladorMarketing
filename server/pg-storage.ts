@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { eq, and, desc, isNull, inArray, asc } from "drizzle-orm";
+import { eq, and, desc, inArray, asc } from "drizzle-orm";
 import {
   type User,
   type InsertUser,
@@ -66,9 +66,6 @@ import {
   roundAccessLogs,
   deterministicFeedback,
   type DeterministicFeedback,
-  practiceRounds,
-  type PracticeRound,
-  systemFlags,
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 
@@ -1318,106 +1315,4 @@ export class PgStorage implements IStorage {
     return result.length > 0;
   }
 
-  // Rodada 0 (treino/tutorial isolado por equipe)
-  async getPracticeRound(teamId: string): Promise<PracticeRound | undefined> {
-    const result = await db.select().from(practiceRounds)
-      .where(eq(practiceRounds.teamId, teamId))
-      .limit(1);
-    return result[0];
-  }
-
-  async createPracticeRound(teamId: string): Promise<PracticeRound> {
-    const existing = await this.getPracticeRound(teamId);
-    if (existing) return existing;
-    const result = await db.insert(practiceRounds)
-      .values({ teamId })
-      .returning();
-    return result[0];
-  }
-
-  async updatePracticeRound(teamId: string, data: Partial<PracticeRound>): Promise<PracticeRound | undefined> {
-    const result = await db.update(practiceRounds)
-      .set(data)
-      .where(eq(practiceRounds.teamId, teamId))
-      .returning();
-    return result[0];
-  }
-
-  // Garante que as colunas/tabelas da Rodada 0 existam no banco, mesmo que o
-  // passo de "drizzle-kit push" no predeploy do Railway seja interrompido por
-  // um erro pré-existente e não relacionado (em ai_feedback), que impede as
-  // alterações pendentes seguintes de serem aplicadas. Tudo aqui é
-  // idempotente (IF NOT EXISTS), seguro de rodar em todo boot do servidor.
-  private async ensureRodada0SchemaExists(): Promise<void> {
-    try {
-      await pool.query('ALTER TABLE teams ADD COLUMN IF NOT EXISTS ready_confirmed_at timestamp');
-      await pool.query('ALTER TABLE teams ADD COLUMN IF NOT EXISTS tutorial_completed_at timestamp');
-      await pool.query(`CREATE TABLE IF NOT EXISTS practice_rounds (
-        id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
-        team_id varchar NOT NULL UNIQUE REFERENCES teams(id) ON DELETE CASCADE,
-        status text NOT NULL DEFAULT 'em_andamento',
-        started_at timestamp NOT NULL DEFAULT now(),
-        completed_at timestamp,
-        decisions jsonb NOT NULL DEFAULT '{}'::jsonb,
-        result_summary jsonb
-      )`);
-      await pool.query(`CREATE TABLE IF NOT EXISTS system_flags (
-        key text PRIMARY KEY,
-        value text,
-        set_at timestamp NOT NULL DEFAULT now()
-      )`);
-    } catch (error) {
-      console.error("[MIGRATION] Falha ao garantir schema da Rodada 0:", error);
-    }
-  }
-
-  // DIAGNÓSTICO TEMPORÁRIO — investigar por que o predeploy do Railway trava
-  // ao tentar `ALTER TABLE ai_feedback DROP CONSTRAINT ai_feedback_id_not_null`
-  // (erro 42P16, "column is in a primary key"). Só lê o catálogo do Postgres,
-  // não altera nada. Remover depois que a causa raiz for corrigida.
-  private async diagnoseAiFeedbackConstraint(): Promise<void> {
-    try {
-      const constraints = await pool.query(`
-        SELECT conrelid::regclass::text AS table_name, conname, contype, pg_get_constraintdef(oid) AS definition
-        FROM pg_constraint
-        WHERE conrelid IN ('ai_feedback'::regclass, 'teams'::regclass, 'password_reset_tokens'::regclass)
-        ORDER BY table_name, contype
-      `);
-      console.log("[DIAG] pg_constraint (ai_feedback vs teams vs password_reset_tokens):", JSON.stringify(constraints.rows));
-
-      const columns = await pool.query(`
-        SELECT table_name, column_name, is_nullable, column_default, data_type, is_identity
-        FROM information_schema.columns
-        WHERE table_name IN ('ai_feedback', 'teams', 'password_reset_tokens') AND column_name = 'id'
-        ORDER BY table_name
-      `);
-      console.log("[DIAG] information_schema.columns (id):", JSON.stringify(columns.rows));
-
-      const pgVersion = await pool.query('SHOW server_version');
-      console.log("[DIAG] Postgres server_version:", JSON.stringify(pgVersion.rows));
-    } catch (error) {
-      console.error("[DIAG] Falha ao diagnosticar constraint de ai_feedback:", error);
-    }
-  }
-
-  async runLegacyTeamsTutorialBackfillOnce(): Promise<void> {
-    await this.ensureRodada0SchemaExists();
-    await this.diagnoseAiFeedbackConstraint();
-
-    const FLAG_KEY = "legacy_teams_tutorial_backfilled";
-    const existing = await db.select().from(systemFlags).where(eq(systemFlags.key, FLAG_KEY)).limit(1);
-    if (existing.length > 0) return;
-
-    // Dá como "treino já concluído" toda equipe que já existia antes deste
-    // deploy, para não bloquear equipes que já estavam jogando. Só roda uma
-    // vez: a linha em system_flags impede que rode de novo em reinícios
-    // futuros do servidor (o que travaria equipes novas em treino).
-    const result = await db.update(teams)
-      .set({ tutorialCompletedAt: new Date() })
-      .where(isNull(teams.tutorialCompletedAt))
-      .returning({ id: teams.id });
-
-    await db.insert(systemFlags).values({ key: FLAG_KEY, value: String(result.length) }).onConflictDoNothing();
-    console.log(`[MIGRATION] Rodada 0: ${result.length} equipe(s) existente(s) marcada(s) como já treinada(s).`);
-  }
 }

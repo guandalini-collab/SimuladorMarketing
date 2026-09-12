@@ -61,12 +61,6 @@ export const teams = pgTable("teams", {
   targetAudienceAge: text("target_audience_age"),
   targetAudienceProfile: text("target_audience_profile"),
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
-  // Rodada 0 (treino/tutorial): preenchido quando o líder confirma que a
-  // equipe está completa (mínimo 3, máximo 4 membros) e libera a Rodada 0.
-  readyConfirmedAt: timestamp("ready_confirmed_at"),
-  // Preenchido quando a equipe conclui a Rodada 0. A partir daí a Rodada 0
-  // nunca mais é exibida para essa equipe.
-  tutorialCompletedAt: timestamp("tutorial_completed_at"),
 });
 
 export const rounds = pgTable("rounds", {
@@ -727,35 +721,6 @@ export type InsertTeamProduct = z.infer<typeof insertTeamProductSchema>;
 export type TeamProduct = typeof teamProducts.$inferSelect;
 export type RoundAccessLog = typeof roundAccessLogs.$inferSelect;
 export type InsertRoundAccessLog = typeof roundAccessLogs.$inferInsert;
-
-// Rodada 0 — treino/tutorial isolado, por equipe. Não usa as tabelas de
-// rounds/campaigns/marketing_mix/results reais: fica completamente à parte
-// para nunca afetar a rodada real da turma, o orçamento real ou o ranking.
-export const practiceRounds = pgTable("practice_rounds", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  teamId: varchar("team_id").notNull().unique().references(() => teams.id, { onDelete: 'cascade' }),
-  status: text("status").notNull().default("em_andamento"), // 'em_andamento' | 'concluida'
-  startedAt: timestamp("started_at").notNull().default(sql`now()`),
-  completedAt: timestamp("completed_at"),
-  // Respostas do aluno em cada etapa do treino (orçamento, campanha, produto/mercado).
-  decisions: jsonb("decisions").notNull().default(sql`'{}'::jsonb`),
-  // Feedback simulado gerado ao concluir, calculado com uma lógica simples e
-  // independente do motor de simulação real (que compara equipes entre si).
-  resultSummary: jsonb("result_summary"),
-});
-
-export type PracticeRound = typeof practiceRounds.$inferSelect;
-export type InsertPracticeRound = typeof practiceRounds.$inferInsert;
-
-// Tabela de marcadores internos para migrações/ajustes que só devem rodar
-// uma única vez (por exemplo, dar como concluída a Rodada 0 para equipes
-// que já existiam antes desse recurso ser lançado, para não travar equipes
-// que já estavam em jogo).
-export const systemFlags = pgTable("system_flags", {
-  key: text("key").primaryKey(),
-  value: text("value"),
-  setAt: timestamp("set_at").notNull().default(sql`now()`),
-});
 
 export const deterministicFeedback = pgTable("deterministic_feedback", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
