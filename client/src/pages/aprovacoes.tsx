@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Mail, AlertCircle, UserCheck } from "lucide-react";
+import { Check, X, Mail, AlertCircle, UserCheck, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -85,14 +85,24 @@ export default function Aprovacoes() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Aprovações de Usuários</h1>
-        <p className="text-muted-foreground">
-          Gerencie cadastros de alunos que utilizaram emails não-institucionais
-        </p>
+    <div className="min-h-screen bg-background">
+      <div className="bg-gradient-to-r from-[#2c2a9e] to-[#6d28d9] text-white">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+              <ShieldCheck className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">Aprovações de Usuários</h1>
+              <p className="text-white/75 mt-1">
+                Gerencie cadastros de alunos que utilizaram emails não-institucionais
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
+      <div className="container mx-auto p-6 space-y-6">
       {!pendingUsers || pendingUsers.length === 0 ? (
         <Alert>
           <UserCheck className="h-4 w-4" />
@@ -104,7 +114,7 @@ export default function Aprovacoes() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-orange-500" />
+              <AlertCircle className="h-5 w-5 text-[#ff8c1a]" />
               Usuários Pendentes ({pendingUsers.length})
             </CardTitle>
             <CardDescription>
@@ -121,7 +131,7 @@ export default function Aprovacoes() {
                 >
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                      <Badge variant="secondary" className="bg-[#fff3d6] text-[#7a5300]">
                         <Mail className="h-3 w-3 mr-1" />
                         Aguardando Aprovação
                       </Badge>
@@ -141,7 +151,7 @@ export default function Aprovacoes() {
                     <Button
                       variant="default"
                       size="sm"
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-[#1aa15c] hover:bg-[#158a4d]"
                       onClick={() => approveMutation.mutate(user.id)}
                       disabled={approveMutation.isPending || rejectMutation.isPending}
                       data-testid={`button-approve-${user.id}`}
@@ -183,6 +193,7 @@ export default function Aprovacoes() {
           </p>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

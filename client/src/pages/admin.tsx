@@ -72,48 +72,55 @@ import type { User, Team, Round, MarketingMix, MarketEvent, Class } from "@share
 /* ============================================
    COMPONENTE: Card de Estatística
    ============================================ */
-function StatCard({ 
-  title, 
-  value, 
-  subtitle, 
-  icon: Icon, 
+const STAT_COLOR_MAP = {
+  indigo: { bg: "#2f2a8f", shadow: "rgba(47,42,143,0.25)" },
+  blue: { bg: "#1447e6", shadow: "rgba(20,71,230,0.25)" },
+  gold: { bg: "#ffcc00", shadow: "rgba(255,204,0,0.25)" },
+  green: { bg: "#1aa15c", shadow: "rgba(26,161,92,0.25)" },
+  orange: { bg: "#ff8c1a", shadow: "rgba(255,140,26,0.25)" },
+  violet: { bg: "#7c3aed", shadow: "rgba(124,58,237,0.25)" },
+} as const;
+
+function StatCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
   color = "blue",
   trend
-}: { 
-  title: string; 
-  value: number | string; 
-  subtitle?: string; 
+}: {
+  title: string;
+  value: number | string;
+  subtitle?: string;
   icon: any;
-  color?: "blue" | "green" | "purple" | "orange" | "red" | "cyan";
+  color?: keyof typeof STAT_COLOR_MAP;
   trend?: { value: number; label: string };
 }) {
-  const colorClasses = {
-    blue: "from-blue-500/20 to-blue-600/5 text-blue-600 dark:text-blue-400",
-    green: "from-green-500/20 to-green-600/5 text-green-600 dark:text-green-400",
-    purple: "from-purple-500/20 to-purple-600/5 text-purple-600 dark:text-purple-400",
-    orange: "from-orange-500/20 to-orange-600/5 text-orange-600 dark:text-orange-400",
-    red: "from-red-500/20 to-red-600/5 text-red-600 dark:text-red-400",
-    cyan: "from-cyan-500/20 to-cyan-600/5 text-cyan-600 dark:text-cyan-400",
-  };
+  const { bg, shadow } = STAT_COLOR_MAP[color];
+  // O dourado é claro demais para texto branco continuar legível; usa texto navy nesse caso.
+  const textColor = color === "gold" ? "#3a2c00" : "#ffffff";
+  const mutedTextColor = color === "gold" ? "rgba(58,44,0,0.7)" : "rgba(255,255,255,0.75)";
 
   return (
-    <Card className="relative overflow-hidden">
-      <div className={`absolute inset-0 bg-gradient-to-br ${colorClasses[color]} opacity-50`} />
-      <CardContent className="relative p-4">
+    <Card
+      className="border-0 hover-elevate"
+      style={{ backgroundColor: bg, boxShadow: `0 4px 14px ${shadow}` }}
+    >
+      <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
-            {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
+            <p className="text-sm" style={{ color: mutedTextColor }}>{title}</p>
+            <p className="text-2xl font-bold" style={{ color: textColor }}>{value}</p>
+            {subtitle && <p className="text-xs mt-1" style={{ color: mutedTextColor }}>{subtitle}</p>}
             {trend && (
               <div className="flex items-center gap-1 mt-1">
-                <TrendingUp className="h-3 w-3 text-green-500" />
-                <span className="text-xs text-green-600">{trend.value}% {trend.label}</span>
+                <TrendingUp className="h-3 w-3" style={{ color: textColor }} />
+                <span className="text-xs" style={{ color: textColor }}>{trend.value}% {trend.label}</span>
               </div>
             )}
           </div>
-          <div className={`p-3 rounded-full bg-gradient-to-br ${colorClasses[color]}`}>
-            <Icon className="h-5 w-5" />
+          <div className="p-2.5 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>
+            <Icon className="h-5 w-5" style={{ color: textColor }} />
           </div>
         </div>
       </CardContent>
@@ -321,7 +328,7 @@ function ClassCard({
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
-              <School className="h-5 w-5 text-primary" />
+              <School className="h-5 w-5 text-[#2f2a8f]" />
               {cls.name}
             </CardTitle>
             <CardDescription className="mt-1">
@@ -329,7 +336,7 @@ function ClassCard({
             </CardDescription>
           </div>
           {activeRound && (
-            <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
+            <Badge className="bg-[#e6f7ee] text-[#0f7a44] border-transparent">
               <CircleDot className="h-3 w-3 mr-1 animate-pulse" />
               Rodada {activeRound.roundNumber}
             </Badge>
@@ -339,7 +346,7 @@ function ClassCard({
       <CardContent>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-2xl font-bold text-primary">{classTeams.length}</p>
+            <p className="text-2xl font-bold text-[#2f2a8f]">{classTeams.length}</p>
             <p className="text-xs text-muted-foreground">Equipes</p>
           </div>
           <div>
@@ -391,8 +398,8 @@ function TeamCard({
             {team.logoUrl ? (
               <img src={team.logoUrl} alt={team.name} className="w-10 h-10 rounded-full object-cover" />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <UsersRound className="h-5 w-5 text-primary" />
+              <div className="w-10 h-10 rounded-full bg-[#1447e6] flex items-center justify-center">
+                <UsersRound className="h-5 w-5 text-white" />
               </div>
             )}
             <div>
@@ -466,8 +473,8 @@ function RoundTimeline({ rounds, classes }: { rounds?: Round[]; classes?: Class[
 
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-500 text-white';
-      case 'completed': return 'bg-blue-500 text-white';
+      case 'active': return 'bg-[#1aa15c] text-white';
+      case 'completed': return 'bg-[#1447e6] text-white';
       default: return 'bg-muted text-muted-foreground';
     }
   };
@@ -688,19 +695,23 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-background" data-testid="page-admin">
       {/* Header */}
-      <div className="border-b bg-card">
+      <div className="bg-gradient-to-r from-[#2c2a9e] to-[#6d28d9] text-white">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2" data-testid="text-admin-title">
-                <Shield className="h-6 w-6 text-primary" />
-                Painel de Administração
-              </h1>
-              <p className="text-muted-foreground mt-1" data-testid="text-admin-description">
-                Visão geral do sistema e gestão de dados
-              </p>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+                <Shield className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold" data-testid="text-admin-title">
+                  Painel de Administração
+                </h1>
+                <p className="text-white/75 mt-1" data-testid="text-admin-description">
+                  Visão geral do sistema e gestão de dados
+                </p>
+              </div>
             </div>
-            <Badge variant="outline" className="gap-1">
+            <Badge variant="outline" className="gap-1 border-white/30 text-white bg-white/10">
               <Activity className="h-3 w-3" />
               Sistema Ativo
             </Badge>
@@ -712,34 +723,58 @@ export default function AdminPage() {
         {/* Cards de Estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
           <StatCard title="Usuários" value={stats.totalUsers} icon={Users} color="blue" />
-          <StatCard title="Professores" value={stats.professors} icon={GraduationCap} color="purple" />
+          <StatCard title="Professores" value={stats.professors} icon={GraduationCap} color="violet" />
           <StatCard title="Alunos" value={stats.students} icon={UserCheck} color="green" />
           <StatCard title="Turmas" value={stats.totalClasses} icon={School} color="orange" />
-          <StatCard title="Equipes" value={stats.totalTeams} icon={UsersRound} color="cyan" />
+          <StatCard title="Equipes" value={stats.totalTeams} icon={UsersRound} color="indigo" />
           <StatCard title="Rodadas Ativas" value={stats.activeRounds} icon={CircleDot} color="green" />
           <StatCard title="Mix Marketing" value={stats.totalMixes} icon={BarChart3} color="blue" />
-          <StatCard title="Eventos Ativos" value={stats.activeEvents} icon={Zap} color="orange" />
+          <StatCard title="Eventos Ativos" value={stats.activeEvents} icon={Zap} color="gold" />
         </div>
 
         {/* Abas de Conteúdo */}
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="flex flex-wrap h-auto gap-1 p-1">
-            <TabsTrigger value="users" data-testid="tab-users" className="gap-1">
+          <TabsList className="flex flex-wrap h-auto gap-2 rounded-2xl bg-[#2f2a8f] p-3 justify-start">
+            <TabsTrigger
+              value="users"
+              data-testid="tab-users"
+              className="gap-1.5 rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white/75 hover:text-white data-[state=active]:border-transparent data-[state=active]:bg-white data-[state=active]:text-[#2f2a8f] data-[state=active]:shadow-md"
+            >
               <Users className="h-4 w-4" /> Usuários
             </TabsTrigger>
-            <TabsTrigger value="classes" data-testid="tab-classes" className="gap-1">
+            <TabsTrigger
+              value="classes"
+              data-testid="tab-classes"
+              className="gap-1.5 rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white/75 hover:text-white data-[state=active]:border-transparent data-[state=active]:bg-white data-[state=active]:text-[#2f2a8f] data-[state=active]:shadow-md"
+            >
               <School className="h-4 w-4" /> Turmas
             </TabsTrigger>
-            <TabsTrigger value="teams" data-testid="tab-teams" className="gap-1">
+            <TabsTrigger
+              value="teams"
+              data-testid="tab-teams"
+              className="gap-1.5 rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white/75 hover:text-white data-[state=active]:border-transparent data-[state=active]:bg-white data-[state=active]:text-[#2f2a8f] data-[state=active]:shadow-md"
+            >
               <UsersRound className="h-4 w-4" /> Equipes
             </TabsTrigger>
-            <TabsTrigger value="rounds" data-testid="tab-rounds" className="gap-1">
+            <TabsTrigger
+              value="rounds"
+              data-testid="tab-rounds"
+              className="gap-1.5 rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white/75 hover:text-white data-[state=active]:border-transparent data-[state=active]:bg-white data-[state=active]:text-[#2f2a8f] data-[state=active]:shadow-md"
+            >
               <Calendar className="h-4 w-4" /> Rodadas
             </TabsTrigger>
-            <TabsTrigger value="mixes" data-testid="tab-mixes" className="gap-1">
+            <TabsTrigger
+              value="mixes"
+              data-testid="tab-mixes"
+              className="gap-1.5 rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white/75 hover:text-white data-[state=active]:border-transparent data-[state=active]:bg-white data-[state=active]:text-[#2f2a8f] data-[state=active]:shadow-md"
+            >
               <BarChart3 className="h-4 w-4" /> Mix Marketing
             </TabsTrigger>
-            <TabsTrigger value="events" data-testid="tab-events" className="gap-1">
+            <TabsTrigger
+              value="events"
+              data-testid="tab-events"
+              className="gap-1.5 rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white/75 hover:text-white data-[state=active]:border-transparent data-[state=active]:bg-white data-[state=active]:text-[#2f2a8f] data-[state=active]:shadow-md"
+            >
               <Zap className="h-4 w-4" /> Eventos
             </TabsTrigger>
           </TabsList>
@@ -1133,13 +1168,13 @@ export default function AdminPage() {
                   onClick={handleCopyPassword}
                   data-testid="button-copy-password"
                 >
-                  {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  {copied ? <Check className="h-4 w-4 text-[#1aa15c]" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
-            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-md space-y-2">
-              <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">Instruções:</p>
-              <ol className="text-sm text-blue-800 dark:text-blue-200 list-decimal list-inside space-y-1">
+            <div className="bg-[#eef2ff] dark:bg-blue-950 p-4 rounded-md space-y-2">
+              <p className="text-sm font-semibold text-[#1447e6] dark:text-blue-100">Instruções:</p>
+              <ol className="text-sm text-[#1447e6]/90 dark:text-blue-200 list-decimal list-inside space-y-1">
                 <li>Copie esta senha e envie para o aluno por email ou mensagem</li>
                 <li>O aluno deve fazer login usando esta senha temporária</li>
                 <li>Na primeira vez que logar, será <strong>obrigado a criar uma nova senha</strong></li>
@@ -1160,7 +1195,7 @@ export default function AdminPage() {
         <AlertDialogContent data-testid="dialog-reset-decisions">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <RotateCcw className="h-5 w-5 text-orange-600" />
+              <RotateCcw className="h-5 w-5 text-[#ff8c1a]" />
               Resetar Todas as Decisões
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
@@ -1192,7 +1227,7 @@ export default function AdminPage() {
               })}
               disabled={resetTeamDecisionsMutation.isPending}
               data-testid="button-confirm-reset"
-              className="bg-orange-600 text-white hover:bg-orange-700"
+              className="bg-[#ff8c1a] text-white hover:bg-[#e07800]"
             >
               {resetTeamDecisionsMutation.isPending ? "Resetando..." : "Confirmar Reset"}
             </AlertDialogAction>

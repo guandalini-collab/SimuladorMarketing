@@ -3,10 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Users, 
-  Trophy, 
-  TrendingUp, 
+import {
+  Users,
+  Trophy,
+  TrendingUp,
   Target,
   BarChart3,
   Award,
@@ -15,6 +15,49 @@ import {
   Building2,
   DollarSign
 } from "lucide-react";
+
+const METRIC_COLOR_MAP = {
+  blue: { bg: "#1447e6", shadow: "rgba(20,71,230,0.25)" },
+  green: { bg: "#1aa15c", shadow: "rgba(26,161,92,0.25)" },
+  violet: { bg: "#7c3aed", shadow: "rgba(124,58,237,0.25)" },
+  orange: { bg: "#ff8c1a", shadow: "rgba(255,140,26,0.25)" },
+} as const;
+
+function MetricCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  color,
+  testId,
+  valueTestId,
+}: {
+  title: string;
+  value: string | number;
+  subtitle: string;
+  icon: any;
+  color: keyof typeof METRIC_COLOR_MAP;
+  testId: string;
+  valueTestId: string;
+}) {
+  const { bg, shadow } = METRIC_COLOR_MAP[color];
+  return (
+    <Card className="border-0 hover-elevate" style={{ backgroundColor: bg, boxShadow: `0 4px 14px ${shadow}` }} data-testid={testId}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-white/85">{title}</CardTitle>
+        <div className="p-2 rounded-lg bg-white/18">
+          <Icon className="h-4 w-4 text-white" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold text-white" data-testid={valueTestId}>
+          {value}
+        </div>
+        <p className="text-xs text-white/75">{subtitle}</p>
+      </CardContent>
+    </Card>
+  );
+}
 import { 
   LineChart, 
   Line, 
@@ -122,83 +165,67 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight" data-testid="text-page-title">
-          Analytics da Turma
-        </h2>
-        <p className="text-muted-foreground" data-testid="text-page-description">
-          Acompanhe o desempenho e engajamento das equipes
-        </p>
+      <div className="rounded-2xl bg-gradient-to-r from-[#2c2a9e] to-[#6d28d9] text-white p-6">
+        <div className="flex items-center gap-3">
+          <div className="h-11 w-11 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+            <BarChart3 className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight" data-testid="text-page-title">
+              Analytics da Turma
+            </h2>
+            <p className="text-white/75" data-testid="text-page-description">
+              Acompanhe o desempenho e engajamento das equipes
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Métricas Gerais */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card data-testid="card-total-teams">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Equipes</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold" data-testid="value-total-teams">
-              {analytics.classInfo.totalTeams}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {analytics.classInfo.totalStudents} estudantes
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card data-testid="card-completed-rounds">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rodadas Completadas</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold" data-testid="value-completed-rounds">
-              {analytics.classInfo.completedRounds}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              de {analytics.classInfo.totalRounds} rodadas
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card data-testid="card-submission-rate">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taxa de Submissão</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold" data-testid="value-submission-rate">
-              {analytics.engagement.overall.avgSubmissionRate.toFixed(1)}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Média entre equipes
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card data-testid="card-tools-completed">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ferramentas Concluídas</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold" data-testid="value-tools-completed">
-              {analytics.engagement.overall.avgToolsCompleted.toFixed(1)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              de 4 ferramentas (média)
-            </p>
-          </CardContent>
-        </Card>
+        <MetricCard
+          title="Total de Equipes"
+          value={analytics.classInfo.totalTeams}
+          subtitle={`${analytics.classInfo.totalStudents} estudantes`}
+          icon={Users}
+          color="blue"
+          testId="card-total-teams"
+          valueTestId="value-total-teams"
+        />
+        <MetricCard
+          title="Rodadas Completadas"
+          value={analytics.classInfo.completedRounds}
+          subtitle={`de ${analytics.classInfo.totalRounds} rodadas`}
+          icon={Activity}
+          color="violet"
+          testId="card-completed-rounds"
+          valueTestId="value-completed-rounds"
+        />
+        <MetricCard
+          title="Taxa de Submissão"
+          value={`${analytics.engagement.overall.avgSubmissionRate.toFixed(1)}%`}
+          subtitle="Média entre equipes"
+          icon={CheckCircle2}
+          color="green"
+          testId="card-submission-rate"
+          valueTestId="value-submission-rate"
+        />
+        <MetricCard
+          title="Ferramentas Concluídas"
+          value={analytics.engagement.overall.avgToolsCompleted.toFixed(1)}
+          subtitle="de 4 ferramentas (média)"
+          icon={Target}
+          color="orange"
+          testId="card-tools-completed"
+          valueTestId="value-tools-completed"
+        />
       </div>
 
       {/* Evolução Temporal dos KPIs */}
       <Card data-testid="card-kpi-evolution">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
+            <TrendingUp className="h-5 w-5 text-[#1447e6]" />
             Evolução dos KPIs
           </CardTitle>
           <CardDescription>
@@ -222,7 +249,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
                   <YAxis label={{ value: 'Lucro Médio (R$)', angle: -90, position: 'insideLeft' }} />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="avgProfit" stroke="hsl(var(--primary))" strokeWidth={2} name="Lucro Médio" />
+                  <Line type="monotone" dataKey="avgProfit" stroke="#1447e6" strokeWidth={2} name="Lucro Médio" />
                 </LineChart>
               </ResponsiveContainer>
             </TabsContent>
@@ -235,7 +262,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
                   <YAxis label={{ value: 'Market Share (%)', angle: -90, position: 'insideLeft' }} />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="avgMarketShare" stroke="hsl(var(--primary))" strokeWidth={2} name="Market Share Médio" />
+                  <Line type="monotone" dataKey="avgMarketShare" stroke="#7c3aed" strokeWidth={2} name="Market Share Médio" />
                 </LineChart>
               </ResponsiveContainer>
             </TabsContent>
@@ -248,7 +275,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
                   <YAxis label={{ value: 'NPS', angle: -90, position: 'insideLeft' }} />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="avgNPS" stroke="hsl(var(--primary))" strokeWidth={2} name="NPS Médio" />
+                  <Line type="monotone" dataKey="avgNPS" stroke="#1aa15c" strokeWidth={2} name="NPS Médio" />
                 </LineChart>
               </ResponsiveContainer>
             </TabsContent>
@@ -261,7 +288,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
                   <YAxis label={{ value: 'ROI (%)', angle: -90, position: 'insideLeft' }} />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="avgROI" stroke="hsl(var(--primary))" strokeWidth={2} name="ROI Médio" />
+                  <Line type="monotone" dataKey="avgROI" stroke="#ff8c1a" strokeWidth={2} name="ROI Médio" />
                 </LineChart>
               </ResponsiveContainer>
             </TabsContent>
@@ -273,7 +300,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
       <Card data-testid="card-rankings">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5" />
+            <Trophy className="h-5 w-5 text-[#ffcc00]" />
             Rankings
           </CardTitle>
           <CardDescription>
@@ -404,7 +431,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
       <Card data-testid="card-engagement">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5" />
+            <CheckCircle2 className="h-5 w-5 text-[#1aa15c]" />
             Engajamento das Equipes
           </CardTitle>
           <CardDescription>
