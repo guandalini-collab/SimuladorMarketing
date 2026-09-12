@@ -10,7 +10,7 @@ const TEXT_COLOR = '#1f2937'; // Gray 800
 const LIGHT_GRAY = '#f3f4f6'; // Gray 100
 const DARK_GRAY = '#6b7280'; // Gray 500
 
-const LOGO_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Vibrant_marketing_logo_Simula+_e9b50ad9.png');
+const LOGO_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Simula_logo_navy_dourado_final.png');
 const SWOT_DIAGRAM_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Diagrama_SWOT_em_português_0a7241aa.png');
 const PORTER_DIAGRAM_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Diagrama_5_Forças_Porter_português_06e5802d.png');
 const BCG_DIAGRAM_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Matriz_BCG_em_português_023ea876.png');
@@ -89,16 +89,21 @@ function addCoverPage(doc: PDFKit.PDFDocument) {
      .fill(ACCENT_COLOR)
      .fillOpacity(1);
 
-  // Logo corporativo Simula+ (imagem)
+  // Logo corporativo Simula+ (imagem, lockup horizontal navy + dourado)
+  // Fica sobre um cartão branco para manter a legibilidade do texto navy no fundo colorido.
   if (fs.existsSync(LOGO_PATH)) {
-    const logoSize = 120;
-    const logoX = (pageWidth - logoSize) / 2;
-    const logoY = 120;
-    
-    doc.image(LOGO_PATH, logoX, logoY, {
-      width: logoSize,
-      height: logoSize,
-      align: 'center'
+    const boxWidth = 300;
+    const boxHeight = 110;
+    const boxX = (pageWidth - boxWidth) / 2;
+    const boxY = 120;
+    const padding = 18;
+
+    doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 14).fill('#ffffff');
+
+    doc.image(LOGO_PATH, boxX + padding, boxY + padding, {
+      fit: [boxWidth - padding * 2, boxHeight - padding * 2],
+      align: 'center',
+      valign: 'center'
     });
   }
 
