@@ -4,7 +4,6 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { ensureMidiaCatalog } from "./ensureMidiaCatalog";
 import { ensureResultsUniqueIndex } from "./ensureResultsUniqueIndex";
-import { pool } from "./pg-storage";
 
 const app = express();
 
@@ -55,25 +54,6 @@ app.use((req, res, next) => {
 (async () => {
   await ensureMidiaCatalog();
   await ensureResultsUniqueIndex();
-
-  // TEMP DIAGNOSTIC (Item 7 - auditoria): confirmar que a constraint única
-  // "results_unique_team_round" está presente em produção (criada aqui em
-  // ensureResultsUniqueIndex, já que o pre-deploy "drizzle-kit push" do
-  // Railway está falhando por um erro pré-existente e não relacionado em
-  // outra tabela, e por isso não chega a aplicar essa migração sozinho).
-  // Remover após a checagem.
-  try {
-    const idx = await pool.query(`
-      SELECT indexname, indexdef FROM pg_indexes
-      WHERE tablename = 'results' AND indexname = 'results_unique_team_round'
-    `);
-    log(`[DIAG-ITEM7] Índice único "results_unique_team_round" presente: ${idx.rows.length > 0}`);
-    if (idx.rows.length > 0) {
-      log(`[DIAG-ITEM7] Definição: ${idx.rows[0].indexdef}`);
-    }
-  } catch (e) {
-    log(`[DIAG-ITEM7] Erro ao checar índice: ${e}`);
-  }
 
   const server = await registerRoutes(app);
 
