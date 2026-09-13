@@ -114,7 +114,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         secure: isProduction,
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24 * 7,
-        sameSite: isProduction ? 'none' : 'lax',
+        // A aplicação serve frontend e API sempre pela mesma origem (não há
+        // domínio separado nem chamadas cross-site que dependam do cookie de
+        // sessão), então "lax" já é suficiente em produção e evita abrir mão
+        // da proteção padrão contra CSRF que "none" desativa sem necessidade.
+        sameSite: 'lax',
       },
     })
   );

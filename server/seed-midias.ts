@@ -1,9 +1,13 @@
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import { midias } from "@shared/schema";
 
-const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle(sql);
+// Mesmo driver usado em pg-storage.ts: o Postgres hospedado no Railway fala
+// o protocolo TCP padrão, não o endpoint HTTP/WebSocket da Neon.tech, então
+// @neondatabase/serverless não conseguia se conectar aqui (script órfão,
+// nunca atualizado quando o driver principal foi corrigido).
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const db = drizzle(pool);
 
 const midiasData = [
   // MÍDIA IMPRESSA (p. 4)
@@ -284,6 +288,8 @@ async function seedMidias() {
   } catch (error) {
     console.error("❌ Erro ao fazer seed de mídias:", error);
     throw error;
+  } finally {
+    await pool.end();
   }
 }
 
