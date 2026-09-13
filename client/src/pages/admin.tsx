@@ -69,6 +69,33 @@ import {
 } from "@/components/ui/collapsible";
 import type { User, Team, Round, MarketingMix, MarketEvent, Class } from "@shared/schema";
 
+// O gerador de eventos por IA e o formulário manual já salvaram "type" com
+// grafias diferentes ao longo do tempo (ver market-event-card.tsx para o
+// histórico completo). Mantém todas como sinônimos para exibir um rótulo
+// legível em vez do slug interno.
+const eventTypeLabels: Record<string, string> = {
+  economico: "Econômico",
+  economic: "Econômico",
+  tecnologico: "Tecnológico",
+  technological: "Tecnológico",
+  social: "Social",
+  competitivo: "Competição",
+  competitive: "Competição",
+  regulatorio: "Regulatório",
+  regulatory: "Regulatório",
+  ambiental: "Ambiental",
+  environmental: "Ambiental",
+};
+
+// A severidade é salva em português ("baixo"/"medio"/"alto"/"critico" —
+// ver insertMarketEventSchema em shared/schema.ts).
+const eventSeverityLabels: Record<string, string> = {
+  baixo: "Baixo",
+  medio: "Médio",
+  alto: "Alto",
+  critico: "Crítico",
+};
+
 /* ============================================
    COMPONENTE: Card de Estatística
    ============================================ */
@@ -1070,13 +1097,17 @@ export default function AdminPage() {
                                 {event.title}
                               </TableCell>
                               <TableCell>
-                                <Badge variant="outline">{event.type}</Badge>
+                                <Badge variant="outline">{eventTypeLabels[event.type] || event.type}</Badge>
                               </TableCell>
                               <TableCell>
-                                <Badge 
-                                  variant={event.severity === 'high' ? 'destructive' : event.severity === 'medium' ? 'default' : 'secondary'}
+                                {/* A severidade é salva em português ("baixo"/"medio"/"alto"/"critico" —
+                                    ver insertMarketEventSchema em shared/schema.ts), não em inglês.
+                                    Comparar com 'high'/'medium' nunca batia, então todo evento sempre
+                                    caía no badge "secondary" independente da severidade real. */}
+                                <Badge
+                                  variant={event.severity === 'critico' || event.severity === 'alto' ? 'destructive' : event.severity === 'medio' ? 'default' : 'secondary'}
                                 >
-                                  {event.severity}
+                                  {eventSeverityLabels[event.severity] || event.severity}
                                 </Badge>
                               </TableCell>
                               <TableCell>

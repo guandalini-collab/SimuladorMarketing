@@ -1478,12 +1478,16 @@ function MarketEventsManager({ classId, rounds }: { classId: string; rounds: Rou
                           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="economic">Econômico</SelectItem>
-                          <SelectItem value="technological">Tecnológico</SelectItem>
+                          {/* Mesmos valores salvos pelo gerador de eventos por IA
+                              (server/services/eventGenerator.ts), para que o card
+                              exibido ao aluno (market-event-card.tsx) reconheça o
+                              tipo e mostre o rótulo traduzido corretamente. */}
+                          <SelectItem value="economico">Econômico</SelectItem>
+                          <SelectItem value="tecnologico">Tecnológico</SelectItem>
                           <SelectItem value="social">Social</SelectItem>
-                          <SelectItem value="competitive">Competitivo</SelectItem>
-                          <SelectItem value="regulatory">Regulatório</SelectItem>
-                          <SelectItem value="environmental">Ambiental</SelectItem>
+                          <SelectItem value="competitivo">Competitivo</SelectItem>
+                          <SelectItem value="regulatorio">Regulatório</SelectItem>
+                          <SelectItem value="ambiental">Ambiental</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -2693,10 +2697,11 @@ export default function Professor() {
   }, [selectedClass, previousRoundProductCount]);
 
   const scheduleRoundMutation = useMutation({
-    mutationFn: async (data: { roundId: string; scheduledStartAt?: string; scheduledEndAt?: string }) => {
+    mutationFn: async (data: { roundId: string; scheduledStartAt?: string; scheduledEndAt?: string; clear?: boolean }) => {
       const res = await apiRequest("POST", `/api/rounds/${data.roundId}/schedule`, {
         scheduledStartAt: data.scheduledStartAt || null,
         scheduledEndAt: data.scheduledEndAt || null,
+        clear: data.clear ?? false,
       });
       return res.json();
     },
@@ -4188,7 +4193,7 @@ export default function Professor() {
               {(scheduleData.scheduledStartAt || scheduleData.scheduledEndAt) && (
                 <Button
                   variant="destructive"
-                  onClick={() => { if (roundBeingScheduled) scheduleRoundMutation.mutate({ roundId: roundBeingScheduled, scheduledStartAt: undefined, scheduledEndAt: undefined }); }}
+                  onClick={() => { if (roundBeingScheduled) scheduleRoundMutation.mutate({ roundId: roundBeingScheduled, clear: true }); }}
                   disabled={!roundBeingScheduled || scheduleRoundMutation.isPending}
                   data-testid="button-remove-schedule"
                 >

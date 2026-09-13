@@ -935,6 +935,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
     }
+    // Antes qualquer usuário autenticado (inclusive um aluno de outra turma)
+    // podia listar as equipes — nomes de empresa, orçamento, membros — de
+    // qualquer turma só sabendo o classId.
+    const user = await storage.getUser(req.session.userId);
+    if (!user) {
+      return res.status(401).json({ error: "Usuário não encontrado" });
+    }
+    if (user.role === "equipe") {
+      const studentClass = await storage.getClassByStudent(req.session.userId);
+      if (!studentClass || studentClass.id !== req.params.classId) {
+        return res.status(403).json({ error: "Você não faz parte desta turma" });
+      }
+    }
     const teams = await storage.getTeamsByClass(req.params.classId);
     res.json(teams);
   });
@@ -1110,6 +1123,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Turma não encontrada" });
     }
 
+    if (classData.professorId !== user.id) {
+      return res.status(403).json({ error: "Você não tem permissão para iniciar rodadas nesta turma" });
+    }
+
     const currentActive = await storage.getCurrentRound(req.params.classId);
     if (currentActive) {
       return res.status(400).json({ error: "Já existe uma rodada ativa" });
@@ -1178,6 +1195,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Turma não encontrada" });
     }
 
+    if (classData.professorId !== user.id) {
+      return res.status(403).json({ error: "Você não tem permissão para iniciar rodadas nesta turma" });
+    }
+
     const currentActive = await storage.getCurrentRound(req.params.classId);
     if (currentActive) {
       return res.status(400).json({ error: "Já existe uma rodada ativa" });
@@ -1241,6 +1262,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(403).json({ error: "Acesso negado" });
     }
 
+    const roundToEnd = await storage.getRound(req.params.roundId);
+    if (!roundToEnd) {
+      return res.status(404).json({ error: "Rodada não encontrada" });
+    }
+    const classForRound = await storage.getClass(roundToEnd.classId);
+    if (!classForRound || classForRound.professorId !== user.id) {
+      return res.status(403).json({ error: "Você não tem permissão para encerrar esta rodada" });
+    }
+
     try {
       const { processRoundCompletion } = await import("./services/roundCompletion");
       const result = await processRoundCompletion(storage, req.params.roundId);
@@ -1270,6 +1300,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const classData = await storage.getClass(req.params.classId);
     if (!classData) {
       return res.status(404).json({ error: "Turma não encontrada" });
+    }
+
+    if (classData.professorId !== user.id) {
+      return res.status(403).json({ error: "Você não tem permissão para adicionar rodadas nesta turma" });
     }
 
     // Get all existing rounds
@@ -1309,6 +1343,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const classData = await storage.getClass(req.params.classId);
     if (!classData) {
       return res.status(404).json({ error: "Turma não encontrada" });
+    }
+
+    if (classData.professorId !== user.id) {
+      return res.status(403).json({ error: "Você não tem permissão para remover rodadas desta turma" });
     }
 
     const roundNumber = parseInt(req.params.roundNumber);
@@ -1378,6 +1416,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const round = await storage.getRound(req.params.roundId);
     if (!round) {
       return res.status(404).json({ error: "Rodada não encontrada" });
+    }
+
+    const classForRound = await storage.getClass(round.classId);
+    if (!classForRound || classForRound.professorId !== user.id) {
+      return res.status(403).json({ error: "Você não tem permissão para acessar esta rodada" });
     }
 
     const dependencies = await storage.getRoundDependencies(req.params.roundId);
@@ -1601,7 +1644,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Rodada não encontrada" });
       }
 
-      const { scheduledStartAt, scheduledEndAt } = req.body;
+      const classForRound = await storage.getClass(round.classId);
+      if (!classForRound || classForRound.professorId !== user.id) {
+        return res.status(403).json({ error: "Você não tem permissão para agendar esta rodada" });
+      }
+
+      const { scheduledStartAt, scheduledEndAt, clear } = req.body;
+
+      // "clear: true" remove o agendamento por completo (usado pelo botão
+      // "Remover Agendamento"). Sem essa flag, o app sempre enviava as duas
+      // datas como null nesse caso e caía direto na validação abaixo, que
+      // rejeitava com 400 — tornando o botão permanentemente inoperante.
+      if (clear === true) {
+        const updated = await storage.updateRound(req.params.roundId, {
+          scheduledStartAt: null,
+          scheduledEndAt: null,
+        });
+        return res.json(updated);
+      }
 
       if (!scheduledStartAt && !scheduledEndAt) {
         return res.status(400).json({ error: "Pelo menos uma data de agendamento deve ser fornecida" });
@@ -1899,12 +1959,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
     }
-    
+
     const team = await storage.getTeam(req.params.teamId);
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
-    
+
+    // Antes qualquer usuário autenticado podia consultar qualquer equipe
+    // (orçamento, nome da empresa etc.) só sabendo o teamId — inclusive um
+    // aluno de uma equipe concorrente.
+    const user = await storage.getUser(req.session.userId);
+    if (!user) {
+      return res.status(401).json({ error: "Usuário não encontrado" });
+    }
+    if (user.role === "equipe" && !team.memberIds.includes(req.session.userId)) {
+      return res.status(403).json({ error: "Você não faz parte desta equipe" });
+    }
+
     res.json(team);
   });
 
@@ -1912,16 +1983,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
     }
-    
+
     const team = await storage.getTeam(req.params.teamId);
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
-    
+
+    // Mesmo problema do endpoint acima: sem isso, qualquer aluno conseguia
+    // listar nomes e emails dos membros de uma equipe concorrente.
+    const user = await storage.getUser(req.session.userId);
+    if (!user) {
+      return res.status(401).json({ error: "Usuário não encontrado" });
+    }
+    if (user.role === "equipe" && !team.memberIds.includes(req.session.userId)) {
+      return res.status(403).json({ error: "Você não faz parte desta equipe" });
+    }
+
     const members = await Promise.all(
       team.memberIds.map(id => storage.getUser(id))
     );
-    
+
     res.json(members.filter(m => m !== undefined));
   });
 
@@ -3111,6 +3192,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(204).send();
   });
 
+  // Cada professor só deve ver dados das próprias turmas neste painel. As
+  // rotas abaixo antes chamavam storage.getAll*() sem filtrar, retornando
+  // literalmente todas as turmas/equipes/rodadas/mixes/eventos do sistema
+  // inteiro para qualquer professor autenticado — um vazamento entre
+  // turmas de professores diferentes. Este helper resolve o conjunto de
+  // classId/teamId que pertencem ao professor logado.
+  async function getProfessorScope(professorId: string) {
+    const myClasses = await storage.getClassesByProfessor(professorId);
+    const classIds = new Set(myClasses.map(c => c.id));
+    const myTeams = (await storage.getAllTeams()).filter(t => classIds.has(t.classId));
+    const teamIds = new Set(myTeams.map(t => t.id));
+    return { classIds, teamIds };
+  }
+
   app.get("/api/admin/teams", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
@@ -3119,7 +3214,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!user || user.role !== "professor") {
       return res.status(403).json({ error: "Acesso negado" });
     }
-    const teams = await storage.getAllTeams();
+    const { classIds } = await getProfessorScope(user.id);
+    const teams = (await storage.getAllTeams()).filter(t => classIds.has(t.classId));
     res.json(teams);
   });
 
@@ -3131,7 +3227,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!user || user.role !== "professor") {
       return res.status(403).json({ error: "Acesso negado" });
     }
-    const rounds = await storage.getAllRounds();
+    const { classIds } = await getProfessorScope(user.id);
+    const rounds = (await storage.getAllRounds()).filter(r => classIds.has(r.classId));
     res.json(rounds);
   });
 
@@ -3143,7 +3240,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!user || user.role !== "professor") {
       return res.status(403).json({ error: "Acesso negado" });
     }
-    const mixes = await storage.getAllMarketingMixes();
+    const { teamIds } = await getProfessorScope(user.id);
+    const mixes = (await storage.getAllMarketingMixes()).filter(m => teamIds.has(m.teamId));
     res.json(mixes);
   });
 
@@ -3155,7 +3253,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!user || user.role !== "professor") {
       return res.status(403).json({ error: "Acesso negado" });
     }
-    const events = await storage.getAllMarketEvents();
+    const { classIds } = await getProfessorScope(user.id);
+    const events = (await storage.getAllMarketEvents()).filter(e => classIds.has(e.classId));
     res.json(events);
   });
 
@@ -3875,7 +3974,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!user || user.role !== "professor") {
       return res.status(403).json({ error: "Acesso negado" });
     }
-    const results = await storage.getAllResults();
+    const { teamIds } = await getProfessorScope(user.id);
+    const results = (await storage.getAllResults()).filter(r => teamIds.has(r.teamId));
     res.json(results);
   });
 
@@ -4555,6 +4655,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Senha temporária só pode ser gerada para alunos" });
     }
 
+    // Garante que o aluno pertence a uma turma deste professor — antes
+    // qualquer professor autenticado podia gerar (e ver em texto puro) uma
+    // senha temporária válida para QUALQUER aluno do sistema, mesmo de
+    // turmas de outros professores.
+    const studentClass = await storage.getClassByStudent(targetUser.id);
+    if (!studentClass || studentClass.professorId !== user.id) {
+      return res.status(403).json({ error: "Você não tem permissão para gerar senha para este aluno" });
+    }
+
     // Gera senha temporária simples e legível (8 caracteres: letras e números)
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Sem caracteres confusos (0,O,1,I)
     let tempPassword = '';
@@ -4590,11 +4699,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { teamId, roundId } = req.params;
 
-      const existingFeedback = await storage.getAiFeedback(teamId, roundId);
-      if (existingFeedback) {
-        await storage.deleteAiFeedback(teamId, roundId);
-      }
-
       const team = await storage.getTeam(teamId);
       if (!team) {
         return res.status(404).json({ error: "Equipe não encontrada" });
@@ -4612,6 +4716,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const classData = await storage.getClass(team.classId);
       if (!classData) {
         return res.status(404).json({ error: "Turma não encontrada" });
+      }
+
+      // Checado antes de qualquer efeito colateral (o apagamento do feedback
+      // existente logo abaixo): sem isso, qualquer professor podia gerar (e
+      // antes disso, apagar) o feedback de IA de uma equipe de outra turma.
+      if (classData.professorId !== user.id) {
+        return res.status(403).json({ error: "Você não tem permissão para gerar feedback para esta equipe" });
+      }
+
+      const existingFeedback = await storage.getAiFeedback(teamId, roundId);
+      if (existingFeedback) {
+        await storage.deleteAiFeedback(teamId, roundId);
       }
 
       const marketingMix = await storage.getMarketingMix(teamId, roundId);

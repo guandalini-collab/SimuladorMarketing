@@ -41,12 +41,29 @@ const severityConfig = {
   },
 };
 
+// Existem três fontes históricas de valores para "type", que nunca foram
+// unificadas: o gerador de eventos por IA salva em português sem acento
+// ("economico", "tecnologico", "competitivo"...), o formulário manual salvava
+// em inglês ("economic", "technological"...) até ser corrigido, e este
+// dicionário original só reconhecia uma terceira grafia ("economia",
+// "tecnologia"...). Isso fazia a maioria dos eventos aparecerem para o aluno
+// com o slug interno em vez de um rótulo traduzido. Mantém todas as grafias
+// como sinônimos (inclusive as antigas, para eventos já salvos no banco).
 const typeLabels: Record<string, string> = {
-  economia: "Economia",
-  tecnologia: "Tecnologia",
+  economia: "Econômico",
+  economico: "Econômico",
+  economic: "Econômico",
+  tecnologia: "Tecnológico",
+  tecnologico: "Tecnológico",
+  technological: "Tecnológico",
   social: "Social",
   competicao: "Competição",
+  competitivo: "Competição",
+  competitive: "Competição",
   regulatorio: "Regulatório",
+  regulatory: "Regulatório",
+  ambiental: "Ambiental",
+  environmental: "Ambiental",
   tendencia: "Tendência",
 };
 
