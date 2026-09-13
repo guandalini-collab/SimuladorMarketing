@@ -3,6 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { ensureMidiaCatalog } from "./ensureMidiaCatalog";
+import { ensureResultsUniqueIndex } from "./ensureResultsUniqueIndex";
 import { pool } from "./pg-storage";
 
 const app = express();
@@ -53,10 +54,13 @@ app.use((req, res, next) => {
 
 (async () => {
   await ensureMidiaCatalog();
+  await ensureResultsUniqueIndex();
 
   // TEMP DIAGNOSTIC (Item 7 - auditoria): confirmar que a constraint única
-  // "results_unique_team_round" (adicionada em shared/schema.ts) foi
-  // efetivamente criada em produção pelo pre-deploy "drizzle-kit push".
+  // "results_unique_team_round" está presente em produção (criada aqui em
+  // ensureResultsUniqueIndex, já que o pre-deploy "drizzle-kit push" do
+  // Railway está falhando por um erro pré-existente e não relacionado em
+  // outra tabela, e por isso não chega a aplicar essa migração sozinho).
   // Remover após a checagem.
   try {
     const idx = await pool.query(`
