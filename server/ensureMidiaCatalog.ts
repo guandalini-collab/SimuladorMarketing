@@ -130,6 +130,22 @@ const DESCRICOES_CATALOGO_ORIGINAL: DescricaoSeed[] = [
 
 export async function ensureMidiaCatalog(): Promise<void> {
   try {
+    // DIAGNÓSTICO TEMPORÁRIO — remover depois de identificar por que o
+    // UPDATE de descrições não bateu com nenhuma das 25 mídias originais.
+    // Lista o que realmente está gravado no banco para comparar caractere
+    // a caractere com o que este arquivo espera (ex.: acentuação, espaços).
+    try {
+      const debug = await pool.query(
+        `SELECT categoria, nome, formato, length(categoria) as len_categoria, length(nome) as len_nome, length(formato) as len_formato
+         FROM midias ORDER BY order_index LIMIT 5`
+      );
+      for (const row of debug.rows) {
+        console.log(`[DEBUG midias] categoria="${row.categoria}"(${row.len_categoria}) nome="${row.nome}"(${row.len_nome}) formato="${row.formato}"(${row.len_formato})`);
+      }
+    } catch (debugError) {
+      console.error("[DEBUG midias] falhou:", debugError);
+    }
+
     for (const midia of NOVAS_MIDIAS) {
       const existing = await pool.query(
         `SELECT id FROM midias WHERE categoria = $1 AND nome = $2 AND formato = $3 LIMIT 1`,
