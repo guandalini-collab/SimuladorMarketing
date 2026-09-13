@@ -1,6 +1,8 @@
 import type { IStorage } from "../storage";
-import { calculateResults, applyStrategicImpacts, applyAlignmentPenalties } from "../calculator";
+import type { MarketingMix } from "@shared/schema";
+import { calculateResults, calculateMarketingSpend, applyStrategicImpacts, applyAlignmentPenalties } from "../calculator";
 import { computeRoundOutcome, type SimulationInputs } from "../simulation/marketEngine";
+import { consolidateKpis, type ResultCoreMetrics } from "../utils/consolidateKpis";
 import { getEnv } from "../config";
 
 function isSimEngineV2Enabled(): boolean {
@@ -85,13 +87,43 @@ export async function processRoundCompletion(
     for (const team of teams) {
       const existingResult = await storage.getResult(team.id, roundId);
       if (!existingResult) {
-        const marketingMix = await storage.getMarketingMix(team.id, roundId);
-        
-        if (marketingMix && marketingMix.submittedAt) {
+        // Bug corrigido aqui (Item 2 da auditoria): antes buscava um único
+        // getMarketingMix(team.id, roundId) — que faz SELECT ... LIMIT 1 sem
+        // ORDER BY (pg-storage.ts) — então equipes com mais de um produto na
+        // rodada tinham só um produto (escolhido arbitrariamente pelo banco)
+        // processado no fechamento, e os demais eram ignorados. Agora busca
+        // TODOS os mixes submetidos da equipe e processa cada produto,
+        // igual ao padrão já usado (e testado) no endpoint manual do
+        // professor POST /api/rounds/:roundId/process.
+        const allMixes = await storage.getMarketingMixesByTeamAndRound(team.id, roundId);
+        const submittedProducts = allMixes.filter(mix => mix.submittedAt !== null);
+
+        if (submittedProducts.length > 0) {
           const swot = await storage.getSwotAnalysis(team.id, roundId);
           const porter = await storage.getPorterAnalysis(team.id, roundId);
           const bcg = await storage.getBcgAnalyses(team.id, roundId);
           const pestel = await storage.getPestelAnalysis(team.id, roundId);
+          const analyses = {
+            swot: swot || null,
+            porter: porter || null,
+            bcg: bcg.length > 0 ? bcg : null,
+            pestel: pestel || null,
+          };
+
+          // Orçamento-base de cada produto: para o caso de 1 produto só
+          // (o cenário mais comum, já em produção), mantém exatamente o
+          // comportamento anterior (teamBudget = team.budget) para não
+          // mudar o resultado de nenhuma equipe existente. Para 2+
+          // produtos — caso que hoje está quebrado — usa o custo estimado
+          // de cada decisão (ou o cálculo de fallback), igual ao endpoint
+          // /process já testado.
+          const productBudget = (mix: MarketingMix): number =>
+            submittedProducts.length === 1
+              ? team.budget
+              : (mix.estimatedCost || calculateMarketingSpend(mix));
+
+          const firstProduct = submittedProducts[0];
+          const productKpisList: ResultCoreMetrics[] = [];
 
           let finalKPIs: any;
           let alignmentScore: number | undefined;
@@ -104,115 +136,169 @@ export async function processRoundCompletion(
           if (useV2Engine) {
             const previousResult = await storage.getPreviousRoundResult(team.id, roundId);
             const prevCompetitor = previousResult?.competitorResponse as { referencePrice?: number; referencePromoSpend?: number } | null;
+            const perProductSim: { productId: string; breakdown: any; competitorResponse: any; eventImpacts: any }[] = [];
 
-            const simInputs: SimulationInputs = {
-              marketingMix,
-              marketEvents: activeEvents,
-              teamBudget: team.budget,
-              totalTeamsInRound: teams.length,
-              previousRoundData: previousResult ? {
-                teamPrice: prevCompetitor?.referencePrice,
-                teamPromoSpend: prevCompetitor?.referencePromoSpend,
-                competitorPrice: prevCompetitor?.referencePrice,
-                competitorPromoSpend: prevCompetitor?.referencePromoSpend,
-                teamMarketShare: previousResult.marketShare,
-              } : undefined,
-              classData: {
-                sector: classData.sector ?? undefined,
-                businessType: classData.businessType ?? undefined,
-                marketSize: classData.marketSize ?? undefined,
-                marketGrowthRate: classData.marketGrowthRate ?? undefined,
-                competitionLevel: classData.competitionLevel ?? undefined,
-                numberOfCompetitors: classData.numberOfCompetitors ?? undefined,
-              },
-            };
+            for (const productMix of submittedProducts) {
+              const budget = productBudget(productMix);
 
-            const simResult = computeRoundOutcome(simInputs);
+              const simInputs: SimulationInputs = {
+                marketingMix: productMix,
+                marketEvents: activeEvents,
+                teamBudget: budget,
+                totalTeamsInRound: teams.length,
+                previousRoundData: previousResult ? {
+                  teamPrice: prevCompetitor?.referencePrice,
+                  teamPromoSpend: prevCompetitor?.referencePromoSpend,
+                  competitorPrice: prevCompetitor?.referencePrice,
+                  competitorPromoSpend: prevCompetitor?.referencePromoSpend,
+                  teamMarketShare: previousResult.marketShare,
+                } : undefined,
+                classData: {
+                  sector: classData.sector ?? undefined,
+                  businessType: classData.businessType ?? undefined,
+                  marketSize: classData.marketSize ?? undefined,
+                  marketGrowthRate: classData.marketGrowthRate ?? undefined,
+                  competitionLevel: classData.competitionLevel ?? undefined,
+                  numberOfCompetitors: classData.numberOfCompetitors ?? undefined,
+                },
+              };
 
-            finalKPIs = {
-              ...simResult.kpis,
-              impostos: simResult.kpis.receitaBruta * 0.12,
-              devolucoes: simResult.kpis.receitaBruta * 0.02,
-              descontos: simResult.kpis.receitaBruta * 0.01,
-              cpv: simResult.kpis.costs * 0.60,
-              lucroBruto: simResult.kpis.receitaLiquida - simResult.kpis.costs * 0.60,
-              despesasVendas: simResult.kpis.costs * 0.25,
-              despesasAdmin: simResult.kpis.costs * 0.10,
-              despesasFinanc: simResult.kpis.costs * 0.03,
-              outrasDespesas: simResult.kpis.costs * 0.02,
-              ebitda: simResult.kpis.profit * 1.15,
-              depreciacao: team.budget * 0.03,
-              lair: simResult.kpis.profit * 1.12,
-              irCsll: Math.max(0, simResult.kpis.profit * 0.34),
-              lucroLiquido: simResult.kpis.profit * 0.66,
-              caixa: Math.max(0, team.budget * 0.25 + simResult.kpis.profit * 0.4),
-              contasReceber: simResult.kpis.revenue * 0.15,
-              estoques: simResult.kpis.costs * 0.20,
-              ativoCirculante: 0,
-              imobilizado: team.budget * 0.30,
-              intangivel: team.budget * 0.10,
-              ativoNaoCirculante: 0,
-              ativoTotal: 0,
-              fornecedores: simResult.kpis.costs * 0.20,
-              obrigFiscais: simResult.kpis.profit > 0 ? simResult.kpis.profit * 0.34 : 0,
-              outrasObrig: simResult.kpis.costs * 0.10,
-              passivoCirculante: 0,
-              financiamentosLP: team.budget * 0.20,
-              passivoNaoCirculante: 0,
-              capitalSocial: team.budget * 0.50,
-              lucrosAcumulados: 0,
-              patrimonioLiquido: 0,
-              passivoPlTotal: 0,
-            };
+              const simResult = computeRoundOutcome(simInputs);
 
-            finalKPIs.ativoCirculante = finalKPIs.caixa + finalKPIs.contasReceber + finalKPIs.estoques;
-            finalKPIs.ativoNaoCirculante = finalKPIs.imobilizado + finalKPIs.intangivel;
-            finalKPIs.ativoTotal = finalKPIs.ativoCirculante + finalKPIs.ativoNaoCirculante;
-            finalKPIs.passivoCirculante = finalKPIs.fornecedores + finalKPIs.obrigFiscais + finalKPIs.outrasObrig;
-            finalKPIs.passivoNaoCirculante = finalKPIs.financiamentosLP;
-            finalKPIs.lucrosAcumulados = finalKPIs.ativoTotal - finalKPIs.passivoCirculante - finalKPIs.passivoNaoCirculante - finalKPIs.capitalSocial;
-            finalKPIs.patrimonioLiquido = finalKPIs.capitalSocial + finalKPIs.lucrosAcumulados;
-            finalKPIs.passivoPlTotal = finalKPIs.passivoCirculante + finalKPIs.passivoNaoCirculante + finalKPIs.patrimonioLiquido;
+              const productKPIs: any = {
+                ...simResult.kpis,
+                impostos: simResult.kpis.receitaBruta * 0.12,
+                devolucoes: simResult.kpis.receitaBruta * 0.02,
+                descontos: simResult.kpis.receitaBruta * 0.01,
+                cpv: simResult.kpis.costs * 0.60,
+                lucroBruto: simResult.kpis.receitaLiquida - simResult.kpis.costs * 0.60,
+                despesasVendas: simResult.kpis.costs * 0.25,
+                despesasAdmin: simResult.kpis.costs * 0.10,
+                despesasFinanc: simResult.kpis.costs * 0.03,
+                outrasDespesas: simResult.kpis.costs * 0.02,
+                ebitda: simResult.kpis.profit * 1.15,
+                depreciacao: budget * 0.03,
+                lair: simResult.kpis.profit * 1.12,
+                irCsll: Math.max(0, simResult.kpis.profit * 0.34),
+                lucroLiquido: simResult.kpis.profit * 0.66,
+                caixa: Math.max(0, budget * 0.25 + simResult.kpis.profit * 0.4),
+                contasReceber: simResult.kpis.revenue * 0.15,
+                estoques: simResult.kpis.costs * 0.20,
+                ativoCirculante: 0,
+                imobilizado: budget * 0.30,
+                intangivel: budget * 0.10,
+                ativoNaoCirculante: 0,
+                ativoTotal: 0,
+                fornecedores: simResult.kpis.costs * 0.20,
+                obrigFiscais: simResult.kpis.profit > 0 ? simResult.kpis.profit * 0.34 : 0,
+                outrasObrig: simResult.kpis.costs * 0.10,
+                passivoCirculante: 0,
+                financiamentosLP: budget * 0.20,
+                passivoNaoCirculante: 0,
+                capitalSocial: budget * 0.50,
+                lucrosAcumulados: 0,
+                patrimonioLiquido: 0,
+                passivoPlTotal: 0,
+              };
 
-            simulationBreakdown = simResult.breakdown;
-            competitorResponse = simResult.competitorResponse;
-            eventImpacts = simResult.eventImpacts;
-            engineVersion = "v2";
+              productKPIs.ativoCirculante = productKPIs.caixa + productKPIs.contasReceber + productKPIs.estoques;
+              productKPIs.ativoNaoCirculante = productKPIs.imobilizado + productKPIs.intangivel;
+              productKPIs.ativoTotal = productKPIs.ativoCirculante + productKPIs.ativoNaoCirculante;
+              productKPIs.passivoCirculante = productKPIs.fornecedores + productKPIs.obrigFiscais + productKPIs.outrasObrig;
+              productKPIs.passivoNaoCirculante = productKPIs.financiamentosLP;
+              productKPIs.lucrosAcumulados = productKPIs.ativoTotal - productKPIs.passivoCirculante - productKPIs.passivoNaoCirculante - productKPIs.capitalSocial;
+              productKPIs.patrimonioLiquido = productKPIs.capitalSocial + productKPIs.lucrosAcumulados;
+              productKPIs.passivoPlTotal = productKPIs.passivoCirculante + productKPIs.passivoNaoCirculante + productKPIs.patrimonioLiquido;
 
-            console.log(`[ROUND_COMPLETION] V2 Engine breakdown for team ${team.id}:`, 
-              simResult.breakdown.map(b => `${b.label}: ΔRev=${b.deltaRevenue}, ΔProfit=${b.deltaProfit}`).join("; "));
-          } else {
-            const baseKPIs = calculateResults({
-              marketingMix,
-              marketEvents: activeEvents,
-              teamBudget: team.budget,
-              totalTeamsInRound: teams.length,
-            });
+              productKpisList.push(productKPIs);
+              perProductSim.push({
+                productId: productMix.productId ?? "default",
+                breakdown: simResult.breakdown,
+                competitorResponse: simResult.competitorResponse,
+                eventImpacts: simResult.eventImpacts,
+              });
 
-            const analyses = {
-              swot: swot || null,
-              porter: porter || null,
-              bcg: bcg.length > 0 ? bcg : null,
-              pestel: pestel || null,
-            };
+              await storage.createProductResult({
+                teamId: team.id,
+                roundId: roundId,
+                productId: productMix.productId ?? "default",
+                ...productKPIs,
+                budgetBefore: budget,
+                profitImpact: productKPIs.profit,
+                budgetAfter: budget + productKPIs.profit,
+                alignmentScore: null,
+                alignmentIssues: [],
+                financialBreakdown: simResult.breakdown,
+              });
 
-            const adjustedKPIs = applyStrategicImpacts(baseKPIs, analyses, marketingMix.priceValue);
+              console.log(`[ROUND_COMPLETION] V2 Engine breakdown for team ${team.id} produto ${productMix.productId ?? "default"}:`,
+                simResult.breakdown.map(b => `${b.label}: ΔRev=${b.deltaRevenue}, ΔProfit=${b.deltaProfit}`).join("; "));
+            }
+
+            const consolidated = consolidateKpis(productKpisList);
 
             const penaltyResult = applyAlignmentPenalties(
-              adjustedKPIs,
-              marketingMix,
+              consolidated,
+              firstProduct,
               swot,
               porter,
               bcg.length > 0 ? bcg[0] : null,
               pestel,
               round.aiAssistanceLevel ?? 1,
-              marketingMix.priceValue
+              firstProduct.priceValue
             );
 
+            alignmentScore = penaltyResult.alignmentScore;
+            alignmentIssues = penaltyResult.alignmentIssues;
+            simulationBreakdown = perProductSim.map(p => ({ productId: p.productId, breakdown: p.breakdown }));
+            competitorResponse = perProductSim.map(p => ({ productId: p.productId, competitorResponse: p.competitorResponse }));
+            eventImpacts = perProductSim.map(p => ({ productId: p.productId, eventImpacts: p.eventImpacts }));
+            engineVersion = "v2";
             finalKPIs = penaltyResult.kpis;
+          } else {
+            for (const productMix of submittedProducts) {
+              const budget = productBudget(productMix);
+
+              const baseKPIs = calculateResults({
+                marketingMix: productMix,
+                marketEvents: activeEvents,
+                teamBudget: budget,
+                totalTeamsInRound: teams.length,
+              });
+
+              const adjustedKPIs = applyStrategicImpacts(baseKPIs, analyses, productMix.priceValue);
+              productKpisList.push(adjustedKPIs);
+
+              await storage.createProductResult({
+                teamId: team.id,
+                roundId: roundId,
+                productId: productMix.productId ?? "default",
+                ...adjustedKPIs,
+                budgetBefore: budget,
+                profitImpact: adjustedKPIs.profit,
+                budgetAfter: budget + adjustedKPIs.profit,
+                alignmentScore: null,
+                alignmentIssues: [],
+              });
+            }
+
+            const consolidatedKPIs = consolidateKpis(productKpisList);
+
+            const penaltyResult = applyAlignmentPenalties(
+              consolidatedKPIs,
+              firstProduct,
+              swot,
+              porter,
+              bcg.length > 0 ? bcg[0] : null,
+              pestel,
+              round.aiAssistanceLevel ?? 1,
+              firstProduct.priceValue
+            );
+
             alignmentScore = penaltyResult.alignmentScore;
             alignmentIssues = penaltyResult.alignmentIssues;
             engineVersion = "v1";
+            finalKPIs = penaltyResult.kpis;
           }
 
           const budgetBefore = team.budget;
@@ -236,7 +322,7 @@ export async function processRoundCompletion(
 
           await storage.updateTeam(team.id, { budget: budgetAfter });
 
-          console.log(`[ROUND_COMPLETION] Processed results for team ${team.id} (engine: ${engineVersion})`);
+          console.log(`[ROUND_COMPLETION] Processed results for team ${team.id} (engine: ${engineVersion}, produtos: ${submittedProducts.length})`);
         }
       }
     }
