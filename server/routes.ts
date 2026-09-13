@@ -5312,6 +5312,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sector?.averageMargin
       );
 
+      // Validação de orçamento: soma o custo estimado deste produto ao custo já
+      // planejado para os demais produtos da equipe nesta rodada (rascunhos e
+      // submissões já finalizadas), e compara com o orçamento total disponível.
+      // Só bloqueia no envio final (isDraft === false) — um rascunho pode
+      // ultrapassar o orçamento enquanto a equipe ainda está ajustando os valores.
+      if (isDraft === false) {
+        const otherMixes = await storage.getMarketingMixesByTeamAndRound(team.id, roundId);
+        const otherProductsCost = otherMixes
+          .filter(mix => mix.productId !== productId)
+          .reduce((sum, mix) => sum + (mix.estimatedCost || 0), 0);
+        const totalEstimatedCost = otherProductsCost + estimatedCost;
+
+        if (totalEstimatedCost > team.budget) {
+          return res.status(400).json({
+            error: "Orçamento insuficiente",
+            details: `O custo total estimado dos produtos configurados nesta rodada seria de R$ ${totalEstimatedCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, mas a equipe tem apenas R$ ${team.budget.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} disponível. Ajuste as decisões para reduzir os custos.`,
+            estimatedCost: Math.round(totalEstimatedCost * 100) / 100,
+            availableBudget: Math.round(team.budget * 100) / 100,
+          });
+        }
+      }
+
       const existing = await storage.getMarketingMix(team.id, roundId, productId);
 
       let result;
