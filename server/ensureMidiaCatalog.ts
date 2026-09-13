@@ -156,12 +156,23 @@ export async function ensureMidiaCatalog(): Promise<void> {
     }
 
     for (const item of DESCRICOES_CATALOGO_ORIGINAL) {
-      const result = await pool.query(
-        `UPDATE midias SET descricao = $1
-         WHERE categoria = $2 AND nome = $3 AND formato = $4 AND descricao IS DISTINCT FROM $1`,
-        [item.descricao, item.categoria, item.nome, item.formato]
+      // Busca por id primeiro (em vez de UPDATE...WHERE direto) para poder
+      // distinguir "já está com este texto" (rowCount 0, esperado) de
+      // "categoria/nome/formato não bateu com nenhuma linha" (rowCount 0
+      // também, mas indica um mismatch de texto que merece log — sem isso,
+      // os dois casos ficam indistinguíveis nos logs de boot).
+      const existing = await pool.query(
+        `SELECT id, descricao FROM midias WHERE categoria = $1 AND nome = $2 AND formato = $3 LIMIT 1`,
+        [item.categoria, item.nome, item.formato]
       );
-      if ((result.rowCount ?? 0) > 0) {
+
+      if (existing.rows.length === 0) {
+        console.warn(`⚠️  Descrição não aplicada (mídia não encontrada no catálogo): ${item.categoria} / ${item.nome} (${item.formato})`);
+        continue;
+      }
+
+      if (existing.rows[0].descricao !== item.descricao) {
+        await pool.query(`UPDATE midias SET descricao = $1 WHERE id = $2`, [item.descricao, existing.rows[0].id]);
         console.log(`✓ Descrição atualizada: ${item.categoria} / ${item.nome} (${item.formato})`);
       }
     }
