@@ -12,11 +12,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, Building2, FileText, Image, Target, Package, Upload, Link as LinkIcon, CheckCircle2, Circle } from "lucide-react";
+import { Save, Building2, FileText, Image, Target, Package, Upload, Link as LinkIcon, CheckCircle2, Circle, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, apiUpload, queryClient } from "@/lib/queryClient";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Team, Class, Round, TeamProduct } from "@shared/schema";
 
 export default function Empresa() {
@@ -34,6 +44,18 @@ export default function Empresa() {
     targetAge: string;
     targetProfile: string;
   }>>({});
+
+  // Produto aguardando confirmação de finalização — pedir confirmação antes de
+  // bloquear a edição, permitindo que o aluno ainda revise/altere antes de
+  // confirmar (mesmo padrão de confirmação usado em Decisões).
+  const [productPendingFinalize, setProductPendingFinalize] = useState<{
+    productId: string;
+    productName: string;
+    productDescription: string;
+    targetAudienceClass: string;
+    targetAudienceAge: string;
+    targetAudienceProfile: string;
+  } | null>(null);
 
   const { data: team, isLoading } = useQuery<Team>({
     queryKey: ["/api/team/current"],
@@ -263,10 +285,13 @@ export default function Empresa() {
       queryClient.invalidateQueries({ queryKey: ["/api/team-products", team?.id, activeRound?.id] });
       toast({
         title: variables.isDraft ? "Rascunho salvo!" : "Produto configurado!",
-        description: variables.isDraft 
+        description: variables.isDraft
           ? "Suas alterações foram salvas como rascunho."
           : "A configuração do produto foi finalizada e não poderá mais ser editada nesta rodada.",
       });
+      if (!variables.isDraft) {
+        setProductPendingFinalize(null);
+      }
     },
     onError: (error: any) => {
       toast({
@@ -764,16 +789,16 @@ export default function Empresa() {
                                 return;
                               }
 
-                              saveTeamProductMutation.mutate({
-                                teamId: team!.id,
-                                roundId: activeRound.id,
+                              // Só abre a confirmação aqui — o envio de fato só acontece
+                              // se o aluno confirmar no diálogo, podendo cancelar e
+                              // continuar ajustando os campos antes disso.
+                              setProductPendingFinalize({
                                 productId: product.id,
                                 productName: product.name,
                                 productDescription: product.description || "",
                                 targetAudienceClass: targetClass,
                                 targetAudienceAge: targetAge,
                                 targetAudienceProfile: targetProfile,
-                                isDraft: false,
                               });
                             }}
                             disabled={saveTeamProductMutation.isPending || !activeRound}
@@ -842,6 +867,47 @@ export default function Empresa() {
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={!!productPendingFinalize} onOpenChange={(open) => !open && setProductPendingFinalize(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-[#ff8c1a]" />
+              Confirmar Finalização do Produto
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                <strong>Atenção!</strong> Você está prestes a finalizar a configuração de{" "}
+                <strong>{productPendingFinalize?.productName}</strong> para esta rodada.
+              </p>
+              <p className="text-destructive font-semibold">
+                ⚠️ Após finalizar, não será possível alterar classe social, faixa etária e perfil deste produto até a próxima rodada!
+              </p>
+              <p>
+                Confira as informações antes de confirmar. Se ainda quiser revisar algo, clique em "Revisar".
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-finalize">Revisar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!productPendingFinalize || !team || !activeRound) return;
+                saveTeamProductMutation.mutate({
+                  teamId: team.id,
+                  roundId: activeRound.id,
+                  ...productPendingFinalize,
+                  isDraft: false,
+                });
+              }}
+              disabled={saveTeamProductMutation.isPending}
+              data-testid="button-confirm-finalize"
+            >
+              {saveTeamProductMutation.isPending ? "Finalizando..." : "Confirmar e Finalizar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
