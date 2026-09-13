@@ -23,6 +23,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Marketing Digital': '#6366f1',
   'Mídia Exterior (OOH)': '#f59e0b',
   'Mídia Eletrônica': '#ef4444',
+  'Mídia Display e Programática': '#06b6d4',
   'Marketing Direto': '#10b981',
   'Relações Públicas': '#8b5cf6',
   'Promoção de Vendas': '#ec4899',

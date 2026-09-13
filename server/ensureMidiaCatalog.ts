@@ -19,6 +19,26 @@ import { pool } from "./pg-storage";
 // segura para rodar em todo deploy, sem risco de invalidar IDs de mídia
 // já referenciados em decisões de rodadas anteriores (diferente de rodar
 // seed-midias.ts, que apaga e recria a tabela inteira com novos IDs).
+//
+// Expansão do catálogo (31 novos formatos, a pedido do usuário): TV, Rádio,
+// mídia impressa e OOH ganharam formatos adicionais dentro das categorias
+// já existentes; redes sociais/vídeo online ganharam itens granulares por
+// formato de anúncio (mantendo Google Ads/Meta Ads como estão, para quem
+// prefere pensar em verba mensal geral); e banners/programática entraram
+// numa categoria nova, "Mídia Display e Programática", por serem comprados
+// via leilão em sites terceiros (Google Ads Display/GDN), um modelo
+// diferente do de redes sociais. "Mídia em Trânsito" (envelopamento de
+// frota, telas em elevador/táxi/metrô) foi absorvida em "Mídia Exterior
+// (OOH)", que já continha Busdoor — evita fragmentar em mais uma categoria
+// para só 2-4 itens. Preços regionais/por emissora (TV e Rádio) foram
+// condensados no valor único exigido pelo schema usando a faixa "Estadual
+// (RS)" da emissora líder de cada mercado (RBS TV/Globo, Rádio Gaúcha) —
+// mesmo critério implícito já usado nos valores de TV/Rádio pré-existentes
+// abaixo. Preços por CPM/CPV/CPC usam o ponto médio da faixa informada
+// pelo usuário como custoUnitarioMinimo, com a unidade de cobrança (CPM,
+// CPV ou CPC) no campo `unidade`. quantidadeSugerida foi deixado de fora
+// nos itens novos: o campo existe no schema mas não é lido em lugar nenhum
+// do cliente (nem na tela de decisões, nem no PDF do Guia de Mídias).
 interface MidiaSeed {
   categoria: string;
   nome: string;
@@ -61,6 +81,51 @@ const CATALOGO_MIDIAS: MidiaSeed[] = [
     quantidadeSugerida: "1-2",
     descricao: "Anúncio de página inteira em revista impressa, indicado para públicos segmentados por editoria.",
     orderIndex: 3,
+  },
+  {
+    categoria: "Mídia Impressa",
+    nome: "Jornal",
+    formato: "Página Dupla",
+    custoUnitarioMinimo: 9000.00,
+    unidade: "edição",
+    descricao: "Anúncio ocupando as duas páginas centrais abertas da edição, para máxima visibilidade.",
+    orderIndex: 100,
+  },
+  {
+    categoria: "Mídia Impressa",
+    nome: "Revista",
+    formato: "Página Dupla",
+    custoUnitarioMinimo: 12500.00,
+    unidade: "edição",
+    descricao: "Anúncio ocupando as duas páginas centrais abertas da edição, para máxima visibilidade.",
+    orderIndex: 101,
+  },
+  {
+    categoria: "Mídia Impressa",
+    nome: "Jornal",
+    formato: "Fração de Página",
+    custoUnitarioMinimo: 450.00,
+    unidade: "edição",
+    descricao: "Bloco pequeno (1/4 ou 1/8 de página) ou anúncio de rodapé, opção de menor custo.",
+    orderIndex: 102,
+  },
+  {
+    categoria: "Mídia Impressa",
+    nome: "Revista",
+    formato: "Fração de Página",
+    custoUnitarioMinimo: 650.00,
+    unidade: "edição",
+    descricao: "Bloco pequeno (1/4 ou 1/8 de página) ou anúncio de rodapé, opção de menor custo.",
+    orderIndex: 103,
+  },
+  {
+    categoria: "Mídia Impressa",
+    nome: "Revista",
+    formato: "Meia Página",
+    custoUnitarioMinimo: 6000.00,
+    unidade: "edição",
+    descricao: "Anúncio ocupando metade da página (horizontal ou vertical) em revista impressa.",
+    orderIndex: 104,
   },
 
   // MARKETING DIGITAL
@@ -154,6 +219,134 @@ const CATALOGO_MIDIAS: MidiaSeed[] = [
     descricao: "Campanhas de conversão em Facebook e Instagram",
     orderIndex: 18,
   },
+  {
+    categoria: "Marketing Digital",
+    nome: "Bumper Ads",
+    formato: "YouTube",
+    custoUnitarioMinimo: 14.00,
+    unidade: "CPM",
+    descricao: "Vídeo não pulável de até 6 segundos exibido no YouTube. Custo por mil impressões (CPM).",
+    orderIndex: 110,
+  },
+  {
+    categoria: "Marketing Digital",
+    nome: "Skippable Ads",
+    formato: "YouTube (In-Stream)",
+    custoUnitarioMinimo: 0.25,
+    unidade: "CPV",
+    descricao: "Vídeo pulável após 5 segundos (30s a 2min) no YouTube. Custo por visualização completa (CPV).",
+    orderIndex: 111,
+  },
+  {
+    categoria: "Marketing Digital",
+    nome: "Stories/Reels/TikTok Ads",
+    formato: "Vídeo Vertical",
+    custoUnitarioMinimo: 16.00,
+    unidade: "CPM",
+    descricao: "Vídeo ou imagem vertical (9:16) em Stories, Reels e TikTok. Custo por mil pessoas alcançadas (CPM).",
+    orderIndex: 112,
+  },
+  {
+    categoria: "Marketing Digital",
+    nome: "Feed Ads",
+    formato: "Instagram, Facebook e LinkedIn",
+    custoUnitarioMinimo: 20.00,
+    unidade: "CPM",
+    descricao: "Imagem ou vídeo no feed (1:1 ou 4:5) de Instagram, Facebook e LinkedIn. Custo por mil impressões (CPM).",
+    orderIndex: 113,
+  },
+  {
+    categoria: "Marketing Digital",
+    nome: "Carrossel Ads",
+    formato: "Múltiplas Imagens",
+    custoUnitarioMinimo: 1.20,
+    unidade: "CPC",
+    descricao: "Sequência de até 10 imagens ou vídeos deslizantes (1:1), focada em cliques e engajamento. Custo por clique (CPC).",
+    orderIndex: 114,
+  },
+  {
+    categoria: "Marketing Digital",
+    nome: "Anúncios de Coleção",
+    formato: "Catálogo E-commerce",
+    custoUnitarioMinimo: 25.00,
+    unidade: "CPM",
+    descricao: "Capa em vídeo/imagem com catálogo de produtos abaixo, focado em conversões de e-commerce. Custo por mil impressões (CPM).",
+    orderIndex: 115,
+  },
+  {
+    categoria: "Marketing Digital",
+    nome: "Notificação Push",
+    formato: "App e Navegador",
+    custoUnitarioMinimo: 300.00,
+    unidade: "mês",
+    descricao: "Licença de ferramenta de disparo de notificações curtas na tela de bloqueio do celular ou no navegador.",
+    orderIndex: 116,
+  },
+
+  // MÍDIA DISPLAY E PROGRAMÁTICA
+  {
+    categoria: "Mídia Display e Programática",
+    nome: "Leaderboard",
+    formato: "728x90 px",
+    custoUnitarioMinimo: 10.00,
+    unidade: "CPM",
+    descricao: "Banner horizontal de topo veiculado em blogs, portais e sites de notícias via mídia programática.",
+    orderIndex: 130,
+  },
+  {
+    categoria: "Mídia Display e Programática",
+    nome: "Retângulo Médio (MPU)",
+    formato: "300x250 px",
+    custoUnitarioMinimo: 12.00,
+    unidade: "CPM",
+    descricao: "Banner lateral integrado ao texto, um dos formatos mais comuns em sites de conteúdo.",
+    orderIndex: 131,
+  },
+  {
+    categoria: "Mídia Display e Programática",
+    nome: "Half Page",
+    formato: "300x600 px",
+    custoUnitarioMinimo: 17.00,
+    unidade: "CPM",
+    descricao: "Banner lateral longo de alta visibilidade.",
+    orderIndex: 132,
+  },
+  {
+    categoria: "Mídia Display e Programática",
+    nome: "Skyscraper",
+    formato: "160x600 px",
+    custoUnitarioMinimo: 8.00,
+    unidade: "CPM",
+    descricao: "Banner vertical fino posicionado na lateral da página.",
+    orderIndex: 133,
+  },
+  {
+    categoria: "Mídia Display e Programática",
+    nome: "Billboard",
+    formato: "970x250 px",
+    custoUnitarioMinimo: 21.00,
+    unidade: "CPM",
+    descricao: "Grande banner de topo de página, alta visibilidade.",
+    orderIndex: 134,
+  },
+  {
+    categoria: "Mídia Display e Programática",
+    nome: "Interstitial",
+    formato: "Tela Cheia",
+    custoUnitarioMinimo: 35.00,
+    unidade: "CPM",
+    descricao: "Anúncio em tela cheia que cobre a página antes de carregar o conteúdo.",
+    orderIndex: 135,
+  },
+  {
+    categoria: "Mídia Display e Programática",
+    nome: "Native Ads",
+    formato: "Publicidade Nativa",
+    custoUnitarioMinimo: 0.50,
+    unidade: "CPC",
+    descricao: "Anúncio que imita o formato das notícias do site (ex.: Taboola, Outbrain). Custo por clique (CPC).",
+    orderIndex: 136,
+  },
 
   // MÍDIA EXTERIOR (OOH)
   {
@@ -195,6 +388,42 @@ const CATALOGO_MIDIAS: MidiaSeed[] = [
     quantidadeSugerida: "5-10",
     descricao: "Painel de LED digital em vias públicas, permite rotação entre diferentes campanhas.",
     orderIndex: 23,
+  },
+  {
+    categoria: "Mídia Exterior (OOH)",
+    nome: "Mobiliário Urbano",
+    formato: "Abrigos de Ônibus e Relógios",
+    custoUnitarioMinimo: 1650.00,
+    unidade: "ponto/semana",
+    descricao: "Painel publicitário ao nível do pedestre em abrigos de ônibus ou relógios de rua.",
+    orderIndex: 140,
+  },
+  {
+    categoria: "Mídia Exterior (OOH)",
+    nome: "Empena",
+    formato: "Lona em Parede Cega",
+    custoUnitarioMinimo: 45000.00,
+    unidade: "mês",
+    descricao: "Grande lona fixada em parede cega de prédio, alto custo de estrutura e produção.",
+    orderIndex: 141,
+  },
+  {
+    categoria: "Mídia Exterior (OOH)",
+    nome: "Envelopamento de Frota",
+    formato: "Metrô, Trem ou Ônibus",
+    custoUnitarioMinimo: 23000.00,
+    unidade: "veículo/mês",
+    descricao: "Adesivagem completa de vagões de metrô, trens ou ônibus.",
+    orderIndex: 142,
+  },
+  {
+    categoria: "Mídia Exterior (OOH)",
+    nome: "Telas em Elevadores, Táxis e Metrô",
+    formato: "Circuito Fechado",
+    custoUnitarioMinimo: 1800.00,
+    unidade: "mês",
+    descricao: "Circuito fechado de TV em elevadores, táxis ou metrô, inserções de 15 segundos sem som.",
+    orderIndex: 143,
   },
 
   // MÍDIA ELETRÔNICA
@@ -247,6 +476,78 @@ const CATALOGO_MIDIAS: MidiaSeed[] = [
     quantidadeSugerida: "2-4",
     descricao: "Comercial de 30 segundos exibido antes da sessão nas salas de cinema.",
     orderIndex: 34,
+  },
+  {
+    categoria: "Mídia Eletrônica",
+    nome: "TV",
+    formato: "Teaser (5 a 10s)",
+    custoUnitarioMinimo: 4500.00,
+    unidade: "inserção",
+    descricao: "Vídeo curto para gerar expectativa antes de um lançamento.",
+    orderIndex: 150,
+  },
+  {
+    categoria: "Mídia Eletrônica",
+    nome: "TV",
+    formato: "Merchandising / Ação Integrada",
+    custoUnitarioMinimo: 27000.00,
+    unidade: "ação",
+    descricao: "Apresentador interage com o produto no cenário do programa (30 segundos a 3 minutos).",
+    orderIndex: 151,
+  },
+  {
+    categoria: "Mídia Eletrônica",
+    nome: "TV",
+    formato: "Vinheta de Patrocínio",
+    custoUnitarioMinimo: 47000.00,
+    unidade: "mês",
+    descricao: "Abertura/fechamento de blocos de programação (5 a 7 segundos), vendida por cota mensal.",
+    orderIndex: 152,
+  },
+  {
+    categoria: "Mídia Eletrônica",
+    nome: "TV",
+    formato: "Infocomercial (15 a 30min)",
+    custoUnitarioMinimo: 6000.00,
+    unidade: "bloco",
+    descricao: "Demonstração longa de vendas, tipicamente veiculada na madrugada.",
+    orderIndex: 153,
+  },
+  {
+    categoria: "Mídia Eletrônica",
+    nome: "Rádio",
+    formato: "Jingle (Produção)",
+    custoUnitarioMinimo: 2400.00,
+    unidade: "produção",
+    descricao: "Custo único de produção de propaganda cantada e ritmada; a veiculação segue o preço do spot.",
+    orderIndex: 154,
+  },
+  {
+    categoria: "Mídia Eletrônica",
+    nome: "Rádio",
+    formato: "Patrocínio de Programa",
+    custoUnitarioMinimo: 4750.00,
+    unidade: "mês",
+    descricao: "Cota mensal de patrocínio com direito a vinhetas exclusivas.",
+    orderIndex: 155,
+  },
+  {
+    categoria: "Mídia Eletrônica",
+    nome: "Rádio",
+    formato: "Podcast e Streaming Digital",
+    custoUnitarioMinimo: 40.00,
+    unidade: "CPM",
+    descricao: "Áudio digital da rádio integrado a plataformas online. Custo por mil ouvintes/reproduções (CPM).",
+    orderIndex: 156,
+  },
+  {
+    categoria: "Mídia Eletrônica",
+    nome: "Rádio",
+    formato: "Publicação em Mídia Social da Emissora",
+    custoUnitarioMinimo: 900.00,
+    unidade: "postagem",
+    descricao: "Post ou combo de ações nos perfis digitais da rádio.",
+    orderIndex: 157,
   },
 
   // MARKETING DIRETO
