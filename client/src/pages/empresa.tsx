@@ -27,7 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { Team, Class, Round, TeamProduct } from "@shared/schema";
+import type { Team, Class, TeamProduct } from "@shared/schema";
 
 export default function Empresa() {
   const { toast } = useToast();
@@ -79,10 +79,21 @@ export default function Empresa() {
     queryKey: ["/api/market/audiences"],
   });
 
-  const { data: activeRound } = useQuery<Round>({
+  // O endpoint sempre retorna um wrapper { round, decisionsAllowed, reason, message },
+  // nunca a Round "pura" — mesmo formato tratado em decisoes.tsx (RoundStatusResponse).
+  interface RoundStatusResponse {
+    round: { id: string; roundNumber: number; status: string } | null;
+    decisionsAllowed: boolean;
+    reason: "no_team" | "no_active_round" | "round_active";
+    message: string;
+  }
+
+  const { data: roundStatus } = useQuery<RoundStatusResponse>({
     queryKey: ["/api/rounds/active/current"],
     enabled: !!team?.classId,
   });
+
+  const activeRound = roundStatus?.round ?? null;
 
   const { data: classProducts } = useQuery<any[]>({
     queryKey: [
@@ -573,7 +584,7 @@ export default function Empresa() {
               <div>
                 <CardTitle>Produtos e Público-Alvo</CardTitle>
                 <CardDescription>
-                  Configure cada um dos 4 produtos individualmente com nome, descrição e público-alvo específico.
+                  Configure cada um dos {classProducts.length} produto{classProducts.length === 1 ? "" : "s"} individualmente com nome, descrição e público-alvo específico.
                 </CardDescription>
               </div>
             </div>
@@ -589,7 +600,7 @@ export default function Empresa() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue={classProducts[0]?.id} className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full h-auto" style={{ gridTemplateColumns: `repeat(${classProducts.length}, 1fr)` }}>
                 {classProducts.map((product: any, index: number) => {
                   const teamProduct = teamProducts?.find((tp) => tp.productId === product.id);
                   const isSubmitted = !!teamProduct?.submittedAt;
