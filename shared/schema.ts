@@ -204,7 +204,9 @@ export const results = pgTable("results", {
   passivoPlTotal: real("passivo_pl_total").notNull().default(0),
   
   calculatedAt: timestamp("calculated_at").notNull().default(sql`now()`),
-});
+}, (table) => ({
+  teamRoundIdx: uniqueIndex("results_unique_team_round").on(table.teamId, table.roundId),
+}));
 
 export const productResults = pgTable("product_results", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

@@ -1124,7 +1124,13 @@ export class MemStorage implements IStorage {
   }
 
   async createResult(insertResult: InsertResult): Promise<Result> {
-    const id = randomUUID();
+    // Upsert por (teamId, roundId), espelhando a constraint única do Postgres
+    // em produção (PgStorage.createResult / schema.ts "results_unique_team_round"):
+    // reaproveita o id existente em vez de criar uma linha duplicada.
+    const existing = Array.from(this.results.values()).find(
+      (r) => r.teamId === insertResult.teamId && r.roundId === insertResult.roundId
+    );
+    const id = existing?.id ?? randomUUID();
     const result: Result = {
       id,
       teamId: insertResult.teamId,

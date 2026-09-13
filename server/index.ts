@@ -54,24 +54,21 @@ app.use((req, res, next) => {
 (async () => {
   await ensureMidiaCatalog();
 
-  // TEMP DIAGNOSTIC (Item 7 - auditoria): verificar se já existem linhas
-  // duplicadas (team_id, round_id) na tabela "results" antes de adicionar
-  // uma constraint de unicidade. Remover após a checagem.
+  // TEMP DIAGNOSTIC (Item 7 - auditoria): confirmar que a constraint única
+  // "results_unique_team_round" (adicionada em shared/schema.ts) foi
+  // efetivamente criada em produção pelo pre-deploy "drizzle-kit push".
+  // Remover após a checagem.
   try {
-    const dup = await pool.query(`
-      SELECT team_id, round_id, COUNT(*) AS count
-      FROM results
-      GROUP BY team_id, round_id
-      HAVING COUNT(*) > 1
+    const idx = await pool.query(`
+      SELECT indexname, indexdef FROM pg_indexes
+      WHERE tablename = 'results' AND indexname = 'results_unique_team_round'
     `);
-    log(`[DIAG-ITEM7] Grupos (team_id, round_id) duplicados em "results": ${dup.rows.length}`);
-    if (dup.rows.length > 0) {
-      log(`[DIAG-ITEM7] Detalhe: ${JSON.stringify(dup.rows)}`);
+    log(`[DIAG-ITEM7] Índice único "results_unique_team_round" presente: ${idx.rows.length > 0}`);
+    if (idx.rows.length > 0) {
+      log(`[DIAG-ITEM7] Definição: ${idx.rows[0].indexdef}`);
     }
-    const total = await pool.query(`SELECT COUNT(*) AS count FROM results`);
-    log(`[DIAG-ITEM7] Total de linhas em "results": ${total.rows[0].count}`);
   } catch (e) {
-    log(`[DIAG-ITEM7] Erro ao checar duplicatas: ${e}`);
+    log(`[DIAG-ITEM7] Erro ao checar índice: ${e}`);
   }
 
   const server = await registerRoutes(app);

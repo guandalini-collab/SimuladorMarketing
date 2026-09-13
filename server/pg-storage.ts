@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { eq, and, desc, inArray, asc } from "drizzle-orm";
+import { eq, and, desc, inArray, asc, sql } from "drizzle-orm";
 import {
   type User,
   type InsertUser,
@@ -786,7 +786,20 @@ export class PgStorage implements IStorage {
   }
 
   async createResult(result: InsertResult): Promise<Result> {
-    const created = await db.insert(results).values(result).returning();
+    // Upsert por (teamId, roundId): fecha a corrida entre os três caminhos que
+    // podem processar o fechamento de uma mesma rodada (scheduler automático,
+    // POST /:roundId/end e POST /:roundId/process) — a constraint única
+    // "results_unique_team_round" (shared/schema.ts) garante que nunca haja
+    // duas linhas para a mesma equipe+rodada; se ambos chegarem aqui quase ao
+    // mesmo tempo, o segundo sobrescreve o primeiro com o cálculo mais recente
+    // em vez de criar uma duplicata.
+    const created = await db.insert(results)
+      .values(result)
+      .onConflictDoUpdate({
+        target: [results.teamId, results.roundId],
+        set: { ...result, calculatedAt: sql`now()` },
+      })
+      .returning();
     return created[0];
   }
 
