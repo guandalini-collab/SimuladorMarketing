@@ -200,7 +200,7 @@ export function calculateResults(inputs: CalculationInputs): ResultCoreMetrics {
     classData.competitionLevel
   );
   const receitaBruta = revenue;
-  const receitaLiquida = calculateNetRevenue(revenue, marketingMix.promotionMix);
+  const receitaLiquida = calculateNetRevenue(revenue);
   const margemContribuicao = calculateContributionMargin(receitaLiquida, costs);
   
   // ========== DRE COMPLETA - Demonstrativo do Resultado do Exercício ==========
@@ -711,30 +711,20 @@ function calculateAverageConversionTime(
   return Math.max(5, Math.min(90, baseDays));
 }
 
-function calculateNetRevenue(
-  grossRevenue: number,
-  promotionMix: string[]
-): number {
-  let deductionRate = 0.05;
-  
-  const hasDiscountPromotions = promotionMix.some(media => 
-    media === "cupons_desconto" || 
-    media === "promocoes_sazonais" || 
-    media === "amostras_gratis"
-  );
-  
-  if (hasDiscountPromotions) {
-    deductionRate += 0.08;
-  }
-  
-  const hasMarketplaces = promotionMix.includes("marketplaces");
-  if (hasMarketplaces) {
-    deductionRate += 0.12;
-  }
-  
-  const netRevenue = grossRevenue * (1 - deductionRate);
-  
-  return netRevenue;
+function calculateNetRevenue(grossRevenue: number): number {
+  // Dedução fixa de 5% (impostos e custos de venda) sobre a receita bruta.
+  //
+  // Este cálculo já teve deduções adicionais condicionadas a promotionMix
+  // conter "cupons_desconto", "promocoes_sazonais", "amostras_gratis" ou
+  // "marketplaces" — resíduo de uma versão anterior do simulador. Hoje
+  // promotionMix é preenchido só com os UUIDs reais das mídias do catálogo
+  // (ver decisoes.tsx, que já filtra qualquer valor que não seja um ID de
+  // mídia válido), então essas condições nunca eram satisfeitas e a
+  // dedução extra nunca era aplicada. Removido para não sugerir um
+  // comportamento que não existia.
+  const deductionRate = 0.05;
+
+  return grossRevenue * (1 - deductionRate);
 }
 
 function calculateContributionMargin(
