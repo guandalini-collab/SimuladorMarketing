@@ -5,7 +5,8 @@ import { storage } from "./storage";
 import { insertUserSchema, insertClassSchema, insertClassFormSchema, insertTeamSchema, insertRoundSchema, insertMarketEventSchema, insertMarketingMixSchema, updateTeamIdentitySchema, updateTeamLogoSchema, updateTeamLeaderSchema, updateClassMarketSchema, updateTeamBudgetSchema, insertSwotSchema, insertPorterSchema, insertBcgSchema, insertPestelSchema } from "@shared/schema";
 import session from "express-session";
 import bcrypt from "bcryptjs";
-import createMemoryStore from "memorystore";
+import connectPgSimple from "connect-pg-simple";
+import { pool } from "./pg-storage";
 import { calculateResults, calculateMarketingSpend, applyStrategicImpacts, applyAlignmentPenalties } from "./calculator";
 import { consolidateKpis, type ResultCoreMetrics } from "./utils/consolidateKpis";
 import { marketSectors, targetAudiences, businessTypes, competitionLevels } from "./data/marketData";
@@ -20,7 +21,7 @@ import path from "path";
 import fs from "fs";
 import { getEnv, getAuthorizedProfessorEmails } from "./config";
 
-const MemoryStore = createMemoryStore(session);
+const PgSessionStore = connectPgSimple(session);
 
 // Função para gerar código de recuperação no formato R7K9-2LQ8-ZX1A
 function generateRecoveryCode(): string {
@@ -107,8 +108,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       secret: appEnv.SESSION_SECRET || "marketing-sim-secret-key-change-in-production",
       resave: false,
       saveUninitialized: false,
-      store: new MemoryStore({
-        checkPeriod: 86400000,
+      // Antes usava memorystore (em memória): toda vez que o processo reiniciava
+      // (cada deploy no Railway, ou qualquer reinício do container) TODAS as
+      // sessões eram perdidas de uma vez, derrubando o login de professores e
+      // alunos no meio de uma rodada sem aviso. Persistindo no Postgres, o
+      // login sobrevive a deploys e reinícios. createTableIfMissing cria a
+      // tabela "session" automaticamente na primeira execução.
+      store: new PgSessionStore({
+        pool,
+        createTableIfMissing: true,
       }),
       cookie: {
         secure: isProduction,
@@ -123,27 +131,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     })
   );
 
-  // Configuração do multer para upload de logomarcas
-  const logosDir = path.join(process.cwd(), 'attached_assets', 'logos');
-  if (!fs.existsSync(logosDir)) {
-    fs.mkdirSync(logosDir, { recursive: true });
-  }
-
-  const logoStorage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, logosDir);
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      const ext = path.extname(file.originalname);
-      cb(null, 'logo-' + uniqueSuffix + ext);
-    }
-  });
-
+  // Configuração do multer para upload de logomarcas.
+  // Antes salvava em disco (attached_assets/logos): no Railway o sistema de
+  // arquivos do container é efêmero, então cada novo deploy (ex.: "git push")
+  // recriava o container do zero e apagava todas as logos já enviadas pelos
+  // alunos — o arquivo sumia mesmo com o campo logo_url ainda apontando pra
+  // ele no banco. Agora a imagem é convertida para base64 e guardada direto
+  // na coluna logo_url (mesma coluna já usada para URLs externas), então ela
+  // sobrevive a deploys e reinícios como qualquer outro dado da equipe.
   const uploadLogo = multer({
-    storage: logoStorage,
+    storage: multer.memoryStorage(),
     limits: {
-      fileSize: 5 * 1024 * 1024, // 5MB máximo
+      fileSize: 2 * 1024 * 1024, // 2MB máximo (a imagem passa a viver no banco, como texto base64)
     },
     fileFilter: (req, file, cb) => {
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
@@ -155,12 +154,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Servir arquivos estáticos da pasta de logos
+  // Serve arquivos estáticos da pasta de logos antiga, para não quebrar de
+  // imediato equipes que ainda tenham um logo_url apontando para ela (embora,
+  // por conta do bug acima, o arquivo em si provavelmente já tenha sido
+  // perdido em algum deploy anterior).
   app.use('/attached_assets/logos', (req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     next();
   });
-  app.use('/attached_assets/logos', express.static(logosDir));
+  app.use('/attached_assets/logos', express.static(path.join(process.cwd(), 'attached_assets', 'logos')));
 
   app.post("/api/auth/register", async (req, res) => {
     try {
@@ -2266,26 +2268,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/team/logo/upload", (req, res) => {
     uploadLogo.single('logo')(req, res, async (err) => {
-      let dbUpdateSucceeded = false;
-
-      // Helper para limpar arquivo enviado (apenas se DB não foi atualizado)
-      const cleanupUploadedFile = async () => {
-        if (!dbUpdateSucceeded && req.file?.path) {
-          try {
-            await fs.promises.unlink(req.file.path);
-          } catch (cleanupErr) {
-            console.error('Erro ao limpar arquivo enviado:', cleanupErr);
-          }
-        }
-      };
-
       try {
         // Trata erros do multer (validação de arquivo)
         if (err) {
-          await cleanupUploadedFile();
           if (err instanceof multer.MulterError) {
             if (err.code === 'LIMIT_FILE_SIZE') {
-              return res.status(400).json({ error: "Arquivo muito grande. O tamanho máximo é 5MB." });
+              return res.status(400).json({ error: "Arquivo muito grande. O tamanho máximo é 2MB." });
             }
             return res.status(400).json({ error: `Erro no upload: ${err.message}` });
           }
@@ -2293,49 +2281,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (!req.session.userId) {
-          await cleanupUploadedFile();
           return res.status(401).json({ error: "Não autenticado" });
         }
-        
+
         const user = await storage.getUser(req.session.userId);
         if (!user || user.role !== "equipe") {
-          await cleanupUploadedFile();
           return res.status(403).json({ error: "Apenas alunos podem fazer upload de logo" });
         }
-        
+
         const team = await storage.getTeamByUser(req.session.userId);
         if (!team) {
-          await cleanupUploadedFile();
           return res.status(404).json({ error: "Você não está em uma equipe" });
         }
-        
+
         if (!req.file) {
           return res.status(400).json({ error: "Nenhum arquivo foi enviado" });
         }
 
-        // Remove logo anterior APENAS se for arquivo local (não URL remota)
-        if (team.logoUrl && team.logoUrl.startsWith('/attached_assets/logos/')) {
-          const relativePath = team.logoUrl.startsWith('/') ? team.logoUrl.slice(1) : team.logoUrl;
-          const oldLogoPath = path.join(process.cwd(), relativePath);
-          const logosDirectory = path.join(process.cwd(), 'attached_assets', 'logos');
-          
-          const normalizedPath = path.normalize(oldLogoPath);
-          if (normalizedPath.startsWith(logosDirectory) && fs.existsSync(normalizedPath)) {
-            await fs.promises.unlink(normalizedPath);
-          }
-        }
+        // Converte a imagem para base64 e guarda direto no banco (ver comentário
+        // acima, na configuração do multer, sobre por que não salva mais em disco).
+        const logoUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
 
-        // Gera a URL pública do arquivo
-        const logoUrl = `/attached_assets/logos/${req.file.filename}`;
-        
         // Atualiza o banco de dados
         const updatedTeam = await storage.updateTeam(team.id, { logoUrl });
-        dbUpdateSucceeded = true;
-        
+
         res.json(updatedTeam);
       } catch (error: any) {
         console.error('Erro no upload:', error);
-        await cleanupUploadedFile();
         res.status(500).json({ error: error.message || "Erro ao fazer upload do logo" });
       }
     });

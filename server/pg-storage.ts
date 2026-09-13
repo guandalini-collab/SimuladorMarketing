@@ -77,7 +77,7 @@ if (!databaseUrl) {
 // hospedado no Railway. O driver @neondatabase/serverless (neon-http) só
 // funciona contra o endpoint HTTP/WebSocket da Neon.tech e não consegue
 // falar com um Postgres "normal" — por isso foi substituído aqui.
-const pool = new Pool({ connectionString: databaseUrl });
+export const pool = new Pool({ connectionString: databaseUrl });
 const db = drizzle(pool);
 
 pool.on("error", (err) => {

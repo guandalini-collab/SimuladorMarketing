@@ -317,11 +317,11 @@ export default function Empresa() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Valida tamanho (5MB)
-      if (file.size > 5 * 1024 * 1024) {
+      // Valida tamanho (2MB — a imagem é convertida para base64 e guardada no banco)
+      if (file.size > 2 * 1024 * 1024) {
         toast({
           title: "Arquivo muito grande",
-          description: "O arquivo deve ter no máximo 5MB",
+          description: "O arquivo deve ter no máximo 2MB",
           variant: "destructive",
         });
         return;
@@ -499,7 +499,7 @@ export default function Empresa() {
                     <p className="text-xs text-muted-foreground">
                       {logoFile 
                         ? `Arquivo selecionado: ${logoFile.name} (${(logoFile.size / 1024).toFixed(1)} KB)`
-                        : "Selecione uma imagem (JPG, PNG, GIF, WEBP, SVG - máx. 5MB)"}
+                        : "Selecione uma imagem (JPG, PNG, GIF, WEBP, SVG - máx. 2MB)"}
                     </p>
                   </div>
                 </div>
