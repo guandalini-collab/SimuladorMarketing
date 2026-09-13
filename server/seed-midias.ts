@@ -18,6 +18,7 @@ const midiasData = [
     custoUnitarioMinimo: 8500.00,
     unidade: "inserção",
     quantidadeSugerida: "1-3",
+    descricao: "Anúncio ocupando a página inteira em jornal impresso, indicado para grande visibilidade e credibilidade institucional.",
     orderIndex: 1
   },
   {
@@ -27,6 +28,7 @@ const midiasData = [
     custoUnitarioMinimo: 4500.00,
     unidade: "inserção",
     quantidadeSugerida: "2-5",
+    descricao: "Anúncio ocupando meia página em jornal impresso, alternativa de menor custo à página inteira.",
     orderIndex: 2
   },
   {
@@ -36,6 +38,7 @@ const midiasData = [
     custoUnitarioMinimo: 12000.00,
     unidade: "inserção",
     quantidadeSugerida: "1-2",
+    descricao: "Anúncio de página inteira em revista impressa, indicado para públicos segmentados por editoria.",
     orderIndex: 3
   },
   
@@ -47,6 +50,7 @@ const midiasData = [
     custoUnitarioMinimo: 1200.00,
     unidade: "campanha",
     quantidadeSugerida: "3-5",
+    descricao: "Parceria paga com criador de conteúdo de até 100 mil seguidores, indicada para nichos específicos e maior proximidade com a audiência.",
     orderIndex: 10
   },
   {
@@ -56,6 +60,7 @@ const midiasData = [
     custoUnitarioMinimo: 3500.00,
     unidade: "campanha",
     quantidadeSugerida: "2-3",
+    descricao: "Parceria paga com criador de conteúdo de 100 mil a 500 mil seguidores, equilíbrio entre alcance e engajamento.",
     orderIndex: 11
   },
   {
@@ -65,6 +70,7 @@ const midiasData = [
     custoUnitarioMinimo: 8000.00,
     unidade: "campanha",
     quantidadeSugerida: "1-2",
+    descricao: "Parceria paga com criador de conteúdo acima de 500 mil seguidores, indicada para campanhas de grande alcance.",
     orderIndex: 12
   },
   
@@ -76,10 +82,10 @@ const midiasData = [
     custoUnitarioMinimo: 0.12,
     unidade: "envio",
     quantidadeSugerida: "1000-10000",
-    descricao: "R$ 0,12 por envio",
+    descricao: "Disparo de campanha por e-mail para uma lista de contatos. R$ 0,12 por envio.",
     orderIndex: 13
   },
-  
+
   // PODCASTS (p. 9)
   {
     categoria: "Marketing Digital",
@@ -88,6 +94,7 @@ const midiasData = [
     custoUnitarioMinimo: 800.00,
     unidade: "inserção",
     quantidadeSugerida: "2-4",
+    descricao: "Menção ou spot publicitário inserido dentro de um episódio de podcast.",
     orderIndex: 14
   },
   {
@@ -139,6 +146,7 @@ const midiasData = [
     custoUnitarioMinimo: 1700.00,
     unidade: "unidade/mês",
     quantidadeSugerida: "5-10",
+    descricao: "Painel publicitário fixo instalado em vias de grande circulação.",
     orderIndex: 20
   },
   {
@@ -148,6 +156,7 @@ const midiasData = [
     custoUnitarioMinimo: 4000.00,
     unidade: "unidade/mês",
     quantidadeSugerida: "3-5",
+    descricao: "Painel iluminado internamente, indicado para pontos de grande visibilidade noturna.",
     orderIndex: 21
   },
   {
@@ -157,6 +166,7 @@ const midiasData = [
     custoUnitarioMinimo: 900.00,
     unidade: "unidade/mês",
     quantidadeSugerida: "10-20",
+    descricao: "Anúncio aplicado na lateral externa de ônibus urbano.",
     orderIndex: 22
   },
   {
@@ -166,9 +176,10 @@ const midiasData = [
     custoUnitarioMinimo: 1400.00,
     unidade: "unidade/mês",
     quantidadeSugerida: "5-10",
+    descricao: "Painel de LED digital em vias públicas, permite rotação entre diferentes campanhas.",
     orderIndex: 23
   },
-  
+
   // RÁDIO (p. 16)
   {
     categoria: "Mídia Eletrônica",
@@ -177,6 +188,7 @@ const midiasData = [
     custoUnitarioMinimo: 500.00,
     unidade: "inserção",
     quantidadeSugerida: "20-50",
+    descricao: "Inserção de áudio de 30 segundos veiculada na programação de rádio.",
     orderIndex: 30
   },
   {
@@ -186,9 +198,10 @@ const midiasData = [
     custoUnitarioMinimo: 1200.00,
     unidade: "inserção",
     quantidadeSugerida: "10-20",
+    descricao: "Anúncio lido ao vivo por um apresentador ou locutor do programa.",
     orderIndex: 31
   },
-  
+
   // TV (p. 18)
   {
     categoria: "Mídia Eletrônica",
@@ -197,6 +210,7 @@ const midiasData = [
     custoUnitarioMinimo: 18000.00,
     unidade: "inserção",
     quantidadeSugerida: "5-10",
+    descricao: "Comercial de 15 segundos veiculado na grade de programação de TV.",
     orderIndex: 32
   },
   {
@@ -206,9 +220,10 @@ const midiasData = [
     custoUnitarioMinimo: 30000.00,
     unidade: "inserção",
     quantidadeSugerida: "3-8",
+    descricao: "Comercial de 30 segundos veiculado na grade de programação de TV.",
     orderIndex: 33
   },
-  
+
   // CINEMA (p. 20)
   {
     categoria: "Mídia Eletrônica",
@@ -217,9 +232,10 @@ const midiasData = [
     custoUnitarioMinimo: 12000.00,
     unidade: "semana",
     quantidadeSugerida: "2-4",
+    descricao: "Comercial de 30 segundos exibido antes da sessão nas salas de cinema.",
     orderIndex: 34
   },
-  
+
   // MARKETING DIRETO (p. 21, 36)
   {
     categoria: "Marketing Direto",
@@ -228,6 +244,7 @@ const midiasData = [
     custoUnitarioMinimo: 350.00,
     unidade: "dia",
     quantidadeSugerida: "5-10",
+    descricao: "Divulgação sonora itinerante em vias públicas de um bairro ou região.",
     orderIndex: 40
   },
   {
@@ -237,7 +254,7 @@ const midiasData = [
     custoUnitarioMinimo: 0.22,
     unidade: "unidade",
     quantidadeSugerida: "5000-20000",
-    descricao: "R$ 0,22 por unidade",
+    descricao: "Impressão do material para distribuição. R$ 0,22 por unidade.",
     orderIndex: 41
   },
   {
@@ -247,7 +264,7 @@ const midiasData = [
     custoUnitarioMinimo: 0.18,
     unidade: "unidade",
     quantidadeSugerida: "5000-20000",
-    descricao: "R$ 0,18 por unidade distribuída",
+    descricao: "Distribuição de panfletos em pontos de grande circulação. R$ 0,18 por unidade distribuída.",
     orderIndex: 42
   },
   {
@@ -279,6 +296,7 @@ const midiasData = [
     custoUnitarioMinimo: 3800.00,
     unidade: "mês",
     quantidadeSugerida: "1-3",
+    descricao: "Gestão profissional do relacionamento com a imprensa para geração de pauta espontânea.",
     orderIndex: 50
   },
   {
@@ -288,9 +306,10 @@ const midiasData = [
     custoUnitarioMinimo: 280.00,
     unidade: "release",
     quantidadeSugerida: "3-6",
+    descricao: "Nota oficial enviada a veículos de imprensa para divulgar uma novidade da empresa.",
     orderIndex: 51
   },
-  
+
   // PROMOÇÕES DE VENDAS (p. 36)
   {
     categoria: "Promoção de Vendas",
@@ -299,10 +318,10 @@ const midiasData = [
     custoUnitarioMinimo: 8.00,
     unidade: "unidade",
     quantidadeSugerida: "500-2000",
-    descricao: "R$ 8,00 por brinde",
+    descricao: "Distribuição de brindes promocionais com a marca da empresa. R$ 8,00 por unidade.",
     orderIndex: 60
   },
-  
+
   // PRODUCT PLACEMENT (p. 37)
   {
     categoria: "Product Placement",
@@ -311,6 +330,7 @@ const midiasData = [
     custoUnitarioMinimo: 6000.00,
     unidade: "inserção",
     quantidadeSugerida: "1-2",
+    descricao: "Inserção do produto ou marca em cena de programa de TV, novela ou conteúdo audiovisual.",
     orderIndex: 70
   },
   {
@@ -320,6 +340,7 @@ const midiasData = [
     custoUnitarioMinimo: 18000.00,
     unidade: "inserção",
     quantidadeSugerida: "1",
+    descricao: "Inserção destacada e recorrente do produto ou marca em conteúdo audiovisual de alto alcance.",
     orderIndex: 71
   },
 ];

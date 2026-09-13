@@ -84,6 +84,50 @@ const NOVAS_MIDIAS: MidiaSeed[] = [
   },
 ];
 
+// Descrições para as 25 mídias do catálogo original (seed-midias.ts). A
+// maioria nunca teve o campo `descricao` preenchido; um punhado tinha apenas
+// o preço repetido (ex.: "R$ 0,22 por unidade"), redundante com o campo
+// "Custo unitário mínimo" que o Guia de Mídias já exibe ao lado. Por isso a
+// atualização é incondicional (sempre reescreve com o texto abaixo), não só
+// quando está vazio — garante um texto explicativo real para todas as
+// mídias. Roda a cada boot do servidor, por categoria+nome+formato:
+// idempotente (reescreve o mesmo texto) e nunca insere linha nova aqui — só
+// complementa registros que já existem.
+interface DescricaoSeed {
+  categoria: string;
+  nome: string;
+  formato: string;
+  descricao: string;
+}
+
+const DESCRICOES_CATALOGO_ORIGINAL: DescricaoSeed[] = [
+  { categoria: "Mídia Impressa", nome: "Jornal", formato: "Página Inteira", descricao: "Anúncio ocupando a página inteira em jornal impresso, indicado para grande visibilidade e credibilidade institucional." },
+  { categoria: "Mídia Impressa", nome: "Jornal", formato: "Meia Página", descricao: "Anúncio ocupando meia página em jornal impresso, alternativa de menor custo à página inteira." },
+  { categoria: "Mídia Impressa", nome: "Revista", formato: "Página Inteira", descricao: "Anúncio de página inteira em revista impressa, indicado para públicos segmentados por editoria." },
+  { categoria: "Marketing Digital", nome: "Influenciador", formato: "Micro (até 100k seguidores)", descricao: "Parceria paga com criador de conteúdo de até 100 mil seguidores, indicada para nichos específicos e maior proximidade com a audiência." },
+  { categoria: "Marketing Digital", nome: "Influenciador", formato: "Médio (100k-500k seguidores)", descricao: "Parceria paga com criador de conteúdo de 100 mil a 500 mil seguidores, equilíbrio entre alcance e engajamento." },
+  { categoria: "Marketing Digital", nome: "Influenciador", formato: "Grande (500k+ seguidores)", descricao: "Parceria paga com criador de conteúdo acima de 500 mil seguidores, indicada para campanhas de grande alcance." },
+  { categoria: "Marketing Digital", nome: "E-mail Marketing", formato: "Campanha", descricao: "Disparo de campanha por e-mail para uma lista de contatos. R$ 0,12 por envio." },
+  { categoria: "Marketing Digital", nome: "Podcast", formato: "Inserção", descricao: "Menção ou spot publicitário inserido dentro de um episódio de podcast." },
+  { categoria: "Mídia Exterior (OOH)", nome: "Outdoor", formato: "Fixo", descricao: "Painel publicitário fixo instalado em vias de grande circulação." },
+  { categoria: "Mídia Exterior (OOH)", nome: "Front Light", formato: "Padrão", descricao: "Painel iluminado internamente, indicado para pontos de grande visibilidade noturna." },
+  { categoria: "Mídia Exterior (OOH)", nome: "Busdoor", formato: "Padrão", descricao: "Anúncio aplicado na lateral externa de ônibus urbano." },
+  { categoria: "Mídia Exterior (OOH)", nome: "Painéis Digitais", formato: "Padrão", descricao: "Painel de LED digital em vias públicas, permite rotação entre diferentes campanhas." },
+  { categoria: "Mídia Eletrônica", nome: "Rádio", formato: "Spot 30s", descricao: "Inserção de áudio de 30 segundos veiculada na programação de rádio." },
+  { categoria: "Mídia Eletrônica", nome: "Rádio", formato: "Testemunhal", descricao: "Anúncio lido ao vivo por um apresentador ou locutor do programa." },
+  { categoria: "Mídia Eletrônica", nome: "TV", formato: "Comercial 15s", descricao: "Comercial de 15 segundos veiculado na grade de programação de TV." },
+  { categoria: "Mídia Eletrônica", nome: "TV", formato: "Comercial 30s", descricao: "Comercial de 30 segundos veiculado na grade de programação de TV." },
+  { categoria: "Mídia Eletrônica", nome: "Cinema", formato: "Comercial 30s", descricao: "Comercial de 30 segundos exibido antes da sessão nas salas de cinema." },
+  { categoria: "Marketing Direto", nome: "Carro de Som", formato: "Padrão", descricao: "Divulgação sonora itinerante em vias públicas de um bairro ou região." },
+  { categoria: "Marketing Direto", nome: "Panfletos e Flyers", formato: "Impressão", descricao: "Impressão do material para distribuição. R$ 0,22 por unidade." },
+  { categoria: "Marketing Direto", nome: "Panfletos e Flyers", formato: "Distribuição", descricao: "Distribuição de panfletos em pontos de grande circulação. R$ 0,18 por unidade distribuída." },
+  { categoria: "Relações Públicas", nome: "Assessoria de Imprensa", formato: "Mensal", descricao: "Gestão profissional do relacionamento com a imprensa para geração de pauta espontânea." },
+  { categoria: "Relações Públicas", nome: "Comunicados à Imprensa", formato: "Por release", descricao: "Nota oficial enviada a veículos de imprensa para divulgar uma novidade da empresa." },
+  { categoria: "Promoção de Vendas", nome: "Brindes", formato: "Padrão", descricao: "Distribuição de brindes promocionais com a marca da empresa. R$ 8,00 por unidade." },
+  { categoria: "Product Placement", nome: "Product Placement", formato: "Inserção Simples", descricao: "Inserção do produto ou marca em cena de programa de TV, novela ou conteúdo audiovisual." },
+  { categoria: "Product Placement", nome: "Product Placement", formato: "Inserção Premium", descricao: "Inserção destacada e recorrente do produto ou marca em conteúdo audiovisual de alto alcance." },
+];
+
 export async function ensureMidiaCatalog(): Promise<void> {
   try {
     for (const midia of NOVAS_MIDIAS) {
@@ -108,6 +152,17 @@ export async function ensureMidiaCatalog(): Promise<void> {
           ]
         );
         console.log(`✓ Mídia adicionada ao catálogo: ${midia.categoria} / ${midia.nome} (${midia.formato})`);
+      }
+    }
+
+    for (const item of DESCRICOES_CATALOGO_ORIGINAL) {
+      const result = await pool.query(
+        `UPDATE midias SET descricao = $1
+         WHERE categoria = $2 AND nome = $3 AND formato = $4 AND descricao IS DISTINCT FROM $1`,
+        [item.descricao, item.categoria, item.nome, item.formato]
+      );
+      if ((result.rowCount ?? 0) > 0) {
+        console.log(`✓ Descrição atualizada: ${item.categoria} / ${item.nome} (${item.formato})`);
       }
     }
   } catch (error) {
