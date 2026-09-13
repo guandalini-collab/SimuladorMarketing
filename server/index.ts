@@ -3,6 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { ensureMidiaCatalog } from "./ensureMidiaCatalog";
+import { pool } from "./pg-storage";
 
 const app = express();
 
@@ -52,6 +53,26 @@ app.use((req, res, next) => {
 
 (async () => {
   await ensureMidiaCatalog();
+
+  // TEMP DIAGNOSTIC (Item 7 - auditoria): verificar se já existem linhas
+  // duplicadas (team_id, round_id) na tabela "results" antes de adicionar
+  // uma constraint de unicidade. Remover após a checagem.
+  try {
+    const dup = await pool.query(`
+      SELECT team_id, round_id, COUNT(*) AS count
+      FROM results
+      GROUP BY team_id, round_id
+      HAVING COUNT(*) > 1
+    `);
+    log(`[DIAG-ITEM7] Grupos (team_id, round_id) duplicados em "results": ${dup.rows.length}`);
+    if (dup.rows.length > 0) {
+      log(`[DIAG-ITEM7] Detalhe: ${JSON.stringify(dup.rows)}`);
+    }
+    const total = await pool.query(`SELECT COUNT(*) AS count FROM results`);
+    log(`[DIAG-ITEM7] Total de linhas em "results": ${total.rows[0].count}`);
+  } catch (e) {
+    log(`[DIAG-ITEM7] Erro ao checar duplicatas: ${e}`);
+  }
 
   const server = await registerRoutes(app);
 
