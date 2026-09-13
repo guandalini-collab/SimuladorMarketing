@@ -128,9 +128,8 @@ export default function GuiaMidias() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>• Mala Direta</li>
               <li>• Telemarketing</li>
-              <li>• Catálogos de Produtos</li>
-              <li>• Venda Direta (Porta a porta)</li>
-              <li>• Eventos e Promoções</li>
+              <li>• Carro de Som</li>
+              <li>• Panfletos e Flyers</li>
             </ul>
           </CardContent>
         </Card>

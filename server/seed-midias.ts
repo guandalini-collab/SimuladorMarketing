@@ -90,7 +90,27 @@ const midiasData = [
     quantidadeSugerida: "2-4",
     orderIndex: 14
   },
-  
+  {
+    categoria: "Marketing Digital",
+    nome: "SMS Marketing",
+    formato: "Campanha",
+    custoUnitarioMinimo: 0.10,
+    unidade: "envio",
+    quantidadeSugerida: "1000-10000",
+    descricao: "R$ 0,10 por SMS enviado",
+    orderIndex: 15
+  },
+  {
+    categoria: "Marketing Digital",
+    nome: "Marketing de Conteúdo",
+    formato: "Pacote Mensal",
+    custoUnitarioMinimo: 1500.00,
+    unidade: "mês",
+    quantidadeSugerida: "1-3",
+    descricao: "Produção de conteúdo para blog e redes sociais (pacote básico)",
+    orderIndex: 16
+  },
+
   // OOH EXTERIOR (p. 13)
   {
     categoria: "Mídia Exterior (OOH)",
@@ -210,7 +230,27 @@ const midiasData = [
     descricao: "R$ 0,18 por unidade distribuída",
     orderIndex: 42
   },
-  
+  {
+    categoria: "Marketing Direto",
+    nome: "Mala Direta",
+    formato: "Impressão e Postagem",
+    custoUnitarioMinimo: 1.50,
+    unidade: "unidade",
+    quantidadeSugerida: "1000-5000",
+    descricao: "R$ 1,50 por peça (impressão + postagem)",
+    orderIndex: 43
+  },
+  {
+    categoria: "Marketing Direto",
+    nome: "Telemarketing",
+    formato: "Campanha Mensal",
+    custoUnitarioMinimo: 1500.00,
+    unidade: "mês",
+    quantidadeSugerida: "1",
+    descricao: "Operação terceirizada de telemarketing",
+    orderIndex: 44
+  },
+
   // RELAÇÕES PÚBLICAS (p. 36)
   {
     categoria: "Relações Públicas",

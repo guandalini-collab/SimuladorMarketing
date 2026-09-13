@@ -612,24 +612,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
     }
-    
+
     try {
-      const path = await import('path');
-      const fs = await import('fs');
-      
-      const pdfPath = path.join(process.cwd(), 'attached_assets', 'GUIA DE MIDIA SIMULA+_1763564911908.pdf');
-      
-      if (!fs.existsSync(pdfPath)) {
-        return res.status(404).json({ error: "PDF do Guia de Mídias não encontrado" });
-      }
-      
+      // Gerado dinamicamente a partir da tabela `midias` (ver
+      // server/services/guiaMidiasPDF.ts). O antigo PDF estático nunca foi
+      // versionado no git (excluído via .gitignore) e por isso não existia
+      // mais em produção — todo download retornava 404. Como o conteúdo
+      // agora vem direto do catálogo real, nunca fica desatualizado nem
+      // volta a se perder num deploy.
+      const { generateGuiaMidiasPDF } = await import('./services/guiaMidiasPDF');
+      const midias = await storage.getAllMidias();
+
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'attachment; filename="Guia_Midias_Simula.pdf"');
-      
-      const fileStream = fs.createReadStream(pdfPath);
-      fileStream.pipe(res);
+
+      const pdfStream = generateGuiaMidiasPDF(midias);
+      pdfStream.pipe(res);
     } catch (error) {
-      console.error("Erro ao servir PDF do guia de mídias:", error);
+      console.error("Erro ao gerar PDF do guia de mídias:", error);
       res.status(500).json({ error: "Erro ao carregar guia de mídias" });
     }
   });
