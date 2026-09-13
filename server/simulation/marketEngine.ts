@@ -389,28 +389,26 @@ function calculateEventImpact(event: MarketEvent): EventImpact {
   const severityFactor = getSeverityFactor(event.severity);
 
   switch (event.type) {
-    case "economia":
+    case "economico":
       demandMultiplier = 1 - severityFactor * 0.15;
       revenueMultiplier = 1 - severityFactor * 0.12;
       break;
-    case "competicao":
+    case "competitivo":
       revenueMultiplier = 1 - severityFactor * 0.08;
       demandMultiplier = 1 - severityFactor * 0.05;
       break;
-    case "tecnologia":
+    case "tecnologico":
       revenueMultiplier = 1 + severityFactor * 0.08;
       costMultiplier = 1 - severityFactor * 0.05;
       break;
     case "social":
       demandMultiplier = 1 + severityFactor * 0.10;
       break;
-    case "politico":
-      costMultiplier = 1 + severityFactor * 0.08;
-      break;
-    case "ambiental":
-      costMultiplier = 1 + severityFactor * 0.12;
-      demandMultiplier = 1 - severityFactor * 0.05;
-      break;
+    // "regulatorio" fica sem efeito numérico por ora — os eventos dessa
+    // categoria têm sentido misto (ex.: "Aumento de Impostos" é negativo,
+    // "Redução de Impostos" é positivo) e o cálculo atual só decide pelo
+    // tipo+severidade, sem ler o conteúdo do evento. Tratar com mais calma
+    // antes de atribuir uma direção única a essa categoria.
     default:
       break;
   }

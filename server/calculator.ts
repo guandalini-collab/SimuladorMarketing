@@ -432,11 +432,16 @@ function calculateEventImpact(events: MarketEvent[]): number {
     else if (event.severity === "alto") eventMultiplier = 0.15;
     else if (event.severity === "critico") eventMultiplier = 0.25;
     
-    if (event.type === "economia" || event.type === "competicao") {
+    if (event.type === "economico" || event.type === "competitivo") {
       totalImpact -= eventMultiplier;
-    } else if (event.type === "tecnologia" || event.type === "social") {
+    } else if (event.type === "tecnologico" || event.type === "social") {
       totalImpact += eventMultiplier * 0.5;
     }
+    // "regulatorio" fica sem efeito numérico por ora — os eventos dessa
+    // categoria têm sentido misto (ex.: "Aumento de Impostos" é negativo,
+    // "Redução de Impostos" é positivo) e o cálculo atual só decide pelo
+    // tipo+severidade, sem ler o conteúdo do evento. Tratar com mais calma
+    // antes de atribuir uma direção única a essa categoria.
   }
   
   return Math.max(0.5, Math.min(1.5, 1 + totalImpact));
