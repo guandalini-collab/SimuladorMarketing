@@ -135,12 +135,20 @@ export async function ensureMidiaCatalog(): Promise<void> {
     // Lista o que realmente está gravado no banco para comparar caractere
     // a caractere com o que este arquivo espera (ex.: acentuação, espaços).
     try {
+      const countRes = await pool.query(`SELECT count(*) FROM midias`);
+      console.log(`[DEBUG midias] total de linhas na tabela: ${countRes.rows[0].count}`);
+
+      // A primeira tentativa (ORDER BY order_index LIMIT 5) só trouxe as 6
+      // mídias novas dos Grupos 1-2 — sinal de que as 25 originais têm
+      // order_index NULL (Postgres ordena NULL por último em ASC). Busca
+      // agora especificamente por elas.
       const debug = await pool.query(
-        `SELECT categoria, nome, formato, length(categoria) as len_categoria, length(nome) as len_nome, length(formato) as len_formato
-         FROM midias ORDER BY order_index LIMIT 5`
+        `SELECT categoria, nome, formato, order_index, length(categoria) as len_categoria, length(nome) as len_nome, length(formato) as len_formato
+         FROM midias WHERE order_index IS NULL LIMIT 8`
       );
+      console.log(`[DEBUG midias] linhas com order_index NULL: ${debug.rows.length}`);
       for (const row of debug.rows) {
-        console.log(`[DEBUG midias] categoria="${row.categoria}"(${row.len_categoria}) nome="${row.nome}"(${row.len_nome}) formato="${row.formato}"(${row.len_formato})`);
+        console.log(`[DEBUG midias] categoria="${row.categoria}"(${row.len_categoria}) nome="${row.nome}"(${row.len_nome}) formato="${row.formato}"(${row.len_formato}) order_index=${row.order_index}`);
       }
     } catch (debugError) {
       console.error("[DEBUG midias] falhou:", debugError);
