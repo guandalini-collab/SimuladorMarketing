@@ -53,6 +53,43 @@ export async function diagPkDrift(): Promise<void> {
       ORDER BY table_name
     `);
     console.log(`[DIAG-PK] Tabelas em 'public': ${allTables.rows.map(r => r.table_name).join(", ")}`);
+
+    // Verificação crítica de segurança: o "drizzle-kit push" (pre-deploy) gera,
+    // a cada deploy, um DROP CONSTRAINT "<tabela>_<coluna>_not_null" para
+    // praticamente toda coluna NOT NULL do banco (não só "id") — provavelmente
+    // por causa de como o Postgres 17+ passou a catalogar NOT NULL como
+    // constraint nomeada (pg_constraint contype='n'), o que confunde o diff
+    // do drizzle-kit. O push só falha (42P16) quando chega numa coluna "id"
+    // (ainda faz parte da PK). Como as statements rodam em loop simples,
+    // sem transação (db.query() um a um, sem BEGIN/COMMIT — confirmado lendo
+    // o código-fonte do drizzle-kit em node_modules), statements ANTERIORES
+    // à que falha no loop já teriam sido de fato aplicadas e confirmadas no
+    // banco. Esta checagem confirma, direto no catálogo de produção, se
+    // alguma coluna que schema.ts declara como notNull() já está, de fato,
+    // NULLABLE em produção (ou seja, se o DROP CONSTRAINT already-executado
+    // realmente "pegou").
+    const nullableCols = await pool.query(`
+      SELECT table_name, column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND is_nullable = 'YES'
+      ORDER BY table_name, column_name
+    `);
+    console.log(`[DIAG-NULL] ${nullableCols.rows.length} colunas atualmente NULLABLE em produção:`);
+    for (const row of nullableCols.rows) {
+      console.log(`[DIAG-NULL] tabela=${row.table_name} coluna=${row.column_name}`);
+    }
+
+    // Checagem extra: schema.ts não declara mais "readyConfirmedAt" nem
+    // "tutorialCompletedAt" na tabela "teams" (DROP COLUMN pendente no plano
+    // do drizzle-kit) — confirma se essas colunas ainda existem em produção
+    // (ou seja, se esse DROP COLUMN específico, que aparece DEPOIS dos DROP
+    // CONSTRAINT no plano impresso, chegou a rodar).
+    const teamsCols = await pool.query(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'teams'
+      ORDER BY column_name
+    `);
+    console.log(`[DIAG-NULL] Colunas atuais de "teams": ${teamsCols.rows.map(r => r.column_name).join(", ")}`);
   } catch (e) {
     console.log(`[DIAG-PK] Erro ao investigar: ${e}`);
   }
