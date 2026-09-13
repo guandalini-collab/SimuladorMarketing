@@ -508,7 +508,9 @@ export default function Mercado() {
                   </CardHeader>
                   <CardContent className="pt-6">
                     <div className="text-3xl font-bold">
-                      R$ {economicData.exchangeRateUSD?.toFixed(2) || "N/A"}
+                      {economicData.exchangeRateUSD != null
+                        ? `R$ ${economicData.exchangeRateUSD.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : "N/A"}
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
                       Atualizado em {new Date(economicData.date || economicData.createdAt).toLocaleString("pt-BR")}
@@ -619,7 +621,7 @@ export default function Mercado() {
                         <XAxis dataKey="data" />
                         <YAxis domain={["auto", "auto"]} />
                         <Tooltip
-                          formatter={(value: number) => [`R$ ${value.toFixed(2)}`, "Taxa"]}
+                          formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, "Taxa"]}
                           labelStyle={{ color: "hsl(var(--foreground))" }}
                           contentStyle={{
                             backgroundColor: "hsl(var(--background))",

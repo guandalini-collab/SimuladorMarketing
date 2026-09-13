@@ -444,7 +444,7 @@ export default function Dashboard() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <KPICard
           title="Orçamento Disponível"
-          value={`R$ ${team.budget?.toLocaleString('pt-BR') || '0'}`}
+          value={`R$ ${(team.budget ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={DollarSign}
           testId="text-budget"
           color="green"

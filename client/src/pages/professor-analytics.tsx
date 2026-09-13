@@ -335,7 +335,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium">{team.teamName}</TableCell>
-                      <TableCell className="text-right">R$ {team.profit.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">R$ {team.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                       <TableCell className="text-right">{team.margin.toFixed(1)}%</TableCell>
                     </TableRow>
                   ))}
@@ -363,7 +363,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
                       </TableCell>
                       <TableCell className="font-medium">{team.teamName}</TableCell>
                       <TableCell className="text-right">{team.marketShare.toFixed(1)}%</TableCell>
-                      <TableCell className="text-right">R$ {team.revenue.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">R$ {team.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -390,7 +390,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
                       </TableCell>
                       <TableCell className="font-medium">{team.teamName}</TableCell>
                       <TableCell className="text-right">{team.nps.toFixed(0)}</TableCell>
-                      <TableCell className="text-right">R$ {team.profit.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">R$ {team.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

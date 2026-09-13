@@ -538,7 +538,7 @@ export default function Decisoes() {
               </div>
               <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg backdrop-blur-sm">
                 <DollarSign className="h-4 w-4 text-white" />
-                <span className="text-sm text-white font-medium">R$ {team.budget?.toLocaleString('pt-BR') || '0'}</span>
+                <span className="text-sm text-white font-medium">R$ {(team.budget ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               {activeRound && (
                 <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg backdrop-blur-sm">
@@ -707,7 +707,7 @@ export default function Decisoes() {
               <AlertDescription>
                 <strong>Informações do Setor:</strong> {marketSector.name} - Margem média de {marketSector.averageMargin}%. 
                 {marketSector.categories && marketSector.categories.length > 0 && (
-                  <span> Preço médio de produtos: R$ {marketSector.categories[0].averagePrice?.toLocaleString('pt-BR')}.</span>
+                  <span> Preço médio de produtos: R$ {(marketSector.categories[0].averagePrice ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.</span>
                 )}
               </AlertDescription>
             </Alert>
@@ -980,7 +980,7 @@ export default function Decisoes() {
                 </div>
                 <div className="p-4 bg-muted/50 rounded-lg space-y-2">
                   <p className="text-sm">
-                    <strong>Posicionamento:</strong> Seu preço de R$ {price.toFixed(2)} posiciona o produto na faixa{" "}
+                    <strong>Posicionamento:</strong> Seu preço de R$ {price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} posiciona o produto na faixa{" "}
                     {price < 50 ? "econômica" : price < 100 ? "média" : "premium"}.
                   </p>
                   <p className="text-sm">
@@ -1180,9 +1180,9 @@ export default function Decisoes() {
                                   <p className="text-xs text-muted-foreground mt-0.5">{midia.especificacao}</p>
                                 )}
                                 <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-                                  <span>Preço unitário: R$ {(midia.custoUnitarioMinimo || 0).toFixed(2)}</span>
+                                  <span>Preço unitário: {formatarNumeroBR(midia.custoUnitarioMinimo || 0, 'moeda')}</span>
                                   <span>•</span>
-                                  <span className="text-[#7a5300] dark:text-amber-500 font-medium">Investimento mínimo: R$ {(midia.valorMinimo || midia.custoUnitarioMinimo || 0).toFixed(2)}</span>
+                                  <span className="text-[#7a5300] dark:text-amber-500 font-medium">Investimento mínimo: {formatarNumeroBR(midia.valorMinimo || midia.custoUnitarioMinimo || 0, 'moeda')}</span>
                                 </div>
                               </div>
                             </Label>
@@ -1207,7 +1207,7 @@ export default function Decisoes() {
                                 <Alert variant="destructive" className="py-2">
                                   <AlertCircle className="h-3 w-3" />
                                   <AlertDescription className="text-xs">
-                                    Valor abaixo do mínimo de R$ {(midia.valorMinimo || midia.custoUnitarioMinimo || 0).toFixed(2)}
+                                    Valor abaixo do mínimo de {formatarNumeroBR(midia.valorMinimo || midia.custoUnitarioMinimo || 0, 'moeda')}
                                   </AlertDescription>
                                 </Alert>
                               )}
@@ -1235,14 +1235,14 @@ export default function Decisoes() {
                 <div className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg border-2 border-primary/20">
                   <p className="text-sm text-muted-foreground mb-2">Total Investido em Promoção</p>
                   <p className="text-3xl font-bold text-primary" data-testid="text-total-promotion-budget">
-                    R$ {totalPromotionBudget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {totalPromotionBudget.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
 
                 <Alert>
                   <DollarSign className="h-4 w-4" />
                   <AlertDescription>
-                    <strong>Orçamento Disponível:</strong> R$ {(team?.budget || 0).toLocaleString('pt-BR')}
+                    <strong>Orçamento Disponível:</strong> {formatarNumeroBR(team?.budget || 0, 'moeda')}
                     <br />
                     <span className="text-sm text-muted-foreground">
                       Você pode investir livremente sem obrigação de usar 100% do orçamento. 

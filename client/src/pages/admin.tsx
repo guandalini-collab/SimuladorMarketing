@@ -435,7 +435,7 @@ function TeamCard({
             </div>
           </div>
           <Badge variant="outline">
-            R$ {team.budget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            R$ {team.budget.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Badge>
         </div>
       </CardHeader>
@@ -1039,7 +1039,7 @@ export default function AdminPage() {
                               </TableCell>
                               <TableCell className="capitalize">{mix.productQuality}</TableCell>
                               <TableCell className="capitalize">{mix.priceStrategy}</TableCell>
-                              <TableCell>R$ {mix.priceValue}</TableCell>
+                              <TableCell>R$ {Number(mix.priceValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                               <TableCell className="text-muted-foreground text-sm">
                                 {mix.submittedAt ? new Date(mix.submittedAt as Date).toLocaleString('pt-BR') : '-'}
                               </TableCell>

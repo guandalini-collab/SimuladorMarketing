@@ -126,7 +126,7 @@ export class EmailService {
             <h3 style="margin-top: 0; color: #1f2937;">📊 Resumo da Decisão:</h3>
             
             <p><strong>🎁 Produto:</strong> Qualidade ${productQuality}</p>
-            <p><strong>💰 Preço:</strong> R$ ${priceValue.toFixed(2)}</p>
+            <p><strong>💰 Preço:</strong> R$ ${priceValue.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             <p><strong>📍 Distribuição:</strong> ${distributionChannels.join(", ")}</p>
             <p><strong>📢 Promoção:</strong> ${promotionMix.join(", ")}</p>
             
@@ -134,7 +134,7 @@ export class EmailService {
             
             <p><strong>💵 Custo Estimado:</strong> 
               <span style="color: #dc2626; font-size: 18px; font-weight: bold;">
-                R$ ${estimatedCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                R$ ${estimatedCost.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </p>
           </div>

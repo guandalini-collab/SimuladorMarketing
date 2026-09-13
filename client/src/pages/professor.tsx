@@ -3380,7 +3380,7 @@ export default function Professor() {
                         <div className="grid gap-4 sm:grid-cols-3">
                           <div>
                             <p className="text-sm text-muted-foreground">Taxa USD/BRL</p>
-                            <p className="text-xl font-bold">R$ {economicData.exchangeRateUSD?.toFixed(2)}</p>
+                            <p className="text-xl font-bold">R$ {(economicData.exchangeRateUSD ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">Tendência</p>

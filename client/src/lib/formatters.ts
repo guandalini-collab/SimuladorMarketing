@@ -11,7 +11,7 @@ export type FormatType = 'moeda' | 'quantidade' | 'porcentagem';
  * @returns String formatada no padrão brasileiro
  * 
  * @example
- * formatarNumeroBR(1000000, 'moeda') // "R$ 1.000.000"
+ * formatarNumeroBR(1000000, 'moeda') // "R$ 1.000.000,00"
  * formatarNumeroBR(1000000.50, 'moeda') // "R$ 1.000.000,50"
  * formatarNumeroBR("1.234,56", 'moeda') // "R$ 1.234,56" (normaliza string PT-BR)
  * formatarNumeroBR(1500, 'quantidade') // "1.500"
@@ -34,7 +34,9 @@ export function formatarNumeroBR(valor: number | string | null | undefined, tipo
     return '';
   }
 
-  // Determina se deve mostrar centavos
+  // Determina se deve mostrar centavos (apenas para quantidade/porcentagem —
+  // moeda em reais sempre mostra as duas casas decimais, mesmo em valores
+  // redondos: R$ 50,00, nunca R$ 50)
   const temCentavos = numero % 1 !== 0;
 
   switch (tipo) {
@@ -42,8 +44,8 @@ export function formatarNumeroBR(valor: number | string | null | undefined, tipo
       return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
-        minimumFractionDigits: temCentavos ? 2 : 0,
-        maximumFractionDigits: temCentavos ? 2 : 0,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
       }).format(numero);
 
     case 'porcentagem':
