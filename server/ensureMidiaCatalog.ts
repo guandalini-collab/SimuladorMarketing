@@ -1,8 +1,9 @@
 import { pool } from "./pg-storage";
 
-// Mídias que o Guia de Mídias (tela e PDF) sempre prometeu ao aluno, mas que
-// nunca existiram na tabela `midias` — o aluno via a promessa no guia e não
-// encontrava a opção para selecionar/investir na aba Decisões.
+// Mídias adicionadas depois do catálogo original de seed-midias.ts — parte
+// prometida pelo Guia de Mídias mas nunca cadastrada, parte mídia digital
+// paga (Google Ads, Meta Ads) ausente do catálogo original apesar de hoje
+// responder pela maior fatia do investimento publicitário real no Brasil.
 //
 // Esta função roda uma vez a cada boot do servidor e só insere o que ainda
 // não existe (idempotente): nunca apaga nem duplica linhas, então é segura
@@ -60,6 +61,26 @@ const NOVAS_MIDIAS: MidiaSeed[] = [
     quantidadeSugerida: "1",
     descricao: "Operação terceirizada de telemarketing",
     orderIndex: 44,
+  },
+  {
+    categoria: "Marketing Digital",
+    nome: "Google Ads",
+    formato: "Pesquisa, Display e YouTube",
+    custoUnitarioMinimo: 750.00,
+    unidade: "mês",
+    quantidadeSugerida: "1-3",
+    descricao: "Piso de campanha para negócio pequeno/local; nichos competitivos passam de R$ 3.000/mês",
+    orderIndex: 17,
+  },
+  {
+    categoria: "Marketing Digital",
+    nome: "Meta Ads",
+    formato: "Facebook e Instagram",
+    custoUnitarioMinimo: 900.00,
+    unidade: "mês",
+    quantidadeSugerida: "1-3",
+    descricao: "Campanhas de conversão em Facebook e Instagram",
+    orderIndex: 18,
   },
 ];
 

@@ -110,6 +110,26 @@ const midiasData = [
     descricao: "Produção de conteúdo para blog e redes sociais (pacote básico)",
     orderIndex: 16
   },
+  {
+    categoria: "Marketing Digital",
+    nome: "Google Ads",
+    formato: "Pesquisa, Display e YouTube",
+    custoUnitarioMinimo: 750.00,
+    unidade: "mês",
+    quantidadeSugerida: "1-3",
+    descricao: "Piso de campanha para negócio pequeno/local; nichos competitivos passam de R$ 3.000/mês",
+    orderIndex: 17
+  },
+  {
+    categoria: "Marketing Digital",
+    nome: "Meta Ads",
+    formato: "Facebook e Instagram",
+    custoUnitarioMinimo: 900.00,
+    unidade: "mês",
+    quantidadeSugerida: "1-3",
+    descricao: "Campanhas de conversão em Facebook e Instagram",
+    orderIndex: 18
+  },
 
   // OOH EXTERIOR (p. 13)
   {

@@ -106,6 +106,8 @@ export default function GuiaMidias() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>• Google Ads (Pesquisa, Display e YouTube)</li>
+              <li>• Meta Ads (Facebook e Instagram)</li>
               <li>• Influenciadores Digitais</li>
               <li>• Email Marketing</li>
               <li>• Podcasts</li>
