@@ -340,6 +340,43 @@ export function calculateResults(inputs: CalculationInputs): ResultCoreMetrics {
   };
 }
 
+// Item 4 da auditoria: antes, `capitalSocial` era recalculado a cada rodada
+// como 50% do orçamento ATUAL da equipe, e `lucrosAcumulados` era só um
+// resíduo para fechar a equação patrimonial (Ativo = Passivo + PL) —
+// nenhum dos dois carregava histórico de verdade entre rodadas, apesar do
+// nome "Lucros Acumulados" sugerir uma série acumulada. Esta função corrige
+// isso: `capitalSocialFixo` é fixado desde a criação da equipe (não muda
+// mais a cada rodada) e `previousAccumulatedProfits` é somado ao lucro
+// líquido do período para formar o novo acumulado de verdade. Para a
+// equação patrimonial continuar fechando com esses dois valores agora
+// genuínos, quem passa a ser o item de fechamento é o `caixa` — o que
+// inclusive é mais realista: caixa cresce conforme os lucros retidos se
+// acumulam, em vez de resetar a cada rodada.
+export function applyEquityCarryover(
+  kpis: ResultCoreMetrics,
+  capitalSocialFixo: number,
+  previousAccumulatedProfits: number
+): ResultCoreMetrics {
+  const lucrosAcumulados = previousAccumulatedProfits + (kpis.lucroLiquido ?? 0);
+  const patrimonioLiquido = capitalSocialFixo + lucrosAcumulados;
+  const passivoPlTotal = (kpis.passivoCirculante ?? 0) + (kpis.passivoNaoCirculante ?? 0) + patrimonioLiquido;
+
+  const caixa = passivoPlTotal - (kpis.ativoNaoCirculante ?? 0) - (kpis.contasReceber ?? 0) - (kpis.estoques ?? 0);
+  const ativoCirculante = caixa + (kpis.contasReceber ?? 0) + (kpis.estoques ?? 0);
+  const ativoTotal = ativoCirculante + (kpis.ativoNaoCirculante ?? 0);
+
+  return {
+    ...kpis,
+    capitalSocial: capitalSocialFixo,
+    lucrosAcumulados,
+    patrimonioLiquido,
+    passivoPlTotal,
+    caixa,
+    ativoCirculante,
+    ativoTotal,
+  };
+}
+
 function calculateProductScore(mix: MarketingMix): number {
   let score = 20;
   

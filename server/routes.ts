@@ -7,7 +7,7 @@ import session from "express-session";
 import bcrypt from "bcryptjs";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./pg-storage";
-import { calculateResults, calculateMarketingSpend, applyStrategicImpacts, applyAlignmentPenalties } from "./calculator";
+import { calculateResults, calculateMarketingSpend, applyStrategicImpacts, applyAlignmentPenalties, applyEquityCarryover } from "./calculator";
 import { consolidateKpis, type ResultCoreMetrics } from "./utils/consolidateKpis";
 import { marketSectors, targetAudiences, businessTypes, competitionLevels } from "./data/marketData";
 import { z } from "zod";
@@ -1736,6 +1736,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           continue;
         }
 
+        // Item 4 da auditoria: capital social fixo desde a criação da
+        // equipe e lucros acumulados carregados da rodada anterior — ver
+        // applyEquityCarryover em calculator.ts (mesmo padrão usado em
+        // roundCompletion.ts, para os dois caminhos de fechamento de
+        // rodada ficarem consistentes).
+        const previousResult = await storage.getPreviousRoundResult(team.id, req.params.roundId);
+        const capitalSocialFixo = team.initialBudget * 0.50;
+        const previousAccumulatedProfits = previousResult?.lucrosAcumulados ?? 0;
+
         const swot = await storage.getSwotAnalysis(team.id, req.params.roundId);
         const porter = await storage.getPorterAnalysis(team.id, req.params.roundId);
         const bcgList = await storage.getBcgAnalyses(team.id, req.params.roundId);
@@ -1790,7 +1799,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           processedProducts++;
         }
 
-        const consolidatedKPIs = consolidateKpis(productKpisList);
+        const consolidatedKPIs = applyEquityCarryover(
+          consolidateKpis(productKpisList),
+          capitalSocialFixo,
+          previousAccumulatedProfits
+        );
 
         const firstProduct = submittedProducts[0];
         const { kpis: finalKPIs, alignmentScore, alignmentIssues } = applyAlignmentPenalties(

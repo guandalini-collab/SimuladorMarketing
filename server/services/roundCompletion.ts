@@ -1,6 +1,6 @@
 import type { IStorage } from "../storage";
 import type { MarketingMix } from "@shared/schema";
-import { calculateResults, calculateMarketingSpend, applyStrategicImpacts, applyAlignmentPenalties } from "../calculator";
+import { calculateResults, calculateMarketingSpend, applyStrategicImpacts, applyAlignmentPenalties, applyEquityCarryover } from "../calculator";
 import { computeRoundOutcome, type SimulationInputs } from "../simulation/marketEngine";
 import { consolidateKpis, type ResultCoreMetrics } from "../utils/consolidateKpis";
 import { getEnv } from "../config";
@@ -125,6 +125,14 @@ export async function processRoundCompletion(
           const firstProduct = submittedProducts[0];
           const productKpisList: ResultCoreMetrics[] = [];
 
+          // Item 4 da auditoria: capital social fixo desde a criação da
+          // equipe (nunca recalculado a cada rodada) e lucros acumulados
+          // de verdade, carregando o valor fechado na rodada anterior —
+          // ver applyEquityCarryover em calculator.ts.
+          const previousResult = await storage.getPreviousRoundResult(team.id, roundId);
+          const capitalSocialFixo = team.initialBudget * 0.50;
+          const previousAccumulatedProfits = previousResult?.lucrosAcumulados ?? 0;
+
           let finalKPIs: any;
           let alignmentScore: number | undefined;
           let alignmentIssues: string[] | undefined;
@@ -134,7 +142,6 @@ export async function processRoundCompletion(
           let engineVersion: string;
 
           if (useV2Engine) {
-            const previousResult = await storage.getPreviousRoundResult(team.id, roundId);
             const prevCompetitor = previousResult?.competitorResponse as { referencePrice?: number; referencePromoSpend?: number } | null;
             const perProductSim: { productId: string; breakdown: any; competitorResponse: any; eventImpacts: any }[] = [];
 
@@ -235,7 +242,11 @@ export async function processRoundCompletion(
                 simResult.breakdown.map(b => `${b.label}: ΔRev=${b.deltaRevenue}, ΔProfit=${b.deltaProfit}`).join("; "));
             }
 
-            const consolidated = consolidateKpis(productKpisList);
+            const consolidated = applyEquityCarryover(
+              consolidateKpis(productKpisList),
+              capitalSocialFixo,
+              previousAccumulatedProfits
+            );
 
             const penaltyResult = applyAlignmentPenalties(
               consolidated,
@@ -282,7 +293,11 @@ export async function processRoundCompletion(
               });
             }
 
-            const consolidatedKPIs = consolidateKpis(productKpisList);
+            const consolidatedKPIs = applyEquityCarryover(
+              consolidateKpis(productKpisList),
+              capitalSocialFixo,
+              previousAccumulatedProfits
+            );
 
             const penaltyResult = applyAlignmentPenalties(
               consolidatedKPIs,
