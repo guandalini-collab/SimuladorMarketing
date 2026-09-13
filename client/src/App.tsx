@@ -106,12 +106,12 @@ function AuthenticatedApp() {
       <div className="flex h-screen w-full">
         <AppSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="flex items-center justify-between p-4 border-b">
-            <SidebarTrigger data-testid="button-sidebar-toggle" />
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm font-semibold" data-testid="text-team-name">{team?.name || user.name}</p>
-                <p className="text-xs text-muted-foreground">
+          <header className="flex items-center justify-between gap-2 p-4 border-b">
+            <SidebarTrigger className="shrink-0" data-testid="button-sidebar-toggle" />
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+              <div className="text-right min-w-0 hidden sm:block">
+                <p className="text-sm font-semibold truncate" data-testid="text-team-name">{team?.name || user.name}</p>
+                <p className="text-xs text-muted-foreground truncate">
                   Orçamento: R$ {team?.budget?.toLocaleString('pt-BR') || '0'}
                 </p>
               </div>
@@ -119,6 +119,7 @@ function AuthenticatedApp() {
               <Button
                 variant="outline"
                 size="icon"
+                className="shrink-0"
                 onClick={() => logoutMutation.mutate()}
                 disabled={logoutMutation.isPending}
                 data-testid="button-logout"
