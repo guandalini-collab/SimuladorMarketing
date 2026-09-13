@@ -1226,41 +1226,100 @@ export default function Decisoes() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Resumo do Investimento</CardTitle>
-                <CardDescription>Total investido em ferramentas promocionais</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg border-2 border-primary/20">
-                  <p className="text-sm text-muted-foreground mb-2">Total Investido em Promoção</p>
-                  <p className="text-3xl font-bold text-primary" data-testid="text-total-promotion-budget">
-                    R$ {totalPromotionBudget.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </p>
-                </div>
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Intensidade de Promoção</CardTitle>
+                  <CardDescription>Nível de investimento e agressividade da campanha</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RadioGroup value={promotionIntensity} onValueChange={setPromotionIntensity} disabled={!canEdit}>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3 p-3 border rounded-lg hover-elevate">
+                        <RadioGroupItem value="baixo" id="promo-int-baixo" data-testid="radio-promo-intensidade-baixo" />
+                        <Label htmlFor="promo-int-baixo" className="flex-1 cursor-pointer">
+                          <div>
+                            <p className="font-semibold">Baixa</p>
+                            <p className="text-sm text-muted-foreground">
+                              Investimento reduzido, menor visibilidade
+                            </p>
+                          </div>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-3 p-3 border rounded-lg hover-elevate">
+                        <RadioGroupItem value="medio" id="promo-int-medio" data-testid="radio-promo-intensidade-medio" />
+                        <Label htmlFor="promo-int-medio" className="flex-1 cursor-pointer">
+                          <div>
+                            <p className="font-semibold">Média</p>
+                            <p className="text-sm text-muted-foreground">
+                              Investimento e visibilidade equilibrados
+                            </p>
+                          </div>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-3 p-3 border rounded-lg hover-elevate">
+                        <RadioGroupItem value="alto" id="promo-int-alto" data-testid="radio-promo-intensidade-alto" />
+                        <Label htmlFor="promo-int-alto" className="flex-1 cursor-pointer">
+                          <div>
+                            <p className="font-semibold">Alta</p>
+                            <p className="text-sm text-muted-foreground">
+                              Presença forte na mídia, custo mais elevado
+                            </p>
+                          </div>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-3 p-3 border rounded-lg hover-elevate">
+                        <RadioGroupItem value="intensivo" id="promo-int-intensivo" data-testid="radio-promo-intensidade-intensivo" />
+                        <Label htmlFor="promo-int-intensivo" className="flex-1 cursor-pointer">
+                          <div>
+                            <p className="font-semibold">Intensiva</p>
+                            <p className="text-sm text-muted-foreground">
+                              Máxima visibilidade possível, maior custo
+                            </p>
+                          </div>
+                        </Label>
+                      </div>
+                    </div>
+                  </RadioGroup>
+                </CardContent>
+              </Card>
 
-                <Alert>
-                  <DollarSign className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>Orçamento Disponível:</strong> {formatarNumeroBR(team?.budget || 0, 'moeda')}
-                    <br />
-                    <span className="text-sm text-muted-foreground">
-                      Você pode investir livremente sem obrigação de usar 100% do orçamento. 
-                      Os valores não gastos ficam disponíveis para as próximas rodadas.
-                    </span>
-                  </AlertDescription>
-                </Alert>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Resumo do Investimento</CardTitle>
+                  <CardDescription>Total investido em ferramentas promocionais</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg border-2 border-primary/20">
+                    <p className="text-sm text-muted-foreground mb-2">Total Investido em Promoção</p>
+                    <p className="text-3xl font-bold text-primary" data-testid="text-total-promotion-budget">
+                      R$ {totalPromotionBudget.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
 
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm font-medium mb-2">Ferramentas Selecionadas ({promotionMix.length})</p>
-                  <p className="text-xs text-muted-foreground">
-                    {promotionMix.length > 0
-                      ? promotionMix.join(", ")
-                      : "Nenhuma ferramenta selecionada"}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                  <Alert>
+                    <DollarSign className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Orçamento Disponível:</strong> {formatarNumeroBR(team?.budget || 0, 'moeda')}
+                      <br />
+                      <span className="text-sm text-muted-foreground">
+                        Você pode investir livremente sem obrigação de usar 100% do orçamento.
+                        Os valores não gastos ficam disponíveis para as próximas rodadas.
+                      </span>
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-sm font-medium mb-2">Ferramentas Selecionadas ({promotionMix.length})</p>
+                    <p className="text-xs text-muted-foreground">
+                      {promotionMix.length > 0
+                        ? promotionMix.join(", ")
+                        : "Nenhuma ferramenta selecionada"}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </TabsContent>
       </Tabs>
