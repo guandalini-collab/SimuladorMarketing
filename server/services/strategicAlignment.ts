@@ -308,7 +308,7 @@ function analyzePorterAlignment(porter: PorterAnalysis | null, mix: MarketingMix
     alignmentPoints -= 20;
   }
 
-  if (porter.buyerPower >= 8 && mix.priceStrategy === "premium") {
+  if (porter.buyerPower >= 8 && mix.priceStrategy === "skimming") {
     issues.push("Alto poder dos clientes dificulta estratégia premium");
     alignmentPoints -= 18;
   }
@@ -439,7 +439,7 @@ function analyzePestelAlignment(pestel: PestelAnalysis | null, mix: MarketingMix
     s.toLowerCase().includes("responsabilidade")
   );
 
-  if (hasSocialChange && mix.promotionIntensity === "alta") {
+  if (hasSocialChange && mix.promotionIntensity === "alto") {
     issues.push("PESTEL indica mudanças sociais que requerem marketing consciente");
     alignmentPoints -= 8;
   }
