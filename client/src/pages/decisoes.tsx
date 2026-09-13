@@ -1175,14 +1175,14 @@ export default function Decisoes() {
                             />
                             <Label htmlFor={midia.id} className="flex-1 cursor-pointer">
                               <div>
-                                <p className="font-semibold">{midia.formato}</p>
-                                {midia.especificacao && (
-                                  <p className="text-xs text-muted-foreground mt-0.5">{midia.especificacao}</p>
+                                <p className="font-semibold">{midia.formato ? `${midia.nome} — ${midia.formato}` : midia.nome}</p>
+                                {midia.descricao && (
+                                  <p className="text-xs text-muted-foreground mt-0.5">{midia.descricao}</p>
                                 )}
                                 <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
                                   <span>Preço unitário: {formatarNumeroBR(midia.custoUnitarioMinimo || 0, 'moeda')}</span>
                                   <span>•</span>
-                                  <span className="text-[#7a5300] dark:text-amber-500 font-medium">Investimento mínimo: {formatarNumeroBR(midia.valorMinimo || midia.custoUnitarioMinimo || 0, 'moeda')}</span>
+                                  <span className="text-[#7a5300] dark:text-amber-500 font-medium">Investimento mínimo: {formatarNumeroBR(midia.custoUnitarioMinimo || 0, 'moeda')}</span>
                                 </div>
                               </div>
                             </Label>
@@ -1203,15 +1203,15 @@ export default function Decisoes() {
                                   testId={`input-budget-${midia.id}`}
                                 />
                               </div>
-                              {promotionBudgets[midia.id] > 0 && promotionBudgets[midia.id] < (midia.valorMinimo || midia.custoUnitarioMinimo || 0) && (
+                              {promotionBudgets[midia.id] > 0 && promotionBudgets[midia.id] < (midia.custoUnitarioMinimo || 0) && (
                                 <Alert variant="destructive" className="py-2">
                                   <AlertCircle className="h-3 w-3" />
                                   <AlertDescription className="text-xs">
-                                    Valor abaixo do mínimo de {formatarNumeroBR(midia.valorMinimo || midia.custoUnitarioMinimo || 0, 'moeda')}
+                                    Valor abaixo do mínimo de {formatarNumeroBR(midia.custoUnitarioMinimo || 0, 'moeda')}
                                   </AlertDescription>
                                 </Alert>
                               )}
-                              {promotionBudgets[midia.id] >= (midia.valorMinimo || midia.custoUnitarioMinimo || 0) && (
+                              {promotionBudgets[midia.id] >= (midia.custoUnitarioMinimo || 0) && (
                                 <p className="text-xs text-muted-foreground">
                                   Quantidade estimada: {Math.floor(promotionBudgets[midia.id] / (midia.custoUnitarioMinimo || 1))} unidades
                                 </p>

@@ -3901,10 +3901,10 @@ export default function Professor() {
                                       {result.companyName && <p className="text-xs text-muted-foreground">{result.teamName}</p>}
                                     </div>
                                   </TableCell>
-                                  <TableCell className="text-right">R$ {result.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                                  <TableCell className="text-right">R$ {result.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                                   <TableCell className="text-right">
                                     <span className={result.profit > 0 ? "text-[#1aa15c]" : "text-[#e5352b]"}>
-                                      R$ {result.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                      R$ {result.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                   </TableCell>
                                   <TableCell className="text-right">{result.roi.toFixed(1)}%</TableCell>

@@ -409,14 +409,14 @@ export default function Analises() {
           <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-6">
             <KPICard
               title="Receita"
-              value={`R$ ${currentResult.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              value={`R$ ${currentResult.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               icon={DollarSign}
               testId="text-revenue"
               color="green"
             />
             <KPICard
               title="Lucro"
-              value={`R$ ${currentResult.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              value={`R$ ${currentResult.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               trend={{
                 value: currentResult.margin,
                 isPositive: currentResult.profit > 0,
@@ -482,7 +482,7 @@ export default function Analises() {
                         <p className="text-sm text-muted-foreground">CAC</p>
                         <p className="text-xl font-bold">
                           {(currentResult.cac ?? 0) > 0 
-                            ? `R$ ${currentResult.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
+                            ? `R$ ${currentResult.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
                             : <span className="text-muted-foreground">R$ 0,00</span>}
                         </p>
                       </div>
@@ -490,7 +490,7 @@ export default function Analises() {
                         <p className="text-sm text-muted-foreground">LTV</p>
                         <p className="text-xl font-bold">
                           {(currentResult.ltv ?? 0) > 0 
-                            ? `R$ ${currentResult.ltv.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
+                            ? `R$ ${currentResult.ltv.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
                             : <span className="text-muted-foreground">R$ 0,00</span>}
                         </p>
                       </div>
@@ -514,7 +514,7 @@ export default function Analises() {
                         <p className="text-sm text-muted-foreground">Ticket Médio</p>
                         <p className="text-xl font-bold">
                           {(currentResult.ticketMedio ?? 0) > 0 
-                            ? `R$ ${currentResult.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
+                            ? `R$ ${currentResult.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
                             : <span className="text-muted-foreground">R$ 0,00</span>}
                         </p>
                       </div>
@@ -547,73 +547,73 @@ export default function Analises() {
                       <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-receita-bruta">
                         <p className="text-sm text-muted-foreground">Receita Bruta</p>
                         <p className="text-xl font-bold">
-                          R$ {(currentResult.receitaBruta ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {(currentResult.receitaBruta ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-impostos">
                         <p className="text-sm text-muted-foreground">(-) Impostos</p>
                         <p className="text-xl font-bold text-destructive">
-                          R$ {(currentResult.impostos ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {(currentResult.impostos ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-receita-liquida">
                         <p className="text-sm text-muted-foreground">Receita Líquida</p>
                         <p className="text-xl font-bold">
-                          R$ {(currentResult.receitaLiquida ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {(currentResult.receitaLiquida ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-cpv">
                         <p className="text-sm text-muted-foreground">(-) CPV</p>
                         <p className="text-xl font-bold text-destructive">
-                          R$ {(currentResult.cpv ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {(currentResult.cpv ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-lucro-bruto">
                         <p className="text-sm text-muted-foreground">Lucro Bruto</p>
                         <p className={`text-xl font-bold ${(currentResult.lucroBruto ?? 0) >= 0 ? '' : 'text-destructive'}`}>
-                          R$ {(currentResult.lucroBruto ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {(currentResult.lucroBruto ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-despesas-vendas">
                         <p className="text-sm text-muted-foreground">(-) Desp. Vendas</p>
                         <p className="text-xl font-bold text-destructive">
-                          R$ {(currentResult.despesasVendas ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {(currentResult.despesasVendas ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-despesas-admin">
                         <p className="text-sm text-muted-foreground">(-) Desp. Admin</p>
                         <p className="text-xl font-bold text-destructive">
-                          R$ {(currentResult.despesasAdmin ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {(currentResult.despesasAdmin ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-ebitda">
                         <p className="text-sm text-muted-foreground">EBITDA</p>
                         <p className={`text-xl font-bold ${(currentResult.ebitda ?? 0) >= 0 ? '' : 'text-destructive'}`}>
-                          R$ {(currentResult.ebitda ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {(currentResult.ebitda ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-depreciacao">
                         <p className="text-sm text-muted-foreground">(-) Depreciação</p>
                         <p className="text-xl font-bold text-destructive">
-                          R$ {(currentResult.depreciacao ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {(currentResult.depreciacao ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-lair">
                         <p className="text-sm text-muted-foreground">LAIR</p>
                         <p className={`text-xl font-bold ${(currentResult.lair ?? 0) >= 0 ? '' : 'text-destructive'}`}>
-                          R$ {(currentResult.lair ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {(currentResult.lair ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div className="p-4 rounded-lg bg-muted/50" data-testid="kpi-ir-csll">
                         <p className="text-sm text-muted-foreground">(-) IR/CSLL</p>
                         <p className="text-xl font-bold text-destructive">
-                          R$ {(currentResult.irCsll ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {(currentResult.irCsll ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div className="p-4 rounded-lg bg-primary/10 border-2 border-primary/20" data-testid="kpi-lucro-liquido">
                         <p className="text-sm text-muted-foreground">Lucro Líquido</p>
                         <p className={`text-xl font-bold ${(currentResult.lucroLiquido ?? 0) >= 0 ? 'text-[#1aa15c]' : 'text-destructive'}`}>
-                          R$ {(currentResult.lucroLiquido ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {(currentResult.lucroLiquido ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                     </div>
@@ -632,35 +632,35 @@ export default function Analises() {
                         <div className="space-y-2">
                           <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-caixa">
                             <span className="text-sm">Caixa</span>
-                            <span className="font-semibold">R$ {(currentResult.caixa ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-semibold">R$ {(currentResult.caixa ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-contas-receber">
                             <span className="text-sm">Contas a Receber</span>
-                            <span className="font-semibold">R$ {(currentResult.contasReceber ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-semibold">R$ {(currentResult.contasReceber ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-estoques">
                             <span className="text-sm">Estoques</span>
-                            <span className="font-semibold">R$ {(currentResult.estoques ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-semibold">R$ {(currentResult.estoques ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-primary/5 flex justify-between border" data-testid="kpi-ativo-circulante">
                             <span className="text-sm font-medium">Ativo Circulante</span>
-                            <span className="font-bold">R$ {(currentResult.ativoCirculante ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-bold">R$ {(currentResult.ativoCirculante ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-imobilizado">
                             <span className="text-sm">Imobilizado</span>
-                            <span className="font-semibold">R$ {(currentResult.imobilizado ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-semibold">R$ {(currentResult.imobilizado ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-intangivel">
                             <span className="text-sm">Intangível</span>
-                            <span className="font-semibold">R$ {(currentResult.intangivel ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-semibold">R$ {(currentResult.intangivel ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-primary/5 flex justify-between border" data-testid="kpi-ativo-nao-circulante">
                             <span className="text-sm font-medium">Ativo Não Circulante</span>
-                            <span className="font-bold">R$ {(currentResult.ativoNaoCirculante ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-bold">R$ {(currentResult.ativoNaoCirculante ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-primary/10 flex justify-between border-2 border-primary/20" data-testid="kpi-ativo-total">
                             <span className="text-sm font-semibold">ATIVO TOTAL</span>
-                            <span className="font-bold text-lg">R$ {(currentResult.ativoTotal ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-bold text-lg">R$ {(currentResult.ativoTotal ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                         </div>
                       </div>
@@ -671,39 +671,39 @@ export default function Analises() {
                         <div className="space-y-2">
                           <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-fornecedores">
                             <span className="text-sm">Fornecedores</span>
-                            <span className="font-semibold">R$ {(currentResult.fornecedores ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-semibold">R$ {(currentResult.fornecedores ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-obrig-fiscais">
                             <span className="text-sm">Obrigações Fiscais</span>
-                            <span className="font-semibold">R$ {(currentResult.obrigFiscais ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-semibold">R$ {(currentResult.obrigFiscais ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-primary/5 flex justify-between border" data-testid="kpi-passivo-circulante">
                             <span className="text-sm font-medium">Passivo Circulante</span>
-                            <span className="font-bold">R$ {(currentResult.passivoCirculante ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-bold">R$ {(currentResult.passivoCirculante ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-financiamentos-lp">
                             <span className="text-sm">Financiamentos LP</span>
-                            <span className="font-semibold">R$ {(currentResult.financiamentosLP ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-semibold">R$ {(currentResult.financiamentosLP ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-primary/5 flex justify-between border" data-testid="kpi-passivo-nao-circulante">
                             <span className="text-sm font-medium">Passivo Não Circulante</span>
-                            <span className="font-bold">R$ {(currentResult.passivoNaoCirculante ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-bold">R$ {(currentResult.passivoNaoCirculante ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-capital-social">
                             <span className="text-sm">Capital Social</span>
-                            <span className="font-semibold">R$ {(currentResult.capitalSocial ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-semibold">R$ {(currentResult.capitalSocial ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-muted/50 flex justify-between" data-testid="kpi-lucros-acumulados">
                             <span className="text-sm">Lucros Acumulados</span>
-                            <span className="font-semibold">R$ {(currentResult.lucrosAcumulados ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-semibold">R$ {(currentResult.lucrosAcumulados ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-primary/5 flex justify-between border" data-testid="kpi-patrimonio-liquido">
                             <span className="text-sm font-medium">Patrimônio Líquido</span>
-                            <span className="font-bold">R$ {(currentResult.patrimonioLiquido ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-bold">R$ {(currentResult.patrimonioLiquido ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                           <div className="p-3 rounded-lg bg-primary/10 flex justify-between border-2 border-primary/20" data-testid="kpi-passivo-pl-total">
                             <span className="text-sm font-semibold">PASSIVO + PL TOTAL</span>
-                            <span className="font-bold text-lg">R$ {(currentResult.passivoPlTotal ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-bold text-lg">R$ {(currentResult.passivoPlTotal ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                         </div>
                       </div>
@@ -765,7 +765,7 @@ export default function Analises() {
                             <div>
                               <p className="text-muted-foreground">Receita</p>
                               <p className="font-semibold" data-testid={`text-product-revenue-${index}`}>
-                                R$ {product.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                R$ {product.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </p>
                             </div>
                             <div>
@@ -774,7 +774,7 @@ export default function Analises() {
                                 className={`font-semibold ${product.profit > 0 ? 'text-[#1aa15c]' : 'text-destructive'}`}
                                 data-testid={`text-product-profit-${index}`}
                               >
-                                R$ {product.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                R$ {product.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </p>
                             </div>
                             <div>
@@ -817,7 +817,7 @@ export default function Analises() {
                       <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                       <XAxis dataKey="produto" />
                       <YAxis />
-                      <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                      <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
                       <Legend />
                       <Bar dataKey="receita" fill="#1447e6" name="Receita" radius={[4, 4, 0, 0]} />
                       <Bar dataKey="custos" fill="#ff8c1a" name="Custos" radius={[4, 4, 0, 0]} />
@@ -861,7 +861,7 @@ export default function Analises() {
                       <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                       <XAxis dataKey="rodada" />
                       <YAxis />
-                      <Tooltip formatter={(value: number) => `R$ ${value.toFixed(2)}`} />
+                      <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
                       <Legend />
                       <Line
                         type="monotone"
@@ -990,7 +990,7 @@ export default function Analises() {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold text-[#ff8c1a]" data-testid="text-costs">
-                  R$ {currentResult.costs.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  R$ {currentResult.costs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
                   {team!.budget > 0 ? ((currentResult.costs / team!.budget) * 100).toFixed(1) : "0.0"}% do orçamento
@@ -1010,7 +1010,7 @@ export default function Analises() {
             <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-5">
               <KPICard
                 title="CAC"
-                value={`R$ ${currentResult.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                value={`R$ ${currentResult.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={Target}
                 description="Custo de Aquisição por Cliente"
                 testId="text-cac"
@@ -1018,7 +1018,7 @@ export default function Analises() {
               />
               <KPICard
                 title="LTV"
-                value={`R$ ${currentResult.ltv.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                value={`R$ ${currentResult.ltv.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={Sparkles}
                 description="Lifetime Value do Cliente"
                 testId="text-ltv"
@@ -1046,7 +1046,7 @@ export default function Analises() {
               />
               <KPICard
                 title="Ticket Médio"
-                value={`R$ ${currentResult.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                value={`R$ ${currentResult.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={ShoppingCart}
                 description="Valor médio por compra"
                 testId="text-average-ticket"
@@ -1098,9 +1098,9 @@ export default function Analises() {
               />
               <KPICard
                 title="Receita Líquida"
-                value={`R$ ${currentResult.receitaLiquida.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                value={`R$ ${currentResult.receitaLiquida.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={Coins}
-                description={`Bruta: R$ ${currentResult.receitaBruta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                description={`Bruta: R$ ${currentResult.receitaBruta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 testId="text-net-revenue"
                 color="orange"
               />
@@ -1147,7 +1147,7 @@ export default function Analises() {
                   <TableRow className="font-semibold bg-blue-50 dark:bg-blue-950/20">
                     <TableCell>RECEITA OPERACIONAL BRUTA</TableCell>
                     <TableCell className="text-right" data-testid="text-receita-bruta">
-                      {currentResult.receitaBruta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {currentResult.receitaBruta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-right">100,0%</TableCell>
                   </TableRow>
@@ -1156,7 +1156,7 @@ export default function Analises() {
                   <TableRow>
                     <TableCell className="pl-6">(-) Impostos sobre Vendas</TableCell>
                     <TableCell className="text-right text-red-500">
-                      ({(currentResult.impostos || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                      ({(currentResult.impostos || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground text-sm">
                       {currentResult.receitaBruta > 0 ? (((currentResult.impostos || 0) / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1165,7 +1165,7 @@ export default function Analises() {
                   <TableRow>
                     <TableCell className="pl-6">(-) Devoluções e Cancelamentos</TableCell>
                     <TableCell className="text-right text-red-500">
-                      ({(currentResult.devolucoes || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                      ({(currentResult.devolucoes || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground text-sm">
                       {currentResult.receitaBruta > 0 ? (((currentResult.devolucoes || 0) / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1174,7 +1174,7 @@ export default function Analises() {
                   <TableRow>
                     <TableCell className="pl-6">(-) Descontos Concedidos</TableCell>
                     <TableCell className="text-right text-red-500">
-                      ({(currentResult.descontos || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                      ({(currentResult.descontos || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground text-sm">
                       {currentResult.receitaBruta > 0 ? (((currentResult.descontos || 0) / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1185,7 +1185,7 @@ export default function Analises() {
                   <TableRow className="font-semibold bg-blue-50 dark:bg-blue-950/20 border-t">
                     <TableCell>(=) RECEITA OPERACIONAL LÍQUIDA</TableCell>
                     <TableCell className="text-right" data-testid="text-receita-liquida-dre">
-                      {currentResult.receitaLiquida.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {currentResult.receitaLiquida.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-right">
                       {currentResult.receitaBruta > 0 ? ((currentResult.receitaLiquida / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1196,7 +1196,7 @@ export default function Analises() {
                   <TableRow>
                     <TableCell className="pl-6">(-) Custo dos Produtos Vendidos (CPV)</TableCell>
                     <TableCell className="text-right text-red-500" data-testid="text-cpv">
-                      ({(currentResult.cpv || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                      ({(currentResult.cpv || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground text-sm">
                       {currentResult.receitaBruta > 0 ? (((currentResult.cpv || 0) / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1207,7 +1207,7 @@ export default function Analises() {
                   <TableRow className="font-semibold bg-green-50 dark:bg-green-950/20 border-t">
                     <TableCell>(=) LUCRO BRUTO</TableCell>
                     <TableCell className="text-right text-green-600 dark:text-green-400" data-testid="text-lucro-bruto-completo">
-                      {(currentResult.lucroBruto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {(currentResult.lucroBruto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-right">
                       {currentResult.receitaBruta > 0 ? (((currentResult.lucroBruto || 0) / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1223,7 +1223,7 @@ export default function Analises() {
                   <TableRow>
                     <TableCell className="pl-6">(-) Despesas com Vendas</TableCell>
                     <TableCell className="text-right text-red-500">
-                      ({(currentResult.despesasVendas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                      ({(currentResult.despesasVendas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground text-sm">
                       {currentResult.receitaBruta > 0 ? (((currentResult.despesasVendas || 0) / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1232,7 +1232,7 @@ export default function Analises() {
                   <TableRow>
                     <TableCell className="pl-6">(-) Despesas Administrativas</TableCell>
                     <TableCell className="text-right text-red-500">
-                      ({(currentResult.despesasAdmin || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                      ({(currentResult.despesasAdmin || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground text-sm">
                       {currentResult.receitaBruta > 0 ? (((currentResult.despesasAdmin || 0) / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1241,7 +1241,7 @@ export default function Analises() {
                   <TableRow>
                     <TableCell className="pl-6">(-) Despesas Financeiras</TableCell>
                     <TableCell className="text-right text-red-500">
-                      ({(currentResult.despesasFinanc || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                      ({(currentResult.despesasFinanc || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground text-sm">
                       {currentResult.receitaBruta > 0 ? (((currentResult.despesasFinanc || 0) / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1250,7 +1250,7 @@ export default function Analises() {
                   <TableRow>
                     <TableCell className="pl-6">(-) Outras Despesas Operacionais</TableCell>
                     <TableCell className="text-right text-red-500">
-                      ({(currentResult.outrasDespesas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                      ({(currentResult.outrasDespesas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground text-sm">
                       {currentResult.receitaBruta > 0 ? (((currentResult.outrasDespesas || 0) / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1261,7 +1261,7 @@ export default function Analises() {
                   <TableRow className="font-semibold bg-purple-50 dark:bg-purple-950/20 border-t">
                     <TableCell>(=) EBITDA</TableCell>
                     <TableCell className="text-right" data-testid="text-ebitda">
-                      {(currentResult.ebitda || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {(currentResult.ebitda || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-right">
                       {currentResult.receitaBruta > 0 ? (((currentResult.ebitda || 0) / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1272,7 +1272,7 @@ export default function Analises() {
                   <TableRow>
                     <TableCell className="pl-6">(-) Depreciação e Amortização</TableCell>
                     <TableCell className="text-right text-red-500">
-                      ({(currentResult.depreciacao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                      ({(currentResult.depreciacao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground text-sm">
                       {currentResult.receitaBruta > 0 ? (((currentResult.depreciacao || 0) / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1283,7 +1283,7 @@ export default function Analises() {
                   <TableRow className="font-semibold bg-yellow-50 dark:bg-yellow-950/20 border-t">
                     <TableCell>(=) LAIR (Lucro Antes do IR)</TableCell>
                     <TableCell className="text-right" data-testid="text-lair">
-                      {(currentResult.lair || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {(currentResult.lair || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-right">
                       {currentResult.receitaBruta > 0 ? (((currentResult.lair || 0) / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1294,7 +1294,7 @@ export default function Analises() {
                   <TableRow>
                     <TableCell className="pl-6">(-) IR e CSLL</TableCell>
                     <TableCell className="text-right text-red-500">
-                      ({(currentResult.irCsll || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                      ({(currentResult.irCsll || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground text-sm">
                       {currentResult.receitaBruta > 0 ? (((currentResult.irCsll || 0) / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1305,7 +1305,7 @@ export default function Analises() {
                   <TableRow className="font-bold bg-green-100 dark:bg-green-900/30 border-t-2">
                     <TableCell>(=) LUCRO LÍQUIDO DO EXERCÍCIO</TableCell>
                     <TableCell className="text-right text-green-700 dark:text-green-300" data-testid="text-lucro-liquido">
-                      {(currentResult.lucroLiquido || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {(currentResult.lucroLiquido || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-right font-bold">
                       {currentResult.receitaBruta > 0 ? (((currentResult.lucroLiquido || 0) / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1338,51 +1338,51 @@ export default function Analises() {
                         <TableRow className="bg-muted/30">
                           <TableCell className="font-semibold">ATIVO CIRCULANTE</TableCell>
                           <TableCell className="text-right font-semibold">
-                            {(currentResult.ativoCirculante || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.ativoCirculante || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="pl-6">Caixa e Equivalentes</TableCell>
                           <TableCell className="text-right">
-                            {(currentResult.caixa || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.caixa || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="pl-6">Contas a Receber</TableCell>
                           <TableCell className="text-right">
-                            {(currentResult.contasReceber || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.contasReceber || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="pl-6">Estoques</TableCell>
                           <TableCell className="text-right">
-                            {(currentResult.estoques || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.estoques || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         
                         <TableRow className="bg-muted/30 border-t">
                           <TableCell className="font-semibold">ATIVO NÃO CIRCULANTE</TableCell>
                           <TableCell className="text-right font-semibold">
-                            {(currentResult.ativoNaoCirculante || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.ativoNaoCirculante || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="pl-6">Imobilizado</TableCell>
                           <TableCell className="text-right">
-                            {(currentResult.imobilizado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.imobilizado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="pl-6">Intangível (Marcas)</TableCell>
                           <TableCell className="text-right">
-                            {(currentResult.intangivel || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.intangivel || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         
                         <TableRow className="font-bold bg-blue-50 dark:bg-blue-950/20 border-t-2">
                           <TableCell>TOTAL DO ATIVO</TableCell>
                           <TableCell className="text-right" data-testid="text-ativo-total">
-                            {(currentResult.ativoTotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.ativoTotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                       </TableBody>
@@ -1399,64 +1399,64 @@ export default function Analises() {
                         <TableRow className="bg-muted/30">
                           <TableCell className="font-semibold">PASSIVO CIRCULANTE</TableCell>
                           <TableCell className="text-right font-semibold">
-                            {(currentResult.passivoCirculante || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.passivoCirculante || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="pl-6">Fornecedores</TableCell>
                           <TableCell className="text-right">
-                            {(currentResult.fornecedores || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.fornecedores || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="pl-6">Obrigações Fiscais</TableCell>
                           <TableCell className="text-right">
-                            {(currentResult.obrigFiscais || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.obrigFiscais || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="pl-6">Outras Obrigações</TableCell>
                           <TableCell className="text-right">
-                            {(currentResult.outrasObrig || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.outrasObrig || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         
                         <TableRow className="bg-muted/30 border-t">
                           <TableCell className="font-semibold">PASSIVO NÃO CIRCULANTE</TableCell>
                           <TableCell className="text-right font-semibold">
-                            {(currentResult.passivoNaoCirculante || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.passivoNaoCirculante || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="pl-6">Financiamentos LP</TableCell>
                           <TableCell className="text-right">
-                            {(currentResult.financiamentosLP || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.financiamentosLP || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         
                         <TableRow className="bg-muted/30 border-t">
                           <TableCell className="font-semibold">PATRIMÔNIO LÍQUIDO</TableCell>
                           <TableCell className="text-right font-semibold" data-testid="text-patrimonio-liquido">
-                            {(currentResult.patrimonioLiquido || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.patrimonioLiquido || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="pl-6">Capital Social</TableCell>
                           <TableCell className="text-right">
-                            {(currentResult.capitalSocial || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.capitalSocial || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="pl-6">Lucros Acumulados</TableCell>
                           <TableCell className="text-right">
-                            {(currentResult.lucrosAcumulados || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.lucrosAcumulados || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                         
                         <TableRow className="font-bold bg-blue-50 dark:bg-blue-950/20 border-t-2">
                           <TableCell>TOTAL PASSIVO + PL</TableCell>
                           <TableCell className="text-right" data-testid="text-passivo-pl-total">
-                            {(currentResult.ativoTotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {(currentResult.ativoTotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                       </TableBody>
@@ -1497,7 +1497,7 @@ export default function Analises() {
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px',
                     }}
-                    formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                    formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                   />
                   <Legend />
                   <Line

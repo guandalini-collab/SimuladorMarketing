@@ -112,7 +112,7 @@ function AuthenticatedApp() {
               <div className="text-right min-w-0 hidden sm:block">
                 <p className="text-sm font-semibold truncate" data-testid="text-team-name">{team?.name || user.name}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  Orçamento: R$ {team?.budget?.toLocaleString('pt-BR') || '0'}
+                  Orçamento: R$ {(team?.budget ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
               <ThemeToggle />

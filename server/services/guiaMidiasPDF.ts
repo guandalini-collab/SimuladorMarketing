@@ -222,18 +222,13 @@ function addMidiaCard(doc: PDFKit.PDFDocument, midia: Midia, cor: string, catego
   doc.font('Helvetica-Bold').fontSize(12);
   const tituloHeight = doc.heightOfString(titulo, { width: tituloWidth });
 
-  let quantidadeHeight = 0;
-  if (midia.quantidadeSugerida) {
-    quantidadeHeight = 14;
-  }
-
   let descricaoHeight = 0;
   if (midia.descricao) {
     doc.font('Helvetica').fontSize(9.5);
     descricaoHeight = doc.heightOfString(midia.descricao, { width: contentWidth - accentWidth - innerPadding * 2 }) + 6;
   }
 
-  const cardHeight = innerPadding * 2 + Math.max(tituloHeight, 16) + quantidadeHeight + descricaoHeight + 4;
+  const cardHeight = innerPadding * 2 + Math.max(tituloHeight, 16) + descricaoHeight + 4;
 
   ensureSpace(doc, cardHeight + 14, categoria, cor);
 
@@ -262,18 +257,7 @@ function addMidiaCard(doc: PDFKit.PDFDocument, midia: Midia, cor: string, catego
      .fillColor(TEXT_COLOR)
      .text(titulo, textX, cardY + innerPadding, { width: tituloWidth });
 
-  let cursorY = cardY + innerPadding + Math.max(tituloHeight, 16) + 2;
-
-  if (midia.quantidadeSugerida) {
-    doc.fontSize(9)
-       .font('Helvetica-Bold')
-       .fillColor(cor)
-       .text(`Quantidade sugerida: `, textX, cursorY, { continued: true })
-       .font('Helvetica')
-       .fillColor(DARK_GRAY)
-       .text(midia.quantidadeSugerida);
-    cursorY = doc.y + 2;
-  }
+  const cursorY = cardY + innerPadding + Math.max(tituloHeight, 16) + 2;
 
   if (midia.descricao) {
     doc.fontSize(9.5)

@@ -30,7 +30,7 @@ export default function Orcamento() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <KPICard
           title="Orçamento Atual"
-          value={`R$ ${currentBudget.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          value={`R$ ${currentBudget.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={Wallet}
           description="Disponível para investimentos nas próximas rodadas"
           testId="text-current-budget"
@@ -41,7 +41,7 @@ export default function Orcamento() {
           <>
             <KPICard
               title="Orçamento Inicial"
-              value={`R$ ${(results[0]?.budgetBefore || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              value={`R$ ${(results[0]?.budgetBefore || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               icon={DollarSign}
               description="Definido no início da simulação"
               color="gold"
@@ -49,7 +49,7 @@ export default function Orcamento() {
 
             <KPICard
               title="Resultado Acumulado"
-              value={`${accumulatedResult >= 0 ? "+" : ""}R$ ${accumulatedResult.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              value={`${accumulatedResult >= 0 ? "+" : ""}R$ ${accumulatedResult.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               icon={accumulatedResult >= 0 ? TrendingUp : TrendingDown}
               description="Lucro/Prejuízo total ao longo das rodadas"
               color={accumulatedResult >= 0 ? "green" : "orange"}
@@ -101,18 +101,18 @@ export default function Orcamento() {
                         </td>
                         <td className="text-right py-3 px-4">
                           <span className="text-muted-foreground">
-                            R$ {(result.budgetBefore || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            R$ {(result.budgetBefore || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         </td>
                         <td className="text-right py-3 px-4">
                           <span className={result.profitImpact >= 0 ? "text-[#0f7a44] font-semibold" : "text-[#a3241c] font-semibold"}>
                             {result.profitImpact >= 0 ? "+" : ""}
-                            R$ {(result.profitImpact || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            R$ {(result.profitImpact || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         </td>
                         <td className="text-right py-3 px-4">
                           <span className="font-bold">
-                            R$ {(result.budgetAfter || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            R$ {(result.budgetAfter || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         </td>
                         <td className="text-center py-3 px-4">
