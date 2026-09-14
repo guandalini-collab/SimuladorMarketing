@@ -6,6 +6,7 @@ import { ensureMidiaCatalog } from "./ensureMidiaCatalog";
 import { ensureResultsUniqueIndex } from "./ensureResultsUniqueIndex";
 import { ensureBcgQuadrantPt } from "./ensureBcgQuadrantPt";
 import { ensureGrupoBUniqueIndexes } from "./ensureGrupoBUniqueIndexes";
+import { ensureRoundsUniqueIndex } from "./ensureRoundsUniqueIndex";
 
 const app = express();
 
@@ -58,6 +59,7 @@ app.use((req, res, next) => {
   await ensureResultsUniqueIndex();
   await ensureBcgQuadrantPt();
   await ensureGrupoBUniqueIndexes();
+  await ensureRoundsUniqueIndex();
 
   const server = await registerRoutes(app);
 

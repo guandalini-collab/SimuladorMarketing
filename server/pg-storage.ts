@@ -577,6 +577,14 @@ export class PgStorage implements IStorage {
     return result[0];
   }
 
+  async claimRoundForCompletion(id: string): Promise<Round | undefined> {
+    const result = await db.update(rounds)
+      .set({ status: "completed", endedAt: new Date() })
+      .where(and(eq(rounds.id, id), eq(rounds.status, "active")))
+      .returning();
+    return result[0];
+  }
+
   async getAllRounds(): Promise<Round[]> {
     return db.select().from(rounds);
   }

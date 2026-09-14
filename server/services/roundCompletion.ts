@@ -18,27 +18,56 @@ export async function processRoundCompletion(
   storage: IStorage,
   roundId: string
 ): Promise<{ success: boolean; error?: string }> {
-  try {
-    const round = await storage.getRound(roundId);
-    if (!round) {
+  // Grupo D (auditoria de 2026-09): "reivindica" a rodada com um UPDATE
+  // atômico condicional (status "active" -> "completed") ANTES de gerar
+  // qualquer evento de mercado ou resultado. Isso fecha a janela de corrida
+  // entre um duplo clique do professor em "Encerrar Rodada" e/ou o scheduler
+  // automático (roundScheduler.ts) tentando encerrar a mesma rodada quase ao
+  // mesmo tempo — antes, ambos liam status "active", ambos geravam seu
+  // próprio conjunto de eventos de mercado (duplicados) e só a gravação final
+  // do status era feita por último. Agora só quem vence a corrida do UPDATE
+  // atômico processa a rodada; o outro recebe undefined e sai sem duplicar
+  // nada. Também impede processar uma rodada "locked" (nunca iniciada) —
+  // antes só "completed" era filtrado.
+  const claimedRound = await storage.claimRoundForCompletion(roundId);
+  if (!claimedRound) {
+    const existing = await storage.getRound(roundId);
+    if (!existing) {
       return { success: false, error: "Rodada não encontrada" };
     }
-
-    if (round.status === "completed") {
+    if (existing.status === "completed") {
       console.log(`[ROUND_COMPLETION] Round ${roundId} already completed, skipping`);
       return { success: true };
     }
+    return { success: false, error: "Rodada não está ativa" };
+  }
 
+  const round = claimedRound;
+
+  try {
     const classData = await storage.getClass(round.classId);
     if (!classData) {
+      // Não há como processar sem a turma — desfaz a reivindicação para que
+      // uma tentativa futura (após o problema ser corrigido) possa repetir.
+      await storage.updateRound(roundId, { status: "active", endedAt: null });
       return { success: false, error: "Turma não encontrada" };
     }
 
     console.log(`[ROUND_COMPLETION] Processing completion for round ${roundId}`);
 
     const autoEventConfig = await storage.getAutoEventConfig(round.classId);
-    
-    if (autoEventConfig?.enabled) {
+
+    // Grupo D (auditoria de 2026-09): a geração automática de eventos não
+    // era idempotente — se processRoundCompletion falhasse no meio do
+    // processamento das equipes (depois de já ter gerado os eventos) e
+    // fosse chamada de novo (professor tentando encerrar a rodada outra
+    // vez), um novo lote de eventos era gerado por cima do anterior,
+    // duplicando os eventos de mercado da rodada. Agora só gera eventos se
+    // a rodada ainda não tiver nenhum — numa nova tentativa, reaproveita os
+    // que já existem em vez de gerar outro lote.
+    const existingEventsForRound = await storage.getMarketEventsByRound(roundId);
+
+    if (autoEventConfig?.enabled && existingEventsForRound.length === 0) {
       console.log("[ROUND_COMPLETION] Auto-events enabled, generating events");
       try {
         const { economicService } = await import("./economic");
@@ -355,15 +384,20 @@ export async function processRoundCompletion(
       }
     }
 
-    await storage.updateRound(roundId, {
-      status: "completed",
-      endedAt: new Date(),
-    });
-
+    // Status e endedAt já foram gravados atomicamente no claim, no início
+    // desta função — nada a fazer aqui além de confirmar no log.
     console.log(`[ROUND_COMPLETION] Round ${roundId} completed successfully`);
     return { success: true };
   } catch (error: any) {
     console.error(`[ROUND_COMPLETION] ERROR processing round ${roundId}:`, error);
+    // Desfaz a reivindicação: a rodada volta a "active" para que uma nova
+    // tentativa de encerramento seja possível, em vez de ficar presa como
+    // "completed" sem resultados de fato processados.
+    try {
+      await storage.updateRound(roundId, { status: "active", endedAt: null });
+    } catch (rollbackError) {
+      console.error(`[ROUND_COMPLETION] Falha ao reverter status da rodada ${roundId} após erro:`, rollbackError);
+    }
     return { success: false, error: error.message || "Erro ao processar encerramento" };
   }
 }

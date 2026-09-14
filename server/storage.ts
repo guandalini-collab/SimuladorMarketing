@@ -96,6 +96,14 @@ export interface IStorage {
   getCurrentRound(classId: string): Promise<Round | undefined>;
   createRound(round: InsertRound): Promise<Round>;
   updateRound(id: string, data: Partial<Round>): Promise<Round | undefined>;
+  // Grupo D (auditoria de 2026-09): atualização condicional atômica usada por
+  // processRoundCompletion para "reivindicar" o encerramento de uma rodada —
+  // só transiciona status "active" -> "completed" se ainda estiver "active" no
+  // momento da gravação. Evita que duas chamadas concorrentes (duplo clique do
+  // professor em "Encerrar Rodada", ou o scheduler automático coincidindo com
+  // um encerramento manual) processem a mesma rodada duas vezes — cada uma
+  // gerando seu próprio conjunto de eventos de mercado duplicados.
+  claimRoundForCompletion(id: string): Promise<Round | undefined>;
   getAllRounds(): Promise<Round[]>;
   deleteRound(roundId: string): Promise<boolean>;
   getRoundDependencies(roundId: string): Promise<{ hasDependencies: boolean; details: string[] }>;
@@ -708,6 +716,16 @@ export class MemStorage implements IStorage {
     const existing = this.rounds.get(id);
     if (!existing) return undefined;
     const updated = { ...existing, ...data };
+    this.rounds.set(id, updated);
+    return updated;
+  }
+
+  async claimRoundForCompletion(id: string): Promise<Round | undefined> {
+    // Seguro por construção: acesso síncrono ao Map, sem await entre a
+    // leitura e a gravação — não há como outra chamada intercalar aqui.
+    const existing = this.rounds.get(id);
+    if (!existing || existing.status !== "active") return undefined;
+    const updated: Round = { ...existing, status: "completed", endedAt: new Date() };
     this.rounds.set(id, updated);
     return updated;
   }

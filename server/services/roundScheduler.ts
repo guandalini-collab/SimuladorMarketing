@@ -41,8 +41,22 @@ export class RoundScheduler {
       );
 
       for (const round of roundsToStart) {
+        // Grupo D (auditoria de 2026-09): antes, ativava a rodada agendada
+        // sem checar se a turma já tinha outra rodada "active" — duas
+        // rodadas agendadas para o mesmo horário (ou próximo de), ou um
+        // agendamento coincidindo com o professor ainda não ter encerrado a
+        // rodada anterior, deixavam a turma com DUAS rodadas ativas ao
+        // mesmo tempo, quebrando getCurrentRound() (SELECT ... LIMIT 1,
+        // resultado arbitrário) e qualquer tela que assume no máximo uma
+        // rodada ativa por turma.
+        const currentActive = await this.storage.getCurrentRound(round.classId);
+        if (currentActive && currentActive.id !== round.id) {
+          console.warn(`[ROUND_SCHEDULER] Rodada ${round.id} (Round ${round.roundNumber}) não ativada: turma ${round.classId} já tem a rodada ${currentActive.id} ativa`);
+          continue;
+        }
+
         console.log(`[ROUND_SCHEDULER] Ativando rodada ${round.id} (Round ${round.roundNumber})`);
-        
+
         await this.storage.updateRound(round.id, {
           status: "active",
           startedAt: new Date(),

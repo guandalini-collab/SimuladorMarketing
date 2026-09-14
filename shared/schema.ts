@@ -78,7 +78,18 @@ export const rounds = pgTable("rounds", {
   // anterior reduz o orçamento das equipes em 10% por produto adicional
   // (e restaura proporcionalmente se for reduzida) — ver rota de início de rodada.
   productCount: integer("product_count").notNull().default(1),
-});
+}, (table) => ({
+  // Grupo D (auditoria de 2026-09): POST /api/rounds/:classId/start (e sua
+  // rota irmã não usada pelo front-end, POST /api/classes/:classId/rounds)
+  // faziam "checar se já há rodada ativa, depois criar" sem atomicidade —
+  // duas chamadas concorrentes (duplo clique em "Iniciar Rodada") liam o
+  // mesmo classData.currentRound e ambas criavam uma rodada com o MESMO
+  // roundNumber para a turma, deixando duas rodadas "active" simultâneas.
+  // Este índice único torna a segunda gravação um erro de conflito (23505)
+  // em vez de uma duplicata silenciosa — tratado como upsert-safe em
+  // storage.createRound (pg-storage.ts).
+  uniqueTeamRound: uniqueIndex("rounds_unique_class_round_number").on(table.classId, table.roundNumber),
+}));
 
 export const campaigns = pgTable("campaigns", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

@@ -7,8 +7,7 @@ import session from "express-session";
 import bcrypt from "bcryptjs";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./pg-storage";
-import { calculateResults, calculateMarketingSpend, applyStrategicImpacts, applyAlignmentPenalties, applyEquityCarryover } from "./calculator";
-import { consolidateKpis, type ResultCoreMetrics } from "./utils/consolidateKpis";
+import { calculateMarketingSpend } from "./calculator";
 import { marketSectors, targetAudiences, businessTypes, competitionLevels } from "./data/marketData";
 import { z } from "zod";
 import { generateMarketEvents, type EventGenerationParams } from "./services/aiEventGenerator";
@@ -1166,12 +1165,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.body?.productCount
     );
 
-    const round = await storage.createRound({
-      classId: req.params.classId,
-      roundNumber: nextRoundNumber,
-      status: "active",
-      productCount,
-    });
+    let round;
+    try {
+      round = await storage.createRound({
+        classId: req.params.classId,
+        roundNumber: nextRoundNumber,
+        status: "active",
+        productCount,
+      });
+    } catch (error: any) {
+      // Grupo D (auditoria de 2026-09): a checagem "já existe rodada ativa?"
+      // acima e este createRound não são atômicos — duas chamadas
+      // concorrentes (duplo clique em "Iniciar Rodada") podiam ambas passar
+      // pela checagem e criar duas rodadas com o mesmo número para a turma.
+      // O índice único "rounds_unique_class_round_number" (schema.ts +
+      // ensureRoundsUniqueIndex.ts) transforma a segunda tentativa num erro
+      // de conflito (23505) em vez de uma duplicata silenciosa; aqui só
+      // traduzimos isso para a mesma mensagem amigável da checagem acima.
+      if (error?.code === "23505") {
+        return res.status(400).json({ error: "Já existe uma rodada ativa" });
+      }
+      throw error;
+    }
 
     await storage.updateRound(round.id, { startedAt: new Date() });
     await storage.updateClass(req.params.classId, { currentRound: nextRoundNumber });
@@ -1186,7 +1201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`[ROUND-START] Iniciando geração automática de análises mínimas para rodada ${round.roundNumber} (rodada <= 3)`);
           const { autoGenerateMinimalAnalysesForAllTeams } = await import("./services/autoStrategicGeneration");
           const result = await autoGenerateMinimalAnalysesForAllTeams(storage, round.id);
-          
+
           if (result.success) {
             console.log(`[ROUND-START] ✓ Análises mínimas geradas: ${result.successCount}/${result.totalTeams} equipes`);
           } else {
@@ -1238,12 +1253,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.body?.productCount
     );
 
-    const round = await storage.createRound({
-      classId: req.params.classId,
-      roundNumber: nextRoundNumber,
-      status: "active",
-      productCount,
-    });
+    let round;
+    try {
+      round = await storage.createRound({
+        classId: req.params.classId,
+        roundNumber: nextRoundNumber,
+        status: "active",
+        productCount,
+      });
+    } catch (error: any) {
+      // Grupo D (auditoria de 2026-09): mesma corrida de "checar depois
+      // criar" da rota irmã POST /api/rounds/:classId/start — ver o
+      // comentário lá. O índice único "rounds_unique_class_round_number"
+      // transforma a segunda tentativa concorrente num conflito (23505)
+      // em vez de uma duplicata silenciosa.
+      if (error?.code === "23505") {
+        return res.status(400).json({ error: "Já existe uma rodada ativa" });
+      }
+      throw error;
+    }
 
     await storage.updateRound(round.id, { startedAt: new Date() });
     await storage.updateClass(req.params.classId, { currentRound: nextRoundNumber });
@@ -1332,13 +1360,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Get all existing rounds
     const existingRounds = await storage.getRoundsByClass(req.params.classId);
     const newRoundNumber = existingRounds.length + 1;
-    
+
     // Create new locked round
-    const round = await storage.createRound({
-      classId: req.params.classId,
-      roundNumber: newRoundNumber,
-      status: "locked",
-    });
+    let round;
+    try {
+      round = await storage.createRound({
+        classId: req.params.classId,
+        roundNumber: newRoundNumber,
+        status: "locked",
+      });
+    } catch (error: any) {
+      // Grupo D (auditoria de 2026-09): mesma corrida de "ler depois criar"
+      // das rotas de início de rodada — duas chamadas concorrentes podiam
+      // calcular o mesmo newRoundNumber e violar o índice único
+      // "rounds_unique_class_round_number".
+      if (error?.code === "23505") {
+        return res.status(400).json({ error: "Uma rodada com esse número já foi adicionada — atualize a página e tente novamente" });
+      }
+      throw error;
+    }
 
     // Update maxRounds if needed
     if (newRoundNumber > classData.maxRounds) {
@@ -1751,144 +1791,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Você não tem permissão para processar esta rodada" });
       }
 
-      const teams = await storage.getTeamsByClass(round.classId);
-      const marketEvents = await storage.getMarketEventsByRound(req.params.roundId);
-      const activeEvents = marketEvents.filter(event => event.active);
+      // Grupo D (auditoria de 2026-09): esta rota reimplementava, de forma
+      // divergente e sem uso pelo front-end (nenhuma tela chama
+      // "/rounds/:roundId/process"), toda a lógica de fechamento de rodada
+      // já existente em services/roundCompletion.ts — sem gerar eventos de
+      // mercado automáticos, sem suportar o motor V2, sem checar
+      // round.status === "active" antes de marcar a rodada como concluída,
+      // e sem a proteção atômica contra chamadas concorrentes. Como ainda
+      // assim ficava exposta (qualquer professor dono da turma podia
+      // chamá-la diretamente, por exemplo via curl/Postman, inclusive numa
+      // rodada ainda em andamento), passa a delegar para a mesma função
+      // usada por POST /api/rounds/:roundId/end, eliminando a divergência.
+      const { processRoundCompletion } = await import("./services/roundCompletion");
+      const result = await processRoundCompletion(storage, req.params.roundId);
 
-      let processedTeams = 0;
-      let processedProducts = 0;
-
-      for (const team of teams) {
-        const submittedMixes = await storage.getMarketingMixesByTeamAndRound(team.id, req.params.roundId);
-        const submittedProducts = submittedMixes.filter(mix => mix.submittedAt !== null);
-
-        if (submittedProducts.length === 0) {
-          continue;
-        }
-
-        const existingResult = await storage.getResult(team.id, req.params.roundId);
-        if (existingResult) {
-          continue;
-        }
-
-        // Item 4 da auditoria: capital social fixo desde a criação da
-        // equipe e lucros acumulados carregados da rodada anterior — ver
-        // applyEquityCarryover em calculator.ts (mesmo padrão usado em
-        // roundCompletion.ts, para os dois caminhos de fechamento de
-        // rodada ficarem consistentes).
-        const previousResult = await storage.getPreviousRoundResult(team.id, req.params.roundId);
-        const capitalSocialFixo = team.initialBudget * 0.50;
-        const previousAccumulatedProfits = previousResult?.lucrosAcumulados ?? 0;
-
-        const swot = await storage.getSwotAnalysis(team.id, req.params.roundId);
-        const porter = await storage.getPorterAnalysis(team.id, req.params.roundId);
-        const bcgList = await storage.getBcgAnalyses(team.id, req.params.roundId);
-        const pestel = await storage.getPestelAnalysis(team.id, req.params.roundId);
-
-        const analyses = {
-          swot: swot || null,
-          porter: porter || null,
-          bcg: bcgList.length > 0 ? bcgList : null,
-          pestel: pestel || null,
-        };
-
-        const productKpisList: ResultCoreMetrics[] = [];
-        let totalProductBudget = 0;
-
-        for (const productMix of submittedProducts) {
-          const productBudget = productMix.estimatedCost || calculateMarketingSpend(productMix);
-          totalProductBudget += productBudget;
-
-          const productKPIs = calculateResults({
-            marketingMix: productMix,
-            marketEvents: activeEvents,
-            teamBudget: productBudget,
-            totalTeamsInRound: teams.length,
-            classData: {
-              sector: classData.sector ?? undefined,
-              businessType: classData.businessType ?? undefined,
-              marketSize: classData.marketSize ?? undefined,
-              marketGrowthRate: classData.marketGrowthRate ?? undefined,
-              competitionLevel: classData.competitionLevel ?? undefined,
-              numberOfCompetitors: classData.numberOfCompetitors ?? undefined,
-              marketConcentration: classData.marketConcentration ?? undefined,
-              competitorStrength: classData.competitorStrength ?? undefined,
-              targetConsumers: classData.targetConsumers ?? undefined,
-            },
-          });
-
-          const adjustedProductKPIs = applyStrategicImpacts(productKPIs, analyses, productMix.priceValue, productBudget);
-          
-          productKpisList.push(adjustedProductKPIs);
-
-          await storage.createProductResult({
-            teamId: team.id,
-            roundId: req.params.roundId,
-            productId: productMix.productId ?? 'default',
-            ...adjustedProductKPIs,
-            budgetBefore: productBudget,
-            profitImpact: adjustedProductKPIs.profit,
-            budgetAfter: productBudget + adjustedProductKPIs.profit,
-            alignmentScore: null,
-            alignmentIssues: [],
-          });
-
-          processedProducts++;
-        }
-
-        // Grupo A (auditoria de 2026-09) — item 1: applyEquityCarryover
-        // agora é chamado DEPOIS de applyAlignmentPenalties, para refletir
-        // o lucroLiquido/balanço já ajustados pelo alinhamento estratégico
-        // (mesma correção aplicada em roundCompletion.ts).
-        const firstProduct = submittedProducts[0];
-        const penaltyResult = applyAlignmentPenalties(
-          consolidateKpis(productKpisList),
-          firstProduct,
-          swot,
-          porter,
-          bcgList.length > 0 ? bcgList[0] : null,
-          pestel,
-          round.aiAssistanceLevel ?? 1,
-          firstProduct.priceValue,
-          totalProductBudget
-        );
-
-        const { alignmentScore, alignmentIssues } = penaltyResult;
-        const finalKPIs = applyEquityCarryover(
-          penaltyResult.kpis,
-          capitalSocialFixo,
-          previousAccumulatedProfits
-        );
-
-        const budgetBefore = team.budget;
-        const profitImpact = finalKPIs.profit;
-        const budgetAfter = Math.max(0, budgetBefore + profitImpact);
-
-        await storage.createResult({
-          teamId: team.id,
-          roundId: req.params.roundId,
-          ...finalKPIs,
-          budgetBefore,
-          profitImpact,
-          budgetAfter,
-          alignmentScore,
-          alignmentIssues,
-        });
-
-        await storage.updateTeam(team.id, { budget: budgetAfter });
-        processedTeams++;
+      if (!result.success) {
+        return res.status(400).json({ error: result.error || "Erro ao processar rodada" });
       }
-
-      await storage.updateRound(req.params.roundId, {
-        status: "completed",
-        endedAt: new Date(),
-      });
 
       res.json({
         success: true,
-        processedTeams,
-        processedProducts,
-        message: `Rodada processada com sucesso! ${processedTeams} equipes e ${processedProducts} produtos calculados.`,
+        message: "Rodada processada com sucesso.",
       });
     } catch (error: any) {
       console.error("[PROCESS-ROUND] Error:", error);
@@ -4478,6 +4401,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Acesso negado - não é sua turma" });
       }
 
+      // Grupo D (auditoria de 2026-09): esta rota sobrescrevia SWOT/Porter/
+      // BCG/PESTEL existentes sem checar o status da rodada. Numa rodada já
+      // "completed", os resultados calculados dependem das análises que
+      // existiam NAQUELE momento (calculator.ts as usa para bônus/penalidade
+      // de alinhamento) — regenerá-las depois reescreve o histórico sem
+      // recalcular o resultado já fechado, deixando análise e resultado
+      // inconsistentes para quem revisar a rodada depois.
+      if (round.status !== "active") {
+        return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
+      }
+
       if (!classData.sector || classData.sector.trim() === "") {
         return res.status(400).json({ error: "Configure o setor da turma antes de gerar análises estratégicas" });
       }
@@ -5421,6 +5355,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!roundId) {
         return res.status(400).json({ error: "roundId é obrigatório" });
+      }
+
+      const round = await storage.getRound(roundId);
+      if (!round) {
+        return res.status(404).json({ error: "Rodada não encontrada" });
+      }
+      if (round.classId !== team.classId) {
+        return res.status(403).json({ error: "Esta rodada não pertence à sua turma" });
+      }
+      if (round.status !== "active") {
+        return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
       }
 
       // ⚠️ VALIDAÇÃO OBRIGATÓRIA: Verificar se todas as análises estratégicas foram completadas
