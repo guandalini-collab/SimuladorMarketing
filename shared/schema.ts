@@ -114,6 +114,18 @@ export const marketingMix = pgTable("marketing_mix", {
   submittedAt: timestamp("submitted_at"),
 }, (table) => ({
   teamRoundProductIdx: index("marketing_mix_team_round_product_idx").on(table.teamId, table.roundId, table.productId),
+  // Grupo B (auditoria de 2026-09): sem esta constraint, dois envios do
+  // mesmo produto quase ao mesmo tempo (duplo clique em "Enviar Decisão",
+  // ou uma nova tentativa após timeout) podiam criar duas linhas de
+  // marketing_mix para o mesmo (team, round, product) — e o fechamento de
+  // rodada usa getMarketingMixesByTeamAndRound (busca TODAS as linhas
+  // submetidas), então processaria o mesmo produto duas vezes, dobrando
+  // a receita/custo desse produto no resultado consolidado da equipe.
+  // Usa coalesce(product_id, '') porque product_id é opcional (equipes
+  // com um produto só) e o Postgres trata NULL como distinto de NULL em
+  // índices únicos — sem o coalesce, o caso mais comum (um produto só)
+  // ficaria sem proteção nenhuma.
+  uniqueTeamRoundProduct: uniqueIndex("marketing_mix_unique_team_round_product").on(table.teamId, table.roundId, sql`coalesce(${table.productId}, '')`),
 }));
 
 export const marketEvents = pgTable("market_events", {
@@ -426,6 +438,12 @@ export const swotAnalysis = pgTable("swot_analysis", {
   updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
 }, (table) => ({
   teamRoundProductIdx: index("swot_team_round_product_idx").on(table.teamId, table.roundId, table.productId),
+  // Grupo B (auditoria de 2026-09): mesmo problema de marketing_mix —
+  // sem constraint única, duas gravações concorrentes (get-then-create
+  // em routes.ts) podiam criar duas análises SWOT para o mesmo produto,
+  // e getSwotAnalysis (SELECT ... LIMIT 1 sem ORDER BY) escolheria uma
+  // das duas arbitrariamente.
+  uniqueTeamRoundProduct: uniqueIndex("swot_unique_team_round_product").on(table.teamId, table.roundId, sql`coalesce(${table.productId}, '')`),
 }));
 
 export const porterAnalysis = pgTable("porter_analysis", {
@@ -450,6 +468,8 @@ export const porterAnalysis = pgTable("porter_analysis", {
   updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
 }, (table) => ({
   teamRoundProductIdx: index("porter_team_round_product_idx").on(table.teamId, table.roundId, table.productId),
+  // Grupo B (auditoria de 2026-09): mesmo problema de marketing_mix/SWOT.
+  uniqueTeamRoundProduct: uniqueIndex("porter_unique_team_round_product").on(table.teamId, table.roundId, sql`coalesce(${table.productId}, '')`),
 }));
 
 export const bcgAnalysis = pgTable("bcg_analysis", {
@@ -489,6 +509,8 @@ export const pestelAnalysis = pgTable("pestel_analysis", {
   updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
 }, (table) => ({
   teamRoundProductIdx: index("pestel_team_round_product_idx").on(table.teamId, table.roundId, table.productId),
+  // Grupo B (auditoria de 2026-09): mesmo problema de marketing_mix/SWOT.
+  uniqueTeamRoundProduct: uniqueIndex("pestel_unique_team_round_product").on(table.teamId, table.roundId, sql`coalesce(${table.productId}, '')`),
 }));
 
 export const insertSwotSchema = createInsertSchema(swotAnalysis).omit({

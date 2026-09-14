@@ -454,15 +454,34 @@ export class PgStorage implements IStorage {
   }
 
   async addMemberToTeam(teamId: string, userId: string): Promise<Team | undefined> {
-    const team = await this.getTeam(teamId);
-    if (!team) return undefined;
-
-    const updatedMemberIds = [...team.memberIds, userId];
+    // Grupo B (auditoria de 2026-09) — item: esta função fazia um
+    // read-modify-write clássico (getTeam, calcula o array em memória,
+    // depois UPDATE incondicional com esse array). Duas entradas
+    // concorrentes na MESMA equipe (dois alunos clicando "Entrar na
+    // Equipe" quase ao mesmo tempo) liam o mesmo memberIds original,
+    // cada uma calculava seu próprio array com só o seu próprio userId
+    // incluído, e a gravação que terminasse por último sobrescrevia a
+    // outra — removendo silenciosamente o primeiro aluno da equipe, sem
+    // nenhum erro para nenhum dos dois lados. Corrigido com um UPDATE
+    // atômico direto no banco (array_append + guarda no WHERE): o
+    // Postgres serializa duas transações concorrentes sobre a mesma
+    // linha e a segunda, ao ser desbloqueada, recalcula array_append
+    // sobre o valor já commitado pela primeira — nenhuma gravação é
+    // perdida.
     const result = await db.update(teams)
-      .set({ memberIds: updatedMemberIds })
-      .where(eq(teams.id, teamId))
+      .set({ memberIds: sql`array_append(${teams.memberIds}, ${userId})` })
+      .where(and(eq(teams.id, teamId), sql`NOT (${userId} = ANY(${teams.memberIds}))`))
       .returning();
-    return result[0];
+
+    if (result[0]) {
+      return result[0];
+    }
+
+    // Nenhuma linha afetada: ou a equipe não existe, ou o usuário já era
+    // membro (guarda do WHERE bloqueou a gravação). Em ambos os casos,
+    // devolve o estado atual da equipe (undefined se não existir), para
+    // manter o comportamento idempotente esperado pelos chamadores.
+    return this.getTeam(teamId);
   }
 
   async removeMemberFromTeam(teamId: string, userId: string): Promise<Team | undefined> {
@@ -715,8 +734,32 @@ export class PgStorage implements IStorage {
   }
 
   async createMarketingMix(mix: InsertMarketingMix): Promise<MarketingMix> {
-    const result = await db.insert(marketingMix).values(mix).returning();
-    return result[0];
+    // Grupo B (auditoria de 2026-09) — routes.ts faz "buscar, depois criar"
+    // (getMarketingMix + createMarketingMix se não existir) sem atomicidade:
+    // duas gravações quase simultâneas para o mesmo (team, round, product)
+    // — duplo clique em salvar/enviar, ou uma nova tentativa após timeout —
+    // podiam passar pela checagem e criar duas linhas. O fechamento de
+    // rodada busca TODAS as linhas submetidas (getMarketingMixesByTeamAndRound)
+    // e processa cada uma como um produto: uma duplicata faria o mesmo
+    // produto ser contado duas vezes na receita/custo consolidados da
+    // equipe. A constraint única "marketing_mix_unique_team_round_product"
+    // (shared/schema.ts + ensureGrupoBUniqueIndexes.ts) agora impede a
+    // duplicata no banco; aqui tratamos a rejeição (23505) como um upsert
+    // — busca a linha já criada pela gravação concorrente e atualiza com
+    // os dados mais recentes, em vez de propagar um erro bruto de banco.
+    try {
+      const result = await db.insert(marketingMix).values(mix).returning();
+      return result[0];
+    } catch (e: any) {
+      if (e?.code === "23505") {
+        const existing = await this.getMarketingMix(mix.teamId, mix.roundId, mix.productId ?? undefined);
+        if (existing) {
+          const updated = await this.updateMarketingMix(existing.id, mix);
+          if (updated) return updated;
+        }
+      }
+      throw e;
+    }
   }
 
   async updateMarketingMix(id: string, data: Partial<MarketingMix>): Promise<MarketingMix | undefined> {
@@ -849,8 +892,22 @@ export class PgStorage implements IStorage {
   }
 
   async createSwotAnalysis(swot: InsertSwot & { teamId: string }): Promise<SwotAnalysis> {
-    const result = await db.insert(swotAnalysis).values(swot).returning();
-    return result[0];
+    // Grupo B (auditoria de 2026-09): mesmo padrão de createMarketingMix —
+    // trata a rejeição da constraint única "swot_unique_team_round_product"
+    // como upsert em vez de propagar erro bruto de banco.
+    try {
+      const result = await db.insert(swotAnalysis).values(swot).returning();
+      return result[0];
+    } catch (e: any) {
+      if (e?.code === "23505") {
+        const existing = await this.getSwotAnalysis(swot.teamId, swot.roundId, swot.productId ?? undefined);
+        if (existing) {
+          const updated = await this.updateSwotAnalysis(existing.id, swot);
+          if (updated) return updated;
+        }
+      }
+      throw e;
+    }
   }
 
   async updateSwotAnalysis(id: string, data: Partial<SwotAnalysis>): Promise<SwotAnalysis | undefined> {
@@ -878,8 +935,22 @@ export class PgStorage implements IStorage {
   }
 
   async createPorterAnalysis(porter: InsertPorter & { teamId: string }): Promise<PorterAnalysis> {
-    const result = await db.insert(porterAnalysis).values(porter).returning();
-    return result[0];
+    // Grupo B (auditoria de 2026-09): mesmo padrão de createMarketingMix —
+    // trata a rejeição da constraint única "porter_unique_team_round_product"
+    // como upsert em vez de propagar erro bruto de banco.
+    try {
+      const result = await db.insert(porterAnalysis).values(porter).returning();
+      return result[0];
+    } catch (e: any) {
+      if (e?.code === "23505") {
+        const existing = await this.getPorterAnalysis(porter.teamId, porter.roundId, porter.productId ?? undefined);
+        if (existing) {
+          const updated = await this.updatePorterAnalysis(existing.id, porter);
+          if (updated) return updated;
+        }
+      }
+      throw e;
+    }
   }
 
   async updatePorterAnalysis(id: string, data: Partial<PorterAnalysis>): Promise<PorterAnalysis | undefined> {
@@ -946,8 +1017,22 @@ export class PgStorage implements IStorage {
   }
 
   async createPestelAnalysis(pestel: InsertPestel & { teamId: string }): Promise<PestelAnalysis> {
-    const result = await db.insert(pestelAnalysis).values(pestel).returning();
-    return result[0];
+    // Grupo B (auditoria de 2026-09): mesmo padrão de createMarketingMix —
+    // trata a rejeição da constraint única "pestel_unique_team_round_product"
+    // como upsert em vez de propagar erro bruto de banco.
+    try {
+      const result = await db.insert(pestelAnalysis).values(pestel).returning();
+      return result[0];
+    } catch (e: any) {
+      if (e?.code === "23505") {
+        const existing = await this.getPestelAnalysis(pestel.teamId, pestel.roundId, pestel.productId ?? undefined);
+        if (existing) {
+          const updated = await this.updatePestelAnalysis(existing.id, pestel);
+          if (updated) return updated;
+        }
+      }
+      throw e;
+    }
   }
 
   async updatePestelAnalysis(id: string, data: Partial<PestelAnalysis>): Promise<PestelAnalysis | undefined> {
@@ -1178,7 +1263,30 @@ export class PgStorage implements IStorage {
   }
 
   async createProductResult(result: InsertProductResult): Promise<ProductResult> {
-    const created = await db.insert(productResults).values(result).returning();
+    // Grupo B (auditoria de 2026-09) — item: "product_results" já tinha a
+    // constraint única "product_results_unique_team_round_product"
+    // (shared/schema.ts) desde antes desta correção, mas este INSERT era
+    // simples, sem tratar conflito. Se o fechamento de uma rodada falhasse
+    // no meio do loop de produtos (roundCompletion.ts processa cada
+    // produto submetido de cada equipe antes de salvar o "results"
+    // consolidado da equipe) — por exemplo, uma falha de rede ou exceção
+    // ao processar o produto seguinte —, a rodada nunca chegava a ser
+    // marcada como concluída, e a próxima tentativa (novo tick do
+    // scheduler ou reprocessamento manual) recomeçava do zero, incluindo
+    // os produtos que JÁ tinham sido gravados com sucesso na tentativa
+    // anterior. O INSERT desses produtos já existentes violava a
+    // constraint única e lançava um erro não tratado — travando a rodada
+    // PERMANENTEMENTE, pois toda tentativa futura falharia da mesma
+    // forma. Corrigido com upsert (mesmo padrão de createResult): uma
+    // nova tentativa sobrescreve o resultado do produto com o cálculo
+    // mais recente, em vez de travar.
+    const created = await db.insert(productResults)
+      .values(result)
+      .onConflictDoUpdate({
+        target: [productResults.teamId, productResults.roundId, productResults.productId],
+        set: result,
+      })
+      .returning();
     return created[0];
   }
 

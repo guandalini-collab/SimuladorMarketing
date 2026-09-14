@@ -5,6 +5,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { ensureMidiaCatalog } from "./ensureMidiaCatalog";
 import { ensureResultsUniqueIndex } from "./ensureResultsUniqueIndex";
 import { ensureBcgQuadrantPt } from "./ensureBcgQuadrantPt";
+import { ensureGrupoBUniqueIndexes } from "./ensureGrupoBUniqueIndexes";
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use((req, res, next) => {
   await ensureMidiaCatalog();
   await ensureResultsUniqueIndex();
   await ensureBcgQuadrantPt();
+  await ensureGrupoBUniqueIndexes();
 
   const server = await registerRoutes(app);
 
