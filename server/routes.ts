@@ -10,7 +10,7 @@ import { pool } from "./pg-storage";
 import { calculateMarketingSpend } from "./calculator";
 import { marketSectors, targetAudiences, businessTypes, competitionLevels } from "./data/marketData";
 import { z } from "zod";
-import { generateMarketEvents, type EventGenerationParams } from "./services/aiEventGenerator";
+import { generateMarketEvents, translateEventTypeToPt, type EventGenerationParams } from "./services/aiEventGenerator";
 import { emailService } from "./services/email";
 import { sendTeamEmail } from "./email-service";
 import { randomUUID } from "crypto";
@@ -4355,7 +4355,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const eventData = {
           classId,
           roundId: activeRound.id,
-          type: event.type,
+          // Grupo E (auditoria de 2026-09): a IA gera "type" em inglês, mas
+          // calculateEventImpact() (calculator.ts) só reconhece os valores
+          // em português usados pelo gerador determinístico — sem tradução,
+          // o evento aparecia normalmente na tela mas nunca tinha efeito no
+          // resultado calculado da equipe.
+          type: translateEventTypeToPt(event.type),
           title: event.title,
           description: event.description,
           impact: event.impact,
@@ -4766,11 +4771,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Você não tem permissão para gerar feedback para esta equipe" });
       }
 
-      const existingFeedback = await storage.getAiFeedback(teamId, roundId);
-      if (existingFeedback) {
-        await storage.deleteAiFeedback(teamId, roundId);
-      }
-
       const marketingMix = await storage.getMarketingMix(teamId, roundId);
       if (!marketingMix) {
         return res.status(404).json({ error: "Nenhuma decisão de marketing mix encontrada para esta rodada" });
@@ -4805,6 +4805,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         marketEvents: marketEvents.filter(e => e.active),
         previousResults,
       });
+
+      // Grupo E (auditoria de 2026-09): antes, o feedback existente era
+      // apagado ANTES de chamar a IA — se generateFeedback() falhasse (erro
+      // de rede, resposta malformada, etc.), a equipe ficava sem NENHUM
+      // feedback (nem o antigo, nem um novo), com o professor vendo um erro
+      // 500 sem saber que o feedback anterior tinha acabado de ser perdido.
+      // Agora só apaga o antigo depois que a nova análise já foi gerada com
+      // sucesso, bem próximo do INSERT — não há hoje uma constraint única
+      // em (team_id, round_id) para usar upsert diretamente (createAiFeedback
+      // é um INSERT simples), então o padrão seguro possível aqui é
+      // "gerar primeiro, substituir por último".
+      const existingFeedback = await storage.getAiFeedback(teamId, roundId);
+      if (existingFeedback) {
+        await storage.deleteAiFeedback(teamId, roundId);
+      }
 
       const savedFeedback = await storage.createAiFeedback({
         teamId,

@@ -15,6 +15,30 @@ export interface GeneratedEvent {
   pestelCategory: string;
 }
 
+// Grupo E (auditoria de 2026-09): a IA gera o campo "type" em inglês
+// ("economic", "technological", ...), mas calculateEventImpact()
+// (calculator.ts) compara com os valores em português usados pelo gerador
+// determinístico de eventos (eventGenerator.ts: "economico", "tecnologico",
+// "competitivo", "social", "regulatorio") — mesmo padrão do bug do quadrante
+// BCG corrigido no Grupo A. Sem tradução, um evento gerado por IA nunca
+// bate em nenhuma comparação (exceto "social", que coincide nas duas
+// línguas), então nunca tem efeito numérico no resultado da equipe, embora
+// apareça normalmente na tela (o rótulo em client/admin.tsx já reconhecia
+// tanto o inglês quanto o português, então a tradução aqui não quebra a
+// exibição — só garante que o efeito no cálculo passe a existir).
+const EVENT_TYPE_PT: Record<GeneratedEvent["type"], string> = {
+  economic: "economico",
+  technological: "tecnologico",
+  social: "social",
+  competitive: "competitivo",
+  regulatory: "regulatorio",
+  environmental: "ambiental",
+};
+
+export function translateEventTypeToPt(type: string): string {
+  return EVENT_TYPE_PT[type as GeneratedEvent["type"]] ?? type;
+}
+
 export interface EventGenerationParams {
   sectorId: string;
   productCategory?: string;
@@ -67,11 +91,44 @@ export async function generateMarketEvents(params: EventGenerationParams): Promi
     }
 
     const parsed = JSON.parse(response);
-    return parsed.events || [];
+
+    // Grupo E (auditoria de 2026-09): antes, "parsed.events || []" confiava
+    // cegamente no formato devolvido pela IA — um item sem "severity"
+    // válido, ou o campo "events" vindo como algo que não é array, seguia
+    // direto para storage.createMarketEvent (colunas NOT NULL em
+    // market_events) e quebrava a rota com um erro de banco, em vez de uma
+    // mensagem clara. Agora valida a forma de cada evento e descarta
+    // silenciosamente (com log) só os que não têm o formato esperado,
+    // devolvendo os demais normalmente.
+    const rawEvents = Array.isArray(parsed?.events) ? parsed.events : [];
+    const validEvents = rawEvents.filter(isValidGeneratedEvent);
+
+    if (validEvents.length < rawEvents.length) {
+      console.warn(
+        `[AI_EVENT_GENERATOR] ${rawEvents.length - validEvents.length} de ${rawEvents.length} evento(s) descartado(s) por formato inválido na resposta da IA.`
+      );
+    }
+
+    return validEvents;
   } catch (error) {
     console.error("Erro ao gerar eventos com IA:", error);
     throw new Error("Falha ao gerar eventos de mercado. Tente novamente.");
   }
+}
+
+const VALID_EVENT_TYPES = new Set<GeneratedEvent["type"]>([
+  "economic", "technological", "social", "competitive", "regulatory", "environmental",
+]);
+const VALID_EVENT_SEVERITIES = new Set<GeneratedEvent["severity"]>(["baixo", "medio", "alto"]);
+const REQUIRED_STRING_FIELDS: (keyof GeneratedEvent)[] = ["title", "description", "impact", "pestelCategory"];
+
+export function isValidGeneratedEvent(event: any): event is GeneratedEvent {
+  if (!event || typeof event !== "object") return false;
+  if (!VALID_EVENT_TYPES.has(event.type)) return false;
+  if (!VALID_EVENT_SEVERITIES.has(event.severity)) return false;
+  return REQUIRED_STRING_FIELDS.every(
+    (field) => typeof event[field] === "string" && event[field].trim().length > 0
+  );
 }
 
 function buildPESTELPrompt(

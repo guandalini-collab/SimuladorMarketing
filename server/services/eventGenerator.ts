@@ -361,7 +361,17 @@ export class EventGenerator {
     classId: string,
     roundId: string
   ): Omit<InsertMarketEvent, "roundId" | "classId">[] {
-    const { condition, severity } = economicService.analyzeEconomicCondition(economicData);
+    // Grupo E (auditoria de 2026-09): analyzeEconomicCondition() também
+    // devolve uma "severity" (baixa/media/alta) derivada do cenário
+    // econômico geral, mas ela nunca era usada aqui — cada evento sorteado
+    // usa sempre a severidade fixa do seu próprio template (linha abaixo,
+    // "severity: template.severity"), então dois eventos do mesmo template
+    // têm sempre a mesma severidade, seja a economia estável ou em crise
+    // total. Usar essa severidade para de fato modular o impacto de cada
+    // evento sorteado seria uma mudança de balanceamento do jogo (fora do
+    // escopo de uma correção de bug) — por ora, só deixa de desestruturar o
+    // valor não utilizado, para não sugerir que ele influencia o resultado.
+    const { condition } = economicService.analyzeEconomicCondition(economicData);
     const events: Omit<InsertMarketEvent, "roundId" | "classId">[] = [];
 
     const numEvents = Math.floor(

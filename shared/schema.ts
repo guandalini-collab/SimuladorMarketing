@@ -581,6 +581,13 @@ export const autoEventConfig = pgTable("auto_event_config", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   classId: varchar("class_id").notNull().unique(),
   enabled: boolean("enabled").notNull().default(false),
+  // Grupo E (auditoria de 2026-09): campo vestigial — nunca lido por
+  // eventGenerator.ts (a quantidade de eventos por rodada já é controlada
+  // por minEventsPerRound/maxEventsPerRound) nem exposto em nenhuma tela do
+  // professor para ser configurado. Mantido apenas por compatibilidade com
+  // linhas já existentes; implementar de verdade exigiria decisão de
+  // produto (quais frequências oferecer, tela para configurá-las) fora do
+  // escopo desta auditoria de bugs.
   eventFrequency: text("event_frequency").notNull().default("every_round"),
   minEventsPerRound: integer("min_events_per_round").notNull().default(1),
   maxEventsPerRound: integer("max_events_per_round").notNull().default(3),
