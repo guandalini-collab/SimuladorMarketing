@@ -571,19 +571,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!user || user.role !== "professor") {
       return res.status(403).json({ error: "Acesso negado. Apenas professores podem acessar este recurso." });
     }
-    
+
     try {
       const fs = await import('fs/promises');
       const path = await import('path');
       const manualPath = path.join(process.cwd(), 'server', 'manual-professor.md');
       const manualContent = await fs.readFile(manualPath, 'utf-8');
-      
+
       res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
       res.setHeader('Content-Disposition', 'attachment; filename="Manual_Professor_Simula.md"');
       res.send(manualContent);
     } catch (error) {
       console.error("Erro ao servir manual do professor:", error);
       res.status(500).json({ error: "Erro ao carregar manual" });
+    }
+  });
+
+  // Correções pós-auditoria (2026-09), item 3 relatado pelo professor: o
+  // botão de baixar o manual do professor usava a rota acima, que sempre
+  // serviu o markdown bruto (.md) em vez de um PDF de verdade — o navegador
+  // baixava o arquivo e o sistema operacional abria com o que estivesse
+  // associado a .md (no caso, o programa R/RStudio), nunca um leitor de
+  // PDF. Esta rota gera um PDF de verdade a partir do mesmo conteúdo,
+  // mesmo padrão já usado para o manual do aluno (/api/manual/aluno/pdf).
+  app.get("/api/manual/professor/pdf", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "professor") {
+      return res.status(403).json({ error: "Acesso negado. Apenas professores podem acessar este recurso." });
+    }
+
+    try {
+      const { generateManualProfessorPDF } = await import('./services/manualProfessorPDF');
+      const pdfStream = generateManualProfessorPDF();
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="Manual_Professor_Simula.pdf"');
+
+      pdfStream.pipe(res);
+    } catch (error) {
+      console.error("Erro ao gerar PDF do manual do professor:", error);
+      res.status(500).json({ error: "Erro ao gerar manual em PDF" });
     }
   });
 

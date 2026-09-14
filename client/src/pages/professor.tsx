@@ -1872,13 +1872,13 @@ function RoundsTimeline({
                   {round.scheduledStartAt && (
                     <p className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      Início: {new Date(round.scheduledStartAt).toLocaleString("pt-BR")}
+                      Início: {new Date(round.scheduledStartAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} (00:00, Brasília)
                     </p>
                   )}
                   {round.scheduledEndAt && (
                     <p className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      Término: {new Date(round.scheduledEndAt).toLocaleString("pt-BR")}
+                      Término: {new Date(round.scheduledEndAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} (00:00, Brasília)
                     </p>
                   )}
                 </div>
@@ -2698,9 +2698,19 @@ export default function Professor() {
 
   const scheduleRoundMutation = useMutation({
     mutationFn: async (data: { roundId: string; scheduledStartAt?: string; scheduledEndAt?: string; clear?: boolean }) => {
+      // Item 4 (problemas relatados pelo professor, 2026-09): os campos do
+      // diálogo agora só pedem a DATA (sem hora) — abertura/encerramento são
+      // sempre à meia-noite, horário de Brasília, como o professor pediu.
+      // "-03:00" fixo porque o Brasil não observa mais horário de verão
+      // desde 2019 (Brasília = UTC-3 o ano todo); o "Z" explícito evita que
+      // "YYYY-MM-DDT00:00" seja interpretado no fuso horário do servidor
+      // (Railway roda em UTC) em vez de Brasília — sem isso, meia-noite em
+      // Brasília virava 21h do dia anterior.
+      const toMidnightBrasilia = (dateOnly?: string) =>
+        dateOnly ? `${dateOnly}T00:00:00-03:00` : null;
       const res = await apiRequest("POST", `/api/rounds/${data.roundId}/schedule`, {
-        scheduledStartAt: data.scheduledStartAt || null,
-        scheduledEndAt: data.scheduledEndAt || null,
+        scheduledStartAt: toMidnightBrasilia(data.scheduledStartAt),
+        scheduledEndAt: toMidnightBrasilia(data.scheduledEndAt),
         clear: data.clear ?? false,
       });
       return res.json();
@@ -2909,13 +2919,14 @@ export default function Professor() {
 
   const handleScheduleRound = (round: Round) => {
     setRoundBeingScheduled(round.id);
-    const formatLocalDateTime = (date: string | Date) => {
-      const d = new Date(date);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-    };
+    // Mostra a data já em horário de Brasília, não no fuso do navegador —
+    // evita reabrir o diálogo de edição com a data errada (véspera/dia
+    // seguinte) caso o professor acesse de outro fuso horário.
+    const formatDateBrasilia = (date: string | Date) =>
+      new Date(date).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
     setScheduleData({
-      scheduledStartAt: round.scheduledStartAt ? formatLocalDateTime(round.scheduledStartAt) : "",
-      scheduledEndAt: round.scheduledEndAt ? formatLocalDateTime(round.scheduledEndAt) : "",
+      scheduledStartAt: round.scheduledStartAt ? formatDateBrasilia(round.scheduledStartAt) : "",
+      scheduledEndAt: round.scheduledEndAt ? formatDateBrasilia(round.scheduledEndAt) : "",
     });
     setIsScheduleDialogOpen(true);
   };
@@ -2957,7 +2968,7 @@ export default function Professor() {
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={() => window.open('/api/manual/professor', '_blank')} data-testid="button-manual-professor">
+                  <Button variant="ghost" size="icon" onClick={() => window.open('/api/manual/professor/pdf', '_blank')} data-testid="button-manual-professor">
                     <BookOpen className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -3023,15 +3034,23 @@ export default function Professor() {
             {currentClass && (
               <div className="flex items-center gap-2">
                 {!activeRound && rounds.length < currentClass.maxRounds && (
-                  <Button 
-                    size="sm" 
-                    onClick={() => selectedClass && startRoundMutation.mutate(selectedClass)}
-                    disabled={startRoundMutation.isPending}
-                    data-testid="button-quick-start-round"
-                  >
-                    <Play className="h-4 w-4 mr-1" />
-                    Iniciar Rodada
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        onClick={() => selectedClass && startRoundMutation.mutate(selectedClass)}
+                        disabled={startRoundMutation.isPending}
+                        data-testid="button-quick-start-round"
+                      >
+                        <Play className="h-4 w-4 mr-1" />
+                        Iniciar Rodada
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Inicia com {nextRoundProductCount} produto{nextRoundProductCount !== 1 ? "s" : ""} por equipe (mesma quantidade da rodada anterior).
+                      Para mudar, abra a aba "Aula" — o seletor de quantidade de produtos aparece no card de ação principal antes de iniciar.
+                    </TooltipContent>
+                  </Tooltip>
                 )}
                 {activeRound && (
                   <Button 
@@ -3172,6 +3191,24 @@ export default function Professor() {
                         <span>{submissionStats.pending.length} equipes ainda não enviaram</span>
                       </div>
                     )}
+
+                    {/* Item 4 (problemas relatados pelo professor, 2026-09): o
+                        agendamento de abertura/encerramento automático (por
+                        rodada) já existia, mas ficava escondido na aba
+                        "Configurar" > "Gerenciamento de Rodadas" — longe da
+                        aba "Aula", que é onde o professor de fato controla o
+                        dia a dia. Este atalho torna a funcionalidade visível
+                        no lugar onde ele primeiro procuraria por ela. */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-white/80 hover:text-white hover:bg-white/10 h-auto py-1 px-2 -ml-2 self-start"
+                      onClick={() => setActiveTab("configurar")}
+                      data-testid="button-goto-schedule-round"
+                    >
+                      <Clock className="h-3.5 w-3.5 mr-1.5" />
+                      Agendar abertura/encerramento automático de rodadas
+                    </Button>
                   </div>
 
                   {/* Ação Principal */}
@@ -4176,16 +4213,19 @@ export default function Professor() {
         <DialogContent data-testid="dialog-schedule-round">
           <DialogHeader>
             <DialogTitle>Agendar Rodada</DialogTitle>
-            <DialogDescription>Defina as datas para ativação e encerramento automático</DialogDescription>
+            <DialogDescription>
+              Defina as datas para ativação e encerramento automático. A rodada sempre abre e
+              encerra à meia-noite, horário de Brasília — não é preciso informar hora.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Data/Hora de Início</Label>
-              <Input type="datetime-local" value={scheduleData.scheduledStartAt} onChange={(e) => setScheduleData({ ...scheduleData, scheduledStartAt: e.target.value })} data-testid="input-scheduled-start" />
+              <Label>Data de Início (meia-noite, horário de Brasília)</Label>
+              <Input type="date" value={scheduleData.scheduledStartAt} onChange={(e) => setScheduleData({ ...scheduleData, scheduledStartAt: e.target.value })} data-testid="input-scheduled-start" />
             </div>
             <div className="space-y-2">
-              <Label>Data/Hora de Término</Label>
-              <Input type="datetime-local" value={scheduleData.scheduledEndAt} onChange={(e) => setScheduleData({ ...scheduleData, scheduledEndAt: e.target.value })} data-testid="input-scheduled-end" />
+              <Label>Data de Término (meia-noite, horário de Brasília)</Label>
+              <Input type="date" value={scheduleData.scheduledEndAt} onChange={(e) => setScheduleData({ ...scheduleData, scheduledEndAt: e.target.value })} data-testid="input-scheduled-end" />
             </div>
           </div>
           <DialogFooter className="flex justify-between">
