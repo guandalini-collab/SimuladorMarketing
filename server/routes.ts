@@ -560,7 +560,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     res.json({
-      authorizedEmails: Array.from(authorizedProfessorEmails),
       isAuthorized: authorizedProfessorEmails.has(currentUser.email.trim().toLowerCase())
     });
   });
@@ -958,18 +957,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
     }
-    
+
+    // Grupo C (auditoria de 2026-09): esta rota cria a equipe e já
+    // coloca quem chamou como líder/membro (igual a POST /api/teams/create),
+    // mas não tinha nenhuma das checagens que essa rota irmã tem — qualquer
+    // usuário autenticado (professor, ou aluno de OUTRA turma) podia criar
+    // e entrar em uma equipe de qualquer turma só sabendo o classId, e um
+    // aluno já matriculado em uma equipe podia criar outra.
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "equipe") {
+      return res.status(403).json({ error: "Apenas alunos podem criar equipes" });
+    }
+    if (user.status !== "approved") {
+      return res.status(403).json({ error: "Sua conta ainda não foi aprovada pelo professor. Aguarde a aprovação para criar equipes." });
+    }
+    const existingTeam = await storage.getTeamByUser(req.session.userId);
+    if (existingTeam) {
+      return res.status(400).json({ error: "Você já está em uma equipe" });
+    }
+    const studentClass = await storage.getClassByStudent(req.session.userId);
+    if (!studentClass || studentClass.id !== req.params.classId) {
+      return res.status(403).json({ error: "Você não está matriculado nesta turma" });
+    }
+
     try {
       const data = insertTeamSchema.parse({
         ...req.body,
         classId: req.params.classId,
       });
-      
+
       const classData = await storage.getClass(data.classId);
       if (!classData) {
         return res.status(404).json({ error: "Turma não encontrada" });
       }
-      
+
       const team = await storage.createTeam({
         name: data.name,
         classId: data.classId,
@@ -1579,6 +1600,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           continue;
         }
 
+        if (team.classId !== req.params.classId) {
+          results.push({ teamId, teamName: team.name, success: false, error: "Equipe não pertence a esta turma" });
+          continue;
+        }
+
         // Get team members emails
         const teamMembers = team.memberIds || [];
         const memberEmails: string[] = [];
@@ -1714,6 +1740,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const classData = await storage.getClass(round.classId);
       if (!classData) {
         return res.status(404).json({ error: "Turma não encontrada" });
+      }
+
+      // Grupo C (auditoria de 2026-09): faltava a checagem de propriedade
+      // (professor logado é dono da turma da rodada) que já existe no
+      // endpoint irmão POST /api/rounds/:roundId/end — sem ela, qualquer
+      // professor autenticado podia forçar o processamento/fechamento de
+      // rodadas de turmas de OUTROS professores.
+      if (classData.professorId !== user.id) {
+        return res.status(403).json({ error: "Você não tem permissão para processar esta rodada" });
       }
 
       const teams = await storage.getTeamsByClass(round.classId);
@@ -1873,13 +1908,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
     }
-    
+
     const classId = req.params.classId;
     const classData = await storage.getClass(classId);
     if (!classData) {
       return res.status(404).json({ error: "Turma não encontrada" });
     }
-    
+
+    // Grupo C (auditoria de 2026-09): esta rota é irmã de
+    // GET /api/classes/:classId/teams, que já tinha sido corrigida
+    // porque qualquer usuário autenticado (inclusive um aluno de outra
+    // turma) conseguia listar as equipes de qualquer turma só sabendo o
+    // classId. Esta rota tinha exatamente o mesmo problema.
+    const user = await storage.getUser(req.session.userId);
+    if (!user) {
+      return res.status(401).json({ error: "Usuário não encontrado" });
+    }
+    if (user.role === "equipe") {
+      const studentClass = await storage.getClassByStudent(req.session.userId);
+      if (!studentClass || studentClass.id !== classId) {
+        return res.status(403).json({ error: "Você não faz parte desta turma" });
+      }
+    }
+
     const teams = await storage.getTeamsByClass(classId);
     res.json(teams);
   });
@@ -2638,9 +2689,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!user) {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
-    
+
+    const round = await storage.getRound(req.params.roundId);
+    if (!round) {
+      return res.status(404).json({ error: "Rodada não encontrada" });
+    }
+
+    if (user.role === "professor") {
+      const classData = await storage.getClass(round.classId);
+      if (!classData || classData.professorId !== user.id) {
+        return res.status(403).json({ error: "Acesso negado - não é sua turma" });
+      }
+    } else {
+      const studentClass = await storage.getClassByStudent(req.session.userId);
+      if (!studentClass || studentClass.id !== round.classId) {
+        return res.status(403).json({ error: "Acesso negado - você não faz parte desta turma" });
+      }
+    }
+
     const events = await storage.getMarketEventsByRound(req.params.roundId);
-    
+
     if (user.role === "professor") {
       res.json(events);
     } else {
@@ -3261,8 +3329,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(401).json({ error: "Usuário não encontrado" });
     }
 
+    if (user.role === "professor") {
+      const round = await storage.getRound(req.params.roundId);
+      if (!round) {
+        return res.status(404).json({ error: "Rodada não encontrada" });
+      }
+      const classData = await storage.getClass(round.classId);
+      if (!classData || classData.professorId !== user.id) {
+        return res.status(403).json({ error: "Acesso negado - não é sua turma" });
+      }
+    }
+
     const results = await storage.getResultsByRound(req.params.roundId);
-    
+
     const resultsWithTeams = await Promise.all(
       results.map(async (result) => {
         const team = await storage.getTeam(result.teamId);
@@ -3300,7 +3379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const user = await storage.getUser(req.session.userId);
     const team = await storage.getTeam(req.params.teamId);
-    
+
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
@@ -3309,6 +3388,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userTeam = await storage.getTeamByUser(req.session.userId);
       if (!userTeam || userTeam.id !== req.params.teamId) {
         return res.status(403).json({ error: "Acesso negado" });
+      }
+    } else if (user?.role === "professor") {
+      const classData = await storage.getClass(team.classId);
+      if (!classData || classData.professorId !== user.id) {
+        return res.status(403).json({ error: "Acesso negado - não é sua turma" });
       }
     }
 
@@ -3325,7 +3409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const user = await storage.getUser(req.session.userId);
     const team = await storage.getTeam(req.params.teamId);
-    
+
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
@@ -3335,10 +3419,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userTeam || userTeam.id !== req.params.teamId) {
         return res.status(403).json({ error: "Acesso negado" });
       }
+    } else if (user?.role === "professor") {
+      const classData = await storage.getClass(team.classId);
+      if (!classData || classData.professorId !== user.id) {
+        return res.status(403).json({ error: "Acesso negado - não é sua turma" });
+      }
     }
 
     const result = await storage.getResult(req.params.teamId, req.params.roundId);
-    
+
     if (!result) {
       return res.status(404).json({ error: "Resultado não encontrado para esta rodada" });
     }
@@ -3353,7 +3442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const user = await storage.getUser(req.session.userId);
     const team = await storage.getTeam(req.params.teamId);
-    
+
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
@@ -3362,6 +3451,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userTeam = await storage.getTeamByUser(req.session.userId);
       if (!userTeam || userTeam.id !== req.params.teamId) {
         return res.status(403).json({ error: "Acesso negado" });
+      }
+    } else if (user?.role === "professor") {
+      const classData = await storage.getClass(team.classId);
+      if (!classData || classData.professorId !== user.id) {
+        return res.status(403).json({ error: "Acesso negado - não é sua turma" });
       }
     }
 
@@ -3392,13 +3486,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     const classData = await storage.getClass(req.params.classId);
-    
+
     if (!classData) {
       return res.status(404).json({ error: "Turma não encontrada" });
     }
 
+    if (classData.professorId !== user.id) {
+      return res.status(403).json({ error: "Acesso negado - não é sua turma" });
+    }
+
     const round = await storage.getRound(req.params.roundId);
-    
+
     if (!round) {
       return res.status(404).json({ error: "Rodada não encontrada" });
     }
@@ -3588,6 +3686,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const classData = await storage.getClass(team.classId);
     if (!classData) {
       return res.status(404).json({ error: "Turma não encontrada" });
+    }
+
+    if (user?.role === "professor" && classData.professorId !== user.id) {
+      return res.status(403).json({ error: "Acesso negado - não é sua turma" });
     }
 
     const sector = marketSectors.find(s => s.id === classData.sector);
@@ -4009,6 +4111,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!round) {
         return res.status(404).json({ error: "Rodada não encontrada" });
       }
+      if (round.classId !== team.classId) {
+        return res.status(403).json({ error: "Esta rodada não pertence à sua turma" });
+      }
       if (round.status !== "active") {
         return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
       }
@@ -4047,6 +4152,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!round) {
         return res.status(404).json({ error: "Rodada não encontrada" });
       }
+      if (round.classId !== team.classId) {
+        return res.status(403).json({ error: "Esta rodada não pertence à sua turma" });
+      }
       if (round.status !== "active") {
         return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
       }
@@ -4084,6 +4192,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const round = await storage.getRound(data.roundId);
       if (!round) {
         return res.status(404).json({ error: "Rodada não encontrada" });
+      }
+      if (round.classId !== team.classId) {
+        return res.status(403).json({ error: "Esta rodada não pertence à sua turma" });
       }
       if (round.status !== "active") {
         return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
@@ -4147,6 +4258,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const round = await storage.getRound(data.roundId);
       if (!round) {
         return res.status(404).json({ error: "Rodada não encontrada" });
+      }
+      if (round.classId !== team.classId) {
+        return res.status(403).json({ error: "Esta rodada não pertence à sua turma" });
       }
       if (round.status !== "active") {
         return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
@@ -4797,6 +4911,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Você não faz parte desta equipe" });
       }
 
+      if (user.role === "professor") {
+        const classData = await storage.getClass(team.classId);
+        if (!classData || classData.professorId !== user.id) {
+          return res.status(403).json({ error: "Acesso negado - não é sua turma" });
+        }
+      }
+
       const feedback = await storage.getAiFeedback(teamId, roundId);
       if (!feedback) {
         return res.status(404).json({ error: "Feedback não encontrado" });
@@ -4831,6 +4952,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Você não faz parte desta equipe" });
       }
 
+      if (user.role === "professor") {
+        const classData = await storage.getClass(team.classId);
+        if (!classData || classData.professorId !== user.id) {
+          return res.status(403).json({ error: "Acesso negado - não é sua turma" });
+        }
+      }
+
       const feedbacks = await storage.getAiFeedbacksByTeam(teamId);
       res.json(feedbacks);
     } catch (error: any) {
@@ -4860,6 +4988,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (user.role === "equipe" && !team.memberIds.includes(req.session.userId)) {
         return res.status(403).json({ error: "Você não faz parte desta equipe" });
+      }
+
+      if (user.role === "professor") {
+        const classData = await storage.getClass(team.classId);
+        if (!classData || classData.professorId !== user.id) {
+          return res.status(403).json({ error: "Acesso negado - não é sua turma" });
+        }
       }
 
       let feedback = await storage.getDeterministicFeedback(teamId, roundId);
@@ -4930,6 +5065,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { roundId } = req.params;
+      const round = await storage.getRound(roundId);
+      if (!round) {
+        return res.status(404).json({ error: "Rodada não encontrada" });
+      }
+      const classData = await storage.getClass(round.classId);
+      if (!classData || classData.professorId !== user.id) {
+        return res.status(403).json({ error: "Acesso negado - não é sua turma" });
+      }
+
       const feedbacks = await storage.getDeterministicFeedbacksByRound(roundId);
       res.json(feedbacks);
     } catch (error: any) {
@@ -4946,10 +5090,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const { teamId, roundId } = req.params;
-      
+
       const team = await storage.getTeam(teamId);
       if (!team) {
         return res.status(404).json({ error: "Equipe não encontrada" });
+      }
+
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(401).json({ error: "Usuário não encontrado" });
+      }
+
+      if (user.role === "equipe" && !team.memberIds.includes(req.session.userId)) {
+        return res.status(403).json({ error: "Você não faz parte desta equipe" });
+      }
+
+      if (user.role === "professor") {
+        const classData = await storage.getClass(team.classId);
+        if (!classData || classData.professorId !== user.id) {
+          return res.status(403).json({ error: "Acesso negado - não é sua turma" });
+        }
       }
 
       const round = await storage.getRound(roundId);
@@ -4965,9 +5125,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const previousResult = await storage.getPreviousRoundResult(teamId, roundId);
 
       const { generateRoundFeedback, generateFallbackFeedback } = await import("./feedback/feedbackEngine");
-      
+
       let generatedFeedback;
-      
+
       if (result.simulationBreakdown || result.competitorResponse || result.eventImpacts) {
         generatedFeedback = generateRoundFeedback({
           previousResult: previousResult || null,
@@ -5122,6 +5282,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const round = await storage.getRound(roundId);
       if (!round) {
         return res.status(404).json({ error: "Rodada não encontrada" });
+      }
+
+      if (round.classId !== team.classId) {
+        return res.status(403).json({ error: "Esta rodada não pertence à sua turma" });
       }
 
       if (round.status !== "active") {
