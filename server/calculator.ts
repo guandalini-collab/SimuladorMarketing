@@ -125,6 +125,100 @@ export function calculateMarketingSpend(
   return BASE_COST * costMultiplier;
 }
 
+// Grupo A (auditoria de 2026-09) — item 1: a DRE e o Balanço Patrimonial
+// completos são derivados aqui, uma única vez, a partir de
+// (receitaBruta, receitaLiquida, costs, teamBudget). Extraído de dentro de
+// calculateResults() para poder ser chamado de novo, com os valores
+// ATUALIZADOS de revenue/costs, depois que applyStrategicImpacts() e
+// applyAlignmentPenalties() os ajustam — antes, esses dois ajustes
+// recalculavam profit/margin/roi/receitaLiquida (via recomputeDependentKPIs)
+// mas devolviam a DRE e o Balanço intactos, com os valores de ANTES do
+// ajuste (bug: relatório contábil ficava inconsistente com o revenue/costs
+// finais da rodada). Não inclui caixa/ativoCirculante/ativoTotal nem
+// capitalSocial/lucrosAcumulados/patrimonioLiquido/passivoPlTotal — esses
+// dependem do carregamento de patrimônio entre rodadas (ver
+// applyEquityCarryover) e são responsabilidade de quem chama esta função.
+interface AccountingStatements {
+  impostos: number;
+  devolucoes: number;
+  descontos: number;
+  cpv: number;
+  lucroBruto: number;
+  despesasVendas: number;
+  despesasAdmin: number;
+  despesasFinanc: number;
+  outrasDespesas: number;
+  depreciacao: number;
+  ebitda: number;
+  lair: number;
+  irCsll: number;
+  lucroLiquido: number;
+  contasReceber: number;
+  estoques: number;
+  imobilizado: number;
+  intangivel: number;
+  ativoNaoCirculante: number;
+  fornecedores: number;
+  obrigFiscais: number;
+  outrasObrig: number;
+  passivoCirculante: number;
+  financiamentosLP: number;
+  passivoNaoCirculante: number;
+}
+
+function deriveAccountingStatements(
+  receitaBruta: number,
+  receitaLiquida: number,
+  costs: number,
+  teamBudget: number
+): AccountingStatements {
+  // Deduções da Receita Bruta (baseadas no gap entre bruta e líquida)
+  const deducaoTotal = receitaBruta - receitaLiquida;
+  const impostos = deducaoTotal * 0.70;
+  const devolucoes = deducaoTotal * 0.20;
+  const descontos = deducaoTotal * 0.10;
+
+  // CPV - Custo dos Produtos Vendidos (60% dos custos totais)
+  const cpv = costs * 0.60;
+  const lucroBruto = receitaLiquida - cpv;
+
+  // Despesas Operacionais (40% restante dos custos, distribuídos)
+  const despesasOperacionaisTotais = costs * 0.40;
+  const despesasVendas = despesasOperacionaisTotais * 0.625;
+  const despesasAdmin = despesasOperacionaisTotais * 0.25;
+  const despesasFinanc = despesasOperacionaisTotais * 0.075;
+  const outrasDespesas = despesasOperacionaisTotais * 0.05;
+
+  const depreciacao = costs * 0.03;
+  const ebitda = lucroBruto - despesasOperacionaisTotais;
+  const lair = ebitda - depreciacao;
+  const irCsll = lair > 0 ? lair * 0.34 : 0;
+  const lucroLiquido = lair - irCsll;
+
+  const contasReceber = receitaLiquida * 0.25;
+  const estoques = costs * 0.10;
+  const imobilizado = costs * 0.40;
+  const intangivel = teamBudget * 0.15;
+  const ativoNaoCirculante = imobilizado + intangivel;
+
+  const fornecedores = costs * 0.20;
+  const obrigFiscais = irCsll;
+  const outrasObrig = costs * 0.10;
+  const passivoCirculante = fornecedores + obrigFiscais + outrasObrig;
+
+  const financiamentosLP = teamBudget * 0.20;
+  const passivoNaoCirculante = financiamentosLP;
+
+  return {
+    impostos, devolucoes, descontos, cpv, lucroBruto,
+    despesasVendas, despesasAdmin, despesasFinanc, outrasDespesas,
+    depreciacao, ebitda, lair, irCsll, lucroLiquido,
+    contasReceber, estoques, imobilizado, intangivel, ativoNaoCirculante,
+    fornecedores, obrigFiscais, outrasObrig, passivoCirculante,
+    financiamentosLP, passivoNaoCirculante,
+  };
+}
+
 export function calculateResults(inputs: CalculationInputs): ResultCoreMetrics {
   const { 
     marketingMix, 
@@ -203,70 +297,26 @@ export function calculateResults(inputs: CalculationInputs): ResultCoreMetrics {
   const receitaLiquida = calculateNetRevenue(revenue);
   const margemContribuicao = calculateContributionMargin(receitaLiquida, costs);
   
-  // ========== DRE COMPLETA - Demonstrativo do Resultado do Exercício ==========
-  
-  // Deduções da Receita Bruta (baseadas no gap entre bruta e líquida)
-  const deducaoTotal = receitaBruta - receitaLiquida;  // Dedução real
-  const impostos = deducaoTotal * 0.70;                 // 70% das deduções (ICMS, PIS, COFINS, ISS)
-  const devolucoes = deducaoTotal * 0.20;               // 20% das deduções
-  const descontos = deducaoTotal * 0.10;                // 10% das deduções
-  
-  // Receita Operacional Líquida já calculada (receitaLiquida = receitaBruta - deduções)
-  
-  // CPV - Custo dos Produtos Vendidos (60% dos custos totais)
-  const cpv = costs * 0.60;
-  
-  // Lucro Bruto = Receita Líquida - CPV
-  const lucroBruto = receitaLiquida - cpv;
-  
-  // Despesas Operacionais (40% restante dos custos, distribuídos)
-  const despesasOperacionaisTotais = costs * 0.40;
-  const despesasVendas = despesasOperacionaisTotais * 0.625;    // 25% do total de custos
-  const despesasAdmin = despesasOperacionaisTotais * 0.25;      // 10% do total de custos
-  const despesasFinanc = despesasOperacionaisTotais * 0.075;    // 3% do total de custos
-  const outrasDespesas = despesasOperacionaisTotais * 0.05;     // 2% do total de custos
-  
-  // Depreciação e Amortização (3% dos custos totais)
-  const depreciacao = costs * 0.03;
-  
-  // EBITDA = Lucro Bruto - Despesas Operacionais
-  const ebitda = lucroBruto - despesasOperacionaisTotais;
-  
-  // LAIR = EBITDA - Depreciação
-  const lair = ebitda - depreciacao;
-  
-  // IR e CSLL (34% sobre o lucro se positivo, 0 se negativo)
-  const irCsll = lair > 0 ? lair * 0.34 : 0;
-  
-  // Lucro Líquido do Exercício = LAIR - IR/CSLL
-  const lucroLiquido = lair - irCsll;
-  
-  // ========== BALANÇO PATRIMONIAL ==========
-  
+  // ========== DRE COMPLETA e BALANÇO (parte dependente de revenue/costs) ==========
+  const stmt = deriveAccountingStatements(receitaBruta, receitaLiquida, costs, teamBudget);
+  const {
+    impostos, devolucoes, descontos, cpv, lucroBruto,
+    despesasVendas, despesasAdmin, despesasFinanc, outrasDespesas,
+    depreciacao, ebitda, lair, irCsll, lucroLiquido,
+    contasReceber, estoques, imobilizado, intangivel, ativoNaoCirculante,
+    fornecedores, obrigFiscais, outrasObrig, passivoCirculante,
+    financiamentosLP, passivoNaoCirculante,
+  } = stmt;
+
+  // ========== BALANÇO PATRIMONIAL (parte dependente do patrimônio acumulado) ==========
+
   // ATIVO CIRCULANTE
   const caixa = lucroLiquido;                          // Caixa gerado no período
-  const contasReceber = receitaLiquida * 0.25;         // 25% da receita líquida
-  const estoques = costs * 0.10;                       // 10% dos custos
   const ativoCirculante = caixa + contasReceber + estoques;
-  
-  // ATIVO NÃO CIRCULANTE
-  const imobilizado = costs * 0.40;                    // 40% dos custos (infraestrutura)
-  const intangivel = teamBudget * 0.15;                // 15% do orçamento (marcas, software)
-  const ativoNaoCirculante = imobilizado + intangivel;
-  
+
   // TOTAL DO ATIVO
   const ativoTotal = ativoCirculante + ativoNaoCirculante;
-  
-  // PASSIVO CIRCULANTE
-  const fornecedores = costs * 0.20;                   // 20% dos custos
-  const obrigFiscais = irCsll;                         // Obrigações fiscais (IR/CSLL a pagar)
-  const outrasObrig = costs * 0.10;                    // 10% dos custos (outras obrigações)
-  const passivoCirculante = fornecedores + obrigFiscais + outrasObrig;
-  
-  // PASSIVO NÃO CIRCULANTE
-  const financiamentosLP = teamBudget * 0.20;          // 20% do orçamento (financiamentos de longo prazo)
-  const passivoNaoCirculante = financiamentosLP;
-  
+
   // PATRIMÔNIO LÍQUIDO
   const capitalSocial = teamBudget * 0.50;             // 50% do orçamento (capital inicial)
   // Lucros Acumulados balanceadores para fechar a equação patrimonial
@@ -871,7 +921,8 @@ function applyROIClamp(
 export function applyStrategicImpacts(
   baseKPIs: ResultCoreMetrics,
   analyses: StrategicAnalyses,
-  priceValue: number
+  priceValue: number,
+  teamBudget: number
 ): ResultCoreMetrics {
   let adjustedKPIs = { ...baseKPIs };
   
@@ -919,13 +970,22 @@ export function applyStrategicImpacts(
   }
   
   // BCG: Produtos em quadrantes favoráveis (Stars, Cash Cows) aumentam marketShare e reduzem costs
+  //
+  // Grupo A (auditoria de 2026-09) — item 2: os quadrantes são gravados em
+  // português (client/src/pages/estrategia.tsx -> getQuadrant: "Estrela",
+  // "Vaca Leiteira", "Ponto de Interrogação", "Abacaxi") e não há enum na
+  // coluna "quadrant" (shared/schema.ts) que barre isso. A comparação abaixo
+  // usava os nomes em inglês ("star"/"cash_cow"/"question_mark"), que nunca
+  // batiam com o valor real gravado — bcgScore ficava sempre 0 e o BCG nunca
+  // dava nenhum bônus de marketShare/custo, mesmo quando o professor
+  // preenchia a matriz corretamente.
   if (analyses.bcg && Array.isArray(analyses.bcg) && analyses.bcg.length > 0) {
     let bcgScore = 0;
-    
+
     for (const product of analyses.bcg) {
-      if (product.quadrant === "star") bcgScore += 2;
-      else if (product.quadrant === "cash_cow") bcgScore += 1.5;
-      else if (product.quadrant === "question_mark") bcgScore += 0.5;
+      if (product.quadrant === "Estrela") bcgScore += 2;
+      else if (product.quadrant === "Vaca Leiteira") bcgScore += 1.5;
+      else if (product.quadrant === "Ponto de Interrogação") bcgScore += 0.5;
     }
     
     const bcgBoost = Math.min(bcgScore / (analyses.bcg.length * 34), 0.035);
@@ -976,7 +1036,31 @@ export function applyStrategicImpacts(
     // Recalcular razão usando LTV ajustado e CAC final
     adjustedKPIs.razaoLtvCac = adjustedKPIs.cac > 0 ? adjustedKPIs.ltv / adjustedKPIs.cac : 0;
   }
-  
+
+  // Grupo A (auditoria de 2026-09) — item 1: recalcular a DRE e o Balanço
+  // com o revenue/costs JÁ ajustados por SWOT/Porter/BCG/PESTEL, em vez de
+  // devolver os valores de baseKPIs (de antes do ajuste) mais abaixo. Como
+  // ainda não houve carregamento de patrimônio entre rodadas neste ponto
+  // (isso só acontece depois, em applyEquityCarryover, sobre o KPI já
+  // consolidado entre produtos), caixa/ativoTotal/lucrosAcumulados são
+  // recalculados aqui com a mesma fórmula "isolada" de calculateResults
+  // (lucrosAcumulados como resíduo que fecha a equação patrimonial) — o
+  // valor final e correto (com histórico real) é sobrescrito depois.
+  const stmt = deriveAccountingStatements(
+    adjustedKPIs.receitaBruta,
+    adjustedKPIs.receitaLiquida,
+    adjustedKPIs.costs,
+    teamBudget
+  );
+  Object.assign(adjustedKPIs, stmt);
+  adjustedKPIs.caixa = stmt.lucroLiquido;
+  adjustedKPIs.ativoCirculante = adjustedKPIs.caixa + stmt.contasReceber + stmt.estoques;
+  adjustedKPIs.ativoTotal = adjustedKPIs.ativoCirculante + stmt.ativoNaoCirculante;
+  adjustedKPIs.capitalSocial = teamBudget * 0.50;
+  adjustedKPIs.lucrosAcumulados = adjustedKPIs.ativoTotal - stmt.passivoCirculante - stmt.passivoNaoCirculante - adjustedKPIs.capitalSocial;
+  adjustedKPIs.patrimonioLiquido = adjustedKPIs.capitalSocial + adjustedKPIs.lucrosAcumulados;
+  adjustedKPIs.passivoPlTotal = stmt.passivoCirculante + stmt.passivoNaoCirculante + adjustedKPIs.patrimonioLiquido;
+
   // Arredondar todos os valores incluindo DRE e Balanço
   return {
     revenue: Math.round(adjustedKPIs.revenue * 100) / 100,
@@ -1041,7 +1125,8 @@ export function applyAlignmentPenalties(
   bcg: any,
   pestel: any,
   aiAssistanceLevel: number,
-  priceValue: number
+  priceValue: number,
+  teamBudget: number
 ): { kpis: ResultCoreMetrics; alignmentScore: number; alignmentIssues: string[] } {
   const alignment = calculateStrategicAlignment({
     swot: swot || null,
@@ -1069,7 +1154,27 @@ export function applyAlignmentPenalties(
   
   // Aplicar clamp de ROI após alignment penalties
   applyROIClamp(penalizedKPIs, kpis, priceValue);
-  
+
+  // Grupo A (auditoria de 2026-09) — item 1: recalcular a DRE (e a parte do
+  // Balanço que depende só de receita/custos, não de patrimônio acumulado)
+  // com o revenue/costs finais, pós-alignment-penalties — antes, esses
+  // campos eram devolvidos intactos com os valores de "kpis" (de antes do
+  // penalty), deixando a DRE inconsistente com o revenue/costs realmente
+  // salvos no resultado. NÃO mexe em caixa/ativoCirculante/ativoTotal/
+  // capitalSocial/lucrosAcumulados/patrimonioLiquido/passivoPlTotal: esses
+  // dependem do carregamento de patrimônio entre rodadas e continuam sendo
+  // responsabilidade de applyEquityCarryover, que passou a ser chamado
+  // DEPOIS desta função (ver roundCompletion.ts / routes.ts) — chamar
+  // deriveAccountingStatements aqui e sobrescrever esses campos apagaria o
+  // resultado correto do carryover.
+  const stmt = deriveAccountingStatements(
+    penalizedKPIs.receitaBruta,
+    penalizedKPIs.receitaLiquida,
+    penalizedKPIs.costs,
+    teamBudget
+  );
+  Object.assign(penalizedKPIs, stmt);
+
   const roundedKPIs: ResultCoreMetrics = {
     revenue: Math.round(penalizedKPIs.revenue * 100) / 100,
     costs: Math.round(penalizedKPIs.costs * 100) / 100,

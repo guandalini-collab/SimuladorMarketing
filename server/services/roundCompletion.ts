@@ -144,9 +144,11 @@ export async function processRoundCompletion(
           if (useV2Engine) {
             const prevCompetitor = previousResult?.competitorResponse as { referencePrice?: number; referencePromoSpend?: number } | null;
             const perProductSim: { productId: string; breakdown: any; competitorResponse: any; eventImpacts: any }[] = [];
+            let totalProductBudgetV2 = 0;
 
             for (const productMix of submittedProducts) {
               const budget = productBudget(productMix);
+              totalProductBudgetV2 += budget;
 
               const simInputs: SimulationInputs = {
                 marketingMix: productMix,
@@ -256,7 +258,8 @@ export async function processRoundCompletion(
               bcg.length > 0 ? bcg[0] : null,
               pestel,
               round.aiAssistanceLevel ?? 1,
-              firstProduct.priceValue
+              firstProduct.priceValue,
+              totalProductBudgetV2
             );
 
             alignmentScore = penaltyResult.alignmentScore;
@@ -267,8 +270,11 @@ export async function processRoundCompletion(
             engineVersion = "v2";
             finalKPIs = penaltyResult.kpis;
           } else {
+            let totalProductBudget = 0;
+
             for (const productMix of submittedProducts) {
               const budget = productBudget(productMix);
+              totalProductBudget += budget;
 
               const baseKPIs = calculateResults({
                 marketingMix: productMix,
@@ -277,7 +283,7 @@ export async function processRoundCompletion(
                 totalTeamsInRound: teams.length,
               });
 
-              const adjustedKPIs = applyStrategicImpacts(baseKPIs, analyses, productMix.priceValue);
+              const adjustedKPIs = applyStrategicImpacts(baseKPIs, analyses, productMix.priceValue, budget);
               productKpisList.push(adjustedKPIs);
 
               await storage.createProductResult({
@@ -293,27 +299,34 @@ export async function processRoundCompletion(
               });
             }
 
-            const consolidatedKPIs = applyEquityCarryover(
-              consolidateKpis(productKpisList),
-              capitalSocialFixo,
-              previousAccumulatedProfits
-            );
-
+            // Grupo A (auditoria de 2026-09) — item 1: applyEquityCarryover
+            // agora é chamado DEPOIS de applyAlignmentPenalties (não antes),
+            // para que capitalSocial/lucrosAcumulados/caixa/ativoTotal do
+            // resultado final reflitam o lucroLiquido e o balanço JÁ
+            // ajustados pelo alinhamento estratégico, e não o valor de
+            // antes desse ajuste (ver comentários em calculator.ts).
             const penaltyResult = applyAlignmentPenalties(
-              consolidatedKPIs,
+              consolidateKpis(productKpisList),
               firstProduct,
               swot,
               porter,
               bcg.length > 0 ? bcg[0] : null,
               pestel,
               round.aiAssistanceLevel ?? 1,
-              firstProduct.priceValue
+              firstProduct.priceValue,
+              totalProductBudget
+            );
+
+            const consolidatedKPIs = applyEquityCarryover(
+              penaltyResult.kpis,
+              capitalSocialFixo,
+              previousAccumulatedProfits
             );
 
             alignmentScore = penaltyResult.alignmentScore;
             alignmentIssues = penaltyResult.alignmentIssues;
             engineVersion = "v1";
-            finalKPIs = penaltyResult.kpis;
+            finalKPIs = consolidatedKPIs;
           }
 
           const budgetBefore = team.budget;

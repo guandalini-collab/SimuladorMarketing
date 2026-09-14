@@ -1758,10 +1758,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
 
         const productKpisList: ResultCoreMetrics[] = [];
+        let totalProductBudget = 0;
 
         for (const productMix of submittedProducts) {
           const productBudget = productMix.estimatedCost || calculateMarketingSpend(productMix);
-          
+          totalProductBudget += productBudget;
+
           const productKPIs = calculateResults({
             marketingMix: productMix,
             marketEvents: activeEvents,
@@ -1780,7 +1782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             },
           });
 
-          const adjustedProductKPIs = applyStrategicImpacts(productKPIs, analyses, productMix.priceValue);
+          const adjustedProductKPIs = applyStrategicImpacts(productKPIs, analyses, productMix.priceValue, productBudget);
           
           productKpisList.push(adjustedProductKPIs);
 
@@ -1799,22 +1801,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           processedProducts++;
         }
 
-        const consolidatedKPIs = applyEquityCarryover(
-          consolidateKpis(productKpisList),
-          capitalSocialFixo,
-          previousAccumulatedProfits
-        );
-
+        // Grupo A (auditoria de 2026-09) — item 1: applyEquityCarryover
+        // agora é chamado DEPOIS de applyAlignmentPenalties, para refletir
+        // o lucroLiquido/balanço já ajustados pelo alinhamento estratégico
+        // (mesma correção aplicada em roundCompletion.ts).
         const firstProduct = submittedProducts[0];
-        const { kpis: finalKPIs, alignmentScore, alignmentIssues } = applyAlignmentPenalties(
-          consolidatedKPIs,
+        const penaltyResult = applyAlignmentPenalties(
+          consolidateKpis(productKpisList),
           firstProduct,
           swot,
           porter,
           bcgList.length > 0 ? bcgList[0] : null,
           pestel,
           round.aiAssistanceLevel ?? 1,
-          firstProduct.priceValue
+          firstProduct.priceValue,
+          totalProductBudget
+        );
+
+        const { alignmentScore, alignmentIssues } = penaltyResult;
+        const finalKPIs = applyEquityCarryover(
+          penaltyResult.kpis,
+          capitalSocialFixo,
+          previousAccumulatedProfits
         );
 
         const budgetBefore = team.budget;
@@ -4365,8 +4373,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Não há equipes nesta turma" });
       }
 
-      const { generateStrategicAnalyses } = await import("./services/aiStrategy");
-      
+      const { generateStrategicAnalyses, translateBcgQuadrantToPt } = await import("./services/aiStrategy");
+
       const results = [];
       for (const team of teams) {
         try {
@@ -4439,7 +4447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               productName: bcgItem.productName,
               marketGrowth: bcgItem.marketGrowth,
               relativeMarketShare: bcgItem.relativeMarketShare,
-              quadrant: bcgItem.quadrant,
+              quadrant: translateBcgQuadrantToPt(bcgItem.quadrant),
               notes: bcgItem.notes,
             });
           }

@@ -347,32 +347,37 @@ function analyzeBcgAlignment(bcg: BcgAnalysis | null, mix: MarketingMix): Alignm
 
   const totalInvestment = getTotalPromotion(mix);
 
-  if (bcg.quadrant === "star" && totalInvestment < 20000) {
+  // Grupo A (auditoria de 2026-09) — item 2: bcg.quadrant é gravado em
+  // português (client/src/pages/estrategia.tsx -> getQuadrant: "Estrela",
+  // "Vaca Leiteira", "Ponto de Interrogação", "Abacaxi"), não em inglês —
+  // as comparações abaixo nunca batiam, então nenhuma dessas penalidades
+  // de alinhamento era aplicada.
+  if (bcg.quadrant === "Estrela" && totalInvestment < 20000) {
     issues.push("Produto classificado como ESTRELA requer alto investimento para manter crescimento");
     alignmentPoints -= 25;
   }
 
-  if (bcg.quadrant === "cash_cow" && totalInvestment > 25000) {
+  if (bcg.quadrant === "Vaca Leiteira" && totalInvestment > 25000) {
     issues.push("Produto VACA LEITEIRA não justifica investimento tão alto");
     alignmentPoints -= 15;
   }
 
-  if (bcg.quadrant === "question_mark" && totalInvestment < 15000) {
+  if (bcg.quadrant === "Ponto de Interrogação" && totalInvestment < 15000) {
     issues.push("Produto INTERROGAÇÃO precisa de investimento para se tornar Estrela");
     alignmentPoints -= 20;
   }
 
-  if (bcg.quadrant === "dog" && totalInvestment > 10000) {
+  if (bcg.quadrant === "Abacaxi" && totalInvestment > 10000) {
     issues.push("Produto ABACAXI tem baixo potencial, investimento deveria ser mínimo");
     alignmentPoints -= 18;
   }
 
-  if (bcg.quadrant === "cash_cow" && mix.priceStrategy === "penetracao") {
+  if (bcg.quadrant === "Vaca Leiteira" && mix.priceStrategy === "penetracao") {
     issues.push("VACA LEITEIRA deveria maximizar lucros, não penetração de mercado");
     alignmentPoints -= 15;
   }
 
-  if (bcg.quadrant === "star" && mix.priceValue && mix.priceValue < 20) {
+  if (bcg.quadrant === "Estrela" && mix.priceValue && mix.priceValue < 20) {
     issues.push("ESTRELA permite preço premium devido ao crescimento e participação");
     alignmentPoints -= 12;
   }
@@ -421,11 +426,14 @@ function analyzePestelAlignment(pestel: PestelAnalysis | null, mix: MarketingMix
     t.toLowerCase().includes("internet")
   );
 
-  const hasDigitalChannel = mix.distributionChannels.some(channel => 
-    channel.toLowerCase().includes("online") || 
-    channel.toLowerCase().includes("e-commerce") ||
-    channel.toLowerCase().includes("marketplace") ||
-    channel.toLowerCase().includes("digital")
+  // Grupo A (auditoria de 2026-09) — item 3: o catálogo real de canais
+  // (client/src/pages/decisoes.tsx) usa os values "varejo", "ecommerce"
+  // (sem hífen), "marketplace", "atacado", "franquias", "direto" — nenhum
+  // deles contém "online", "e-commerce" (com hífen) ou "digital", então só
+  // "marketplace" acionava esta checagem antes.
+  const hasDigitalChannel = mix.distributionChannels.some(channel =>
+    channel.toLowerCase() === "ecommerce" ||
+    channel.toLowerCase() === "marketplace"
   );
 
   if (hasTechTrends && !hasDigitalChannel) {

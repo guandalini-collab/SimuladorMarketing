@@ -136,6 +136,28 @@ export interface StrategicAnalyses {
   };
 }
 
+// Grupo A (auditoria de 2026-09) — item 2 (parte 2): a IA gera o quadrante
+// BCG em inglês ("star"/"cash_cow"/"question_mark"/"dog", ver
+// bcgQuadrantSchema acima), mas o preenchimento manual pelo professor
+// (client/src/pages/estrategia.tsx -> getQuadrant) grava em português
+// ("Estrela"/"Vaca Leiteira"/"Ponto de Interrogação"/"Abacaxi") — e é esse o
+// formato que o restante do sistema (calculator.ts, strategicAlignment.ts,
+// os gráficos BCG do frontend) espera. Sem esta tradução, análises BCG
+// geradas por IA ficavam com o quadrante "mudo": não davam nenhum bônus/
+// penalidade de alinhamento e não apareciam nos gráficos. Traduzimos aqui,
+// na fonte, para que o valor gravado no banco seja sempre em português,
+// como o resto do sistema já assume.
+const BCG_QUADRANT_PT: Record<"star" | "cash_cow" | "question_mark" | "dog", string> = {
+  star: "Estrela",
+  cash_cow: "Vaca Leiteira",
+  question_mark: "Ponto de Interrogação",
+  dog: "Abacaxi",
+};
+
+export function translateBcgQuadrantToPt(quadrant: "star" | "cash_cow" | "question_mark" | "dog"): string {
+  return BCG_QUADRANT_PT[quadrant] ?? quadrant;
+}
+
 export interface StrategyGenerationParams {
   classData: Class;
   teamData: Team;

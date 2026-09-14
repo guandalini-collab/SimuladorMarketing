@@ -1,5 +1,5 @@
 import type { IStorage } from "../storage";
-import { generateMinimalStrategicAnalyses } from "./aiStrategy";
+import { generateMinimalStrategicAnalyses, translateBcgQuadrantToPt } from "./aiStrategy";
 
 export interface AutoGenerationResult {
   success: boolean;
@@ -135,7 +135,7 @@ export async function autoGenerateMinimalAnalysesForAllTeams(
             productName: bcgItem.productName,
             marketGrowth: bcgItem.marketGrowth,
             relativeMarketShare: bcgItem.relativeMarketShare,
-            quadrant: bcgItem.quadrant,
+            quadrant: translateBcgQuadrantToPt(bcgItem.quadrant),
             notes: bcgItem.notes || "",
             aiGeneratedPercentage: 100,
             originalAIContent: originalBcg,
