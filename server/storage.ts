@@ -474,7 +474,18 @@ export class MemStorage implements IStorage {
       }
       this.classStudentsByClass.delete(id);
     }
-    
+
+    // Grupo F (auditoria de 2026-09): deleteClass nunca limpava
+    // autoEventConfigs — diferente do PgStorage, que já apaga
+    // auto_event_config por classId. Configuração de eventos automáticos de
+    // uma turma excluída ficava órfã (e reaparecia com dados incorretos se
+    // uma nova turma reaproveitasse o mesmo id, embora isso seja raro com
+    // UUIDs).
+    const configEntry = Array.from(this.autoEventConfigs.values()).find(c => c.classId === id);
+    if (configEntry) {
+      this.autoEventConfigs.delete(configEntry.id);
+    }
+
     this.classes.delete(id);
     return true;
   }
@@ -674,7 +685,38 @@ export class MemStorage implements IStorage {
     for (const pestel of pestels) {
       this.pestelAnalyses.delete(pestel.id);
     }
-    
+
+    // Grupo F (auditoria de 2026-09): faltavam 5 mapas com teamId aqui —
+    // ai_feedback (o PgStorage já limpava, mas o MemStorage não), product_results
+    // e strategic_recommendations (nenhuma das duas implementações limpava),
+    // e team_products/deterministic_feedback (em produção o Postgres cuida
+    // sozinho via "onDelete: cascade" no schema, mas o MemStorage não simula
+    // FK em cascata, então precisa limpar manualmente aqui).
+    const feedbacks = Array.from(this.aiFeedbacks.values()).filter(f => f.teamId === id);
+    for (const feedback of feedbacks) {
+      this.aiFeedbacks.delete(feedback.id);
+    }
+
+    const productResultsToDelete = Array.from(this.productResults.values()).filter(pr => pr.teamId === id);
+    for (const productResult of productResultsToDelete) {
+      this.productResults.delete(productResult.id);
+    }
+
+    const recommendations = Array.from(this.strategicRecommendations.values()).filter(r => r.teamId === id);
+    for (const recommendation of recommendations) {
+      this.strategicRecommendations.delete(recommendation.id);
+    }
+
+    const teamProductsToDelete = Array.from(this.teamProducts.values()).filter(tp => tp.teamId === id);
+    for (const teamProduct of teamProductsToDelete) {
+      this.teamProducts.delete(teamProduct.id);
+    }
+
+    const deterministicFeedbacksToDelete = Array.from(this.deterministicFeedbacks.values()).filter((f: any) => f.teamId === id);
+    for (const feedback of deterministicFeedbacksToDelete) {
+      this.deterministicFeedbacks.delete(feedback.id);
+    }
+
     this.teams.delete(id);
     return true;
   }
@@ -1047,7 +1089,23 @@ export class MemStorage implements IStorage {
     
     const pestelCount = Array.from(this.pestelAnalyses.values()).filter(p => p.roundId === roundId).length;
     if (pestelCount > 0) details.push(`${pestelCount} análises PESTEL`);
-    
+
+    // Grupo F: mesma checagem completa adicionada no PgStorage.
+    const productResultsCount = Array.from(this.productResults.values()).filter(pr => pr.roundId === roundId).length;
+    if (productResultsCount > 0) details.push(`${productResultsCount} resultados por produto`);
+
+    const recommendationsCount = Array.from(this.strategicRecommendations.values()).filter(r => r.roundId === roundId).length;
+    if (recommendationsCount > 0) details.push(`${recommendationsCount} recomendações estratégicas`);
+
+    const teamProductsCount = Array.from(this.teamProducts.values()).filter(tp => tp.roundId === roundId).length;
+    if (teamProductsCount > 0) details.push(`${teamProductsCount} produtos de equipe`);
+
+    const deterministicFeedbackCount = Array.from(this.deterministicFeedbacks.values()).filter((f: any) => f.roundId === roundId).length;
+    if (deterministicFeedbackCount > 0) details.push(`${deterministicFeedbackCount} feedback determinístico`);
+
+    const aiFeedbackCount = Array.from(this.aiFeedbacks.values()).filter(f => f.roundId === roundId).length;
+    if (aiFeedbackCount > 0) details.push(`${aiFeedbackCount} feedback de IA`);
+
     return { hasDependencies: details.length > 0, details };
   }
 

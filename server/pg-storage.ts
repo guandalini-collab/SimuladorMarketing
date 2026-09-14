@@ -538,6 +538,15 @@ export class PgStorage implements IStorage {
     await db.delete(bcgAnalysis).where(eq(bcgAnalysis.teamId, id));
     await db.delete(pestelAnalysis).where(eq(pestelAnalysis.teamId, id));
     await db.delete(aiFeedback).where(eq(aiFeedback.teamId, id));
+    // Grupo F (auditoria de 2026-09): product_results e
+    // strategic_recommendations também têm team_id NOT NULL sem
+    // referências (FK) de exclusão em cascata, e ficavam órfãos ao
+    // excluir uma equipe — mesmo padrão das demais tabelas acima.
+    // team_products e deterministic_feedback já têm
+    // "references(...).onDelete: 'cascade'" no schema, então o Postgres
+    // já os remove sozinho quando a linha de teams é apagada abaixo.
+    await db.delete(productResults).where(eq(productResults.teamId, id));
+    await db.delete(strategicRecommendations).where(eq(strategicRecommendations.teamId, id));
     await db.delete(teams).where(eq(teams.id, id));
     return true;
   }
@@ -629,6 +638,28 @@ export class PgStorage implements IStorage {
       // Check for PESTEL analyses
       const pestelData = await db.select({ id: pestelAnalysis.id }).from(pestelAnalysis).where(eq(pestelAnalysis.roundId, roundId)).limit(1);
       if (pestelData.length > 0) details.push("análises PESTEL");
+
+      // Grupo F (auditoria de 2026-09): faltavam 4 tabelas com round_id que
+      // também podem ter dados associados à rodada — a checagem incompleta
+      // permitia, em tese, excluir uma rodada "locked" que já tivesse esses
+      // registros (hoje isso não acontece na prática, porque todas essas
+      // tabelas só recebem escrita com a rodada "active", e só é possível
+      // excluir uma rodada "locked" — mas a checagem deve cobrir todas as
+      // tabelas com round_id por completude e defesa em profundidade).
+      const productResultsData = await db.select({ id: productResults.id }).from(productResults).where(eq(productResults.roundId, roundId)).limit(1);
+      if (productResultsData.length > 0) details.push("resultados por produto");
+
+      const strategicRecommendationsData = await db.select({ id: strategicRecommendations.id }).from(strategicRecommendations).where(eq(strategicRecommendations.roundId, roundId)).limit(1);
+      if (strategicRecommendationsData.length > 0) details.push("recomendações estratégicas");
+
+      const teamProductsData = await db.select({ id: teamProducts.id }).from(teamProducts).where(eq(teamProducts.roundId, roundId)).limit(1);
+      if (teamProductsData.length > 0) details.push("produtos de equipe");
+
+      const deterministicFeedbackData = await db.select({ id: deterministicFeedback.id }).from(deterministicFeedback).where(eq(deterministicFeedback.roundId, roundId)).limit(1);
+      if (deterministicFeedbackData.length > 0) details.push("feedback determinístico");
+
+      const aiFeedbackData = await db.select({ id: aiFeedback.id }).from(aiFeedback).where(eq(aiFeedback.roundId, roundId)).limit(1);
+      if (aiFeedbackData.length > 0) details.push("feedback de IA");
     } catch (error) {
       console.error("Erro ao verificar dependências da rodada:", error);
     }

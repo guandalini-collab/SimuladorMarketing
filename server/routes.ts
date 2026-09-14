@@ -785,6 +785,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.addStudentToClass(req.params.classId, studentId);
       res.json({ message: "Aluno matriculado com sucesso" });
     } catch (error: any) {
+      // Grupo F (auditoria de 2026-09): addStudentToClass lança mensagens de
+      // negócio específicas e amigáveis (ex.: "Aluno já está matriculado em
+      // outra turma"), diferente dos catches genéricos de erro bruto de
+      // banco corrigidos nesta mesma rodada de correções — aqui error.message
+      // é intencional e deve chegar ao cliente.
       res.status(400).json({ error: error.message || "Erro ao matricular aluno" });
     }
   });
@@ -811,6 +816,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.removeStudentFromClass(req.params.classId, req.params.studentId);
       res.json({ message: "Aluno removido da turma com sucesso" });
     } catch (error: any) {
+      // Grupo F: mesmo caso de addStudentToClass acima — mensagem de negócio
+      // intencional, não erro bruto de banco.
       res.status(400).json({ error: error.message || "Erro ao remover aluno" });
     }
   });
@@ -841,7 +848,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(allStudentsWithClasses);
     } catch (error: any) {
-      res.status(500).json({ error: error.message || "Erro ao buscar alunos" });
+      console.error("Erro ao buscar alunos do professor:", error);
+      res.status(500).json({ error: "Erro ao buscar alunos" });
     }
   });
 
@@ -909,7 +917,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Erro ao cadastrar aluno:", error);
-      res.status(500).json({ error: error.message || "Erro ao cadastrar aluno" });
+      res.status(500).json({ error: "Erro ao cadastrar aluno" });
     }
   });
 
@@ -1334,7 +1342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updated);
     } catch (error: any) {
       console.error("[ROUND_END] Erro ao encerrar rodada:", error);
-      res.status(500).json({ error: error.message || "Erro ao encerrar rodada" });
+      res.status(500).json({ error: "Erro ao encerrar rodada" });
     }
   });
 
@@ -1693,7 +1701,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Erro ao enviar emails:", error);
-      res.status(500).json({ error: error.message || "Erro ao enviar emails" });
+      res.status(500).json({ error: "Erro ao enviar emails" });
     }
   });
 
@@ -1758,7 +1766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updated);
     } catch (error: any) {
       console.error("Erro ao agendar rodada:", error);
-      res.status(500).json({ error: error.message || "Erro ao agendar rodada" });
+      res.status(500).json({ error: "Erro ao agendar rodada" });
     }
   });
 
@@ -1815,7 +1823,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("[PROCESS-ROUND] Error:", error);
-      res.status(500).json({ error: error.message || "Erro ao processar rodada" });
+      res.status(500).json({ error: "Erro ao processar rodada" });
     }
   });
 
@@ -2303,7 +2311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json(updatedTeam);
       } catch (error: any) {
         console.error('Erro no upload:', error);
-        res.status(500).json({ error: error.message || "Erro ao fazer upload do logo" });
+        res.status(500).json({ error: "Erro ao fazer upload do logo" });
       }
     });
   });
@@ -3125,7 +3133,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.removeDuplicateUsers();
       res.json({ message: "Duplicatas removidas com sucesso" });
     } catch (error: any) {
-      res.status(500).json({ error: "Erro ao remover duplicatas: " + error.message });
+      console.error("Erro ao remover usuários duplicados:", error);
+      res.status(500).json({ error: "Erro ao remover duplicatas" });
     }
   });
 
@@ -4225,7 +4234,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const analysis = economicService.analyzeEconomicCondition(economicData);
       res.json({ ...economicData, analysis });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error("Erro ao buscar dados econômicos:", error);
+      res.status(500).json({ error: "Erro ao buscar dados econômicos" });
     }
   });
 
@@ -4256,6 +4266,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     if (user.role === "professor" && classData.professorId !== user.id) {
       return res.status(403).json({ error: "Acesso negado" });
+    }
+
+    // Grupo F (auditoria de 2026-09): faltava checar que um aluno só veja a
+    // configuração de eventos automáticos da PRÓPRIA turma — a checagem
+    // acima só cobria o caso "professor de outra turma"; qualquer aluno
+    // autenticado conseguia ler a config (enabled, frequência, distribuição
+    // de severidade) de qualquer turma só sabendo o classId. Mesmo padrão
+    // já corrigido no Grupo C para outras rotas de leitura por classId.
+    if (user.role === "equipe") {
+      const studentClass = await storage.getClassByStudent(req.session.userId);
+      if (!studentClass || studentClass.id !== req.params.classId) {
+        return res.status(403).json({ error: "Você não faz parte desta turma" });
+      }
     }
 
     const config = await storage.getAutoEventConfig(req.params.classId);
@@ -4377,7 +4400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Erro ao gerar eventos com IA:", error);
-      res.status(500).json({ error: error.message || "Erro ao gerar eventos" });
+      res.status(500).json({ error: "Erro ao gerar eventos" });
     }
   });
 
@@ -4573,7 +4596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Erro ao gerar análises estratégicas:", error);
-      res.status(500).json({ error: error.message || "Erro ao gerar análises estratégicas" });
+      res.status(500).json({ error: "Erro ao gerar análises estratégicas" });
     }
   });
 
@@ -4615,7 +4638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Erro ao buscar recomendações estratégicas:", error);
-      res.status(500).json({ error: error.message || "Erro ao buscar recomendações" });
+      res.status(500).json({ error: "Erro ao buscar recomendações" });
     }
   });
 
@@ -4834,7 +4857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(savedFeedback);
     } catch (error: any) {
       console.error("Erro ao gerar feedback:", error);
-      res.status(500).json({ error: error.message || "Erro ao gerar feedback com IA" });
+      res.status(500).json({ error: "Erro ao gerar feedback com IA" });
     }
   });
 
@@ -4875,7 +4898,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(feedback);
     } catch (error: any) {
       console.error("Erro ao buscar feedback:", error);
-      res.status(500).json({ error: error.message || "Erro ao buscar feedback" });
+      res.status(500).json({ error: "Erro ao buscar feedback" });
     }
   });
 
@@ -4912,7 +4935,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(feedbacks);
     } catch (error: any) {
       console.error("Erro ao buscar feedbacks:", error);
-      res.status(500).json({ error: error.message || "Erro ao buscar feedbacks" });
+      res.status(500).json({ error: "Erro ao buscar feedbacks" });
     }
   });
 
@@ -4997,7 +5020,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(feedback);
     } catch (error: any) {
       console.error("Erro ao buscar feedback determinístico:", error);
-      res.status(500).json({ error: error.message || "Erro ao buscar feedback" });
+      res.status(500).json({ error: "Erro ao buscar feedback" });
     }
   });
 
@@ -5027,7 +5050,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(feedbacks);
     } catch (error: any) {
       console.error("Erro ao buscar feedbacks da rodada:", error);
-      res.status(500).json({ error: error.message || "Erro ao buscar feedbacks" });
+      res.status(500).json({ error: "Erro ao buscar feedbacks" });
     }
   });
 
@@ -5104,7 +5127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(feedback);
     } catch (error: any) {
       console.error("Erro ao regenerar feedback:", error);
-      res.status(500).json({ error: error.message || "Erro ao regenerar feedback" });
+      res.status(500).json({ error: "Erro ao regenerar feedback" });
     }
   });
 
@@ -5157,7 +5180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(orderedProducts);
     } catch (error: any) {
       console.error("Erro ao buscar produtos:", error);
-      res.status(500).json({ error: error.message || "Erro ao buscar produtos" });
+      res.status(500).json({ error: "Erro ao buscar produtos" });
     }
   });
 
@@ -5171,7 +5194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(midias);
     } catch (error: any) {
       console.error("Erro ao buscar mídias:", error);
-      res.status(500).json({ error: error.message || "Erro ao buscar mídias" });
+      res.status(500).json({ error: "Erro ao buscar mídias" });
     }
   });
 
@@ -5208,7 +5231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(teamProducts);
     } catch (error: any) {
       console.error("Erro ao buscar produtos da equipe:", error);
-      res.status(500).json({ error: error.message || "Erro ao buscar produtos" });
+      res.status(500).json({ error: "Erro ao buscar produtos" });
     }
   });
 
@@ -5269,7 +5292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error: any) {
       console.error("Erro ao salvar produto da equipe:", error);
-      res.status(400).json({ error: error.message || "Erro ao salvar produto" });
+      res.status(400).json({ error: "Erro ao salvar produto" });
     }
   });
 
@@ -5306,7 +5329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Erro ao resetar decisões:", error);
-      res.status(500).json({ error: error.message || "Erro ao resetar decisões" });
+      res.status(500).json({ error: "Erro ao resetar decisões" });
     }
   });
 
@@ -5343,7 +5366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(marketingMixes);
     } catch (error: any) {
       console.error("Erro ao buscar marketing mixes por produto:", error);
-      res.status(500).json({ error: error.message || "Erro ao buscar decisões" });
+      res.status(500).json({ error: "Erro ao buscar decisões" });
     }
   });
 
@@ -5507,7 +5530,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error: any) {
       console.error("Erro ao salvar marketing mix do produto:", error);
-      res.status(400).json({ error: error.message || "Dados inválidos" });
+      res.status(400).json({ error: "Dados inválidos" });
     }
   });
 
@@ -5545,7 +5568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(productResults);
     } catch (error: any) {
       console.error("Erro ao buscar resultados por produto:", error);
-      res.status(500).json({ error: error.message || "Erro ao buscar resultados" });
+      res.status(500).json({ error: "Erro ao buscar resultados" });
     }
   });
 
@@ -5587,7 +5610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error: any) {
       console.error("Erro ao buscar resultado consolidado:", error);
-      res.status(500).json({ error: error.message || "Erro ao buscar resultado" });
+      res.status(500).json({ error: "Erro ao buscar resultado" });
     }
   });
 
