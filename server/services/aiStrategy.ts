@@ -249,7 +249,7 @@ function buildStrategyPrompt(
 - Taxa de Crescimento: ${classData.marketGrowthRate?.toFixed(1) || "5.0"}% ao ano
 - Nível de Competição: ${classData.competitionLevel || "Médio"}
 - Número de Concorrentes: ${classData.numberOfCompetitors || "Vários"}
-- Concentração de Mercado: ${classData.marketConcentration || "Fragmentado"}
+- Estrutura de Mercado: ${classData.marketConcentration || "Fragmentado"}
 - Força dos Concorrentes: ${classData.competitorStrength || "Média"}
 - Consumidores-alvo: ${classData.targetConsumers?.toLocaleString('pt-BR') || "Não especificado"}
 

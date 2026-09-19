@@ -2908,12 +2908,19 @@ export default function Professor() {
   // Effects
   useEffect(() => {
     if (isMarketDialogOpen && currentClass) {
+      // Item 2 (problemas relatados pelo professor, 2026-09): "marketSize: 0" e
+      // "targetConsumers: 0" (em vez de null) faziam o Salvar falhar com 400 sempre
+      // que a turma nunca teve esses dois campos preenchidos (não há input para eles
+      // neste diálogo) — o schema do servidor exige > 0 quando o valor é enviado, mas
+      // aceita ausência do campo (não altera o que já está salvo). Usar null em vez de
+      // 0 faz esses dois campos serem omitidos do PATCH quando não têm valor prévio,
+      // em vez de enviar um "0" inválido que derruba o salvamento dos demais campos.
       setMarketConfigEdits({
         sector: currentClass.sector || "", businessType: currentClass.businessType || "",
-        marketSize: currentClass.marketSize || 0, marketGrowthRate: currentClass.marketGrowthRate || 0,
+        marketSize: currentClass.marketSize || null, marketGrowthRate: currentClass.marketGrowthRate || 0,
         defaultBudget: currentClass.defaultBudget || 100000, competitionLevel: currentClass.competitionLevel || "",
         numberOfCompetitors: currentClass.numberOfCompetitors || null, marketConcentration: currentClass.marketConcentration || "",
-        competitorStrength: currentClass.competitorStrength || "", targetConsumers: currentClass.targetConsumers || 0,
+        competitorStrength: currentClass.competitorStrength || "", targetConsumers: currentClass.targetConsumers || null,
       });
     } else if (!isMarketDialogOpen) {
       setMarketConfigEdits(null);
@@ -3060,7 +3067,7 @@ export default function Professor() {
                     </TooltipTrigger>
                     <TooltipContent>
                       Inicia com {nextRoundProductCount} produto{nextRoundProductCount !== 1 ? "s" : ""} por equipe (mesma quantidade da rodada anterior).
-                      Para mudar, abra a aba "Aula" — o seletor de quantidade de produtos aparece no card de ação principal antes de iniciar.
+                      Para mudar, abra a aba "Aula" — o seletor fica em "Gerenciamento de Rodadas", logo acima da lista de rodadas.
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -3424,6 +3431,43 @@ export default function Professor() {
                       <Calendar className="h-5 w-5" />
                       Gerenciamento de Rodadas
                     </h3>
+
+                    {/* Item 1 (problemas relatados pelo professor, 2026-09): a quantidade
+                        de produtos por equipe só aparecia no card de ação principal, e só
+                        no instante exato de clicar "Iniciar Rodada" — com uma rodada já
+                        ativa (o caso mais comum), esse controle sumia da tela inteira e o
+                        professor não achava onde ajustar para a próxima rodada. Agora fica
+                        sempre visível aqui: mostra o valor fixo da rodada em andamento, ou
+                        o seletor para a próxima, quando não há rodada ativa. */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg border bg-muted/40" data-testid="row-round-product-count">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Layers className="h-4 w-4 text-muted-foreground shrink-0" />
+                        {activeRound ? (
+                          <span>
+                            Produtos por equipe na Rodada {activeRound.roundNumber}: <strong>{previousRoundProductCount}</strong>
+                            <span className="text-muted-foreground"> (só muda ao iniciar a próxima rodada)</span>
+                          </span>
+                        ) : (
+                          <span>Produtos por equipe na próxima rodada:</span>
+                        )}
+                      </div>
+                      {!activeRound && (
+                        <Select
+                          value={String(nextRoundProductCount)}
+                          onValueChange={(value) => setNextRoundProductCount(Number(value))}
+                        >
+                          <SelectTrigger className="w-[80px]" data-testid="select-round-product-count-persistent">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: maxRoundProducts }, (_, i) => i + 1).map((n) => (
+                              <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+
                     <RoundsTimeline
                       rounds={rounds}
                       activeRound={activeRound}
@@ -4191,7 +4235,13 @@ export default function Professor() {
                   <Input type="number" value={marketConfigEdits.numberOfCompetitors ?? ""} onChange={(e) => setMarketConfigEdits({ ...marketConfigEdits, numberOfCompetitors: e.target.value ? parseInt(e.target.value) : null })} data-testid="input-edit-num-competitors" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Concentração de Mercado</Label>
+                  {/* Item 2 (problemas relatados pelo professor, 2026-09): rótulo corrigido de
+                      "Concentração de Mercado" para "Estrutura de Mercado" — as opções abaixo
+                      (Monopólio, Oligopólio, Concorrência Monopolística, Concorrência Perfeita,
+                      Fragmentado) são categorias de estrutura de mercado, não de concentração
+                      (que se mede por índices como HHI/CR4). O campo interno (marketConcentration,
+                      na URL da API e no banco) não foi renomeado — só o texto visível. */}
+                  <Label>Estrutura de Mercado</Label>
                   <Select value={marketConfigEdits.marketConcentration} onValueChange={(value) => setMarketConfigEdits({ ...marketConfigEdits, marketConcentration: value })}>
                     <SelectTrigger data-testid="select-edit-market-concentration"><SelectValue /></SelectTrigger>
                     <SelectContent>

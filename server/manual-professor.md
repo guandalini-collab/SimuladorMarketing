@@ -36,7 +36,7 @@ Após criar a turma, você pode ajustar:
 - **Taxa de Crescimento**: Expansão ou retração do mercado
 - **Nível de Competição**: Intensidade competitiva
 - **Número de Concorrentes**: Quantas empresas competem
-- **Concentração de Mercado**: Distribuição de market share
+- **Estrutura de Mercado**: Monopólio, oligopólio, concorrência monopolística, concorrência perfeita ou fragmentado
 - **Força dos Concorrentes**: Nível de sofisticação da concorrência
 
 ### 3. Gerenciar Rodadas

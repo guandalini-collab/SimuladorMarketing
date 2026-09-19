@@ -371,7 +371,10 @@ export default function Mercado() {
 
                         {currentClass.marketConcentration && (
                           <div>
-                            <p className="text-sm font-medium text-muted-foreground">Concentração de Mercado</p>
+                            {/* Item 2 (problemas relatados pelo professor, 2026-09): rótulo corrigido
+                                para "Estrutura de Mercado" — mesmo ajuste de terminologia feito no
+                                diálogo de configuração do professor (professor.tsx). */}
+                            <p className="text-sm font-medium text-muted-foreground">Estrutura de Mercado</p>
                             <div className="flex items-center gap-2 mt-1">
                               <Badge variant="secondary">
                                 {currentClass.marketConcentration === "monopolio" ? "Monopólio" :
