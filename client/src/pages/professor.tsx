@@ -1344,6 +1344,44 @@ function MarketEventsManager({ classId, rounds }: { classId: string; rounds: Rou
     },
   });
 
+  // Item 6 (auditoria de 2026-09): a geração automática de eventos de
+  // mercado (auto_event_config) já existia inteira no backend — rota de
+  // leitura, rota de gravação, e o próprio gerador (eventGenerator.ts) que
+  // roda a cada fechamento de rodada quando "enabled" está true — mas não
+  // havia NENHUMA tela para o professor ligar/desligar. Só era possível
+  // ativar chamando a API diretamente. Adicionado aqui um controle mínimo de
+  // ativar/desativar; os demais campos (frequência, pesos por tipo de
+  // evento) continuam com os valores padrão do banco — a critério de uma
+  // tela de configuração mais completa no futuro, se o professor sentir
+  // falta.
+  const { data: autoEventConfig, isLoading: isAutoEventConfigLoading } = useQuery<{ enabled: boolean }>({
+    queryKey: ["/api/auto-events/config", classId],
+    queryFn: async () => {
+      const res = await fetch(`/api/auto-events/config/${classId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Erro ao buscar configuração de eventos automáticos");
+      return res.json();
+    },
+  });
+
+  const toggleAutoEventsMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const res = await apiRequest("POST", "/api/auto-events/config", { classId, enabled });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["/api/auto-events/config", classId], data);
+      toast({
+        title: data.enabled ? "Geração automática ativada" : "Geração automática desativada",
+        description: data.enabled
+          ? "Eventos de mercado serão gerados automaticamente ao final de cada rodada."
+          : "Nenhum evento será gerado automaticamente — só os criados manualmente ou via IA aqui.",
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro ao atualizar configuração", description: error.message, variant: "destructive" });
+    },
+  });
+
   const activeRounds = rounds.filter(r => r.status !== "locked");
 
   return (
@@ -1366,6 +1404,19 @@ function MarketEventsManager({ classId, rounds }: { classId: string; rounds: Rou
             Criar Manual
           </Button>
         </div>
+      </div>
+
+      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
+        <div>
+          <p className="text-sm font-medium">Geração automática de eventos</p>
+          <p className="text-xs text-muted-foreground">Quando ativada, o sistema gera eventos de mercado sozinho a cada rodada encerrada, além dos criados aqui.</p>
+        </div>
+        <Switch
+          checked={autoEventConfig?.enabled ?? false}
+          onCheckedChange={(enabled) => toggleAutoEventsMutation.mutate(enabled)}
+          disabled={isAutoEventConfigLoading || toggleAutoEventsMutation.isPending}
+          data-testid="switch-auto-events-enabled"
+        />
       </div>
 
       {events.length === 0 ? (
@@ -1715,7 +1766,29 @@ function RoundsTimeline({
   // Find the last round (highest roundNumber)
   const sortedRounds = [...rounds].sort((a, b) => a.roundNumber - b.roundNumber);
   const lastRound = sortedRounds[sortedRounds.length - 1];
-  const canRemoveRound = lastRound && lastRound.status === "locked" && lastRound.roundNumber > currentClass.currentRound;
+  const isLastRoundEligible = !!lastRound && lastRound.status === "locked" && lastRound.roundNumber > currentClass.currentRound;
+
+  // Inconsistência de auditoria (2026-09), item 7: o botão "Remover Última" só
+  // checava status "locked" e o número da rodada — a mesma checagem que o
+  // servidor faz em DELETE /api/classes/:classId/rounds/:roundNumber antes de
+  // criar a rodada. Mas o servidor também recusa a remoção quando a rodada tem
+  // dados associados (getRoundDependencies — ex.: análises estratégicas
+  // pré-geradas pela IA para uma rodada de assistência automática que nunca
+  // chegou a ser ativada). Sem essa checagem no frontend, o botão aparecia
+  // habilitado e o professor só descobria o problema depois de clicar, com um
+  // erro genérico. Agora o frontend consulta o mesmo endpoint de dependências
+  // que o servidor usa, e mostra o motivo real antes do clique.
+  const dependenciesQuery = useQuery<{ hasDependencies: boolean; details?: string[] }>({
+    queryKey: ["/api/rounds", lastRound?.id, "dependencies"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/rounds/${lastRound!.id}/dependencies`);
+      return res.json();
+    },
+    enabled: isLastRoundEligible,
+  });
+
+  const hasBlockingDependencies = isLastRoundEligible && dependenciesQuery.data?.hasDependencies === true;
+  const canRemoveRound = isLastRoundEligible && dependenciesQuery.data?.hasDependencies === false;
 
   const [editMaxRounds, setEditMaxRounds] = useState(currentClass.maxRounds);
 
@@ -1802,8 +1875,12 @@ function RoundsTimeline({
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            {canRemoveRound 
+            {canRemoveRound
               ? <p>Remove a Rodada {lastRound?.roundNumber} (bloqueada e sem dados)</p>
+              : hasBlockingDependencies
+              ? <p>Rodada {lastRound?.roundNumber} possui dados associados (ex.: análises geradas) e não pode ser removida</p>
+              : isLastRoundEligible && dependenciesQuery.isLoading
+              ? <p>Verificando se a rodada tem dados associados...</p>
               : <p>Só é possível remover rodadas bloqueadas sem dados</p>
             }
           </TooltipContent>
@@ -2367,7 +2444,7 @@ export default function Professor() {
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [isCreateStudentDialogOpen, setIsCreateStudentDialogOpen] = useState(false);
   const [newStudentData, setNewStudentData] = useState({ name: "", email: "", password: "", classId: "" as string | null });
-  const [teamToReset, setTeamToReset] = useState<{teamId: string; teamName: string; roundId: string; roundNumber: number} | null>(null);
+  const [teamToReset, setTeamToReset] = useState<{teamId: string; teamName: string; roundId: string; roundNumber: number; roundStatus: string} | null>(null);
   const [roundBeingScheduled, setRoundBeingScheduled] = useState<string | null>(null);
   const [scheduleData, setScheduleData] = useState<{scheduledStartAt: string; scheduledEndAt: string}>({ scheduledStartAt: "", scheduledEndAt: "" });
   const [searchTerm, setSearchTerm] = useState("");
@@ -3955,7 +4032,7 @@ export default function Professor() {
                                     <Select
                                       onValueChange={(roundId) => {
                                         const round = rounds.find(r => r.id === roundId);
-                                        if (round) setTeamToReset({ teamId: team.id, teamName: team.name, roundId, roundNumber: round.roundNumber });
+                                        if (round) setTeamToReset({ teamId: team.id, teamName: team.name, roundId, roundNumber: round.roundNumber, roundStatus: round.status });
                                       }}
                                     >
                                       <SelectTrigger className="w-[160px]" data-testid={`select-reset-round-${team.id}`}>
@@ -4607,7 +4684,20 @@ export default function Professor() {
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>Resetar decisões de <strong>{teamToReset?.teamName}</strong> (Rodada {teamToReset?.roundNumber})?</p>
-              <p className="text-xs text-muted-foreground">Isso apagará: Análises Estratégicas, Recomendações IA, Mix de Marketing e Configuração de Produtos.</p>
+              <p className="text-xs text-muted-foreground">Isso apagará: Análises Estratégicas, Recomendações IA, Mix de Marketing, Configuração de Produtos e os Resultados já calculados para esta equipe nesta rodada.</p>
+              {/* Inconsistência de auditoria (2026-09), item 5: resetar
+                  decisões de uma rodada já "completed" apagava também os
+                  resultados calculados a partir delas, sem nenhum aviso —
+                  o professor só percebia depois, ao ver o resultado da
+                  equipe sumir do fechamento da rodada. Não bloqueamos a
+                  ação (pode ser intencional, ex.: corrigir um erro depois
+                  de fechar a rodada), mas agora ela é clara sobre a
+                  consequência antes de confirmar. */}
+              {teamToReset?.roundStatus === "completed" && (
+                <p className="text-xs font-semibold text-destructive">
+                  Atenção: esta rodada já está concluída. Resultados, ranking e feedback já gerados para esta equipe nesta rodada serão apagados junto com as decisões.
+                </p>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

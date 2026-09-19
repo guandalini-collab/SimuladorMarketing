@@ -210,7 +210,7 @@ export interface IStorage {
   updateTeamProduct(id: string, data: Partial<TeamProduct>): Promise<TeamProduct | undefined>;
   
   // Reset all team decisions for a round
-  resetTeamDecisions(teamId: string, roundId: string): Promise<{ deletedAnalyses: number; deletedMixes: number; deletedProducts: number }>;
+  resetTeamDecisions(teamId: string, roundId: string): Promise<{ deletedAnalyses: number; deletedMixes: number; deletedProducts: number; deletedResults: number }>;
   
   // Deterministic Feedback
   getDeterministicFeedback(teamId: string, roundId: string): Promise<any | undefined>;
@@ -1809,7 +1809,7 @@ export class MemStorage implements IStorage {
     throw new Error("TeamProducts not supported in MemStorage. Use PostgreSQL.");
   }
   
-  async resetTeamDecisions(teamId: string, roundId: string): Promise<{ deletedAnalyses: number; deletedMixes: number; deletedProducts: number }> {
+  async resetTeamDecisions(teamId: string, roundId: string): Promise<{ deletedAnalyses: number; deletedMixes: number; deletedProducts: number; deletedResults: number }> {
     throw new Error("resetTeamDecisions not supported in MemStorage. Use PostgreSQL.");
   }
 

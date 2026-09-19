@@ -1388,7 +1388,31 @@ export class PgStorage implements IStorage {
     return result[0];
   }
   
-  async resetTeamDecisions(teamId: string, roundId: string): Promise<{ deletedAnalyses: number; deletedMixes: number; deletedProducts: number }> {
+  async resetTeamDecisions(teamId: string, roundId: string): Promise<{ deletedAnalyses: number; deletedMixes: number; deletedProducts: number; deletedResults: number }> {
+    // Inconsistência de auditoria (2026-09), item 5: esta função sempre apagou
+    // as DECISÕES da equipe (mixes, produtos, análises) para a rodada, mas
+    // nunca os RESULTADOS já calculados a partir delas (product_results) nem
+    // o feedback gerado em cima desses resultados (deterministic_feedback,
+    // ai_feedback). Como o endpoint que chama esta função (DELETE
+    // /api/team-decisions/:teamId/:roundId) não verificava o status da
+    // rodada, resetar as decisões de uma equipe numa rodada já "completed"
+    // deixava resultados e feedback órfãos — apontando para produtos/mixes
+    // que não existem mais. Agora a limpeza inclui também resultados e
+    // feedback da mesma equipe/rodada, para que o reset nunca deixe dado
+    // inconsistente, seja a rodada "locked", "active" ou "completed".
+    // Delete Product Results
+    const deletedResults = await db.delete(productResults)
+      .where(and(eq(productResults.teamId, teamId), eq(productResults.roundId, roundId)))
+      .returning();
+
+    // Delete Deterministic Feedback
+    await db.delete(deterministicFeedback)
+      .where(and(eq(deterministicFeedback.teamId, teamId), eq(deterministicFeedback.roundId, roundId)));
+
+    // Delete AI Feedback
+    await db.delete(aiFeedback)
+      .where(and(eq(aiFeedback.teamId, teamId), eq(aiFeedback.roundId, roundId)));
+
     // Delete SWOT analyses
     const deletedSwot = await db.delete(swotAnalysis)
       .where(and(eq(swotAnalysis.teamId, teamId), eq(swotAnalysis.roundId, roundId)))
@@ -1429,7 +1453,8 @@ export class PgStorage implements IStorage {
     return {
       deletedAnalyses: totalAnalyses,
       deletedMixes: deletedMixes.length,
-      deletedProducts: deletedProducts.length
+      deletedProducts: deletedProducts.length,
+      deletedResults: deletedResults.length
     };
   }
 

@@ -5353,7 +5353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         success: true,
-        message: `Decisões resetadas: ${result.deletedAnalyses} análises, ${result.deletedMixes} mixes, ${result.deletedProducts} produtos`,
+        message: `Decisões resetadas: ${result.deletedAnalyses} análises, ${result.deletedMixes} mixes, ${result.deletedProducts} produtos, ${result.deletedResults} resultados`,
         ...result
       });
     } catch (error: any) {

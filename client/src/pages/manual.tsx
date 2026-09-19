@@ -2226,7 +2226,7 @@ export default function Manual() {
 
                   <div className="p-3 bg-white dark:bg-gray-900 rounded border border-purple-200 dark:border-purple-800">
                     <p className="font-bold">CAC (Customer Acquisition Cost)</p>
-                    <p className="text-xs mt-1">Custo total para adquirir um novo cliente, incluindo investimentos em marketing, vendas, tecnologia e overhead alocado. Fórmula: CAC = (Custos de Marketing + Custos de Vendas) / Número de Novos Clientes. Regra de ouro: CAC deve ser &lt; 1/3 do LTV para sustentabilidade financeira (SaaS metrics).</p>
+                    <p className="text-xs mt-1">Custo total para adquirir um novo cliente, incluindo investimentos em marketing, vendas, produção e distribuição. Fórmula: CAC = Custos Totais / Número de Clientes (mesma fórmula da seção "KPIs de Cliente e Aquisição", item 6 — não apenas custos de marketing e vendas). Regra de ouro: CAC deve ser &lt; 1/3 do LTV para sustentabilidade financeira (SaaS metrics).</p>
                   </div>
 
                   <div className="p-3 bg-white dark:bg-gray-900 rounded border border-purple-200 dark:border-purple-800">
