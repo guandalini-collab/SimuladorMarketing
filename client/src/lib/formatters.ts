@@ -147,6 +147,27 @@ export function sanitizarDigitacaoMonetaria(valor: string): string {
   return limpo;
 }
 
+/**
+ * Insere os pontos de milhar na parte inteira de um valor já sanitizado por
+ * sanitizarDigitacaoMonetaria (só dígitos e, opcionalmente, uma vírgula
+ * decimal) — usado para mostrar o agrupamento (R$ 100.000) ENQUANTO o
+ * professor ainda está digitando, em vez de só ao sair do campo (comentário
+ * do professor, 2026-09: números grandes sem separador são difíceis de ler
+ * durante a digitação — "quantos zeros eu já pus mesmo?").
+ * @example
+ * aplicarSeparadorMilharEnquantoDigita("100000") // "100.000"
+ * aplicarSeparadorMilharEnquantoDigita("1200,5") // "1.200,5"
+ * aplicarSeparadorMilharEnquantoDigita("12,34") // "12,34"
+ */
+export function aplicarSeparadorMilharEnquantoDigita(valorSanitizado: string): string {
+  if (!valorSanitizado) return '';
+
+  const [inteiro, decimal] = valorSanitizado.split(',');
+  const inteiroComMilhar = inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+  return decimal !== undefined ? `${inteiroComMilhar},${decimal}` : inteiroComMilhar;
+}
+
 export function sanitizarInputNumerico(valor: string): string {
   if (!valor) return '';
   

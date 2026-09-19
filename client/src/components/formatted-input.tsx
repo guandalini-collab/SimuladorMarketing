@@ -1,6 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
-import { formatarNumeroBR, capturarNumeroPuro, sanitizarInputNumerico, sanitizarDigitacaoMonetaria } from '@/lib/formatters';
+import { formatarNumeroBR, capturarNumeroPuro, sanitizarInputNumerico, sanitizarDigitacaoMonetaria, aplicarSeparadorMilharEnquantoDigita } from '@/lib/formatters';
+
+/**
+ * Depois de trocar o valor exibido (ex.: inserir um "." de milhar), devolve
+ * o cursor para a posição "equivalente" no novo texto — contando quantos
+ * dígitos/vírgula havia ANTES do cursor no texto antigo e posicionando o
+ * cursor depois da mesma quantidade de dígitos/vírgula no texto novo.
+ * Sem isso, o campo controlado joga o cursor para o final a cada tecla
+ * assim que um "." de milhar passa a existir no meio do valor.
+ */
+function reposicionarCursorAposFormatacao(input: HTMLInputElement, textoAntigo: string, cursorAntigo: number, textoNovo: string) {
+  const significativosAntes = (textoAntigo.slice(0, cursorAntigo).match(/[\d,]/g) || []).length;
+
+  if (significativosAntes === 0) {
+    // Cursor estava antes de qualquer dígito digitado — mantém logo antes
+    // do primeiro dígito do novo texto (ex.: logo depois do prefixo "R$ ").
+    const primeiroDigito = textoNovo.search(/[\d,]/);
+    const posicao = primeiroDigito === -1 ? textoNovo.length : primeiroDigito;
+    input.setSelectionRange(posicao, posicao);
+    return;
+  }
+
+  let contagem = 0;
+  let posicao = textoNovo.length;
+  for (let i = 0; i < textoNovo.length; i++) {
+    if (/[\d,]/.test(textoNovo[i])) {
+      contagem++;
+      if (contagem === significativosAntes) {
+        posicao = i + 1;
+        break;
+      }
+    }
+  }
+  input.setSelectionRange(posicao, posicao);
+}
 
 interface FormattedMoneyInputProps {
   id?: string;
@@ -29,6 +63,7 @@ export function FormattedMoneyInput({
 }: FormattedMoneyInputProps) {
   const [displayValue, setDisplayValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Atualiza display quando value prop mudar
   useEffect(() => {
@@ -38,10 +73,12 @@ export function FormattedMoneyInput({
   }, [value, isFocused]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value;
-    
+    const inputEl = e.target;
+    const textoAntigo = inputEl.value;
+    const cursorAntigo = inputEl.selectionStart ?? textoAntigo.length;
+
     // Remove 'R$' e espaços para permitir digitação limpa
-    const semSimbolos = input.replace(/R\$/g, '').trim();
+    const semSimbolos = textoAntigo.replace(/R\$/g, '').trim();
 
     // Sanitiza o input (ponto digitado é ignorado — só a vírgula é decimal)
     const sanitizado = sanitizarDigitacaoMonetaria(semSimbolos);
@@ -49,29 +86,49 @@ export function FormattedMoneyInput({
     // Captura o número puro
     const numero = capturarNumeroPuro(sanitizado);
 
-    // Atualiza o estado interno com formatação parcial
-    setDisplayValue(`R$ ${sanitizado}`);
-    
+    // Auditoria (2026-09): antes, o valor digitado ficava sem separador de
+    // milhar até o campo perder o foco — para um número grande, o
+    // professor não conseguia ler quantos zeros já tinha digitado. Agora o
+    // "." de milhar aparece a cada tecla, com o cursor reposicionado para
+    // continuar exatamente onde o professor estava digitando.
+    const comMilhar = aplicarSeparadorMilharEnquantoDigita(sanitizado);
+    const textoNovo = `R$ ${comMilhar}`;
+    setDisplayValue(textoNovo);
+
     // Chama callback com número puro
     onChange(numero);
+
+    // O React só aplica o novo value no input depois de re-renderizar —
+    // reposiciona o cursor no próximo frame, já com o texto novo no DOM.
+    requestAnimationFrame(() => {
+      if (inputRef.current) {
+        reposicionarCursorAposFormatacao(inputRef.current, textoAntigo, cursorAntigo, textoNovo);
+      }
+    });
   };
 
-  const handleFocus = () => {
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(true);
-    // No foco, mostra apenas o número sem formatação completa
-    const numeroStr = value > 0 ? value.toString().replace('.', ',') : '';
-    setDisplayValue(`R$ ${numeroStr}`);
+    // Correção (2026-09): a versão anterior trocava o valor exibido ao
+    // focar por uma versão SEM a vírgula de centavos (ex.: "R$ 100.000,00"
+    // virava "R$ 100000"), fazendo o campo "esquecer" os centavos digitados
+    // assim que o professor clicava nele de novo. Agora o valor completo
+    // (com milhar E vírgula de centavos) permanece exibido ao focar — só
+    // seleciona tudo, para digitar um valor novo já substituir o anterior
+    // de uma vez (clicar para só posicionar o cursor continua funcionando).
+    e.target.select();
   };
 
   const handleBlur = () => {
     setIsFocused(false);
-    // Ao perder o foco, formata completamente
+    // Ao perder o foco, formata completamente (com centavos)
     setDisplayValue(formatarNumeroBR(value, 'moeda'));
     onBlur?.();
   };
 
   return (
     <Input
+      ref={inputRef}
       id={id}
       type="text"
       inputMode="decimal"
