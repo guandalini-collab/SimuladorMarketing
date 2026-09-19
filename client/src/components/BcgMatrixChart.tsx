@@ -58,6 +58,25 @@ export default function BcgMatrixChart({ products }: BcgMatrixChartProps) {
     quadrant: product.quadrant,
   }));
 
+  // Inconsistência de auditoria (2026-09), item 1: "relativeMarketShare" é salvo
+  // em duas escalas diferentes no mesmo campo — quando o aluno preenche
+  // manualmente (BcgTab, em estrategia.tsx) o valor sempre foi uma % de 0 a
+  // 100; quando a IA gera a análise (assistência automática nas Rodadas 1-3,
+  // ver server/services/aiStrategy.ts) o valor é a razão padrão da Matriz BCG,
+  // em torno de 1.0 (participação própria ÷ do maior concorrente), gravada em
+  // routes.ts sem nenhuma conversão. Como os dois tipos de registro convivem
+  // na mesma tabela e alimentam este mesmo gráfico, um produto que a IA
+  // classificou como "Estrela" (ex.: 1.2) aparecia espremido no canto
+  // esquerdo de um eixo 0-100, contradizendo o rótulo/cor exibidos. Corrigido
+  // adotando a escala padrão (razão, corte em 1.0) também aqui — mesma escala
+  // que a IA já usa e que o gráfico de resultados do professor (bcg-matrix-
+  // chart.tsx, em analises.tsx) já exibia corretamente.
+  const shareThreshold = 1;
+  const maxShare = Math.max(...chartData.map(d => d.x), 2);
+  const thresholdPercent = (shareThreshold / maxShare) * 100;
+  const rightCenterPercent = thresholdPercent + (100 - thresholdPercent) / 2;
+  const leftCenterPercent = thresholdPercent / 2;
+
   const quadrantCounts = products.reduce((acc, p) => {
     acc[p.quadrant] = (acc[p.quadrant] || 0) + 1;
     return acc;
@@ -69,7 +88,7 @@ export default function BcgMatrixChart({ products }: BcgMatrixChartProps) {
       return (
         <div className="bg-card border rounded-lg shadow-lg p-3 space-y-1">
           <p className="font-semibold">{data.name}</p>
-          <p className="text-sm text-muted-foreground">Participação: {data.x}%</p>
+          <p className="text-sm text-muted-foreground">Participação: {Number(data.x).toFixed(2)}x</p>
           <p className="text-sm text-muted-foreground">Crescimento: {data.y}%</p>
           <Badge style={{ backgroundColor: QUADRANT_COLORS[data.quadrant as keyof typeof QUADRANT_COLORS] }}>
             {data.quadrant}
@@ -99,13 +118,13 @@ export default function BcgMatrixChart({ products }: BcgMatrixChartProps) {
             <ScatterChart margin={{ top: 20, right: 30, bottom: 60, left: 60 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               
-              <XAxis 
-                type="number" 
-                dataKey="x" 
-                domain={[0, 100]}
+              <XAxis
+                type="number"
+                dataKey="x"
+                domain={[0, maxShare]}
                 name="Participação Relativa"
-                label={{ 
-                  value: 'Participação Relativa de Mercado (%)', 
+                label={{
+                  value: 'Participação Relativa de Mercado (1.0 = líder)',
                   position: 'bottom',
                   offset: 40,
                   style: { fontSize: 14, fontWeight: 600 }
@@ -128,19 +147,19 @@ export default function BcgMatrixChart({ products }: BcgMatrixChartProps) {
                 tick={{ fontSize: 12 }}
               />
               
-              <ReferenceLine x={50} stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" />
+              <ReferenceLine x={shareThreshold} stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" />
               <ReferenceLine y={10} stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" />
-              
-              <text x="75%" y="15%" textAnchor="middle" className="font-semibold text-sm" fill="#1aa15c">
+
+              <text x={`${rightCenterPercent}%`} y="15%" textAnchor="middle" className="font-semibold text-sm" fill="#1aa15c">
                 Estrela
               </text>
-              <text x="25%" y="15%" textAnchor="middle" className="font-semibold text-sm" fill="#ff8c1a">
+              <text x={`${leftCenterPercent}%`} y="15%" textAnchor="middle" className="font-semibold text-sm" fill="#ff8c1a">
                 ?
               </text>
-              <text x="75%" y="85%" textAnchor="middle" className="font-semibold text-sm" fill="#1447e6">
+              <text x={`${rightCenterPercent}%`} y="85%" textAnchor="middle" className="font-semibold text-sm" fill="#1447e6">
                 Vaca Leiteira
               </text>
-              <text x="25%" y="85%" textAnchor="middle" className="font-semibold text-sm" fill="#e5352b">
+              <text x={`${leftCenterPercent}%`} y="85%" textAnchor="middle" className="font-semibold text-sm" fill="#e5352b">
                 Abacaxi
               </text>
               

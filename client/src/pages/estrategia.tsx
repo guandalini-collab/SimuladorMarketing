@@ -401,7 +401,13 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
   const [newProduct, setNewProduct] = useState({
     productName: "",
     marketGrowth: 5,
-    relativeMarketShare: 50,
+    // Inconsistência de auditoria (2026-09), item 1: era uma % de 0 a 100
+    // (escala usada só aqui), enquanto a IA (assistência automática nas
+    // Rodadas 1-3) grava esse mesmo campo na escala padrão da Matriz BCG —
+    // razão em torno de 1.0 (participação própria ÷ do maior concorrente),
+    // sem nenhuma conversão. Corrigido adotando a mesma escala padrão aqui,
+    // já que os dois tipos de registro convivem na mesma tabela/gráfico.
+    relativeMarketShare: 1,
   });
 
   useEffect(() => {
@@ -417,7 +423,7 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/strategy", roundId] });
       toast({ title: "Produto adicionado!", description: "Produto inserido na Matriz BCG." });
-      setNewProduct({ productName: "", marketGrowth: 5, relativeMarketShare: 50 });
+      setNewProduct({ productName: "", marketGrowth: 5, relativeMarketShare: 1 });
     },
   });
 
@@ -436,9 +442,13 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
     // gráfico (BcgMatrixChart usa y={10}) — antes a classificação usava 5%,
     // fazendo produtos com crescimento entre 5% e 10% ficarem com um
     // quadrante/cor que não correspondia à posição real no gráfico.
-    if (growth >= 10 && share >= 50) return "Estrela";
-    if (growth < 10 && share >= 50) return "Vaca Leiteira";
-    if (growth >= 10 && share < 50) return "Ponto de Interrogação";
+    // Limiar de participação (1.0) alinhado com a escala padrão da Matriz
+    // BCG (razão em relação ao maior concorrente) — ver comentário na
+    // declaração de relativeMarketShare acima (inconsistência de auditoria,
+    // item 1, 2026-09).
+    if (growth >= 10 && share >= 1) return "Estrela";
+    if (growth < 10 && share >= 1) return "Vaca Leiteira";
+    if (growth >= 10 && share < 1) return "Ponto de Interrogação";
     return "Abacaxi";
   }
 
@@ -497,13 +507,13 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
                 />
               </div>
               <div className="space-y-2">
-                <Label>Participação Relativa (%) - {newProduct.relativeMarketShare}%</Label>
+                <Label>Participação Relativa - {newProduct.relativeMarketShare.toFixed(1)}x (1.0 = mesma participação do líder)</Label>
                 <Slider
                   value={[newProduct.relativeMarketShare]}
                   onValueChange={([val]) => setNewProduct((prev) => ({ ...prev, relativeMarketShare: val }))}
                   min={0}
-                  max={100}
-                  step={5}
+                  max={3}
+                  step={0.1}
                 />
               </div>
             </div>
@@ -534,7 +544,7 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
                     </div>
                     <div className="text-sm text-muted-foreground">
                       <p>Crescimento: {product.marketGrowth}%</p>
-                      <p>Participação: {product.relativeMarketShare}%</p>
+                      <p>Participação: {Number(product.relativeMarketShare).toFixed(2)}x</p>
                     </div>
                   </div>
                 ))}

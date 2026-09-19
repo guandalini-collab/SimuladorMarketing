@@ -41,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import type { Class, Round } from "@shared/schema";
+import { getProductCountBudgetPreview } from "@shared/budgetUtils";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -3317,13 +3318,25 @@ export default function Professor() {
                                 </SelectContent>
                               </Select>
                             </div>
-                            {nextRoundProductCount !== previousRoundProductCount && (
-                              <p className="text-xs text-[#ffe28a]">
-                                {nextRoundProductCount > previousRoundProductCount
-                                  ? `Orçamento das equipes será reduzido em ${(nextRoundProductCount - previousRoundProductCount) * 10}%`
-                                  : `Orçamento das equipes será restaurado proporcionalmente (${(previousRoundProductCount - nextRoundProductCount) * 10}%)`}
-                              </p>
-                            )}
+                            {/* Inconsistência de auditoria (2026-09), item 2: este texto usava
+                                uma conta linear própria (Δ×10%), diferente da fórmula que o
+                                servidor de fato aplica ao orçamento das equipes (inverso
+                                multiplicativo quando a quantidade de produtos diminui) — os dois
+                                só coincidiam quando a quantidade aumentava. Agora usa a mesma
+                                função (shared/budgetUtils.ts) que o servidor usa para aplicar o
+                                ajuste de verdade, então a prévia sempre bate com o valor real. */}
+                            {nextRoundProductCount !== previousRoundProductCount && (() => {
+                              const preview = getProductCountBudgetPreview(previousRoundProductCount, nextRoundProductCount);
+                              return (
+                                <p className="text-xs text-[#ffe28a]">
+                                  {preview.zeroed
+                                    ? "Orçamento das equipes será zerado (produtos demais para o orçamento atual)"
+                                    : preview.percent < 0
+                                    ? `Orçamento das equipes será reduzido em ${Math.abs(preview.percent)}%`
+                                    : `Orçamento das equipes será aumentado em ${preview.percent}%`}
+                                </p>
+                              );
+                            })()}
                             <Button
                               size="lg"
                               className="min-w-[200px] h-12 text-base bg-white text-[#2c2a9e] border-transparent hover:bg-white/90"

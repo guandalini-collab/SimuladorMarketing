@@ -43,14 +43,55 @@ export default function Login() {
   const [registeredUserData, setRegisteredUserData] = useState<any>(null);
   const [codeCopied, setCodeCopied] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const res = await apiRequest("POST", "/api/auth/login", loginData);
-      
+      // Lê os valores diretamente do formulário no momento do envio, em vez
+      // de confiar apenas no estado do React. Em alguns casos o Safari
+      // preenche os campos via autopreenchimento (senha salva) sem disparar
+      // o evento "input"/"change" que o React usa para atualizar o estado —
+      // o campo aparece preenchido na tela, mas o app envia um valor vazio
+      // ou desatualizado. Ler do FormData evita esse problema, pois reflete
+      // o valor real do campo no DOM, não o estado do React.
+      const formValues = new FormData(e.currentTarget);
+      const credentials = {
+        email: String(formValues.get("email") ?? loginData.email ?? ""),
+        password: String(formValues.get("password") ?? loginData.password ?? ""),
+      };
+
+      // Usa fetch diretamente (em vez de apiRequest) porque apiRequest lança
+      // uma exceção genérica assim que a resposta não é "ok", antes de
+      // devolver o Response — isso tornava o bloco abaixo (if !res.ok)
+      // morto: nunca era executado, e todo erro (senha errada, cadastro
+      // pendente, cadastro rejeitado, falha de rede, erro do servidor)
+      // caía no mesmo catch genérico com a mesma mensagem "Email ou senha
+      // incorretos". Isso mascarava a causa real de falhas de login.
+      let res: Response;
+      try {
+        res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(credentials),
+          credentials: "include",
+          cache: "no-store",
+        });
+      } catch (networkError) {
+        toast({
+          title: "Erro de conexão",
+          description: "Não foi possível contatar o servidor. Verifique sua internet e tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (!res.ok) {
-        const errorData = await res.json();
-        
+        let errorData: any = {};
+        try {
+          errorData = await res.json();
+        } catch {
+          // resposta de erro sem corpo JSON válido
+        }
+
         if (errorData.error === "Aguardando aprovação") {
           toast({
             title: "⏳ Aguardando Aprovação",
@@ -59,7 +100,7 @@ export default function Login() {
           });
           return;
         }
-        
+
         if (errorData.error === "Cadastro rejeitado") {
           toast({
             title: "❌ Cadastro Rejeitado",
@@ -68,17 +109,28 @@ export default function Login() {
           });
           return;
         }
-        
+
+        if (res.status === 401) {
+          toast({
+            title: "Erro no login",
+            description: "Email ou senha incorretos",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Qualquer outro erro do servidor (500, etc.) mostra a mensagem real
+        // em vez de mascará-lo como "senha incorreta".
         toast({
           title: "Erro no login",
-          description: "Email ou senha incorretos",
+          description: errorData.message || errorData.error || `Erro inesperado do servidor (${res.status}).`,
           variant: "destructive",
         });
         return;
       }
-      
+
       const user = await res.json();
-      
+
       // Verifica se precisa trocar senha temporária
       if (user.mustChangePassword) {
         setMustChangePassword(true);
@@ -88,7 +140,7 @@ export default function Login() {
         });
         return;
       }
-      
+
       toast({
         title: "Login realizado!",
         description: `Bem-vindo, ${user.name}!`,
@@ -97,7 +149,7 @@ export default function Login() {
     } catch (error) {
       toast({
         title: "Erro no login",
-        description: "Email ou senha incorretos",
+        description: error instanceof Error ? error.message : "Email ou senha incorretos",
         variant: "destructive",
       });
     }
@@ -162,49 +214,72 @@ export default function Login() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Mesmo motivo do handleLogin acima: apiRequest() lança uma exceção
+    // assim que a resposta não é "ok", antes de devolver o Response — isso
+    // tornava o bloco "if (!res.ok)" que existia aqui morto (nunca era
+    // alcançado), e todo erro de cadastro (professor tentando se cadastrar,
+    // email mal formatado, falha ao enviar o email de aprovação) caía no
+    // mesmo catch genérico com a mensagem fixa "Email já cadastrado ou
+    // dados inválidos", escondendo o motivo real (inconsistência de
+    // auditoria, item 3, 2026-09).
+    let res: Response;
     try {
-      const res = await apiRequest("POST", "/api/auth/register", registerData);
-      const data = await res.json();
-      
-      if (!res.ok) {
-        toast({
-          title: "Erro no cadastro",
-          description: data.error || "Email já cadastrado ou dados inválidos",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Salva o código de recuperação para mostrar no modal
-      if (data.recoveryCode) {
-        setRecoveryCode(data.recoveryCode);
-        setRegisteredUserData(data);
-        setShowRecoveryCodeModal(true);
-      }
-      
-      if (data.status === "pending") {
-        toast({
-          title: "⏳ Cadastro Aguardando Aprovação",
-          description: data.message || "Você receberá um email quando o professor aprovar seu cadastro.",
-          variant: "default",
-        });
-        return;
-      }
-      
-      // Se não houver código (fallback), faz login direto
-      if (!data.recoveryCode) {
-        toast({
-          title: "Cadastro realizado!",
-          description: `Bem-vindo, ${data.name}!`,
-        });
-        window.location.href = data.role === "professor" ? "/professor" : "/";
-      }
-    } catch (error) {
+      res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(registerData),
+        credentials: "include",
+        cache: "no-store",
+      });
+    } catch (networkError) {
       toast({
         title: "Erro no cadastro",
-        description: "Email já cadastrado ou dados inválidos",
+        description: "Não foi possível contatar o servidor. Verifique sua internet e tente novamente.",
         variant: "destructive",
       });
+      return;
+    }
+
+    let data: any = {};
+    try {
+      data = await res.json();
+    } catch {
+      // resposta sem corpo JSON válido
+    }
+
+    if (!res.ok) {
+      toast({
+        title: "Erro no cadastro",
+        description: data.error || `Erro inesperado do servidor (${res.status}).`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Salva o código de recuperação para mostrar no modal
+    if (data.recoveryCode) {
+      setRecoveryCode(data.recoveryCode);
+      setRegisteredUserData(data);
+      setShowRecoveryCodeModal(true);
+    }
+
+    if (data.status === "pending") {
+      toast({
+        title: "⏳ Cadastro Aguardando Aprovação",
+        description: data.message || "Você receberá um email quando o professor aprovar seu cadastro.",
+        variant: "default",
+      });
+      return;
+    }
+
+    // Se não houver código (fallback), faz login direto
+    if (!data.recoveryCode) {
+      toast({
+        title: "Cadastro realizado!",
+        description: `Bem-vindo, ${data.name}!`,
+      });
+      window.location.href = data.role === "professor" ? "/professor" : "/";
     }
   };
   
@@ -329,12 +404,17 @@ export default function Login() {
                 </TabsList>
 
                 <TabsContent value="login">
-                  <form onSubmit={handleLogin} className="space-y-4">
+                  <form onSubmit={handleLogin} className="space-y-4" autoComplete="on">
                     <div className="space-y-2">
                       <Label htmlFor="login-email">Email</Label>
                       <Input
                         id="login-email"
+                        name="email"
                         type="email"
+                        autoComplete="username"
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        spellCheck={false}
                         placeholder="seu@email.com"
                         value={loginData.email}
                         onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
@@ -348,7 +428,12 @@ export default function Login() {
                       <div className="relative">
                         <Input
                           id="login-password"
+                          name="password"
                           type={showLoginPassword ? "text" : "password"}
+                          autoComplete="current-password"
+                          autoCapitalize="off"
+                          autoCorrect="off"
+                          spellCheck={false}
                           placeholder="••••••••"
                           value={loginData.password}
                           onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}

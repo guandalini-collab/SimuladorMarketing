@@ -15,6 +15,7 @@ import { emailService } from "./services/email";
 import { sendTeamEmail } from "./email-service";
 import { randomUUID } from "crypto";
 import { getAlignmentScoreLevel } from "@shared/alignmentUtils";
+import { getProductCountBudgetMultiplier } from "@shared/budgetUtils";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -35,12 +36,13 @@ function generateRecoveryCode(): string {
   return `${generateBlock()}-${generateBlock()}-${generateBlock()}`;
 }
 
-// Percentual de impacto no orçamento por produto adicional/removido entre rodadas.
-const PRODUCT_COUNT_BUDGET_IMPACT = 0.10;
-
 // Quando a quantidade de produtos da turma muda de uma rodada para outra,
 // ajusta o orçamento de todas as equipes da turma: -10% por produto adicional
-// (e o inverso, proporcional, caso a quantidade diminua).
+// (e o inverso, proporcional, caso a quantidade diminua). Fórmula em
+// shared/budgetUtils.ts, compartilhada com a prévia exibida ao professor em
+// professor.tsx (inconsistência de auditoria, item 2, 2026-09: antes cada
+// lado tinha sua própria conta, e elas divergiam quando a quantidade de
+// produtos diminuía).
 async function applyProductCountBudgetAdjustment(
   classId: string,
   previousProductCount: number,
@@ -48,10 +50,7 @@ async function applyProductCountBudgetAdjustment(
 ): Promise<void> {
   if (previousProductCount === newProductCount) return;
 
-  const delta = newProductCount - previousProductCount;
-  const multiplier = delta > 0
-    ? 1 - PRODUCT_COUNT_BUDGET_IMPACT * delta
-    : 1 / (1 - PRODUCT_COUNT_BUDGET_IMPACT * Math.abs(delta));
+  const multiplier = getProductCountBudgetMultiplier(previousProductCount, newProductCount);
 
   const classTeams = await storage.getTeamsByClass(classId);
   for (const team of classTeams) {
