@@ -3253,15 +3253,33 @@ export default function Professor() {
                     )}
 
                     {/* Item 4 (2026-09): agendamento de abertura/encerramento
-                        automático de rodada — este atalho pula direto para o
-                        "Gerenciamento de Rodadas" na aba "Aula" (item 2,
-                        2026-09, moveu esse gerenciamento para lá), útil
-                        quando o professor está vendo outra aba no momento. */}
+                        automático de rodada. Antes este atalho só trocava para
+                        a aba "Aula" e deixava o professor procurar, entre os
+                        cards de "Rodadas da Turma", qual delas ainda podia ser
+                        agendada (só rodadas "Bloqueada" têm o botão Agendar/
+                        Editar) — na prática o professor não achava (relatado
+                        de novo em 2026-09 mesmo após fechar a rodada ativa).
+                        Agora o clique já abre direto o diálogo de agendamento
+                        da próxima rodada bloqueada, sem precisar localizá-la
+                        na lista. */}
                     <Button
                       variant="ghost"
                       size="sm"
                       className="text-white/80 hover:text-white hover:bg-white/10 h-auto py-1 px-2 -ml-2 self-start"
-                      onClick={() => setActiveTab("aula")}
+                      onClick={() => {
+                        setActiveTab("aula");
+                        const nextLockedRound = [...rounds]
+                          .sort((a, b) => a.roundNumber - b.roundNumber)
+                          .find((r) => r.status === "locked");
+                        if (nextLockedRound) {
+                          handleScheduleRound(nextLockedRound);
+                        } else {
+                          toast({
+                            title: "Nenhuma rodada disponível para agendar",
+                            description: "Todas as rodadas já foram iniciadas ou concluídas. Adicione uma nova rodada em \"Gerenciamento de Rodadas\" para poder agendar abertura e encerramento.",
+                          });
+                        }
+                      }}
                       data-testid="button-goto-schedule-round"
                     >
                       <Clock className="h-3.5 w-3.5 mr-1.5" />
