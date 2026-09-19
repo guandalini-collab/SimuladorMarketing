@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
-import { formatarNumeroBR, capturarNumeroPuro, sanitizarInputNumerico, sanitizarDigitacaoMonetaria, aplicarSeparadorMilharEnquantoDigita } from '@/lib/formatters';
+import { formatarNumeroBR, capturarNumeroPuro, sanitizarInputNumerico, sanitizarDigitacaoMonetaria } from '@/lib/formatters';
 
 /**
  * Depois de trocar o valor exibido (ex.: inserir um "." de milhar), devolve
@@ -87,12 +87,19 @@ export function FormattedMoneyInput({
     const numero = capturarNumeroPuro(sanitizado);
 
     // Auditoria (2026-09): antes, o valor digitado ficava sem separador de
-    // milhar até o campo perder o foco — para um número grande, o
-    // professor não conseguia ler quantos zeros já tinha digitado. Agora o
-    // "." de milhar aparece a cada tecla, com o cursor reposicionado para
+    // milhar (e sem os centavos) até o campo perder o foco — para um
+    // número grande, era difícil ler quantos zeros já tinha digitado (ex.:
+    // "500" sem indicação nenhuma de que é R$ 500,00 e não R$ 5,00 ou R$
+    // 50.000,00). Agora o valor é formatado como moeda completa (ponto de
+    // milhar + vírgula de centavos) a cada tecla, igual ao que já aparecia
+    // ao sair do campo — só o texto muda, o cursor é reposicionado para
     // continuar exatamente onde o professor estava digitando.
-    const comMilhar = aplicarSeparadorMilharEnquantoDigita(sanitizado);
-    const textoNovo = `R$ ${comMilhar}`;
+    //
+    // Exceção: campo vazio (professor apagou tudo para digitar de novo) fica
+    // só com "R$ " — se forçássemos "R$ 0,00" aqui, o próximo dígito digitado
+    // se juntaria ao "0" já exibido (ex.: digitar "5" viraria "R$ 50,00" em
+    // vez de "R$ 5,00").
+    const textoNovo = sanitizado === '' ? 'R$ ' : formatarNumeroBR(numero, 'moeda');
     setDisplayValue(textoNovo);
 
     // Chama callback com número puro
