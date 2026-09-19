@@ -2533,6 +2533,50 @@ export default function Professor() {
     return { status: "unknown", label: "Estado desconhecido", action: null };
   }, [currentClass, teams, activeRound, rounds, submissionStats, lastCompletedRound]);
 
+  // Item 5 (problema relatado pelo professor, 2026-09): "aviso antes de abrir
+  // a rodada se o professor esquecer de algo" — hoje POST /api/rounds/:classId/start
+  // não checa nada além de "já existe rodada ativa?" e "número máximo de
+  // rodadas atingido?"; dá para iniciar uma rodada com equipes vazias ou com a
+  // configuração de mercado nunca preenchida, e só descobrir depois. Este
+  // useMemo lista os pontos de atenção; o aviso é dispensável (o professor
+  // pode iniciar mesmo assim), nunca bloqueia — pode ser intencional, como
+  // numa turma de teste.
+  const preRoundWarnings = useMemo(() => {
+    if (!currentClass) return [];
+    const warnings: string[] = [];
+
+    const emptyTeams = teams.filter((t: any) => !t.memberIds || t.memberIds.length === 0);
+    if (emptyTeams.length > 0) {
+      const names = emptyTeams.map((t: any) => t.name).join(", ");
+      warnings.push(
+        emptyTeams.length === 1
+          ? `A equipe "${names}" não tem nenhum aluno — ela não vai conseguir enviar decisões nesta rodada.`
+          : `${emptyTeams.length} equipes sem nenhum aluno (${names}) — elas não vão conseguir enviar decisões nesta rodada.`
+      );
+    }
+
+    if (!currentClass.sector || !currentClass.competitionLevel || !currentClass.marketConcentration) {
+      warnings.push("A configuração de mercado da turma (setor, nível de concorrência ou estrutura de mercado) ainda não foi preenchida.");
+    }
+
+    if (!currentClass.defaultBudget || currentClass.defaultBudget <= 0) {
+      warnings.push("O orçamento padrão das equipes está em R$ 0 ou nunca foi definido.");
+    }
+
+    return warnings;
+  }, [currentClass, teams]);
+
+  const [showPreRoundWarnings, setShowPreRoundWarnings] = useState(false);
+
+  const handleStartRoundClick = () => {
+    if (!selectedClass) return;
+    if (preRoundWarnings.length > 0) {
+      setShowPreRoundWarnings(true);
+    } else {
+      startRoundMutation.mutate(selectedClass);
+    }
+  };
+
   // Filtrar equipes por busca
   const filteredTeams = useMemo(() => {
     if (!searchTerm) return teams;
@@ -3057,7 +3101,7 @@ export default function Professor() {
                     <TooltipTrigger asChild>
                       <Button
                         size="sm"
-                        onClick={() => selectedClass && startRoundMutation.mutate(selectedClass)}
+                        onClick={handleStartRoundClick}
                         disabled={startRoundMutation.isPending}
                         data-testid="button-quick-start-round"
                       >
@@ -3258,7 +3302,7 @@ export default function Professor() {
                             <Button
                               size="lg"
                               className="min-w-[200px] h-12 text-base bg-white text-[#2c2a9e] border-transparent hover:bg-white/90"
-                              onClick={() => startRoundMutation.mutate(selectedClass)}
+                              onClick={handleStartRoundClick}
                               disabled={startRoundMutation.isPending}
                               data-testid="button-main-action"
                             >
@@ -3472,7 +3516,7 @@ export default function Professor() {
                       rounds={rounds}
                       activeRound={activeRound}
                       currentClass={currentClass}
-                      onStartRound={() => startRoundMutation.mutate(selectedClass)}
+                      onStartRound={handleStartRoundClick}
                       onEndRound={(roundId) => endRoundMutation.mutate(roundId)}
                       onScheduleRound={handleScheduleRound}
                       onAddRound={() => addRoundMutation.mutate(selectedClass)}
@@ -4404,6 +4448,45 @@ export default function Professor() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Item 5 (problema relatado pelo professor, 2026-09): aviso não-bloqueante
+          antes de iniciar uma rodada, quando algo comum de esquecer não foi
+          configurado. Acionado por handleStartRoundClick, chamado pelos três
+          lugares que iniciam uma rodada (botão de início rápido no cabeçalho,
+          card de ação principal e "Gerenciamento de Rodadas"). */}
+      <AlertDialog open={showPreRoundWarnings} onOpenChange={setShowPreRoundWarnings}>
+        <AlertDialogContent data-testid="dialog-pre-round-warnings">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-[#c88a00]" />
+              Antes de iniciar a rodada
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm text-foreground">
+                <p>Encontrei alguns pontos que podem precisar de atenção antes de começar:</p>
+                <ul className="list-disc pl-5 space-y-1.5">
+                  {preRoundWarnings.map((warning, i) => (
+                    <li key={i}>{warning}</li>
+                  ))}
+                </ul>
+                <p className="text-muted-foreground">Se for intencional (por exemplo, uma turma de teste), pode iniciar mesmo assim.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-start-round-warning">Corrigir agora</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowPreRoundWarnings(false);
+                if (selectedClass) startRoundMutation.mutate(selectedClass);
+              }}
+              data-testid="button-confirm-start-round-anyway"
+            >
+              Iniciar mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* AlertDialogs de confirmação */}
       <AlertDialog open={!!classToDelete} onOpenChange={(open) => !open && setClassToDelete(null)}>
