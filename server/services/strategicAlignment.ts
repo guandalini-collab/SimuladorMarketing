@@ -1,4 +1,5 @@
 import type { SwotAnalysis, PorterAnalysis, BcgAnalysis, PestelAnalysis, MarketingMix } from "@shared/schema";
+import { calculateKPIModifiers } from "@shared/alignmentUtils";
 
 export interface AlignmentScore {
   score: number;
@@ -489,55 +490,11 @@ function calculateOverallScore(
   return Math.round(Math.max(0, Math.min(100, overallScore)));
 }
 
-function calculateKPIModifiers(overallScore: number): {
-  revenueModifier: number;
-  profitModifier: number;
-  marketShareModifier: number;
-} {
-  if (overallScore >= 90) {
-    return {
-      revenueModifier: 0.20,
-      profitModifier: 0.25,
-      marketShareModifier: 0.15,
-    };
-  } else if (overallScore >= 75) {
-    return {
-      revenueModifier: 0.10,
-      profitModifier: 0.15,
-      marketShareModifier: 0.08,
-    };
-  } else if (overallScore >= 60) {
-    return {
-      revenueModifier: 0.03,
-      profitModifier: 0.05,
-      marketShareModifier: 0.02,
-    };
-  } else if (overallScore >= 40) {
-    return {
-      revenueModifier: -0.08,
-      profitModifier: -0.12,
-      marketShareModifier: -0.05,
-    };
-  } else if (overallScore >= 20) {
-    return {
-      revenueModifier: -0.20,
-      profitModifier: -0.30,
-      marketShareModifier: -0.15,
-    };
-  } else if (overallScore > 0) {
-    return {
-      revenueModifier: -0.35,
-      profitModifier: -0.45,
-      marketShareModifier: -0.25,
-    };
-  } else {
-    return {
-      revenueModifier: -0.50,
-      profitModifier: -0.60,
-      marketShareModifier: -0.35,
-    };
-  }
-}
+// Inconsistência de auditoria (2026-09, segunda rodada): esta função vivia só
+// aqui, e o card de alinhamento no frontend (alignment-score-card.tsx)
+// reimplementava as mesmas faixas/percentuais de forma independente e
+// divergente. Movida para shared/alignmentUtils.ts (calculateKPIModifiers)
+// para que os dois lados usem sempre a mesma tabela.
 
 function compilePenalties(
   swot: AlignmentScore,

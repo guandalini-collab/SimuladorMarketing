@@ -7,6 +7,7 @@ import { ensureResultsUniqueIndex } from "./ensureResultsUniqueIndex";
 import { ensureBcgQuadrantPt } from "./ensureBcgQuadrantPt";
 import { ensureGrupoBUniqueIndexes } from "./ensureGrupoBUniqueIndexes";
 import { ensureRoundsUniqueIndex } from "./ensureRoundsUniqueIndex";
+import { ensureRoundsActiveUniqueIndex } from "./ensureRoundsActiveUniqueIndex";
 import { ensureMarketEventTypePt } from "./ensureMarketEventTypePt";
 
 const app = express();
@@ -61,6 +62,7 @@ app.use((req, res, next) => {
   await ensureBcgQuadrantPt();
   await ensureGrupoBUniqueIndexes();
   await ensureRoundsUniqueIndex();
+  await ensureRoundsActiveUniqueIndex();
   await ensureMarketEventTypePt();
 
   const server = await registerRoutes(app);

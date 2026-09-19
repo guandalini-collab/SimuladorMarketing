@@ -4,7 +4,7 @@ import { Target, AlertTriangle, CheckCircle2, AlertCircle, XCircle } from "lucid
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { getAlignmentScoreLevel, getScoreColor } from "@shared/alignmentUtils";
+import { getAlignmentScoreLevel, getScoreColor, calculateKPIModifiers, formatKpiModifierPercent } from "@shared/alignmentUtils";
 
 interface AlignmentScoreCardProps {
   teamId: string;
@@ -56,6 +56,16 @@ export function AlignmentScoreCard({ teamId, roundId }: AlignmentScoreCardProps)
   // Get score level and styling using shared utility
   const scoreLevel = getAlignmentScoreLevel(score);
   const scoreColor = getScoreColor(score);
+
+  // Inconsistência de auditoria (2026-09, segunda rodada): os blocos abaixo
+  // usavam faixas de pontuação e percentuais de bônus/penalidade digitados
+  // à mão aqui, divergentes da tabela real que o servidor aplica ao
+  // resultado (calculateKPIModifiers, em shared/alignmentUtils.ts). Uma
+  // equipe com pontuação 65 chegava a ver "Penalidades aplicadas" quando o
+  // servidor na verdade aplicou um bônus. Agora os dois números vêm da
+  // mesma função usada pelo servidor.
+  const kpiModifiers = calculateKPIModifiers(score);
+  const hasBonus = kpiModifiers.revenueModifier >= 0;
   
   // Map score to icon
   let ScoreIcon = CheckCircle2;
@@ -115,29 +125,10 @@ export function AlignmentScoreCard({ teamId, roundId }: AlignmentScoreCardProps)
 
         {/* Impact Info */}
         {score < 90 && (
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              {score < 30 && (
-                <span>
-                  <strong>Penalidades aplicadas:</strong> Receita -25%, Lucro -35%, Market Share -15%
-                </span>
-              )}
-              {score >= 30 && score < 50 && (
-                <span>
-                  <strong>Penalidades aplicadas:</strong> Receita -15%, Lucro -20%, Market Share -10%
-                </span>
-              )}
-              {score >= 50 && score < 70 && (
-                <span>
-                  <strong>Penalidades aplicadas:</strong> Receita -10%, Lucro -12%, Market Share -5%
-                </span>
-              )}
-              {score >= 70 && score < 90 && (
-                <span>
-                  <strong>Penalidades aplicadas:</strong> Receita -5%, Lucro -7%, Market Share -3%
-                </span>
-              )}
+          <Alert className={hasBonus ? "bg-[#1aa15c]/10 border-[#1aa15c]" : undefined}>
+            <AlertTriangle className={`h-4 w-4 ${hasBonus ? "text-[#1aa15c]" : ""}`} />
+            <AlertDescription className={hasBonus ? "text-[#1aa15c]" : undefined}>
+              <strong>{hasBonus ? "Bônus aplicado" : "Penalidades aplicadas"}:</strong> Receita {formatKpiModifierPercent(kpiModifiers.revenueModifier)}, Lucro {formatKpiModifierPercent(kpiModifiers.profitModifier)}, Market Share {formatKpiModifierPercent(kpiModifiers.marketShareModifier)}
             </AlertDescription>
           </Alert>
         )}
@@ -169,7 +160,7 @@ export function AlignmentScoreCard({ teamId, roundId }: AlignmentScoreCardProps)
           <Alert className="bg-[#1aa15c]/10 border-[#1aa15c]">
             <CheckCircle2 className="h-4 w-4 text-[#1aa15c]" />
             <AlertDescription className="text-[#1aa15c]">
-              <strong>Bônus aplicado:</strong> Receita +15%, Lucro +20%, Market Share +10%
+              <strong>Bônus aplicado:</strong> Receita {formatKpiModifierPercent(kpiModifiers.revenueModifier)}, Lucro {formatKpiModifierPercent(kpiModifiers.profitModifier)}, Market Share {formatKpiModifierPercent(kpiModifiers.marketShareModifier)}
             </AlertDescription>
           </Alert>
         )}

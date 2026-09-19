@@ -34,13 +34,10 @@ export default function ForgotPassword() {
     setIsLoading(true);
 
     try {
+      // Auditoria (2026-09, segunda rodada): apiRequest já lança (com a
+      // mensagem de erro amigável do servidor) quando a resposta não é
+      // "ok" — o bloco `if (!res.ok)` abaixo nunca era alcançado.
       const res = await apiRequest("POST", "/api/auth/forgot-password", { email });
-      
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Erro ao processar solicitação");
-      }
-
       const data = await res.json();
       setEmailSent(true);
       toast({
@@ -82,18 +79,14 @@ export default function ForgotPassword() {
     setIsRecovering(true);
 
     try {
-      const res = await apiRequest("POST", "/api/auth/recover-with-code", { 
+      // Auditoria (2026-09, segunda rodada): idem — apiRequest já lança em
+      // caso de erro, então `if (!res.ok)` aqui embaixo era código morto.
+      const res = await apiRequest("POST", "/api/auth/recover-with-code", {
         email: codeEmail,
         recoveryCode,
         newPassword
       });
-      
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.error || "Erro ao recuperar senha");
-      }
-
+      await res.json();
       setRecoverySuccess(true);
       toast({
         title: "Senha Redefinida!",

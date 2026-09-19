@@ -485,24 +485,22 @@ export class PgStorage implements IStorage {
   }
 
   async removeMemberFromTeam(teamId: string, userId: string): Promise<Team | undefined> {
-    const team = await this.getTeam(teamId);
-    if (!team) return undefined;
-    
-    const updatedMemberIds = team.memberIds.filter(id => id !== userId);
-    let updatedLeaderId = team.leaderId;
-    
-    if (team.leaderId === userId && updatedMemberIds.length > 0) {
-      updatedLeaderId = updatedMemberIds[0];
-    }
-    
-    if (updatedMemberIds.length === 0) {
-      updatedLeaderId = null as any;
-    }
-    
+    // Inconsistência de auditoria (2026-09, segunda rodada): esta função
+    // tinha o mesmo padrão de read-modify-write que addMemberToTeam (logo
+    // acima) teve corrigido no Grupo B — lia team.memberIds, calculava o
+    // array em memória, depois gravava incondicionalmente. Duas remoções
+    // quase simultâneas na MESMA equipe (ou uma remoção concorrendo com um
+    // aluno entrando via addMemberToTeam) liam o mesmo memberIds original;
+    // a gravação que terminasse por último sobrescrevia a outra —
+    // desfazendo silenciosamente a primeira remoção (ou a entrada),
+    // sem erro para nenhum dos lados. Corrigido com um UPDATE atômico
+    // direto no banco: array_remove recalcula sobre o valor já commitado
+    // por uma transação concorrente, e o CASE do leaderId é resolvido no
+    // mesmo UPDATE, sobre o mesmo snapshot da linha.
     const result = await db.update(teams)
-      .set({ 
-        memberIds: updatedMemberIds, 
-        leaderId: updatedLeaderId 
+      .set({
+        memberIds: sql`array_remove(${teams.memberIds}, ${userId})`,
+        leaderId: sql`CASE WHEN ${teams.leaderId} = ${userId} THEN (array_remove(${teams.memberIds}, ${userId}))[1] ELSE ${teams.leaderId} END`,
       })
       .where(eq(teams.id, teamId))
       .returning();
@@ -805,6 +803,30 @@ export class PgStorage implements IStorage {
     const result = await db.update(marketingMix)
       .set(data)
       .where(eq(marketingMix.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Auditoria (2026-09, segunda rodada): as rotas de submissão final de
+  // marketing mix (POST /api/marketing-mix/submit e as duas rotas
+  // irmãs/legadas) liam a rodada ativa (getCurrentRound), faziam validações
+  // (orçamento, ferramentas estratégicas obrigatórias) e só then gravavam
+  // submittedAt — sem checar de novo, no momento da gravação, se a rodada
+  // ainda estava ativa. Se o professor encerrasse a rodada (manualmente ou
+  // via roundScheduler) durante essa janela, a submissão da equipe era
+  // marcada como enviada DEPOIS que os resultados/feedback da rodada já
+  // tinham sido calculados (sem considerar essa decisão), deixando o time
+  // com um submittedAt enganoso. Este método condiciona a gravação, num
+  // único UPDATE atômico, a que a rodada informada ainda esteja "active"
+  // no momento exato da escrita — se não estiver, retorna undefined e a
+  // rota trata isso como "rodada não está mais ativa".
+  async finalizeMarketingMixSubmission(id: string, roundId: string, data: Partial<MarketingMix>): Promise<MarketingMix | undefined> {
+    const result = await db.update(marketingMix)
+      .set(data)
+      .where(and(
+        eq(marketingMix.id, id),
+        sql`EXISTS (SELECT 1 FROM ${rounds} WHERE ${rounds.id} = ${roundId} AND ${rounds.status} = 'active')`
+      ))
       .returning();
     return result[0];
   }

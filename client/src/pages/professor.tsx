@@ -2937,11 +2937,10 @@ export default function Professor() {
 
   const resetTeamDecisionsMutation = useMutation({
     mutationFn: async ({ teamId, roundId }: { teamId: string; roundId: string }) => {
+      // Auditoria (2026-09, segunda rodada): apiRequest já lança (com a
+      // mensagem de erro amigável do servidor) quando a resposta não é
+      // "ok" — o bloco `if (!response.ok)` abaixo nunca era alcançado.
       const response = await apiRequest("DELETE", `/api/team-decisions/${teamId}/${roundId}`);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Erro ao resetar decisões");
-      }
       return response.json();
     },
     onSuccess: (data) => {

@@ -549,7 +549,7 @@ export default function AdminPage() {
   const [userToDelete, setUserToDelete] = useState<{ id: string; name: string; email: string } | null>(null);
   const [tempPasswordDialog, setTempPasswordDialog] = useState<{ open: boolean; userId: string; userName: string; password: string } | null>(null);
   const [copied, setCopied] = useState(false);
-  const [teamToReset, setTeamToReset] = useState<{ id: string; name: string; roundId: string } | null>(null);
+  const [teamToReset, setTeamToReset] = useState<{ id: string; name: string; roundId: string; roundStatus?: string } | null>(null);
   
   const [userSearch, setUserSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -645,13 +645,15 @@ export default function AdminPage() {
 
   const generateTempPasswordMutation = useMutation({
     mutationFn: async (userId: string) => {
+      // Auditoria (2026-09, segunda rodada): apiRequest já lança (com a
+      // mensagem de erro amigável do servidor, ex.: "Você não tem permissão
+      // para gerar senha para este aluno") quando a resposta não é "ok" —
+      // o `if (!response.ok)` abaixo nunca era alcançado, e mascarava esse
+      // erro específico com um texto genérico.
       const response = await apiRequest(
         "POST",
         `/api/users/${userId}/generate-temporary-password`
       );
-      if (!response.ok) {
-        throw new Error("Erro ao gerar senha temporária");
-      }
       const data = await response.json();
       return data as { temporaryPassword: string };
     },
@@ -688,11 +690,13 @@ export default function AdminPage() {
 
   const resetTeamDecisionsMutation = useMutation({
     mutationFn: async ({ teamId, roundId }: { teamId: string; roundId: string }) => {
+      // Auditoria (2026-09, segunda rodada): o "if (!response.ok)" abaixo
+      // nunca executava — apiRequest() já lança uma exceção assim que a
+      // resposta não é "ok" (ver client/src/lib/queryClient.ts), então esse
+      // branch era código morto e o erro real acabava mostrado sem
+      // formatação (ex.: "400: {\"error\":\"...\"}"), em vez da mensagem
+      // amigável do servidor.
       const response = await apiRequest("DELETE", `/api/team-decisions/${teamId}/${roundId}`);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Erro ao resetar decisões");
-      }
       return response.json();
     },
     onSuccess: (data) => {
@@ -714,8 +718,9 @@ export default function AdminPage() {
 
   const handleResetTeam = (teamId: string, roundId: string) => {
     const team = teams?.find(t => t.id === teamId);
+    const round = rounds?.find(r => r.id === roundId);
     if (team) {
-      setTeamToReset({ id: teamId, name: team.name, roundId });
+      setTeamToReset({ id: teamId, name: team.name, roundId, roundStatus: round?.status });
     }
   };
 
@@ -1238,15 +1243,29 @@ export default function AdminPage() {
                 </p>
               </div>
               <p className="text-sm"><strong>O que será deletado:</strong></p>
+              {/* Auditoria (2026-09, segunda rodada): este diálogo é uma
+                  segunda tela independente para o mesmo recurso já corrigido
+                  em professor.tsx (item 5 da primeira rodada desta
+                  auditoria) — chama o mesmo endpoint DELETE
+                  /api/team-decisions/:teamId/:roundId, mas tinha ficado com
+                  o texto antigo, sem mencionar que resultados e feedback já
+                  calculados também são apagados, nem avisar sobre rodada
+                  concluída. */}
               <ul className="text-sm list-disc list-inside space-y-1">
                 <li>Análises Estratégicas (SWOT, Porter, BCG, PESTEL)</li>
                 <li>Recomendações Estratégicas (geradas por IA)</li>
                 <li>Mix de Marketing (todos os 4 produtos)</li>
                 <li>Configuração de Produtos e Público-Alvo</li>
+                <li>Resultados e feedback já calculados para esta equipe nesta rodada</li>
               </ul>
               <p className="text-sm text-destructive font-medium">
                 Esta ação NÃO pode ser desfeita! A equipe voltará ao estado inicial da rodada.
               </p>
+              {teamToReset?.roundStatus === "completed" && (
+                <p className="text-sm font-semibold text-destructive">
+                  Atenção: esta rodada já está concluída. Resultados, ranking e feedback já gerados para esta equipe nesta rodada serão apagados junto com as decisões.
+                </p>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

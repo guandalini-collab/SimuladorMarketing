@@ -1532,10 +1532,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
     }
-    
+
     const user = await storage.getUser(req.session.userId);
     if (!user) {
       return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+
+    // Auditoria (2026-09, segunda rodada): antes, qualquer usuário
+    // autenticado podia registrar um log de acesso para QUALQUER turma, só
+    // sabendo o classId — um aluno (ou professor) de outra turma podia
+    // poluir o relatório de auditoria de acessos de um professor (GET
+    // .../round-access-logs, que É corretamente restrito por posse) com
+    // entradas falsas. Agora exige a mesma relação de posse usada nas
+    // rotas irmãs (Grupo C): professor dono da turma, ou aluno pertencente
+    // a ela.
+    const classData = await storage.getClass(req.params.classId);
+    if (!classData) {
+      return res.status(404).json({ error: "Turma não encontrada" });
+    }
+    if (user.role === "professor") {
+      if (classData.professorId !== user.id) {
+        return res.status(403).json({ error: "Você não tem permissão para registrar acesso nesta turma" });
+      }
+    } else {
+      const studentClass = await storage.getClassByStudent(req.session.userId);
+      if (!studentClass || studentClass.id !== req.params.classId) {
+        return res.status(403).json({ error: "Você não faz parte desta turma" });
+      }
     }
 
     const { roundId, action } = req.body;
@@ -1856,13 +1879,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/classes/available", async (req, res) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ error: "Não autenticado" });
-    }
-    const allClasses = await storage.getAllClasses();
-    res.json(allClasses);
-  });
+  // Auditoria (2026-09, segunda rodada): GET /api/classes/available foi
+  // removida — retornava TODAS as turmas de TODOS os professores para
+  // qualquer usuário autenticado (inclusive alunos), sem nenhuma checagem
+  // de posse. Não há nenhuma chamada a ela em client/src (busca no
+  // repositório inteiro não encontrou nenhum uso), então era código morto
+  // que só expunha dados de outras turmas sem necessidade.
 
   app.get("/api/teams/class/:classId", async (req, res) => {
     if (!req.session.userId) {
@@ -2972,11 +2994,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Adiciona submittedAt para bloquear edições futuras
-      const result = await storage.updateMarketingMix(existing.id, {
+      // Auditoria (2026-09, segunda rodada): entre a leitura da rodada ativa
+      // (no início desta rota) e esta gravação, o professor pode ter
+      // encerrado a rodada (manualmente ou via roundScheduler) — sem essa
+      // checagem, a decisão seria marcada como submetida DEPOIS de os
+      // resultados da rodada já terem sido calculados sem ela. Ver
+      // storage.finalizeMarketingMixSubmission.
+      const result = await storage.finalizeMarketingMixSubmission(existing.id, activeRound.id, {
         estimatedCost: Math.round(estimatedCost * 100) / 100,
         submittedAt: new Date(),
       });
+
+      if (!result) {
+        return res.status(400).json({
+          error: "Rodada não está mais ativa",
+          details: "A rodada foi encerrada antes que sua submissão fosse concluída. Verifique com o professor se uma nova rodada já está disponível."
+        });
+      }
 
       await storage.logRoundAccess(activeRound.id, team.classId, req.session.userId, "equipe", "round_submitted");
 
@@ -3039,11 +3073,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let result;
       if (existing) {
-        result = await storage.updateMarketingMix(existing.id, {
+        // Auditoria (2026-09, segunda rodada): mesma corrida de
+        // "rodada podia ter sido encerrada entre a leitura acima e esta
+        // gravação" da rota principal (POST /api/marketing-mix/submit) —
+        // ver storage.finalizeMarketingMixSubmission.
+        result = await storage.finalizeMarketingMixSubmission(existing.id, activeRound.id, {
           ...data,
           estimatedCost: Math.round(estimatedCost * 100) / 100,
           submittedAt: new Date(),
         } as any);
+        if (!result) {
+          return res.status(400).json({ error: "Rodada não está mais ativa" });
+        }
       } else {
         result = await storage.createMarketingMix({
           ...data,
@@ -4675,10 +4716,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
     }
-    
+
     const user = await storage.getUser(req.session.userId);
     if (!user || user.role !== "professor") {
       return res.status(403).json({ error: "Acesso negado - apenas professores" });
+    }
+
+    // Auditoria (2026-09, segunda rodada): usuários pendentes ainda não têm
+    // turma (o cadastro não coleta classId), então não há como restringir
+    // por "turma deste professor" como é feito em outras rotas. Como hoje
+    // não existe papel "admin" separado, e o e-mail de aviso de novo
+    // pendente (sendProfessorNewPendingUserEmail) já só é enviado à mesma
+    // lista de operadores autorizados, usamos essa mesma lista aqui: só o
+    // operador do sistema aprova/rejeita/lista cadastros pendentes.
+    if (!authorizedProfessorEmails.has(user.email.trim().toLowerCase())) {
+      return res.status(403).json({ error: "Apenas o administrador do sistema pode ver cadastros pendentes" });
     }
 
     const pendingUsers = await storage.getPendingUsers();
@@ -4689,10 +4741,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
     }
-    
+
     const user = await storage.getUser(req.session.userId);
     if (!user || user.role !== "professor") {
       return res.status(403).json({ error: "Acesso negado - apenas professores" });
+    }
+
+    // Auditoria (2026-09, segunda rodada): ver comentário em GET /api/users/pending.
+    if (!authorizedProfessorEmails.has(user.email.trim().toLowerCase())) {
+      return res.status(403).json({ error: "Apenas o administrador do sistema pode aprovar cadastros pendentes" });
     }
 
     const targetUser = await storage.getUser(req.params.userId);
@@ -4714,10 +4771,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
     }
-    
+
     const user = await storage.getUser(req.session.userId);
     if (!user || user.role !== "professor") {
       return res.status(403).json({ error: "Acesso negado - apenas professores" });
+    }
+
+    // Auditoria (2026-09, segunda rodada): ver comentário em GET /api/users/pending.
+    if (!authorizedProfessorEmails.has(user.email.trim().toLowerCase())) {
+      return res.status(403).json({ error: "Apenas o administrador do sistema pode rejeitar cadastros pendentes" });
     }
 
     const targetUser = await storage.getUser(req.params.userId);
@@ -5535,11 +5597,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let result;
       if (existing) {
-        result = await storage.updateMarketingMix(existing.id, {
-          ...data,
-          estimatedCost: Math.round(estimatedCost * 100) / 100,
-          submittedAt: isDraft === false ? new Date() : undefined,
-        } as any);
+        if (isDraft === false) {
+          // Auditoria (2026-09, segunda rodada): entre a checagem
+          // "round.status !== active" no início desta rota e esta
+          // gravação, o professor pode ter encerrado a rodada — ver
+          // storage.finalizeMarketingMixSubmission (mesma corrida da rota
+          // POST /api/marketing-mix/submit).
+          result = await storage.finalizeMarketingMixSubmission(existing.id, roundId, {
+            ...data,
+            estimatedCost: Math.round(estimatedCost * 100) / 100,
+            submittedAt: new Date(),
+          } as any);
+          if (!result) {
+            return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
+          }
+        } else {
+          result = await storage.updateMarketingMix(existing.id, {
+            ...data,
+            estimatedCost: Math.round(estimatedCost * 100) / 100,
+            submittedAt: undefined,
+          } as any);
+        }
       } else {
         result = await storage.createMarketingMix({
           ...data,

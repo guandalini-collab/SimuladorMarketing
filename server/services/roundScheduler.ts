@@ -49,38 +49,57 @@ export class RoundScheduler {
         // mesmo tempo, quebrando getCurrentRound() (SELECT ... LIMIT 1,
         // resultado arbitrário) e qualquer tela que assume no máximo uma
         // rodada ativa por turma.
-        const currentActive = await this.storage.getCurrentRound(round.classId);
-        if (currentActive && currentActive.id !== round.id) {
-          console.warn(`[ROUND_SCHEDULER] Rodada ${round.id} (Round ${round.roundNumber}) não ativada: turma ${round.classId} já tem a rodada ${currentActive.id} ativa`);
-          continue;
-        }
-
-        console.log(`[ROUND_SCHEDULER] Ativando rodada ${round.id} (Round ${round.roundNumber})`);
-
-        await this.storage.updateRound(round.id, {
-          status: "active",
-          startedAt: new Date(),
-        });
-
-        const classData = await this.storage.getClass(round.classId);
-        if (classData && classData.currentRound < round.roundNumber) {
-          await this.storage.updateClass(round.classId, {
-            currentRound: round.roundNumber,
-          });
-        }
-
-        console.log(`[ROUND_SCHEDULER] Rodada ${round.id} ativada com sucesso`);
-
-        if (round.roundNumber <= 3) {
-          console.log(`[ROUND_SCHEDULER] Gerando análises estratégicas automáticas para rodada ${round.roundNumber}...`);
-          try {
-            const result = await autoGenerateMinimalAnalysesForAllTeams(this.storage, round.id);
-            console.log(`[ROUND_SCHEDULER] Análises geradas: ${result.successCount}/${result.totalTeams} equipes`);
-          } catch (error) {
-            console.error(`[ROUND_SCHEDULER] Erro ao gerar análises automáticas para rodada ${round.id}:`, error);
+        //
+        // Auditoria (2026-09, segunda rodada): essa checagem "ler depois
+        // gravar" continua não sendo atômica — o professor pode iniciar uma
+        // rodada manualmente (POST /api/rounds/:classId/start) no exato
+        // instante entre a leitura acima e o updateRound abaixo. Por isso
+        // todo o corpo do loop agora fica em try/catch: o índice único
+        // parcial "rounds_unique_active_per_class" (ver
+        // ensureRoundsActiveUniqueIndex.ts) garante a atomicidade real a
+        // nível de banco, e aqui só tratamos o conflito (23505) resultante
+        // como um aviso — sem derrubar o processamento das demais rodadas
+        // agendadas nesta mesma execução do scheduler.
+        try {
+          const currentActive = await this.storage.getCurrentRound(round.classId);
+          if (currentActive && currentActive.id !== round.id) {
+            console.warn(`[ROUND_SCHEDULER] Rodada ${round.id} (Round ${round.roundNumber}) não ativada: turma ${round.classId} já tem a rodada ${currentActive.id} ativa`);
+            continue;
           }
-        } else {
-          console.log(`[ROUND_SCHEDULER] Rodada ${round.roundNumber}: sem geração automática (rodada ≥ 4)`);
+
+          console.log(`[ROUND_SCHEDULER] Ativando rodada ${round.id} (Round ${round.roundNumber})`);
+
+          await this.storage.updateRound(round.id, {
+            status: "active",
+            startedAt: new Date(),
+          });
+
+          const classData = await this.storage.getClass(round.classId);
+          if (classData && classData.currentRound < round.roundNumber) {
+            await this.storage.updateClass(round.classId, {
+              currentRound: round.roundNumber,
+            });
+          }
+
+          console.log(`[ROUND_SCHEDULER] Rodada ${round.id} ativada com sucesso`);
+
+          if (round.roundNumber <= 3) {
+            console.log(`[ROUND_SCHEDULER] Gerando análises estratégicas automáticas para rodada ${round.roundNumber}...`);
+            try {
+              const result = await autoGenerateMinimalAnalysesForAllTeams(this.storage, round.id);
+              console.log(`[ROUND_SCHEDULER] Análises geradas: ${result.successCount}/${result.totalTeams} equipes`);
+            } catch (error) {
+              console.error(`[ROUND_SCHEDULER] Erro ao gerar análises automáticas para rodada ${round.id}:`, error);
+            }
+          } else {
+            console.log(`[ROUND_SCHEDULER] Rodada ${round.roundNumber}: sem geração automática (rodada ≥ 4)`);
+          }
+        } catch (error: any) {
+          if (error?.code === "23505") {
+            console.warn(`[ROUND_SCHEDULER] Rodada ${round.id} (Round ${round.roundNumber}) não ativada: outra rodada da turma ${round.classId} foi ativada concorrentemente (conflito de índice único)`);
+          } else {
+            console.error(`[ROUND_SCHEDULER] Erro ao ativar rodada ${round.id}:`, error);
+          }
         }
       }
     } catch (error) {

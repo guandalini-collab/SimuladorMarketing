@@ -89,6 +89,20 @@ export const rounds = pgTable("rounds", {
   // em vez de uma duplicata silenciosa — tratado como upsert-safe em
   // storage.createRound (pg-storage.ts).
   uniqueTeamRound: uniqueIndex("rounds_unique_class_round_number").on(table.classId, table.roundNumber),
+  // Auditoria (2026-09, segunda rodada): a checagem "getCurrentRound
+  // antes de ativar" em roundScheduler.processScheduledStarts (e a mesma
+  // checagem nas rotas manuais de início de rodada, acima) não é atômica —
+  // o scheduler automático podia ativar uma rodada agendada no mesmo
+  // instante em que o professor iniciava outra rodada manualmente para a
+  // mesma turma, e como são round_number diferentes o índice único acima
+  // não pega esse caso. Este índice parcial garante, a nível de banco, no
+  // máximo uma rodada com status "active" por turma; a segunda gravação
+  // vira um conflito (23505), tratado tanto nas rotas manuais (catch já
+  // existente) quanto no scheduler (ver ensureRoundsActiveUniqueIndex.ts
+  // e roundScheduler.ts).
+  uniqueActiveRoundPerClass: uniqueIndex("rounds_unique_active_per_class")
+    .on(table.classId)
+    .where(sql`status = 'active'`),
 }));
 
 export const campaigns = pgTable("campaigns", {

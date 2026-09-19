@@ -59,15 +59,13 @@ export default function ResetPassword() {
     setIsLoading(true);
 
     try {
-      const res = await apiRequest("POST", "/api/auth/reset-password", {
+      // Auditoria (2026-09, segunda rodada): apiRequest já lança (com a
+      // mensagem de erro amigável do servidor) quando a resposta não é
+      // "ok" — o bloco `if (!res.ok)` abaixo nunca era alcançado.
+      await apiRequest("POST", "/api/auth/reset-password", {
         token,
         newPassword,
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Erro ao redefinir senha");
-      }
 
       setResetSuccess(true);
       toast({

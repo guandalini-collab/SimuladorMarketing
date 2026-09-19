@@ -19,8 +19,9 @@ export default function Perfil() {
   const { data: user } = useQuery({
     queryKey: ["user"],
     queryFn: async () => {
+      // Auditoria (2026-09, segunda rodada): apiRequest já lança em caso de
+      // erro, então `if (!res.ok)` aqui era código morto.
       const res = await apiRequest("GET", "/api/auth/me");
-      if (!res.ok) throw new Error("Falha ao carregar usuário");
       return res.json();
     },
   });
@@ -49,15 +50,12 @@ export default function Perfil() {
     setIsChangingPassword(true);
 
     try {
-      const res = await apiRequest("POST", "/api/auth/change-password", {
+      // Auditoria (2026-09, segunda rodada): idem — apiRequest já lança em
+      // caso de erro, então `if (!res.ok)` aqui embaixo era código morto.
+      await apiRequest("POST", "/api/auth/change-password", {
         currentPassword,
         newPassword,
       });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Erro ao alterar senha");
-      }
 
       toast({
         title: "Senha alterada!",

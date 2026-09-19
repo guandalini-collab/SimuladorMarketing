@@ -121,6 +121,10 @@ export interface IStorage {
   getMarketingMixesByClass(classId: string): Promise<MarketingMix[]>;
   createMarketingMix(mix: InsertMarketingMix): Promise<MarketingMix>;
   updateMarketingMix(id: string, data: Partial<MarketingMix>): Promise<MarketingMix | undefined>;
+  // Auditoria (2026-09, segunda rodada): ver comentário em pg-storage.ts —
+  // grava submittedAt de forma condicionada, num único passo atômico, a
+  // que a rodada informada ainda esteja "active".
+  finalizeMarketingMixSubmission(id: string, roundId: string, data: Partial<MarketingMix>): Promise<MarketingMix | undefined>;
   getAllMarketingMixes(): Promise<MarketingMix[]>;
   
   getMarketEvent(id: string): Promise<MarketEvent | undefined>;
@@ -859,6 +863,16 @@ export class MemStorage implements IStorage {
   async updateMarketingMix(id: string, data: Partial<MarketingMix>): Promise<MarketingMix | undefined> {
     const existing = this.marketingMixes.get(id);
     if (!existing) return undefined;
+    const updated = { ...existing, ...data };
+    this.marketingMixes.set(id, updated);
+    return updated;
+  }
+
+  async finalizeMarketingMixSubmission(id: string, roundId: string, data: Partial<MarketingMix>): Promise<MarketingMix | undefined> {
+    const existing = this.marketingMixes.get(id);
+    if (!existing) return undefined;
+    const round = this.rounds.get(roundId);
+    if (!round || round.status !== "active") return undefined;
     const updated = { ...existing, ...data };
     this.marketingMixes.set(id, updated);
     return updated;

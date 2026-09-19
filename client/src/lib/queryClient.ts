@@ -2,8 +2,28 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    const text = await res.text();
+    // Auditoria (2026-09, segunda rodada): antes, esta função sempre
+    // lançava a string crua `${status}: ${text}` — e como quase toda tela
+    // do app captura esse erro só com `error.message` (em onError de
+    // useMutation), o usuário via mensagens tipo `400: {"error":"Email já
+    // cadastrado"}` em vez de "Email já cadastrado". A maioria das rotas do
+    // servidor responde erro como JSON `{ error: "..." }`; quando é esse o
+    // caso, usa a mensagem amigável ali dentro. Quando o corpo não é JSON
+    // (ou não tem campo "error"), mantém o texto cru como antes, para não
+    // esconder informação de um erro inesperado.
+    let message = text || res.statusText;
+    if (text) {
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed && typeof parsed.error === "string" && parsed.error) {
+          message = parsed.error;
+        }
+      } catch {
+        // corpo não era JSON — mantém o texto bruto em message
+      }
+    }
+    throw new Error(message);
   }
 }
 

@@ -17,7 +17,7 @@ interface PendingUser {
 export default function Aprovacoes() {
   const { toast } = useToast();
 
-  const { data: pendingUsers, isLoading } = useQuery<PendingUser[]>({
+  const { data: pendingUsers, isLoading, error } = useQuery<PendingUser[]>({
     queryKey: ["/api/users/pending"],
   });
 
@@ -103,7 +103,20 @@ export default function Aprovacoes() {
       </div>
 
       <div className="container mx-auto p-6 space-y-6">
-      {!pendingUsers || pendingUsers.length === 0 ? (
+      {error ? (
+        // Auditoria (2026-09, segunda rodada): antes, um professor sem
+        // permissão para esta tela via a rota /api/users/pending retornar
+        // 403 e a página simplesmente mostrava "Não há usuários aguardando
+        // aprovação", como se a lista estivesse vazia — uma mensagem
+        // enganosa. Agora o erro (ex.: "Apenas o administrador do sistema
+        // pode ver cadastros pendentes") é exibido de forma explícita.
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error instanceof Error ? error.message : "Não foi possível carregar os cadastros pendentes."}
+          </AlertDescription>
+        </Alert>
+      ) : !pendingUsers || pendingUsers.length === 0 ? (
         <Alert>
           <UserCheck className="h-4 w-4" />
           <AlertDescription>
