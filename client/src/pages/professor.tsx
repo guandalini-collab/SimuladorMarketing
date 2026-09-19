@@ -2475,7 +2475,7 @@ export default function Professor() {
       return { 
         status: "no_teams", 
         label: "Turma sem equipes", 
-        action: { label: "Criar Equipes", tab: "acompanhar" }
+        action: { label: "Criar Equipes", tab: "equipes" }
       };
     }
     
@@ -2515,7 +2515,10 @@ export default function Professor() {
       return { 
         status: "round_active", 
         label: `Rodada ${activeRound.roundNumber} em andamento`, 
-        action: { label: "Acompanhar Submissões", tab: "acompanhar" }
+        // Item 2 (2026-09): o acompanhamento de submissões foi para a aba
+        // "Aula" (operação do dia a dia da rodada), junto com o resto do
+        // controle de rodada — antes ficava em "Acompanhar" (agora "Equipes").
+        action: { label: "Acompanhar Submissões", tab: "aula" }
       };
     }
     
@@ -2946,11 +2949,18 @@ export default function Professor() {
               <p className="hidden sm:block text-sm text-white/80">Painel do Professor</p>
             </div>
             <div className="flex items-center gap-2">
+              {/* Item 2 (problemas relatados pelo professor, 2026-09): estes 3
+                  botões eram ícones puros, só identificáveis passando o mouse
+                  — uma das causas do "não consigo achar o que preciso". Agora
+                  têm texto visível a partir de telas pequenas/médias (sm:),
+                  com o ícone sozinho só no mobile mais estreito, e o tooltip
+                  continua como reforço. */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link href="/aprovacoes">
-                    <Button variant="ghost" size="icon" data-testid="button-aprovacoes">
+                    <Button variant="ghost" size="sm" className="gap-1.5 text-white/90 hover:text-white hover:bg-white/10" data-testid="button-aprovacoes">
                       <CheckCircle2 className="h-4 w-4" />
+                      <span className="hidden sm:inline">Aprovações</span>
                     </Button>
                   </Link>
                 </TooltipTrigger>
@@ -2959,8 +2969,9 @@ export default function Professor() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link href="/admin">
-                    <Button variant="ghost" size="icon" data-testid="button-admin">
+                    <Button variant="ghost" size="sm" className="gap-1.5 text-white/90 hover:text-white hover:bg-white/10" data-testid="button-admin">
                       <Database className="h-4 w-4" />
+                      <span className="hidden sm:inline">Admin</span>
                     </Button>
                   </Link>
                 </TooltipTrigger>
@@ -2968,8 +2979,9 @@ export default function Professor() {
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={() => window.open('/api/manual/professor/pdf', '_blank')} data-testid="button-manual-professor">
+                  <Button variant="ghost" size="sm" className="gap-1.5 text-white/90 hover:text-white hover:bg-white/10" onClick={() => window.open('/api/manual/professor/pdf', '_blank')} data-testid="button-manual-professor">
                     <BookOpen className="h-4 w-4" />
+                    <span className="hidden sm:inline">Manual</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Manual do Professor</TooltipContent>
@@ -3064,23 +3076,20 @@ export default function Professor() {
                     Encerrar
                   </Button>
                 )}
+                {/* Item 2: "Configurar Mercado" saiu daqui — é uma ação rara
+                    (não do dia a dia), então passou a viver só dentro da aba
+                    "Configurar", junto com o resto do que se mexe pouco. */}
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" onClick={() => setIsMarketDialogOpen(true)} data-testid="button-configure-market">
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Configurar Mercado</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
                       onClick={() => setLocation(`/professor/analytics/${selectedClass}`)}
                       data-testid="button-quick-analytics"
                     >
                       <BarChart3 className="h-4 w-4" />
+                      <span className="hidden sm:inline">Analytics</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Analytics da Turma</TooltipContent>
@@ -3192,18 +3201,16 @@ export default function Professor() {
                       </div>
                     )}
 
-                    {/* Item 4 (problemas relatados pelo professor, 2026-09): o
-                        agendamento de abertura/encerramento automático (por
-                        rodada) já existia, mas ficava escondido na aba
-                        "Configurar" > "Gerenciamento de Rodadas" — longe da
-                        aba "Aula", que é onde o professor de fato controla o
-                        dia a dia. Este atalho torna a funcionalidade visível
-                        no lugar onde ele primeiro procuraria por ela. */}
+                    {/* Item 4 (2026-09): agendamento de abertura/encerramento
+                        automático de rodada — este atalho pula direto para o
+                        "Gerenciamento de Rodadas" na aba "Aula" (item 2,
+                        2026-09, moveu esse gerenciamento para lá), útil
+                        quando o professor está vendo outra aba no momento. */}
                     <Button
                       variant="ghost"
                       size="sm"
                       className="text-white/80 hover:text-white hover:bg-white/10 h-auto py-1 px-2 -ml-2 self-start"
-                      onClick={() => setActiveTab("configurar")}
+                      onClick={() => setActiveTab("aula")}
                       data-testid="button-goto-schedule-round"
                     >
                       <Clock className="h-3.5 w-3.5 mr-1.5" />
@@ -3281,7 +3288,8 @@ export default function Professor() {
                             onClick={() => setActiveTab(classState.action!.tab!)}
                             data-testid="button-main-action"
                           >
-                            {classState.action.tab === "acompanhar" && <Users className="h-5 w-5 mr-2" />}
+                            {classState.action.tab === "equipes" && <Users className="h-5 w-5 mr-2" />}
+                            {classState.action.tab === "aula" && <CircleDot className="h-5 w-5 mr-2" />}
                             {classState.action.tab === "analisar" && <BarChart3 className="h-5 w-5 mr-2" />}
                             {classState.action.label}
                           </Button>
@@ -3306,17 +3314,19 @@ export default function Professor() {
                 >
                   <LayoutDashboard className="h-4 w-4" />
                   Aula
-                </TabsTrigger>
-                <TabsTrigger
-                  value="acompanhar"
-                  className="gap-2 justify-start rounded-full border border-white/20 px-4 py-2.5 text-sm font-semibold text-white/75 hover:text-white data-[state=active]:border-transparent data-[state=active]:bg-white data-[state=active]:text-[#2f2a8f] data-[state=active]:shadow-md"
-                  data-testid="tab-acompanhar"
-                >
-                  <Users className="h-4 w-4" />
-                  Acompanhar
+                  {/* Item 2 (2026-09): o alerta de equipes pendentes segue o
+                      acompanhamento de submissões, que agora mora aqui. */}
                   {activeRound && submissionStats.pending.length > 0 && (
                     <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-xs">{submissionStats.pending.length}</Badge>
                   )}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="equipes"
+                  className="gap-2 justify-start rounded-full border border-white/20 px-4 py-2.5 text-sm font-semibold text-white/75 hover:text-white data-[state=active]:border-transparent data-[state=active]:bg-white data-[state=active]:text-[#2f2a8f] data-[state=active]:shadow-md"
+                  data-testid="tab-equipes"
+                >
+                  <Users className="h-4 w-4" />
+                  Equipes
                 </TabsTrigger>
                 <TabsTrigger
                   value="analisar"
@@ -3404,6 +3414,78 @@ export default function Professor() {
                     </Tooltip>
                   </div>
 
+                  {/* Item 2 (2026-09): Gerenciamento de Rodadas (com o
+                      agendamento de abertura/encerramento) veio de dentro de
+                      "Configurar", onde ficava sem relação com o resto —
+                      controlar rodadas é a operação mais frequente da aba
+                      "Aula", então mora aqui agora. */}
+                  <div className="space-y-4">
+                    <h3 className="text-base font-medium flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Gerenciamento de Rodadas
+                    </h3>
+                    <RoundsTimeline
+                      rounds={rounds}
+                      activeRound={activeRound}
+                      currentClass={currentClass}
+                      onStartRound={() => startRoundMutation.mutate(selectedClass)}
+                      onEndRound={(roundId) => endRoundMutation.mutate(roundId)}
+                      onScheduleRound={handleScheduleRound}
+                      onAddRound={() => addRoundMutation.mutate(selectedClass)}
+                      onRemoveRound={(roundNumber) => removeRoundMutation.mutate({ classId: selectedClass, roundNumber })}
+                      onUpdateMaxRounds={(maxRounds) => updateMaxRoundsMutation.mutate({ classId: selectedClass, maxRounds })}
+                      startRoundPending={startRoundMutation.isPending}
+                      endRoundPending={endRoundMutation.isPending}
+                      addRoundPending={addRoundMutation.isPending}
+                      removeRoundPending={removeRoundMutation.isPending}
+                      updateMaxRoundsPending={updateMaxRoundsMutation.isPending}
+                    />
+                  </div>
+
+                  {/* Acompanhamento de submissões da rodada ativa */}
+                  {activeRound && (
+                    <Card className="border-0 shadow-sm">
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <h3 className="font-semibold flex items-center gap-2 text-[#1447e6]">
+                              <CircleDot className="h-5 w-5 animate-pulse" />
+                              Rodada {activeRound.roundNumber} em andamento
+                            </h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {submissionStats.submitted} de {submissionStats.total} equipes enviaram suas decisões
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-3xl font-bold text-[#1447e6]">{Math.round((submissionStats.submitted / Math.max(submissionStats.total, 1)) * 100)}%</div>
+                            <p className="text-xs text-muted-foreground">concluído</p>
+                          </div>
+                        </div>
+                        <Progress value={(submissionStats.submitted / Math.max(submissionStats.total, 1)) * 100} className="mt-4 h-2 bg-[#e4ebff] [&>div]:bg-[#1447e6]" />
+
+                        {/* Equipes pendentes */}
+                        {submissionStats.pending.length > 0 && (
+                          <div className="mt-4 p-3 rounded-lg bg-[#fff3d6] border border-[#ffcc00]/50">
+                            <p className="text-sm font-medium text-[#7a5300] flex items-center gap-2">
+                              <AlertTriangle className="h-4 w-4" />
+                              Equipes sem envio: {submissionStats.pending.join(", ")}
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {!activeRound && (
+                    <Card className="border-dashed">
+                      <CardContent className="py-8 text-center">
+                        <CirclePause className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                        <p className="text-muted-foreground">Nenhuma rodada ativa no momento</p>
+                        <p className="text-sm text-muted-foreground mt-1">Inicie uma rodada para acompanhar as submissões</p>
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* Dados Econômicos */}
                   {economicData && (
                     <Card>
@@ -3439,6 +3521,46 @@ export default function Professor() {
                     </Card>
                   )}
 
+                  {/* Análises Estratégicas Automáticas — Item 2 (2026-09):
+                      também veio de "Configurar"; é conteúdo gerado por IA
+                      para a rodada ativa, no mesmo espírito de Eventos de
+                      Mercado logo abaixo. */}
+                  {activeRound && teams.length > 0 && (
+                    <Card className="border-primary/50">
+                      <CardContent className="pt-6">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Sparkles className="h-5 w-5 text-primary" />
+                              <h4 className="font-semibold">Análises Estratégicas Automáticas</h4>
+                              <Badge variant="secondary">IA</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Gere análises SWOT, Porter, BCG e PESTEL automaticamente via IA para todas as equipes.
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => generateAnalysesMutation.mutate(activeRound.id)}
+                            disabled={generateAnalysesMutation.isPending}
+                            data-testid="button-generate-analyses"
+                          >
+                            {generateAnalysesMutation.isPending ? (
+                              <>
+                                <Activity className="h-4 w-4 mr-2 animate-spin" />
+                                Gerando...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                Gerar Análises
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* Eventos de Mercado */}
                   {rounds.length > 0 && (
                     <Card>
@@ -3456,56 +3578,19 @@ export default function Professor() {
                   </Card>
                 </TabsContent>
 
-                {/* ======== ABA: ACOMPANHAR (Submissões e Equipes) ======== */}
-                <TabsContent value="acompanhar" className="mt-6 space-y-6">
+                {/* ======== ABA: EQUIPES (Elenco, Alunos, Orçamentos) ========
+                    Item 2 (problemas relatados pelo professor, 2026-09):
+                    antes chamada "Acompanhar", misturava acompanhamento de
+                    submissões (que agora mora em "Aula", junto do controle
+                    de rodada) com gestão de equipe. Esta aba passou a reunir
+                    só o que é "sobre uma equipe": membros, alunos, orçamento
+                    e (abaixo) reset de decisões — que antes ficava, sem
+                    relação nenhuma, dentro de "Configurar". */}
+                <TabsContent value="equipes" className="mt-6 space-y-6">
                   <div className="mb-4">
-                    <h2 className="text-lg font-semibold">Acompanhar Equipes</h2>
-                    <p className="text-sm text-muted-foreground">Aqui você acompanha quem já enviou e quem precisa de atenção.</p>
+                    <h2 className="text-lg font-semibold">Equipes</h2>
+                    <p className="text-sm text-muted-foreground">Aqui você gerencia membros, alunos, orçamentos e decisões de cada equipe.</p>
                   </div>
-                  
-                  {/* Resumo de Submissões */}
-                  {activeRound && (
-                    <Card className="border-0 shadow-sm">
-                      <CardContent className="pt-6">
-                        <div className="flex items-center justify-between gap-4">
-                          <div>
-                            <h3 className="font-semibold flex items-center gap-2 text-[#1447e6]">
-                              <CircleDot className="h-5 w-5 animate-pulse" />
-                              Rodada {activeRound.roundNumber} em andamento
-                            </h3>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {submissionStats.submitted} de {submissionStats.total} equipes enviaram suas decisões
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-3xl font-bold text-[#1447e6]">{Math.round((submissionStats.submitted / Math.max(submissionStats.total, 1)) * 100)}%</div>
-                            <p className="text-xs text-muted-foreground">concluído</p>
-                          </div>
-                        </div>
-                        <Progress value={(submissionStats.submitted / Math.max(submissionStats.total, 1)) * 100} className="mt-4 h-2 bg-[#e4ebff] [&>div]:bg-[#1447e6]" />
-
-                        {/* Equipes pendentes */}
-                        {submissionStats.pending.length > 0 && (
-                          <div className="mt-4 p-3 rounded-lg bg-[#fff3d6] border border-[#ffcc00]/50">
-                            <p className="text-sm font-medium text-[#7a5300] flex items-center gap-2">
-                              <AlertTriangle className="h-4 w-4" />
-                              Equipes sem envio: {submissionStats.pending.join(", ")}
-                            </p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )}
-                  
-                  {!activeRound && (
-                    <Card className="border-dashed">
-                      <CardContent className="py-8 text-center">
-                        <CirclePause className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                        <p className="text-muted-foreground">Nenhuma rodada ativa no momento</p>
-                        <p className="text-sm text-muted-foreground mt-1">Inicie uma rodada para acompanhar as submissões</p>
-                      </CardContent>
-                    </Card>
-                  )}
                   {/* Barra de busca e ações */}
                   <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                     <div className="relative flex-1 max-w-sm">
@@ -3713,76 +3798,11 @@ export default function Professor() {
                       </CardContent>
                     </Card>
                   )}
-                </TabsContent>
 
-                {/* ======== ABA: CONFIGURAR ======== */}
-                <TabsContent value="configurar" className="mt-6 space-y-6">
-                  <div className="mb-4">
-                    <h2 className="text-lg font-semibold">Configurações da Turma</h2>
-                    <p className="text-sm text-muted-foreground">Aqui você gerencia rodadas, eventos, acessos e comunicações.</p>
-                  </div>
-                  
-                  {/* Seção: Gerenciamento de Rodadas */}
-                  <div className="space-y-4">
-                    <h3 className="text-base font-medium flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
-                      Gerenciamento de Rodadas
-                    </h3>
-                  <RoundsTimeline
-                    rounds={rounds}
-                    activeRound={activeRound}
-                    currentClass={currentClass}
-                    onStartRound={() => startRoundMutation.mutate(selectedClass)}
-                    onEndRound={(roundId) => endRoundMutation.mutate(roundId)}
-                    onScheduleRound={handleScheduleRound}
-                    onAddRound={() => addRoundMutation.mutate(selectedClass)}
-                    onRemoveRound={(roundNumber) => removeRoundMutation.mutate({ classId: selectedClass, roundNumber })}
-                    onUpdateMaxRounds={(maxRounds) => updateMaxRoundsMutation.mutate({ classId: selectedClass, maxRounds })}
-                    startRoundPending={startRoundMutation.isPending}
-                    endRoundPending={endRoundMutation.isPending}
-                    addRoundPending={addRoundMutation.isPending}
-                    removeRoundPending={removeRoundMutation.isPending}
-                    updateMaxRoundsPending={updateMaxRoundsMutation.isPending}
-                  />
-
-                  {/* Gerar Análises Estratégicas */}
-                  {activeRound && teams.length > 0 && (
-                    <Card className="border-primary/50">
-                      <CardContent className="pt-6">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Sparkles className="h-5 w-5 text-primary" />
-                              <h4 className="font-semibold">Análises Estratégicas Automáticas</h4>
-                              <Badge variant="secondary">IA</Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              Gere análises SWOT, Porter, BCG e PESTEL automaticamente via IA para todas as equipes.
-                            </p>
-                          </div>
-                          <Button
-                            onClick={() => generateAnalysesMutation.mutate(activeRound.id)}
-                            disabled={generateAnalysesMutation.isPending}
-                            data-testid="button-generate-analyses"
-                          >
-                            {generateAnalysesMutation.isPending ? (
-                              <>
-                                <Activity className="h-4 w-4 mr-2 animate-spin" />
-                                Gerando...
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="h-4 w-4 mr-2" />
-                                Gerar Análises
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Reset de Decisões */}
+                  {/* Reset de Decisões — Item 2 (2026-09): veio de dentro de
+                      "Configurar", onde ficava sem relação com o resto do
+                      que estava lá; é uma ação sobre uma equipe específica,
+                      então mora aqui, perto do resto da gestão de equipe. */}
                   {teams.length > 0 && rounds.length > 0 && (
                     <Card>
                       <CardHeader>
@@ -3832,6 +3852,39 @@ export default function Professor() {
                       </CardContent>
                     </Card>
                   )}
+                </TabsContent>
+
+                {/* ======== ABA: CONFIGURAR ======== */}
+                <TabsContent value="configurar" className="mt-6 space-y-6">
+                  {/* Item 2 (problemas relatados pelo professor, 2026-09):
+                      esta aba misturava ações do dia a dia (agendar rodada,
+                      gerar análises por IA, resetar decisões) com
+                      configurações raras — agora só ficam aqui as raras:
+                      mercado, acessos, comunicações e exclusão da turma. O
+                      resto foi para "Aula" (operação de rodada) e "Equipes"
+                      (reset de decisões, por ser uma ação sobre uma equipe). */}
+                  <div className="mb-4">
+                    <h2 className="text-lg font-semibold">Configurações da Turma</h2>
+                    <p className="text-sm text-muted-foreground">O que se mexe pouco: parâmetros de mercado, acessos, comunicações e exclusão da turma.</p>
+                  </div>
+                  <div className="space-y-4">
+
+                  {/* Seção: Configuração de Mercado */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Settings className="h-5 w-5" />
+                        Configuração de Mercado
+                      </CardTitle>
+                      <CardDescription>Tamanho de mercado, crescimento, concorrência e orçamento-base das equipes.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="outline" onClick={() => setIsMarketDialogOpen(true)} data-testid="button-configure-market">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Abrir Configurações de Mercado
+                      </Button>
+                    </CardContent>
+                  </Card>
 
                   {/* Seção: Relatório de Acessos */}
                   <Collapsible className="border rounded-lg">
