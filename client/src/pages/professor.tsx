@@ -3300,7 +3300,14 @@ export default function Professor() {
                                 value={String(nextRoundProductCount)}
                                 onValueChange={(value) => setNextRoundProductCount(Number(value))}
                               >
-                                <SelectTrigger className="w-[80px]" data-testid="select-round-product-count">
+                                {/* Bug relatado pelo professor (2026-09): número selecionado
+                                    aparecia em branco (ilegível) — este seletor fica dentro do
+                                    card roxo "Situação da Aula" (texto branco por padrão), mas
+                                    o SelectTrigger não define cor de texto própria e herdava o
+                                    branco do card, ficando texto branco sobre fundo claro.
+                                    text-foreground força a cor de texto padrão do tema
+                                    independente do texto branco ao redor. */}
+                                <SelectTrigger className="w-[80px] text-foreground" data-testid="select-round-product-count">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
