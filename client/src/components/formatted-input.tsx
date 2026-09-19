@@ -6,6 +6,7 @@ interface FormattedMoneyInputProps {
   id?: string;
   value: number;
   onChange: (value: number) => void;
+  onBlur?: () => void;
   disabled?: boolean;
   placeholder?: string;
   testId?: string;
@@ -20,6 +21,7 @@ export function FormattedMoneyInput({
   id,
   value,
   onChange,
+  onBlur,
   disabled = false,
   placeholder = '0',
   testId,
@@ -65,6 +67,7 @@ export function FormattedMoneyInput({
     setIsFocused(false);
     // Ao perder o foco, formata completamente
     setDisplayValue(formatarNumeroBR(value, 'moeda'));
+    onBlur?.();
   };
 
   return (

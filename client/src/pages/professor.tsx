@@ -85,6 +85,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
+import { FormattedMoneyInput } from "@/components/formatted-input";
 
 const eventFormSchema = insertMarketEventSchema.extend({
   type: z.string().min(1, "Tipo é obrigatório"),
@@ -3967,14 +3968,15 @@ export default function Professor() {
                                   <TableCell className="font-medium">{team.name}</TableCell>
                                   <TableCell><Badge variant="outline">{team.memberIds?.length || 0}</Badge></TableCell>
                                   <TableCell className="text-right">
-                                    <Input
-                                      type="number"
-                                      min="0"
-                                      step="1000"
+                                    {/* Correção (2026-09): mesmo problema dos campos de
+                                        orçamento padrão acima — <Input type="number">
+                                        não formata como moeda (sem ponto de milhar nem
+                                        vírgula decimal), diferente do restante da tela,
+                                        que mostra o orçamento em R$ formatado. */}
+                                    <FormattedMoneyInput
                                       value={teamBudgetEdits[team.id] ?? team.budget}
-                                      onChange={(e) => {
-                                        const value = parseFloat(e.target.value);
-                                        if (!isNaN(value)) setTeamBudgetEdits({ ...teamBudgetEdits, [team.id]: value });
+                                      onChange={(value) => {
+                                        setTeamBudgetEdits({ ...teamBudgetEdits, [team.id]: value });
                                       }}
                                       onBlur={() => {
                                         const editedValue = teamBudgetEdits[team.id];
@@ -3983,8 +3985,8 @@ export default function Professor() {
                                         }
                                       }}
                                       disabled={updateTeamBudgetMutation.isPending}
-                                      className="w-28 text-right"
-                                      data-testid={`input-budget-${team.id}`}
+                                      className="w-32 text-right"
+                                      testId={`input-budget-${team.id}`}
                                     />
                                   </TableCell>
                                   <TableCell className="text-right">
@@ -4317,7 +4319,13 @@ export default function Professor() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="defaultBudget">Orçamento Padrão (R$)</Label>
-                <Input id="defaultBudget" type="number" min={10000} step={10000} value={newClass.defaultBudget} onChange={(e) => setNewClass({ ...newClass, defaultBudget: parseInt(e.target.value) || 100000 })} data-testid="input-default-budget" />
+                {/* Correção (2026-09): campo era <Input type="number">, que o
+                    navegador sempre exibe como dígitos puros — sem separador de
+                    milhar nem vírgula decimal (HTML não permite formatação de
+                    moeda dentro de um input numérico nativo). Trocado pelo
+                    componente já usado em decisoes.tsx, que mantém o valor
+                    formatado (R$ X.XXX,XX) enquanto edita. */}
+                <FormattedMoneyInput id="defaultBudget" value={newClass.defaultBudget} onChange={(value) => setNewClass({ ...newClass, defaultBudget: value || 100000 })} testId="input-default-budget" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="competitionLevel">Nível de Concorrência</Label>
@@ -4375,7 +4383,10 @@ export default function Professor() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Orçamento Padrão (R$)</Label>
-                  <Input type="number" value={marketConfigEdits.defaultBudget} onChange={(e) => setMarketConfigEdits({ ...marketConfigEdits, defaultBudget: parseInt(e.target.value) || 100000 })} data-testid="input-edit-default-budget" />
+                  {/* Correção (2026-09): mesmo problema do campo irmão em
+                      "Criar Turma" — <Input type="number"> não formata como
+                      moeda (sem ponto de milhar nem vírgula decimal). */}
+                  <FormattedMoneyInput value={marketConfigEdits.defaultBudget} onChange={(value) => setMarketConfigEdits({ ...marketConfigEdits, defaultBudget: value || 100000 })} testId="input-edit-default-budget" />
                 </div>
                 <div className="space-y-2">
                   <Label>Nível de Concorrência</Label>
