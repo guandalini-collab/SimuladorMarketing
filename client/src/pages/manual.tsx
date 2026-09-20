@@ -138,7 +138,7 @@ export default function Manual() {
                 <AccordionItem value="inicio">
                   <AccordionTrigger>1. Primeiros Passos</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <p><strong>Cadastro:</strong> Use seu email institucional (@iffarroupilha.edu.br) para se cadastrar no sistema. Crie uma senha segura.</p>
+                    <p><strong>Cadastro:</strong> Use seu email institucional de aluno do IFFar (@aluno.iffar.edu.br) para se cadastrar no sistema — outros emails não são aceitos. Crie uma senha segura.</p>
                     
                     <div className="p-3 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-md">
                       <p className="font-semibold text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">

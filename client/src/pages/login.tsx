@@ -502,8 +502,8 @@ export default function Login() {
                         <p className="text-xs text-muted-foreground flex items-start gap-2">
                           <GraduationCap className="h-4 w-4 flex-shrink-0 mt-0.5" />
                           <span>
-                            Email institucional (@iffarroupilha.edu.br) é aprovado automaticamente. 
-                            Outros emails precisam de aprovação do professor.
+                            O cadastro exige seu email institucional de aluno do IFFar (@aluno.iffar.edu.br).
+                            Outros emails não são aceitos.
                           </span>
                         </p>
                       </div>

@@ -91,6 +91,14 @@ const authorizedProfessorEmails = new Set<string>(
     .map(e => e.trim().toLowerCase())
 );
 
+// Pedido do professor (2026-09): cadastro de aluno só é permitido com o
+// email institucional do IFFar — qualquer outro domínio é bloqueado na hora
+// (nada de ficar "pendente" aguardando aprovação manual, como acontecia
+// antes). A única exceção é uma conta de verificação do próprio professor,
+// usada para entrar no sistema e checar problemas ou inconsistências.
+const STUDENT_INSTITUTIONAL_EMAIL_DOMAIN = "@aluno.iffar.edu.br";
+const STUDENT_REGISTRATION_EMAIL_EXCEPTIONS = new Set<string>(["joaoz@gmail.com"]);
+
 declare module "express-session" {
   interface SessionData {
     userId: string;
@@ -170,44 +178,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (data.role === "professor") {
         return res.status(403).json({ error: "Apenas alunos podem se cadastrar. Professores devem entrar em contato com o administrador." });
       }
-      
+
+      // Bloqueio de domínio institucional (case-insensitive): quem não usa o
+      // email de aluno do IFFar, nem a conta de verificação do professor, é
+      // recusado aqui mesmo — sem cadastro, sem status "pending".
+      const isAllowedEmail =
+        STUDENT_REGISTRATION_EMAIL_EXCEPTIONS.has(emailNormalized) ||
+        emailNormalized.endsWith(STUDENT_INSTITUTIONAL_EMAIL_DOMAIN);
+
+      if (!isAllowedEmail) {
+        return res.status(403).json({
+          error: `Cadastro não permitido: você deve usar seu email institucional de aluno do IFFar (${STUDENT_INSTITUTIONAL_EMAIL_DOMAIN}) para se cadastrar.`,
+        });
+      }
+
       const existing = await storage.getUserByEmail(emailNormalized);
       if (existing) {
         return res.status(400).json({ error: "Email já cadastrado" });
       }
 
-      // Verifica se é email institucional (case-insensitive)
-      const isInstitutionalEmail = 
-        emailNormalized.endsWith("@iffarroupilha.edu.br") || 
-        emailNormalized.endsWith("@aluno.iffar.edu.br") ||
-        emailNormalized.endsWith("@aluno.iffarroupilha.edu.br");
-      const status = isInstitutionalEmail ? "approved" : "pending";
-
       const hashedPassword = await bcrypt.hash(data.password, 10);
-      
+
       // Gera código de recuperação para alunos
       const recoveryCode = generateRecoveryCode();
       const recoveryCodeHash = await bcrypt.hash(recoveryCode, 10);
-      
-      const user = await storage.createUser({ 
-        ...data, 
+
+      const user = await storage.createUser({
+        ...data,
         email: emailNormalized,
-        password: hashedPassword, 
+        password: hashedPassword,
         role: "equipe",
-        status,
+        status: "approved",
         recoveryCodeHash
       });
-
-      if (status === "pending") {
-        await emailService.sendUserPendingEmail(user.email, user.name);
-        await emailService.sendProfessorNewPendingUserEmail(user.name, user.email);
-        
-        return res.json({ 
-          status: "pending",
-          message: "Cadastro realizado! Como você usou um email não-institucional, aguarde a aprovação do professor. Você receberá um email quando for aprovado.",
-          recoveryCode // Retorna o código para o aluno anotar
-        });
-      }
 
       req.session.userId = user.id;
       res.json({ 
