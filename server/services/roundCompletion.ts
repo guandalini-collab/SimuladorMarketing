@@ -132,11 +132,13 @@ export async function processRoundCompletion(
           const porter = await storage.getPorterAnalysis(team.id, roundId);
           const bcg = await storage.getBcgAnalyses(team.id, roundId);
           const pestel = await storage.getPestelAnalysis(team.id, roundId);
+          const segmentation = await storage.getMarketSegmentationsByTeamAndRound(team.id, roundId);
           const analyses = {
             swot: swot || null,
             porter: porter || null,
             bcg: bcg.length > 0 ? bcg : null,
             pestel: pestel || null,
+            segmentation: segmentation.length > 0 ? segmentation : null,
           };
 
           // Orçamento-base de cada produto: para o caso de 1 produto só
@@ -288,7 +290,9 @@ export async function processRoundCompletion(
               pestel,
               round.aiAssistanceLevel ?? 1,
               firstProduct.priceValue,
-              totalProductBudgetV2
+              totalProductBudgetV2,
+              segmentation,
+              classData.businessType
             );
 
             alignmentScore = penaltyResult.alignmentScore;
@@ -343,7 +347,9 @@ export async function processRoundCompletion(
               pestel,
               round.aiAssistanceLevel ?? 1,
               firstProduct.priceValue,
-              totalProductBudget
+              totalProductBudget,
+              segmentation,
+              classData.businessType
             );
 
             const consolidatedKPIs = applyEquityCarryover(

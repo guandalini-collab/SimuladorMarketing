@@ -866,6 +866,15 @@ interface StrategicAnalyses {
     environmental: string[];
     legal: string[];
   } | null;
+  segmentation: {
+    segmentType: string;
+    demographic: string[];
+    geographic: string[];
+    psychographic: string[];
+    behavioral: string[];
+    firmographic: string[];
+    buyingCenter: string[];
+  }[] | null;
 }
 
 function recomputeDependentKPIs(
@@ -1006,14 +1015,41 @@ export function applyStrategicImpacts(
     
     if (pestelFactorsCount > 0) {
       const pestelModifier = Math.min(1 + (pestelFactorsCount / 200), 1.05);
-      
+
       adjustedKPIs.brandPerception *= pestelModifier;
       adjustedKPIs.nps *= pestelModifier;
-      
+
       totalModifier *= Math.min((1 + (pestelFactorsCount / 400)), 1.025);
     }
   }
-  
+
+  // Segmentação de Mercado: conhecer bem o segmento-alvo (riqueza de
+  // critérios preenchidos, somando todas as linhas — b2c e/ou b2b, conforme
+  // o tipo de negócio da turma) melhora a eficiência de conversão
+  // (customerSatisfaction/marketShare), no mesmo espírito do bônus de
+  // riqueza já dado a PESTEL acima.
+  if (analyses.segmentation && analyses.segmentation.length > 0) {
+    const segmentationFactorsCount = analyses.segmentation.reduce((sum, seg) =>
+      sum +
+      (seg.demographic?.length || 0) +
+      (seg.geographic?.length || 0) +
+      (seg.psychographic?.length || 0) +
+      (seg.behavioral?.length || 0) +
+      (seg.firmographic?.length || 0) +
+      (seg.buyingCenter?.length || 0),
+      0
+    );
+
+    if (segmentationFactorsCount > 0) {
+      const segmentationModifier = Math.min(1 + (segmentationFactorsCount / 200), 1.05);
+
+      adjustedKPIs.customerSatisfaction *= segmentationModifier;
+      adjustedKPIs.marketShare *= segmentationModifier;
+
+      totalModifier *= Math.min((1 + (segmentationFactorsCount / 400)), 1.025);
+    }
+  }
+
   // Aplicar modificadores de revenue e cost com caps globais
   const cappedRevenueModifier = Math.max(0.88, Math.min(revenueModifier, 1.08));
   const cappedCostModifier = Math.max(0.94, Math.min(costModifier, 1.06));
@@ -1126,19 +1162,31 @@ export function applyAlignmentPenalties(
   pestel: any,
   aiAssistanceLevel: number,
   priceValue: number,
-  teamBudget: number
+  teamBudget: number,
+  segmentation: any[] = [],
+  businessType?: string | null
 ): { kpis: ResultCoreMetrics; alignmentScore: number; alignmentIssues: string[] } {
+  // aiGeneratedPercentage da Segmentação: uma turma híbrida pode ter até 2
+  // linhas (b2c e b2b) — usa a média entre as que existirem, mesmo espírito
+  // das demais ferramentas (uma única % vinda de uma única linha).
+  const segmentationAiPercentage = segmentation.length > 0
+    ? segmentation.reduce((sum, s) => sum + (s.aiGeneratedPercentage || 0), 0) / segmentation.length
+    : undefined;
+
   const alignment = calculateStrategicAlignment({
     swot: swot || null,
     porter: porter || null,
     bcg: bcg || null,
     pestel: pestel || null,
+    segmentation: segmentation || [],
+    businessType,
     marketingMix,
     aiAssistanceLevel,
     swotAiPercentage: swot?.aiGeneratedPercentage,
     porterAiPercentage: porter?.aiGeneratedPercentage,
     bcgAiPercentage: bcg?.aiGeneratedPercentage,
     pestelAiPercentage: pestel?.aiGeneratedPercentage,
+    segmentationAiPercentage,
   });
   
   let penalizedKPIs = { ...kpis };

@@ -538,6 +538,58 @@ export const pestelAnalysis = pgTable("pestel_analysis", {
   uniqueTeamRoundProduct: uniqueIndex("pestel_unique_team_round_product").on(table.teamId, table.roundId, sql`coalesce(${table.productId}, '')`),
 }));
 
+// Pedido do professor (2026-09): 5ª ferramenta estratégica, no mesmo estilo
+// de SWOT/Porter/BCG/PESTEL (preenche uma vez, herda automaticamente nas
+// rodadas seguintes via strategyCarryForward.ts, pode editar/excluir a
+// qualquer momento). O conteúdo muda conforme o tipo de negócio da turma
+// (classes.businessType): turma B2C usa critérios de segmentação de
+// consumidor (demographic/geographic/psychographic/behavioral), turma B2B
+// usa critérios de segmentação empresarial (firmographic/geographic/
+// behavioral/buyingCenter). Uma turma "híbrida" preenche as duas — por isso
+// "segmentType" existe: cada linha é OU "b2c" OU "b2b", e uma equipe de
+// turma híbrida tem até 2 linhas por rodada/produto (uma de cada tipo),
+// igual a como o BCG tem várias linhas (uma por produto). Os dois conjuntos
+// de critérios convivem na mesma tabela (em vez de duas tabelas separadas)
+// porque a maior parte do código que consome SWOT/Porter/BCG/PESTEL trata
+// "uma ferramenta = uma tabela" — manter esse padrão evita duplicar toda a
+// integração (storage, rotas, carry-forward, geração por IA, alinhamento
+// estratégico) para um conceito que já é, na prática, uma única ferramenta
+// com duas variações de formulário.
+export const marketSegmentation = pgTable("market_segmentation", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  teamId: varchar("team_id").notNull(),
+  roundId: varchar("round_id").notNull(),
+  productId: varchar("product_id"),
+  segmentType: text("segment_type").notNull(), // "b2c" | "b2b"
+  demographic: text("demographic").array().notNull().default(sql`ARRAY[]::text[]`),
+  geographic: text("geographic").array().notNull().default(sql`ARRAY[]::text[]`),
+  psychographic: text("psychographic").array().notNull().default(sql`ARRAY[]::text[]`),
+  behavioral: text("behavioral").array().notNull().default(sql`ARRAY[]::text[]`),
+  firmographic: text("firmographic").array().notNull().default(sql`ARRAY[]::text[]`),
+  buyingCenter: text("buying_center").array().notNull().default(sql`ARRAY[]::text[]`),
+  aiGeneratedPercentage: real("ai_generated_percentage").notNull().default(0),
+  originalAIContent: jsonb("original_ai_content"),
+  editedByUser: boolean("edited_by_user").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().default(sql`now()`),
+  updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
+}, (table) => ({
+  teamRoundProductTypeIdx: index("segmentation_team_round_product_type_idx").on(table.teamId, table.roundId, table.productId, table.segmentType),
+  // Mesmo padrão de swot_analysis/porter_analysis/pestel_analysis (Grupo B,
+  // auditoria de 2026-09): impede duas linhas concorrentes para o mesmo
+  // (team, round, product, segmentType).
+  uniqueTeamRoundProductType: uniqueIndex("segmentation_unique_team_round_product_type").on(table.teamId, table.roundId, sql`coalesce(${table.productId}, '')`, table.segmentType),
+}));
+
+export const insertMarketSegmentationSchema = createInsertSchema(marketSegmentation).omit({
+  id: true,
+  teamId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertMarketSegmentation = z.infer<typeof insertMarketSegmentationSchema>;
+export type MarketSegmentation = typeof marketSegmentation.$inferSelect;
+
 export const insertSwotSchema = createInsertSchema(swotAnalysis).omit({
   id: true,
   teamId: true,

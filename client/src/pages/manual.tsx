@@ -456,8 +456,8 @@ export default function Manual() {
                     <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 p-4 rounded-md">
                       <p className="font-semibold text-red-900 dark:text-red-100 mb-2">🔒 Pré-requisito Obrigatório:</p>
                       <p className="text-sm text-red-800 dark:text-red-200">
-                        Você só poderá submeter as decisões de Marketing Mix após completar <strong>TODAS as 4 ferramentas estratégicas</strong>: 
-                        SWOT, Porter, BCG e PESTEL. Se alguma estiver incompleta, o botão de submissão ficará desabilitado e uma mensagem indicará o que falta.
+                        Você só poderá submeter as decisões de Marketing Mix após completar <strong>TODAS as 5 ferramentas estratégicas</strong>:
+                        SWOT, Porter, BCG, PESTEL e Segmentação de Mercado. Se alguma estiver incompleta, o botão de submissão ficará desabilitado e uma mensagem indicará o que falta.
                       </p>
                     </div>
 
@@ -493,9 +493,10 @@ export default function Manual() {
                       <li><strong>5 Forças de Porter:</strong> Analise a competitividade do setor</li>
                       <li><strong>Matriz BCG:</strong> Posicione seus produtos estrategicamente</li>
                       <li><strong>PESTEL:</strong> Identifique fatores externos que afetam seu negócio</li>
+                      <li><strong>Segmentação de Mercado:</strong> Defina os segmentos de clientes que sua empresa vai atender (critérios de consumidor para turmas B2C, critérios empresariais para turmas B2B)</li>
                     </ul>
                     <p className="text-sm text-muted-foreground mt-2">
-                      <em><strong>Importante:</strong> Todas as 4 ferramentas são obrigatórias antes de enviar decisões!</em>
+                      <em><strong>Importante:</strong> Todas as 5 ferramentas são obrigatórias antes de enviar decisões!</em>
                     </p>
                   </AccordionContent>
                 </AccordionItem>
@@ -506,7 +507,7 @@ export default function Manual() {
                     <div className="bg-[#1447e6]/10 dark:bg-[#1447e6]/15 border-l-4 border-[#1447e6] p-4 rounded-md mb-4">
                       <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">✨ Geração Automática na Rodada 1</p>
                       <p className="text-sm text-blue-800 dark:text-blue-200">
-                        O sistema gera automaticamente análises estratégicas (SWOT, Porter, BCG, PESTEL) quando a Rodada 1 é liberada.
+                        O sistema gera automaticamente análises estratégicas (SWOT, Porter, BCG, PESTEL e Segmentação de Mercado) quando a Rodada 1 é liberada.
                         Você receberá análises prontas que servem como ponto de partida - personalize e aprimore conforme necessário!
                       </p>
                       <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
@@ -515,7 +516,7 @@ export default function Manual() {
                     </div>
 
                     <p><strong>Como funciona:</strong></p>
-                    <p className="text-sm">As análises estratégicas automáticas (SWOT, Porter, BCG, PESTEL) são personalizadas considerando:</p>
+                    <p className="text-sm">As análises estratégicas automáticas (SWOT, Porter, BCG, PESTEL e Segmentação de Mercado) são personalizadas considerando:</p>
                     <ul className="list-disc pl-6 text-sm space-y-1">
                       <li>Setor de mercado da turma</li>
                       <li>Contexto econômico atual (câmbio, inflação, PIB)</li>
@@ -555,7 +556,7 @@ export default function Manual() {
                   <AccordionContent className="space-y-4">
                     <div>
                       <p className="font-semibold mb-2">O que é alinhamento estratégico?</p>
-                      <p className="text-sm">O alinhamento estratégico mede o quanto suas decisões do Mix de Marketing (4 Ps) estão conectadas e coerentes com suas análises estratégicas (SWOT, Porter, BCG, PESTEL). Um alto alinhamento significa que você está tomando decisões baseadas em análise, não em "achismo".</p>
+                      <p className="text-sm">O alinhamento estratégico mede o quanto suas decisões do Mix de Marketing (4 Ps) estão conectadas e coerentes com suas análises estratégicas (SWOT, Porter, BCG, PESTEL e Segmentação de Mercado). Um alto alinhamento significa que você está tomando decisões baseadas em análise, não em "achismo".</p>
                     </div>
 
                     <div className="pt-3 border-t">
@@ -578,6 +579,10 @@ export default function Manual() {
                         <div className="flex items-start gap-2">
                           <span className="font-semibold min-w-[120px]">PESTEL × Mix:</span>
                           <span>Decisões consideram fatores econômicos? Respondem a mudanças tecnológicas? Adaptam-se ao contexto político/social?</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="font-semibold min-w-[120px]">Segmentação × Mix:</span>
+                          <span>Preço e canais condizem com o segmento-alvo declarado (renda, porte da empresa, hábitos de compra)? Uma turma híbrida precisa manter as duas segmentações (consumidor e empresas) coerentes com o mix de cada produto.</span>
                         </div>
                       </div>
                     </div>
@@ -636,7 +641,7 @@ export default function Manual() {
                         Dica para maximizar seu alinhamento:
                       </p>
                       <ol className="list-decimal pl-6 text-sm space-y-1">
-                        <li>Sempre complete as 4 análises estratégicas ANTES de definir o Mix de Marketing</li>
+                        <li>Sempre complete as 5 análises estratégicas ANTES de definir o Mix de Marketing</li>
                         <li>Revise suas análises durante a definição dos 4 Ps e faça conexões explícitas</li>
                         <li>Personalize as análises estratégicas com insights específicos da sua equipe</li>
                         <li>Verifique se cada decisão tem um "porquê" baseado nas análises</li>
@@ -664,7 +669,7 @@ export default function Manual() {
                           Diagnóstico Estratégico (Análises)
                         </h4>
                         <p className="text-sm mb-2">
-                          <strong>O que fazer:</strong> Preencher as 4 ferramentas estratégicas (SWOT, Porter, BCG, PESTEL)
+                          <strong>O que fazer:</strong> Preencher as 5 ferramentas estratégicas (SWOT, Porter, BCG, PESTEL, Segmentação de Mercado)
                         </p>
                         <p className="text-sm mb-2">
                           <strong>Objetivo:</strong> Compreender profundamente o ambiente interno, externo, competitivo e macro-ambiental antes de tomar qualquer decisão
@@ -674,6 +679,7 @@ export default function Manual() {
                           <li><strong>Porter:</strong> Entenda as forças competitivas que moldam sua indústria</li>
                           <li><strong>BCG:</strong> Avalie o posicionamento estratégico dos seus 4 produtos no portfólio</li>
                           <li><strong>PESTEL:</strong> Identifique tendências macro-ambientais (políticas, econômicas, sociais, tecnológicas, ambientais, legais)</li>
+                          <li><strong>Segmentação de Mercado:</strong> Defina o perfil dos clientes que sua empresa vai atender - consumidores (B2C) ou empresas (B2B), conforme o tipo de negócio da turma</li>
                         </ul>
                         <p className="text-xs text-blue-700 dark:text-blue-300 mt-2 italic">
                           💡 Dica: Na rodada 1, você recebe análises automáticas geradas por IA. Personalize-as com insights da sua equipe - elas continuam valendo nas rodadas seguintes até você decidir mudar algo.
@@ -696,10 +702,10 @@ export default function Manual() {
                             <strong className="text-green-700 dark:text-green-300">Produto:</strong> Baseie-se no SWOT (suas forças/fraquezas) e BCG (posicionamento do produto)
                           </div>
                           <div className="text-sm">
-                            <strong className="text-green-700 dark:text-green-300">Preço:</strong> Considere Porter (poder dos compradores) e PESTEL (fatores econômicos)
+                            <strong className="text-green-700 dark:text-green-300">Preço:</strong> Considere Porter (poder dos compradores), PESTEL (fatores econômicos) e Segmentação (renda/porte do segmento-alvo)
                           </div>
                           <div className="text-sm">
-                            <strong className="text-green-700 dark:text-green-300">Praça:</strong> Alinhe com BCG (cobertura por produto) e Porter (poder dos fornecedores)
+                            <strong className="text-green-700 dark:text-green-300">Praça:</strong> Alinhe com BCG (cobertura por produto), Porter (poder dos fornecedores) e Segmentação (canais preferidos do segmento)
                           </div>
                           <div className="text-sm">
                             <strong className="text-green-700 dark:text-green-300">Promoção:</strong> Reflita SWOT (comunicação de forças) e PESTEL (tendências sociais/tecnológicas)
@@ -722,7 +728,7 @@ export default function Manual() {
                           <strong>Checklist pré-submissão:</strong>
                         </p>
                         <ul className="list-disc pl-6 text-sm space-y-1">
-                          <li>✅ As 4 ferramentas estratégicas estão completas e personalizadas?</li>
+                          <li>✅ As 5 ferramentas estratégicas estão completas e personalizadas?</li>
                           <li>✅ Os 4 Ps foram decididos para todos os produtos?</li>
                           <li>✅ Orçamento não foi excedido?</li>
                           <li>✅ Decisões fazem sentido em conjunto (coerência estratégica)?</li>
@@ -1376,6 +1382,96 @@ export default function Manual() {
                   </AccordionContent>
                 </AccordionItem>
 
+                <AccordionItem value="segmentacao">
+                  <AccordionTrigger className="text-lg font-semibold">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-md bg-[#a21caf] flex items-center justify-center shrink-0">
+                        <Users className="h-4 w-4 text-white" />
+                      </div>
+                      Segmentação de Mercado
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p className="text-sm mb-3">
+                      <strong>Fundamento Teórico:</strong> Kotler e Keller estruturam o marketing estratégico moderno em torno do framework STP — Segmentation, Targeting, Positioning — no qual a segmentação é a etapa inicial e mais crítica: dividir um mercado heterogêneo em grupos menores e internamente homogêneos, de modo que cada grupo responda de forma semelhante a um composto de marketing. Wedel e Kamakura destacam que uma boa segmentação precisa atender a critérios de mensurabilidade, acessibilidade, substancialidade (tamanho suficiente para ser rentável) e acionabilidade (é possível desenhar um mix de marketing específico para o segmento). Sem segmentação clara, a empresa tende a adotar marketing de massa, diluindo recursos em públicos com necessidades muito diferentes entre si.
+                    </p>
+                    <p className="text-sm">
+                      A lógica muda quando o cliente não é o consumidor final, mas outra empresa. Hutt e Speh, e também Kotler e Armstrong, mostram que a segmentação B2B substitui variáveis demográficas e psicográficas individuais por variáveis firmográficas (porte, setor, faturamento) e por características do processo de compra organizacional — em especial o centro de compras (buying center), grupo formado por usuários, influenciadores, decisores e compradores que participam coletivamente da decisão. No Simula+, a ferramenta se adapta automaticamente ao tipo de negócio da sua turma: turmas B2C preenchem os critérios de consumidor, turmas B2B preenchem os critérios empresariais, e turmas Híbridas preenchem as duas seções.
+                    </p>
+
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-sm uppercase tracking-wide" style={{ color: "#c026d3" }}>Critérios B2C — Consumidor (Pessoa Física)</h4>
+                      <div className="border-l-4 pl-4" style={{ borderColor: "#c026d3" }}>
+                        <h4 className="font-bold">Demográfica</h4>
+                        <p className="text-sm">Idade, gênero, renda, escolaridade, classe social</p>
+                      </div>
+                      <div className="border-l-4 pl-4" style={{ borderColor: "#c026d3" }}>
+                        <h4 className="font-bold">Geográfica</h4>
+                        <p className="text-sm">Região, cidade, urbano/rural, clima, densidade populacional</p>
+                      </div>
+                      <div className="border-l-4 pl-4" style={{ borderColor: "#c026d3" }}>
+                        <h4 className="font-bold">Psicográfica</h4>
+                        <p className="text-sm">Estilo de vida, valores, personalidade, interesses</p>
+                      </div>
+                      <div className="border-l-4 pl-4" style={{ borderColor: "#c026d3" }}>
+                        <h4 className="font-bold">Comportamental</h4>
+                        <p className="text-sm">Frequência de uso, fidelidade à marca, ocasião de compra, benefícios buscados</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mt-4">
+                      <h4 className="font-bold text-sm uppercase tracking-wide" style={{ color: "#0891b2" }}>Critérios B2B — Empresas</h4>
+                      <div className="border-l-4 pl-4" style={{ borderColor: "#0891b2" }}>
+                        <h4 className="font-bold">Firmográfica</h4>
+                        <p className="text-sm">Porte da empresa, setor de atuação, faturamento</p>
+                      </div>
+                      <div className="border-l-4 pl-4" style={{ borderColor: "#0891b2" }}>
+                        <h4 className="font-bold">Geográfica</h4>
+                        <p className="text-sm">Alcance regional/nacional das empresas-alvo</p>
+                      </div>
+                      <div className="border-l-4 pl-4" style={{ borderColor: "#0891b2" }}>
+                        <h4 className="font-bold">Comportamental/Operacional</h4>
+                        <p className="text-sm">Volume de compra, frequência, critérios de decisão</p>
+                      </div>
+                      <div className="border-l-4 pl-4" style={{ borderColor: "#0891b2" }}>
+                        <h4 className="font-bold">Centro de Compras</h4>
+                        <p className="text-sm">Quem decide: usuários, influenciadores, decisores, compradores</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 p-4 bg-primary/10 border-l-4 border-primary rounded-md">
+                      <p className="font-semibold text-primary mb-2">📝 Como usar Segmentação de Mercado no Simula+</p>
+                      <ol className="list-decimal pl-6 text-sm space-y-2">
+                        <li>Preencha os critérios relevantes para o seu tipo de negócio (o sistema já mostra apenas as seções B2C, B2B, ou ambas, conforme a classificação da sua turma)</li>
+                        <li>Na Rodada 1, a IA já sugere uma segmentação inicial — revise, edite e complete com sua própria visão de mercado</li>
+                        <li>Uma vez preenchida, a análise continua valendo automaticamente nas rodadas seguintes — não precisa reescrever, apenas ajustar se sua estratégia de público mudar</li>
+                        <li>Mantenha coerência entre o segmento declarado e as decisões reais do seu Marketing Mix: preço, canais de distribuição e promoção devem "conversar" com o público que você disse que vai atender</li>
+                      </ol>
+                    </div>
+
+                    <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-500 rounded-md">
+                      <p className="font-semibold text-blue-900 dark:text-blue-100 mb-2">❓ Perguntas Norteadoras (Segmentação)</p>
+                      <div className="space-y-2 text-sm">
+                        <div><strong>B2C — Demográfica/Geográfica:</strong> Quem é o consumidor típico (idade, renda, região)? Esse perfil tem poder de compra compatível com o preço praticado?</div>
+                        <div><strong>B2C — Psicográfica/Comportamental:</strong> Que valores e estilo de vida esse público tem? Com que frequência compra? O que faz esse cliente ser fiel à marca?</div>
+                        <div><strong>B2B — Firmográfica/Geográfica:</strong> Que porte e setor de empresa é o cliente ideal? Ele está concentrado em alguma região?</div>
+                        <div><strong>B2B — Operacional/Centro de Compras:</strong> Qual o volume e frequência de compra esperados? Quem participa da decisão de compra — usuário, influenciador, decisor, comprador?</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-950 border-l-4 border-amber-500 rounded-md">
+                      <p className="font-semibold text-amber-900 dark:text-amber-100 mb-2">💡 Exemplo Prático</p>
+                      <div className="space-y-2 text-sm">
+                        <div><strong>B2C — "FitSnack" (barras de proteína):</strong> Demográfica: "Adultos de 20 a 35 anos, renda média/alta"; Geográfica: "Grandes centros urbanos"; Psicográfica: "Praticantes de atividade física, preocupados com saúde"; Comportamental: "Compra recorrente, alta fidelidade a marcas que confiam"</div>
+                        <div><strong>B2B — "TechFlow" (software de gestão):</strong> Firmográfica: "Pequenas e médias indústrias, faturamento entre R$ 2 e 20 milhões/ano"; Geográfica: "Sul e Sudeste do Brasil"; Operacional: "Contratos anuais, decisão baseada em ROI comprovado"; Centro de Compras: "Gerente de operações (usuário), diretor financeiro (decisor), TI (influenciador)"</div>
+                      </div>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-2 italic">
+                        ➡️ <strong>Conexão com Marketing Mix:</strong> FitSnack usa Praça com forte presença em academias e apps de delivery, Promoção via influenciadores fitness e Preço premium justificado pelo posicionamento saudável. TechFlow usa Praça com venda direta/consultiva, Promoção via cases e conteúdo técnico (marketing B2B), e Preço baseado em valor entregue (ROI), não em concorrência de preço.
+                      </p>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
                 <AccordionItem value="concorrencia">
                   <AccordionTrigger className="text-lg font-semibold">
                     <div className="flex items-center gap-3">
@@ -1550,6 +1646,7 @@ export default function Manual() {
                       <li><strong>Porter:</strong> Entenda a dinâmica competitiva do setor</li>
                       <li><strong>BCG:</strong> Equilibre investimentos entre produtos</li>
                       <li><strong>PESTEL:</strong> Antecipe mudanças externas</li>
+                      <li><strong>Segmentação de Mercado:</strong> Defina com precisão quem é o seu público-alvo</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>

@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Target, Shield, TrendingUp, Globe, Sparkles, Edit3 } from "lucide-react";
+import { Plus, Trash2, Target, Shield, TrendingUp, Globe, Sparkles, Edit3, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -49,10 +49,16 @@ export default function Estrategia() {
     porter?: any;
     bcg?: any[];
     pestel?: any;
+    segmentation?: { b2c?: any; b2b?: any };
   }>({
     queryKey: ["/api/strategy", currentRound?.id],
     enabled: !!currentRound,
   });
+
+  // Pedido do professor (2026-09): a Segmentação de Mercado usa critérios
+  // diferentes conforme o tipo de negócio da turma (B2C = consumidor
+  // pessoa física, B2B = empresas) — turma "hibrido" preenche as duas.
+  const businessType = currentClass?.businessType || "b2c";
 
   if (!currentRound) {
     return (
@@ -102,34 +108,41 @@ export default function Estrategia() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted">
-          <TabsTrigger 
+        <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted">
+          <TabsTrigger
             value="swot"
             className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
           >
             <Target className="h-5 w-5" />
             <span className="font-semibold">SWOT</span>
           </TabsTrigger>
-          <TabsTrigger 
+          <TabsTrigger
             value="porter"
             className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
           >
             <Shield className="h-5 w-5" />
             <span className="font-semibold">5 Forças</span>
           </TabsTrigger>
-          <TabsTrigger 
+          <TabsTrigger
             value="bcg"
             className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
           >
             <TrendingUp className="h-5 w-5" />
             <span className="font-semibold">BCG</span>
           </TabsTrigger>
-          <TabsTrigger 
+          <TabsTrigger
             value="pestel"
             className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
           >
             <Globe className="h-5 w-5" />
             <span className="font-semibold">PESTEL</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="segmentacao"
+            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
+          >
+            <Users className="h-5 w-5" />
+            <span className="font-semibold">Segmentação</span>
           </TabsTrigger>
         </TabsList>
 
@@ -147,6 +160,17 @@ export default function Estrategia() {
 
         <TabsContent value="pestel">
           <PestelTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.pestel} />
+        </TabsContent>
+
+        <TabsContent value="segmentacao">
+          <SegmentacaoTab
+            roundId={currentRound.id}
+            roundNumber={currentRound.roundNumber}
+            roundStatus={currentRound.status}
+            businessType={businessType}
+            b2cData={strategy?.segmentation?.b2c}
+            b2bData={strategy?.segmentation?.b2b}
+          />
         </TabsContent>
       </Tabs>
     </div>
@@ -717,6 +741,228 @@ function PestelTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
         </Button>
       </CardContent>
     </Card>
+    </div>
+  );
+}
+
+// Pedido do professor (2026-09): 5ª ferramenta estratégica, no mesmo estilo
+// de SWOT/Porter/BCG/PESTEL (preenche uma vez, herda automaticamente nas
+// próximas rodadas, pode editar/excluir a qualquer momento). O conteúdo
+// muda conforme o tipo de negócio da turma: B2C usa critérios de
+// segmentação de consumidor (pessoa física), B2B usa critérios de
+// segmentação empresarial. Turma "hibrido" preenche as duas seções.
+const B2C_CATEGORIES = [
+  { key: "demographic" as const, label: "Demográfica", hint: "idade, gênero, renda, escolaridade..." },
+  { key: "geographic" as const, label: "Geográfica", hint: "região, cidade, urbano/rural, clima..." },
+  { key: "psychographic" as const, label: "Psicográfica", hint: "estilo de vida, valores, personalidade..." },
+  { key: "behavioral" as const, label: "Comportamental", hint: "frequência de uso, fidelidade, ocasião de compra..." },
+];
+
+const B2B_CATEGORIES = [
+  { key: "firmographic" as const, label: "Firmográfica", hint: "porte da empresa, setor, faturamento..." },
+  { key: "geographic" as const, label: "Geográfica", hint: "alcance regional/nacional das empresas-alvo..." },
+  { key: "behavioral" as const, label: "Comportamental/Operacional", hint: "volume de compra, frequência, critérios de decisão..." },
+  { key: "buyingCenter" as const, label: "Centro de Compras", hint: "quem decide: usuários, influenciadores, decisores, compradores..." },
+];
+
+type SegmentationCategoryKey = "demographic" | "geographic" | "psychographic" | "behavioral" | "firmographic" | "buyingCenter";
+
+function SegmentacaoTab({
+  roundId,
+  roundNumber,
+  roundStatus,
+  businessType,
+  b2cData,
+  b2bData,
+}: {
+  roundId: string;
+  roundNumber: number;
+  roundStatus: string;
+  businessType: string;
+  b2cData?: any;
+  b2bData?: any;
+}) {
+  const requiredTypes: Array<"b2c" | "b2b"> = businessType === "hibrido" ? ["b2c", "b2b"] : businessType === "b2b" ? ["b2b"] : ["b2c"];
+
+  return (
+    <div className="space-y-6">
+      {requiredTypes.includes("b2c") && (
+        <SegmentationSection
+          segmentType="b2c"
+          title="Segmentação de Mercado — Consumidor (B2C)"
+          description="Defina os segmentos de pessoas físicas que sua empresa vai atender"
+          color="#c026d3"
+          categories={B2C_CATEGORIES}
+          roundId={roundId}
+          roundNumber={roundNumber}
+          roundStatus={roundStatus}
+          data={b2cData}
+        />
+      )}
+      {requiredTypes.includes("b2b") && (
+        <SegmentationSection
+          segmentType="b2b"
+          title="Segmentação de Mercado — Empresas (B2B)"
+          description="Defina os segmentos de empresas-cliente que seu negócio vai atender"
+          color="#0891b2"
+          categories={B2B_CATEGORIES}
+          roundId={roundId}
+          roundNumber={roundNumber}
+          roundStatus={roundStatus}
+          data={b2bData}
+        />
+      )}
+    </div>
+  );
+}
+
+function SegmentationSection({
+  segmentType,
+  title,
+  description,
+  color,
+  categories,
+  roundId,
+  roundNumber,
+  roundStatus,
+  data,
+}: {
+  segmentType: "b2c" | "b2b";
+  title: string;
+  description: string;
+  color: string;
+  categories: { key: SegmentationCategoryKey; label: string; hint: string }[];
+  roundId: string;
+  roundNumber: number;
+  roundStatus: string;
+  data?: any;
+}) {
+  const { toast } = useToast();
+  const hasData = Boolean(data);
+
+  const emptyState = () => {
+    const state: Record<string, string[]> = {};
+    categories.forEach(cat => { state[cat.key] = data?.[cat.key] || []; });
+    return state;
+  };
+  const emptyNewItem = () => {
+    const state: Record<string, string> = {};
+    categories.forEach(cat => { state[cat.key] = ""; });
+    return state;
+  };
+
+  const [segmentation, setSegmentation] = useState<Record<string, string[]>>(emptyState);
+  const [newItem, setNewItem] = useState<Record<string, string>>(emptyNewItem);
+
+  useEffect(() => {
+    setSegmentation(emptyState());
+    setNewItem(emptyNewItem());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, roundId]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const finalSegmentation = { ...segmentation };
+      categories.forEach(cat => {
+        if (newItem[cat.key]?.trim()) {
+          finalSegmentation[cat.key] = [...finalSegmentation[cat.key], newItem[cat.key]];
+        }
+      });
+      const res = await apiRequest("POST", "/api/strategy/segmentation", { roundId, segmentType, ...finalSegmentation });
+      return res.json();
+    },
+    onSuccess: () => {
+      setNewItem(emptyNewItem());
+      queryClient.invalidateQueries({ queryKey: ["/api/strategy", roundId] });
+      toast({ title: "Segmentação salva!", description: "Sua análise foi atualizada." });
+    },
+  });
+
+  const addItem = (category: SegmentationCategoryKey) => {
+    if (newItem[category]?.trim()) {
+      setSegmentation((prev) => ({ ...prev, [category]: [...prev[category], newItem[category]] }));
+      setNewItem((prev) => ({ ...prev, [category]: "" }));
+    }
+  };
+
+  const removeItem = (category: SegmentationCategoryKey, index: number) => {
+    setSegmentation((prev) => ({ ...prev, [category]: prev[category].filter((_: any, i: number) => i !== index) }));
+  };
+
+  return (
+    <div className="space-y-4">
+      {roundStatus === "active" && (
+        <Alert className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">
+          <Sparkles className="h-4 w-4" />
+          <AlertDescription>
+            <div className="space-y-1">
+              <p className="font-medium">
+                {roundNumber === 1
+                  ? "✨ Rodada 1: Análise gerada automaticamente pela IA"
+                  : hasData
+                    ? "📋 Análise herdada da rodada anterior"
+                    : "📝 Preencha sua análise estratégica"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {roundNumber === 1
+                  ? "Esta análise foi criada pela IA como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
+                  : hasData
+                    ? "Você já preencheu essa análise antes, e ela continua valendo automaticamente nesta rodada — não precisa reescrever nada. Reveja se ainda faz sentido: edite, exclua ou adicione itens se sua estratégia mudou. Atenção: se a segmentação não bater com o que você está realmente praticando no mix de marketing (preço, canais), isso reduz sua pontuação de alinhamento estratégico."
+                    : "Preencha sua análise estratégica e clique em 'Salvar' — ela vai continuar valendo nas próximas rodadas até você decidir mudar algo."}
+              </p>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+      <Card className="border-2 border-slate-200 dark:border-slate-800">
+        <CardHeader className="bg-muted/30">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: color }}>
+              <Users className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <CardTitle>{title}</CardTitle>
+              <CardDescription>{description}</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            {categories.map((cat) => (
+              <div key={cat.key} className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5" style={{ color }} />
+                  <h3 className="font-semibold">{cat.label}</h3>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder={`Adicionar critério (${cat.hint})`}
+                    value={newItem[cat.key] || ""}
+                    onChange={(e) => setNewItem((prev) => ({ ...prev, [cat.key]: e.target.value }))}
+                    onKeyPress={(e) => e.key === "Enter" && addItem(cat.key)}
+                  />
+                  <Button size="icon" onClick={() => addItem(cat.key)}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {(segmentation[cat.key] || []).map((item: string, idx: number) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 border rounded">
+                      <span className="flex-1 text-sm">{item}</span>
+                      <Button size="icon" variant="ghost" onClick={() => removeItem(cat.key, idx)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || roundStatus !== "active"}>
+            Salvar Segmentação
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

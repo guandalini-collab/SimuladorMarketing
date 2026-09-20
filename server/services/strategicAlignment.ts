@@ -1,4 +1,4 @@
-import type { SwotAnalysis, PorterAnalysis, BcgAnalysis, PestelAnalysis, MarketingMix } from "@shared/schema";
+import type { SwotAnalysis, PorterAnalysis, BcgAnalysis, PestelAnalysis, MarketSegmentation, MarketingMix } from "@shared/schema";
 import { calculateKPIModifiers } from "@shared/alignmentUtils";
 
 export interface AlignmentScore {
@@ -13,6 +13,7 @@ export interface AlignmentAnalysis {
   porterAlignment: AlignmentScore;
   bcgAlignment: AlignmentScore;
   pestelAlignment: AlignmentScore;
+  segmentationAlignment: AlignmentScore;
   kpiModifiers: {
     revenueModifier: number;
     profitModifier: number;
@@ -31,13 +32,24 @@ export interface AlignmentParams {
   porter: PorterAnalysis | null;
   bcg: BcgAnalysis | null;
   pestel: PestelAnalysis | null;
+  // Segmentação de Mercado (5ª ferramenta, pedido do professor 2026-09):
+  // lista porque uma turma híbrida pode ter até 2 linhas (uma "b2c" e uma
+  // "b2b") — mesmo padrão de "bcg" ser array em vez de valor único.
+  segmentation: MarketSegmentation[];
+  businessType: string | null | undefined;
   marketingMix: MarketingMix;
   aiAssistanceLevel: number;
   swotAiPercentage?: number;
   porterAiPercentage?: number;
   bcgAiPercentage?: number;
   pestelAiPercentage?: number;
+  segmentationAiPercentage?: number;
 }
+
+// Com 5 ferramentas estratégicas (SWOT, Porter, BCG, PESTEL, Segmentação),
+// cada uma pesa igualmente 1/5 do bloco de análise (antes eram 4 ferramentas
+// de 0.25 cada, somando 1.0 — mantém a mesma soma total agora com 5×0.2).
+const TOOL_WEIGHT = 0.2;
 
 function calculateAiContentPenalty(aiPercentage: number | undefined, toolName: string): { penalty: number; description: string | null } {
   if (aiPercentage === undefined || aiPercentage === 0) {
@@ -62,28 +74,32 @@ function calculateAiContentPenalty(aiPercentage: number | undefined, toolName: s
 }
 
 export function calculateStrategicAlignment(params: AlignmentParams): AlignmentAnalysis {
-  const { 
-    swot, 
-    porter, 
-    bcg, 
-    pestel, 
-    marketingMix, 
+  const {
+    swot,
+    porter,
+    bcg,
+    pestel,
+    segmentation,
+    businessType,
+    marketingMix,
     aiAssistanceLevel,
     swotAiPercentage,
     porterAiPercentage,
     bcgAiPercentage,
-    pestelAiPercentage
+    pestelAiPercentage,
+    segmentationAiPercentage
   } = params;
 
-  const completionScore = calculateCompletionScore(swot, porter, bcg, pestel);
+  const completionScore = calculateCompletionScore(swot, porter, bcg, pestel, segmentation, businessType);
 
   const swotAlignment = analyzeSwotAlignment(swot, marketingMix);
   const porterAlignment = analyzePorterAlignment(porter, marketingMix);
   const bcgAlignment = analyzeBcgAlignment(bcg, marketingMix);
   const pestelAlignment = analyzePestelAlignment(pestel, marketingMix);
+  const segmentationAlignment = analyzeSegmentationAlignment(segmentation, businessType, marketingMix);
 
   const aiPenalties: Array<{ description: string; impact: number }> = [];
-  
+
   const swotAiPenalty = calculateAiContentPenalty(swotAiPercentage, "SWOT");
   if (swotAiPenalty.description) {
     aiPenalties.push({ description: swotAiPenalty.description, impact: swotAiPenalty.penalty });
@@ -104,20 +120,26 @@ export function calculateStrategicAlignment(params: AlignmentParams): AlignmentA
     aiPenalties.push({ description: pestelAiPenalty.description, impact: pestelAiPenalty.penalty });
   }
 
-  const totalAiPenalty = swotAiPenalty.penalty + porterAiPenalty.penalty + bcgAiPenalty.penalty + pestelAiPenalty.penalty;
+  const segmentationAiPenalty = calculateAiContentPenalty(segmentationAiPercentage, "Segmentação de Mercado");
+  if (segmentationAiPenalty.description) {
+    aiPenalties.push({ description: segmentationAiPenalty.description, impact: segmentationAiPenalty.penalty });
+  }
+
+  const totalAiPenalty = swotAiPenalty.penalty + porterAiPenalty.penalty + bcgAiPenalty.penalty + pestelAiPenalty.penalty + segmentationAiPenalty.penalty;
 
   const overallScore = calculateOverallScore(
     completionScore,
     swotAlignment,
     porterAlignment,
     bcgAlignment,
-    pestelAlignment
+    pestelAlignment,
+    segmentationAlignment
   );
 
   const adjustedScore = Math.max(0, Math.min(100, overallScore + totalAiPenalty));
 
   const kpiModifiers = calculateKPIModifiers(adjustedScore);
-  const alignmentPenalties = compilePenalties(swotAlignment, porterAlignment, bcgAlignment, pestelAlignment, completionScore);
+  const alignmentPenalties = compilePenalties(swotAlignment, porterAlignment, bcgAlignment, pestelAlignment, segmentationAlignment, completionScore);
   const allPenalties = [...alignmentPenalties, ...aiPenalties];
 
   return {
@@ -126,6 +148,7 @@ export function calculateStrategicAlignment(params: AlignmentParams): AlignmentA
     porterAlignment,
     bcgAlignment,
     pestelAlignment,
+    segmentationAlignment,
     kpiModifiers,
     penalties: allPenalties,
     level: aiAssistanceLevel,
@@ -137,17 +160,62 @@ function calculateCompletionScore(
   swot: SwotAnalysis | null,
   porter: PorterAnalysis | null,
   bcg: BcgAnalysis | null,
-  pestel: PestelAnalysis | null
+  pestel: PestelAnalysis | null,
+  segmentation: MarketSegmentation[],
+  businessType: string | null | undefined
 ): number {
   let completed = 0;
-  let total = 4;
+  let total = 5;
 
   if (swot && isSwotComplete(swot)) completed++;
   if (porter && isPorterComplete(porter)) completed++;
   if (bcg && isBcgComplete(bcg)) completed++;
   if (pestel && isPestelComplete(pestel)) completed++;
+  if (isSegmentationComplete(segmentation, businessType)) completed++;
 
   return (completed / total) * 100;
+}
+
+// Turma "hibrido" precisa das duas linhas (b2c e b2b) completas; qualquer
+// outro businessType (ou ausência de valor) precisa só da linha "b2c" —
+// mesmo critério usado em routes.ts (isSegmentationComplete) para as
+// validações obrigatórias de envio do mix de marketing.
+function getRequiredSegmentTypes(businessType: string | null | undefined): Array<"b2c" | "b2b"> {
+  if (businessType === "hibrido") return ["b2c", "b2b"];
+  if (businessType === "b2b") return ["b2b"];
+  return ["b2c"];
+}
+
+function isValidSegmentationArray(arr: string[] | null | undefined): boolean {
+  if (!arr || arr.length < 1) return false;
+  return arr.some(item => {
+    const trimmed = item.trim();
+    return trimmed.length > 5 && !trimmed.startsWith("[") && !trimmed.endsWith("]");
+  });
+}
+
+function isSegmentationRowComplete(segmentation: MarketSegmentation): boolean {
+  if (segmentation.segmentType === "b2b") {
+    return (
+      isValidSegmentationArray(segmentation.firmographic) &&
+      isValidSegmentationArray(segmentation.geographic) &&
+      isValidSegmentationArray(segmentation.behavioral) &&
+      isValidSegmentationArray(segmentation.buyingCenter)
+    );
+  }
+  return (
+    isValidSegmentationArray(segmentation.demographic) &&
+    isValidSegmentationArray(segmentation.geographic) &&
+    isValidSegmentationArray(segmentation.psychographic) &&
+    isValidSegmentationArray(segmentation.behavioral)
+  );
+}
+
+function isSegmentationComplete(segmentation: MarketSegmentation[], businessType: string | null | undefined): boolean {
+  return getRequiredSegmentTypes(businessType).every(type => {
+    const row = segmentation.find(s => s.segmentType === type);
+    return !!row && isSegmentationRowComplete(row);
+  });
 }
 
 function isSwotComplete(swot: SwotAnalysis): boolean {
@@ -215,7 +283,7 @@ function analyzeSwotAlignment(swot: SwotAnalysis | null, mix: MarketingMix): Ali
   let alignmentPoints = 100;
 
   if (!swot) {
-    return { score: 0, issues: ["Análise SWOT não realizada"], weight: 0.25 };
+    return { score: 0, issues: ["Análise SWOT não realizada"], weight: TOOL_WEIGHT };
   }
 
   if (!isSwotComplete(swot)) {
@@ -278,7 +346,7 @@ function analyzeSwotAlignment(swot: SwotAnalysis | null, mix: MarketingMix): Ali
   }
 
   const score = Math.max(0, Math.min(100, alignmentPoints));
-  return { score, issues, weight: 0.25 };
+  return { score, issues, weight: TOOL_WEIGHT };
 }
 
 function analyzePorterAlignment(porter: PorterAnalysis | null, mix: MarketingMix): AlignmentScore {
@@ -286,7 +354,7 @@ function analyzePorterAlignment(porter: PorterAnalysis | null, mix: MarketingMix
   let alignmentPoints = 100;
 
   if (!porter) {
-    return { score: 0, issues: ["Análise Porter não realizada"], weight: 0.25 };
+    return { score: 0, issues: ["Análise Porter não realizada"], weight: TOOL_WEIGHT };
   }
 
   if (!isPorterComplete(porter)) {
@@ -330,7 +398,7 @@ function analyzePorterAlignment(porter: PorterAnalysis | null, mix: MarketingMix
   }
 
   const score = Math.max(0, Math.min(100, alignmentPoints));
-  return { score, issues, weight: 0.25 };
+  return { score, issues, weight: TOOL_WEIGHT };
 }
 
 function analyzeBcgAlignment(bcg: BcgAnalysis | null, mix: MarketingMix): AlignmentScore {
@@ -338,7 +406,7 @@ function analyzeBcgAlignment(bcg: BcgAnalysis | null, mix: MarketingMix): Alignm
   let alignmentPoints = 100;
 
   if (!bcg) {
-    return { score: 0, issues: ["Análise BCG não realizada"], weight: 0.25 };
+    return { score: 0, issues: ["Análise BCG não realizada"], weight: TOOL_WEIGHT };
   }
 
   if (!isBcgComplete(bcg)) {
@@ -384,7 +452,7 @@ function analyzeBcgAlignment(bcg: BcgAnalysis | null, mix: MarketingMix): Alignm
   }
 
   const score = Math.max(0, Math.min(100, alignmentPoints));
-  return { score, issues, weight: 0.25 };
+  return { score, issues, weight: TOOL_WEIGHT };
 }
 
 function analyzePestelAlignment(pestel: PestelAnalysis | null, mix: MarketingMix): AlignmentScore {
@@ -392,7 +460,7 @@ function analyzePestelAlignment(pestel: PestelAnalysis | null, mix: MarketingMix
   let alignmentPoints = 100;
 
   if (!pestel) {
-    return { score: 0, issues: ["Análise PESTEL não realizada"], weight: 0.25 };
+    return { score: 0, issues: ["Análise PESTEL não realizada"], weight: TOOL_WEIGHT };
   }
 
   if (!isPestelComplete(pestel)) {
@@ -465,7 +533,96 @@ function analyzePestelAlignment(pestel: PestelAnalysis | null, mix: MarketingMix
   }
 
   const score = Math.max(0, Math.min(100, alignmentPoints));
-  return { score, issues, weight: 0.25 };
+  return { score, issues, weight: TOOL_WEIGHT };
+}
+
+// Segmentação de Mercado x Mix de Marketing: mesma lógica das outras 4
+// ferramentas — a equipe é penalizada quando o segmento-alvo que ela mesma
+// declarou não bate com o que está de fato praticando no mix (preço,
+// canais). Os critérios de B2C (demographic/psychographic/behavioral) só
+// são checados se a equipe tiver uma linha "b2c"; os de B2B
+// (firmographic/buyingCenter) só se tiver uma linha "b2b" — turma híbrida
+// checa as duas.
+function analyzeSegmentationAlignment(
+  segmentation: MarketSegmentation[],
+  businessType: string | null | undefined,
+  mix: MarketingMix
+): AlignmentScore {
+  const issues: string[] = [];
+  let alignmentPoints = 100;
+
+  const requiredTypes = getRequiredSegmentTypes(businessType);
+  const b2c = segmentation.find(s => s.segmentType === "b2c");
+  const b2b = segmentation.find(s => s.segmentType === "b2b");
+
+  if (segmentation.length === 0) {
+    return { score: 0, issues: ["Segmentação de Mercado não realizada"], weight: TOOL_WEIGHT };
+  }
+
+  if (!isSegmentationComplete(segmentation, businessType)) {
+    issues.push("Segmentação de Mercado incompleta");
+    alignmentPoints -= 30;
+  }
+
+  const matchesKeyword = (arr: string[] | null | undefined, keywords: string[]): boolean =>
+    !!arr && arr.some(item => keywords.some(kw => item.toLowerCase().includes(kw)));
+
+  const hasDigitalChannel = mix.distributionChannels.some(channel =>
+    channel.toLowerCase() === "ecommerce" ||
+    channel.toLowerCase() === "marketplace"
+  );
+  const hasHighTouchChannel = mix.distributionChannels.some(channel =>
+    channel.toLowerCase() === "direto" ||
+    channel.toLowerCase() === "franquias"
+  );
+
+  if (requiredTypes.includes("b2c") && b2c) {
+    const hasPremiumSegment = matchesKeyword(b2c.demographic, ["alta renda", "classe a", "alto padrão", "premium"]) ||
+      matchesKeyword(b2c.psychographic, ["premium", "sofisticado", "exclusividade"]);
+    const hasPopularSegment = matchesKeyword(b2c.demographic, ["classe c", "classe d", "baixa renda", "popular"]) ||
+      matchesKeyword(b2c.behavioral, ["econômico", "sensível a preço", "promoção"]);
+    const hasDigitalBehavior = matchesKeyword(b2c.behavioral, ["digital", "online", "redes sociais", "aplicativo"]) ||
+      matchesKeyword(b2c.psychographic, ["digital", "conectado"]);
+
+    if (hasPremiumSegment && mix.priceValue && mix.priceValue < 15) {
+      issues.push("Segmentação B2C indica público de alta renda/premium, mas o preço está muito baixo");
+      alignmentPoints -= 18;
+    }
+
+    if (hasPopularSegment && mix.priceValue && mix.priceValue > 30) {
+      issues.push("Segmentação B2C indica público de menor renda/popular, mas o preço está alto");
+      alignmentPoints -= 18;
+    }
+
+    if (hasDigitalBehavior && !hasDigitalChannel) {
+      issues.push("Segmentação B2C indica consumidor digital, mas os canais de venda são majoritariamente tradicionais");
+      alignmentPoints -= 15;
+    }
+  }
+
+  if (requiredTypes.includes("b2b") && b2b) {
+    const hasEnterpriseSegment = matchesKeyword(b2b.firmographic, ["grande porte", "grandes empresas", "corporaç", "multinacional", "enterprise"]);
+    const hasSmallBusinessSegment = matchesKeyword(b2b.firmographic, ["pequeno porte", "pequenas empresas", "mei", "microempresa"]);
+    const hasLongBuyingCycle = matchesKeyword(b2b.buyingCenter, ["comitê", "comite", "decisão longa", "múltiplos decisores", "multiplos decisores"]);
+
+    if (hasEnterpriseSegment && !hasHighTouchChannel) {
+      issues.push("Segmentação B2B indica clientes de grande porte, mas os canais praticados são de venda em massa (varejo/e-commerce), sem canal direto/relacionamento");
+      alignmentPoints -= 18;
+    }
+
+    if (hasSmallBusinessSegment && getTotalPromotion(mix) > 25000) {
+      issues.push("Segmentação B2B indica pequenas empresas como público-alvo, mas o investimento promocional está desproporcional a esse ticket");
+      alignmentPoints -= 12;
+    }
+
+    if (hasLongBuyingCycle && mix.priceStrategy === "penetracao") {
+      issues.push("Segmentação B2B indica ciclo de decisão longo (comitê de compras), pouco compatível com estratégia de penetração por preço baixo");
+      alignmentPoints -= 15;
+    }
+  }
+
+  const score = Math.max(0, Math.min(100, alignmentPoints));
+  return { score, issues, weight: TOOL_WEIGHT };
 }
 
 function calculateOverallScore(
@@ -473,7 +630,8 @@ function calculateOverallScore(
   swot: AlignmentScore,
   porter: AlignmentScore,
   bcg: AlignmentScore,
-  pestel: AlignmentScore
+  pestel: AlignmentScore,
+  segmentation: AlignmentScore
 ): number {
   const completionWeight = 0.3;
   const analysisWeight = 0.7;
@@ -482,7 +640,8 @@ function calculateOverallScore(
     swot.score * swot.weight +
     porter.score * porter.weight +
     bcg.score * bcg.weight +
-    pestel.score * pestel.weight
+    pestel.score * pestel.weight +
+    segmentation.score * segmentation.weight
   );
 
   const overallScore = (completionScore * completionWeight) + (weightedAnalysisScore * analysisWeight);
@@ -501,19 +660,22 @@ function compilePenalties(
   porter: AlignmentScore,
   bcg: AlignmentScore,
   pestel: AlignmentScore,
+  segmentation: AlignmentScore,
   completionScore: number
 ): Array<{ description: string; impact: number }> {
   const penalties: Array<{ description: string; impact: number }> = [];
 
   if (completionScore < 100) {
-    const missingAnalyses = Math.round((100 - completionScore) / 25);
+    // 5 ferramentas agora (SWOT, Porter, BCG, PESTEL, Segmentação) — cada
+    // uma ausente representa 20 pontos de completionScore, não mais 25.
+    const missingAnalyses = Math.round((100 - completionScore) / 20);
     penalties.push({
       description: `${missingAnalyses} análise(s) estratégica(s) não concluída(s) - penalização de -10%`,
       impact: -10,
     });
   }
 
-  [...swot.issues, ...porter.issues, ...bcg.issues, ...pestel.issues].forEach(issue => {
+  [...swot.issues, ...porter.issues, ...bcg.issues, ...pestel.issues, ...segmentation.issues].forEach(issue => {
     const impact = calculateIssueImpact(issue);
     if (impact < 0) {
       penalties.push({ description: issue, impact });
@@ -544,6 +706,8 @@ export interface ProductAlignmentParams {
   porter: PorterAnalysis | null;
   bcg: BcgAnalysis | null;
   pestel: PestelAnalysis | null;
+  segmentation: MarketSegmentation[];
+  businessType: string | null | undefined;
   marketingMix: MarketingMix;
   aiAssistanceLevel: number;
   budget: number;
@@ -562,6 +726,8 @@ export function calculateProductAlignment(params: ProductAlignmentParams): Produ
     porter: params.porter,
     bcg: params.bcg,
     pestel: params.pestel,
+    segmentation: params.segmentation,
+    businessType: params.businessType,
     marketingMix: params.marketingMix,
     aiAssistanceLevel: params.aiAssistanceLevel,
   });
@@ -580,10 +746,11 @@ export function calculateConsolidatedAlignment(
   if (productAlignments.length === 0) {
     return {
       overallScore: 0,
-      swotAlignment: { score: 0, issues: ["Nenhum produto analisado"], weight: 0.25 },
-      porterAlignment: { score: 0, issues: ["Nenhum produto analisado"], weight: 0.25 },
-      bcgAlignment: { score: 0, issues: ["Nenhum produto analisado"], weight: 0.25 },
-      pestelAlignment: { score: 0, issues: ["Nenhum produto analisado"], weight: 0.25 },
+      swotAlignment: { score: 0, issues: ["Nenhum produto analisado"], weight: TOOL_WEIGHT },
+      porterAlignment: { score: 0, issues: ["Nenhum produto analisado"], weight: TOOL_WEIGHT },
+      bcgAlignment: { score: 0, issues: ["Nenhum produto analisado"], weight: TOOL_WEIGHT },
+      pestelAlignment: { score: 0, issues: ["Nenhum produto analisado"], weight: TOOL_WEIGHT },
+      segmentationAlignment: { score: 0, issues: ["Nenhum produto analisado"], weight: TOOL_WEIGHT },
       kpiModifiers: {
         revenueModifier: -0.25,
         profitModifier: -0.35,
@@ -618,7 +785,7 @@ export function calculateConsolidatedAlignment(
       productName: p.productName,
       issues: p.alignment.swotAlignment.issues,
     }))),
-    weight: 0.25,
+    weight: TOOL_WEIGHT,
   };
 
   const consolidatedPorter: AlignmentScore = {
@@ -630,7 +797,7 @@ export function calculateConsolidatedAlignment(
       productName: p.productName,
       issues: p.alignment.porterAlignment.issues,
     }))),
-    weight: 0.25,
+    weight: TOOL_WEIGHT,
   };
 
   const consolidatedBcg: AlignmentScore = {
@@ -642,7 +809,7 @@ export function calculateConsolidatedAlignment(
       productName: p.productName,
       issues: p.alignment.bcgAlignment.issues,
     }))),
-    weight: 0.25,
+    weight: TOOL_WEIGHT,
   };
 
   const consolidatedPestel: AlignmentScore = {
@@ -654,7 +821,19 @@ export function calculateConsolidatedAlignment(
       productName: p.productName,
       issues: p.alignment.pestelAlignment.issues,
     }))),
-    weight: 0.25,
+    weight: TOOL_WEIGHT,
+  };
+
+  const consolidatedSegmentation: AlignmentScore = {
+    score: productAlignments.reduce((sum, p) => {
+      const weight = useEqualWeights ? equalWeight : (p.budget / totalBudget);
+      return sum + (p.alignment.segmentationAlignment.score * weight);
+    }, 0),
+    issues: consolidateIssues(productAlignments.map(p => ({
+      productName: p.productName,
+      issues: p.alignment.segmentationAlignment.issues,
+    }))),
+    weight: TOOL_WEIGHT,
   };
 
   const avgAiLevel = Math.round(
@@ -671,6 +850,7 @@ export function calculateConsolidatedAlignment(
     porterAlignment: consolidatedPorter,
     bcgAlignment: consolidatedBcg,
     pestelAlignment: consolidatedPestel,
+    segmentationAlignment: consolidatedSegmentation,
     kpiModifiers,
     penalties: consolidatedPenalties,
     level: avgAiLevel,

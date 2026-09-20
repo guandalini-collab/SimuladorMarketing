@@ -26,6 +26,8 @@ import {
   type InsertBcg,
   type PestelAnalysis,
   type InsertPestel,
+  type MarketSegmentation,
+  type InsertMarketSegmentation,
   type EconomicData,
   type InsertEconomicData,
   type AutoEventConfig,
@@ -53,6 +55,7 @@ import {
   porterAnalysis,
   bcgAnalysis,
   pestelAnalysis,
+  marketSegmentation,
   economicData,
   autoEventConfig,
   aiFeedback,
@@ -535,6 +538,7 @@ export class PgStorage implements IStorage {
     await db.delete(porterAnalysis).where(eq(porterAnalysis.teamId, id));
     await db.delete(bcgAnalysis).where(eq(bcgAnalysis.teamId, id));
     await db.delete(pestelAnalysis).where(eq(pestelAnalysis.teamId, id));
+    await db.delete(marketSegmentation).where(eq(marketSegmentation.teamId, id));
     await db.delete(aiFeedback).where(eq(aiFeedback.teamId, id));
     // Grupo F (auditoria de 2026-09): product_results e
     // strategic_recommendations também têm team_id NOT NULL sem
@@ -636,6 +640,9 @@ export class PgStorage implements IStorage {
       // Check for PESTEL analyses
       const pestelData = await db.select({ id: pestelAnalysis.id }).from(pestelAnalysis).where(eq(pestelAnalysis.roundId, roundId)).limit(1);
       if (pestelData.length > 0) details.push("análises PESTEL");
+
+      const segmentationData = await db.select({ id: marketSegmentation.id }).from(marketSegmentation).where(eq(marketSegmentation.roundId, roundId)).limit(1);
+      if (segmentationData.length > 0) details.push("análises de Segmentação de Mercado");
 
       // Grupo F (auditoria de 2026-09): faltavam 4 tabelas com round_id que
       // também podem ter dados associados à rodada — a checagem incompleta
@@ -1104,6 +1111,52 @@ export class PgStorage implements IStorage {
     return result[0];
   }
 
+  async getMarketSegmentation(teamId: string, roundId: string, segmentType: string, productId?: string): Promise<MarketSegmentation | undefined> {
+    const baseConditions = [
+      eq(marketSegmentation.teamId, teamId),
+      eq(marketSegmentation.roundId, roundId),
+      eq(marketSegmentation.segmentType, segmentType),
+    ];
+    const conditions = productId !== undefined
+      ? [...baseConditions, eq(marketSegmentation.productId, productId)]
+      : baseConditions;
+    const result = await db.select().from(marketSegmentation)
+      .where(and(...conditions))
+      .limit(1);
+    return result[0];
+  }
+
+  async getMarketSegmentationsByTeamAndRound(teamId: string, roundId: string): Promise<MarketSegmentation[]> {
+    return db.select().from(marketSegmentation)
+      .where(and(eq(marketSegmentation.teamId, teamId), eq(marketSegmentation.roundId, roundId)));
+  }
+
+  async createMarketSegmentation(segmentation: InsertMarketSegmentation & { teamId: string }): Promise<MarketSegmentation> {
+    // Mesmo padrão de createPestelAnalysis — trata a rejeição da constraint
+    // única "segmentation_unique_team_round_product_type" como upsert.
+    try {
+      const result = await db.insert(marketSegmentation).values(segmentation).returning();
+      return result[0];
+    } catch (e: any) {
+      if (e?.code === "23505") {
+        const existing = await this.getMarketSegmentation(segmentation.teamId, segmentation.roundId, segmentation.segmentType, segmentation.productId ?? undefined);
+        if (existing) {
+          const updated = await this.updateMarketSegmentation(existing.id, segmentation);
+          if (updated) return updated;
+        }
+      }
+      throw e;
+    }
+  }
+
+  async updateMarketSegmentation(id: string, data: Partial<MarketSegmentation>): Promise<MarketSegmentation | undefined> {
+    const result = await db.update(marketSegmentation)
+      .set(data)
+      .where(eq(marketSegmentation.id, id))
+      .returning();
+    return result[0];
+  }
+
   async getLatestEconomicData(): Promise<EconomicData | undefined> {
     const result = await db.select().from(economicData)
       .orderBy(desc(economicData.date))
@@ -1454,7 +1507,12 @@ export class PgStorage implements IStorage {
     const deletedPestel = await db.delete(pestelAnalysis)
       .where(and(eq(pestelAnalysis.teamId, teamId), eq(pestelAnalysis.roundId, roundId)))
       .returning();
-    
+
+    // Delete Market Segmentation analyses
+    const deletedSegmentation = await db.delete(marketSegmentation)
+      .where(and(eq(marketSegmentation.teamId, teamId), eq(marketSegmentation.roundId, roundId)))
+      .returning();
+
     // Delete Strategic Recommendations
     const deletedRecommendations = await db.delete(strategicRecommendations)
       .where(and(eq(strategicRecommendations.teamId, teamId), eq(strategicRecommendations.roundId, roundId)))
@@ -1470,7 +1528,7 @@ export class PgStorage implements IStorage {
       .where(and(eq(teamProducts.teamId, teamId), eq(teamProducts.roundId, roundId)))
       .returning();
     
-    const totalAnalyses = deletedSwot.length + deletedPorter.length + deletedBcg.length + deletedPestel.length + deletedRecommendations.length;
+    const totalAnalyses = deletedSwot.length + deletedPorter.length + deletedBcg.length + deletedPestel.length + deletedSegmentation.length + deletedRecommendations.length;
     
     return {
       deletedAnalyses: totalAnalyses,

@@ -23,6 +23,8 @@ import {
   type InsertBcg,
   type PestelAnalysis,
   type InsertPestel,
+  type MarketSegmentation,
+  type InsertMarketSegmentation,
   type EconomicData,
   type InsertEconomicData,
   type AutoEventConfig,
@@ -162,7 +164,15 @@ export interface IStorage {
   getPestelAnalysesByTeamAndRound(teamId: string, roundId: string): Promise<PestelAnalysis[]>;
   createPestelAnalysis(pestel: InsertPestel & { teamId: string }): Promise<PestelAnalysis>;
   updatePestelAnalysis(id: string, data: Partial<PestelAnalysis>): Promise<PestelAnalysis | undefined>;
-  
+
+  // Segmentação de Mercado (5ª ferramenta estratégica, pedido do professor
+  // 2026-09) — segmentType é "b2c" ou "b2b"; uma turma híbrida pode ter as
+  // duas linhas para a mesma equipe/rodada/produto.
+  getMarketSegmentation(teamId: string, roundId: string, segmentType: string, productId?: string): Promise<MarketSegmentation | undefined>;
+  getMarketSegmentationsByTeamAndRound(teamId: string, roundId: string): Promise<MarketSegmentation[]>;
+  createMarketSegmentation(segmentation: InsertMarketSegmentation & { teamId: string }): Promise<MarketSegmentation>;
+  updateMarketSegmentation(id: string, data: Partial<MarketSegmentation>): Promise<MarketSegmentation | undefined>;
+
   getLatestEconomicData(): Promise<EconomicData | undefined>;
   createEconomicData(data: InsertEconomicData): Promise<EconomicData>;
   getAllEconomicData(limit?: number): Promise<EconomicData[]>;
@@ -238,6 +248,7 @@ export class MemStorage implements IStorage {
   private porterAnalyses: Map<string, PorterAnalysis>;
   private bcgAnalyses: Map<string, BcgAnalysis>;
   private pestelAnalyses: Map<string, PestelAnalysis>;
+  private marketSegmentations: Map<string, MarketSegmentation>;
   private economicDataList: Map<string, EconomicData>;
   private autoEventConfigs: Map<string, AutoEventConfig>;
   private aiFeedbacks: Map<string, AiFeedback>;
@@ -266,6 +277,7 @@ export class MemStorage implements IStorage {
     this.porterAnalyses = new Map();
     this.bcgAnalyses = new Map();
     this.pestelAnalyses = new Map();
+    this.marketSegmentations = new Map();
     this.economicDataList = new Map();
     this.autoEventConfigs = new Map();
     this.aiFeedbacks = new Map();
@@ -690,6 +702,11 @@ export class MemStorage implements IStorage {
       this.pestelAnalyses.delete(pestel.id);
     }
 
+    const segmentations = Array.from(this.marketSegmentations.values()).filter(s => s.teamId === id);
+    for (const segmentation of segmentations) {
+      this.marketSegmentations.delete(segmentation.id);
+    }
+
     // Grupo F (auditoria de 2026-09): faltavam 5 mapas com teamId aqui —
     // ai_feedback (o PgStorage já limpava, mas o MemStorage não), product_results
     // e strategic_recommendations (nenhuma das duas implementações limpava),
@@ -1104,6 +1121,9 @@ export class MemStorage implements IStorage {
     const pestelCount = Array.from(this.pestelAnalyses.values()).filter(p => p.roundId === roundId).length;
     if (pestelCount > 0) details.push(`${pestelCount} análises PESTEL`);
 
+    const segmentationCount = Array.from(this.marketSegmentations.values()).filter(s => s.roundId === roundId).length;
+    if (segmentationCount > 0) details.push(`${segmentationCount} análises de Segmentação de Mercado`);
+
     // Grupo F: mesma checagem completa adicionada no PgStorage.
     const productResultsCount = Array.from(this.productResults.values()).filter(pr => pr.roundId === roundId).length;
     if (productResultsCount > 0) details.push(`${productResultsCount} resultados por produto`);
@@ -1490,6 +1510,52 @@ export class MemStorage implements IStorage {
     if (!existing) return undefined;
     const updated = { ...existing, ...data, updatedAt: new Date() };
     this.pestelAnalyses.set(id, updated);
+    return updated;
+  }
+
+  async getMarketSegmentation(teamId: string, roundId: string, segmentType: string, productId?: string): Promise<MarketSegmentation | undefined> {
+    const matches = Array.from(this.marketSegmentations.values()).filter(
+      seg => seg.teamId === teamId && seg.roundId === roundId && seg.segmentType === segmentType &&
+             (productId !== undefined ? seg.productId === productId : true)
+    );
+    return matches[0];
+  }
+
+  async getMarketSegmentationsByTeamAndRound(teamId: string, roundId: string): Promise<MarketSegmentation[]> {
+    return Array.from(this.marketSegmentations.values()).filter(
+      seg => seg.teamId === teamId && seg.roundId === roundId
+    );
+  }
+
+  async createMarketSegmentation(insertSegmentation: InsertMarketSegmentation & { teamId: string }): Promise<MarketSegmentation> {
+    const id = randomUUID();
+    const segmentation: MarketSegmentation = {
+      id,
+      teamId: insertSegmentation.teamId,
+      roundId: insertSegmentation.roundId,
+      productId: insertSegmentation.productId ?? null,
+      segmentType: insertSegmentation.segmentType,
+      demographic: insertSegmentation.demographic ?? [],
+      geographic: insertSegmentation.geographic ?? [],
+      psychographic: insertSegmentation.psychographic ?? [],
+      behavioral: insertSegmentation.behavioral ?? [],
+      firmographic: insertSegmentation.firmographic ?? [],
+      buyingCenter: insertSegmentation.buyingCenter ?? [],
+      aiGeneratedPercentage: insertSegmentation.aiGeneratedPercentage ?? 0,
+      originalAIContent: insertSegmentation.originalAIContent ?? null,
+      editedByUser: insertSegmentation.editedByUser ?? false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.marketSegmentations.set(id, segmentation);
+    return segmentation;
+  }
+
+  async updateMarketSegmentation(id: string, data: Partial<MarketSegmentation>): Promise<MarketSegmentation | undefined> {
+    const existing = this.marketSegmentations.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, ...data, updatedAt: new Date() };
+    this.marketSegmentations.set(id, updated);
     return updated;
   }
 

@@ -47,9 +47,21 @@ export async function autoGenerateMinimalAnalysesForAllTeams(
         const existingPorter = await storage.getPorterAnalysis(team.id, round.id);
         const existingPestel = await storage.getPestelAnalysis(team.id, round.id);
         const existingBcg = await storage.getBcgAnalyses(team.id, round.id);
+        const existingSegmentations = await storage.getMarketSegmentationsByTeamAndRound(team.id, round.id);
+
+        // Segmentação de Mercado (pedido do professor 2026-09): quais
+        // segmentType a turma precisa ter preenchidos depende do
+        // businessType da turma — "b2c" ou "b2b" exigem só a linha
+        // correspondente, "hibrido" exige as duas.
+        const requiredSegmentTypes = classData.businessType === "hibrido"
+          ? ["b2c", "b2b"]
+          : [classData.businessType === "b2b" ? "b2b" : "b2c"];
+        const hasAllRequiredSegmentations = requiredSegmentTypes.every(
+          type => existingSegmentations.some(s => s.segmentType === type)
+        );
 
         // Se já tem análises completas, pular (não conta como sucesso de geração)
-        if (existingSwot && existingPorter && existingPestel && existingBcg.length > 0) {
+        if (existingSwot && existingPorter && existingPestel && existingBcg.length > 0 && hasAllRequiredSegmentations) {
           console.log(`[AUTO-GEN] Equipe ${team.name} já possui análises - pulando`);
           results.push({
             success: true,
@@ -169,6 +181,32 @@ export async function autoGenerateMinimalAnalysesForAllTeams(
             editedByUser: false,
           });
           console.log(`[AUTO-GEN] PESTEL criada para ${team.name}`);
+        }
+
+        // Salvar Segmentação de Mercado — só o(s) segmentType exigido(s)
+        // pelo businessType da turma (ver requiredSegmentTypes acima).
+        for (const segmentType of requiredSegmentTypes) {
+          const alreadyHasType = existingSegmentations.some(s => s.segmentType === segmentType);
+          if (alreadyHasType) continue;
+
+          const segData = segmentType === "b2b" ? analyses.segmentation.b2b : analyses.segmentation.b2c;
+          const originalSegmentation = { ...segData };
+
+          await storage.createMarketSegmentation({
+            teamId: team.id,
+            roundId: round.id,
+            segmentType,
+            demographic: segmentType === "b2c" ? (segData as typeof analyses.segmentation.b2c).demographic : [],
+            geographic: segData.geographic,
+            psychographic: segmentType === "b2c" ? (segData as typeof analyses.segmentation.b2c).psychographic : [],
+            behavioral: segData.behavioral,
+            firmographic: segmentType === "b2b" ? (segData as typeof analyses.segmentation.b2b).firmographic : [],
+            buyingCenter: segmentType === "b2b" ? (segData as typeof analyses.segmentation.b2b).buyingCenter : [],
+            aiGeneratedPercentage: 100,
+            originalAIContent: originalSegmentation,
+            editedByUser: false,
+          });
+          console.log(`[AUTO-GEN] Segmentação (${segmentType}) criada para ${team.name}`);
         }
 
         results.push({

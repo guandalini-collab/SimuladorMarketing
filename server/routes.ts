@@ -2,7 +2,7 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertClassSchema, insertClassFormSchema, insertTeamSchema, insertRoundSchema, insertMarketEventSchema, insertMarketingMixSchema, updateTeamIdentitySchema, updateTeamLogoSchema, updateTeamLeaderSchema, updateClassMarketSchema, updateTeamBudgetSchema, insertSwotSchema, insertPorterSchema, insertBcgSchema, insertPestelSchema } from "@shared/schema";
+import { insertUserSchema, insertClassSchema, insertClassFormSchema, insertTeamSchema, insertRoundSchema, insertMarketEventSchema, insertMarketingMixSchema, updateTeamIdentitySchema, updateTeamLogoSchema, updateTeamLeaderSchema, updateClassMarketSchema, updateTeamBudgetSchema, insertSwotSchema, insertPorterSchema, insertBcgSchema, insertPestelSchema, insertMarketSegmentationSchema, type MarketSegmentation } from "@shared/schema";
 import session from "express-session";
 import bcrypt from "bcryptjs";
 import connectPgSimple from "connect-pg-simple";
@@ -98,6 +98,62 @@ const authorizedProfessorEmails = new Set<string>(
 // usada para entrar no sistema e checar problemas ou inconsistências.
 const STUDENT_INSTITUTIONAL_EMAIL_DOMAIN = "@aluno.iffar.edu.br";
 const STUDENT_REGISTRATION_EMAIL_EXCEPTIONS = new Set<string>(["joaoz@gmail.com"]);
+
+// Segmentação de Mercado (5ª ferramenta estratégica, pedido do professor
+// 2026-09): quais segmentType ("b2c" e/ou "b2b") uma turma precisa ter
+// preenchidos depende do businessType da turma (classes.businessType, ver
+// server/data/marketData.ts -> businessTypes). Turma "hibrido" exige as
+// duas; qualquer outro valor (ou ausência de valor, mesmo default do resto
+// do sistema) exige só "b2c". Usada em todos os pontos que hoje exigem as
+// 4 ferramentas obrigatórias (SWOT/Porter/BCG/PESTEL) antes do envio do
+// mix de marketing, e na checagem de "análises completas" da geração
+// automática/regeneração por IA.
+function getRequiredSegmentTypes(businessType: string | null | undefined): Array<"b2c" | "b2b"> {
+  if (businessType === "hibrido") return ["b2c", "b2b"];
+  if (businessType === "b2b") return ["b2b"];
+  return ["b2c"];
+}
+
+// Mesmo critério de "array válido" já usado para PESTEL (ao menos 1 item
+// com conteúdo real, não vazio/placeholder).
+function isValidSegmentationArray(arr: string[] | null | undefined): boolean {
+  if (!arr || arr.length < 1) return false;
+  return arr.some(item => {
+    const trimmed = item.trim();
+    return trimmed.length > 5 && !trimmed.startsWith("[") && !trimmed.endsWith("]");
+  });
+}
+
+function isSegmentationRowComplete(segmentation: MarketSegmentation): boolean {
+  if (segmentation.segmentType === "b2b") {
+    return (
+      isValidSegmentationArray(segmentation.firmographic) &&
+      isValidSegmentationArray(segmentation.geographic) &&
+      isValidSegmentationArray(segmentation.behavioral) &&
+      isValidSegmentationArray(segmentation.buyingCenter)
+    );
+  }
+  return (
+    isValidSegmentationArray(segmentation.demographic) &&
+    isValidSegmentationArray(segmentation.geographic) &&
+    isValidSegmentationArray(segmentation.psychographic) &&
+    isValidSegmentationArray(segmentation.behavioral)
+  );
+}
+
+// Verifica se a equipe já tem, PARA A RODADA, todas as linhas de
+// Segmentação de Mercado exigidas pelo tipo de negócio da turma (as duas,
+// em turma híbrida) e se cada uma delas está de fato preenchida.
+function isSegmentationComplete(
+  segmentations: MarketSegmentation[],
+  businessType: string | null | undefined
+): boolean {
+  const requiredTypes = getRequiredSegmentTypes(businessType);
+  return requiredTypes.every(type => {
+    const row = segmentations.find(s => s.segmentType === type);
+    return !!row && isSegmentationRowComplete(row);
+  });
+}
 
 declare module "express-session" {
   interface SessionData {
@@ -2216,6 +2272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hasPorter: false,
         hasBcg: false,
         hasPestel: false,
+        hasSegmentation: false,
         hasMarketingMixDraft: false,
         isSubmitted: false,
         hasResults: false,
@@ -2230,34 +2287,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Nenhuma rodada ativa encontrada" });
     }
 
-    const [swotList, porterList, bcgList, pestelList, mixList, result] = await Promise.all([
+    const [swotList, porterList, bcgList, pestelList, segmentationList, mixList, result, classData] = await Promise.all([
       storage.getSwotAnalysesByTeamAndRound(team.id, currentRound.id),
       storage.getPorterAnalysesByTeamAndRound(team.id, currentRound.id),
       storage.getBcgAnalyses(team.id, currentRound.id),
       storage.getPestelAnalysesByTeamAndRound(team.id, currentRound.id),
+      storage.getMarketSegmentationsByTeamAndRound(team.id, currentRound.id),
       storage.getMarketingMixesByTeamAndRound(team.id, currentRound.id),
-      storage.getResult(team.id, currentRound.id)
+      storage.getResult(team.id, currentRound.id),
+      storage.getClass(team.classId)
     ]);
 
     const hasSwot = swotList.length > 0;
     const hasPorter = porterList.length > 0;
     const hasBcg = bcgList.length > 0;
     const hasPestel = pestelList.length > 0;
+    const hasSegmentation = getRequiredSegmentTypes(classData?.businessType).every(
+      type => segmentationList.some(s => s.segmentType === type)
+    );
     const hasMarketingMixDraft = mixList.length > 0;
     const isSubmitted = mixList.some(m => m.submittedAt !== null);
     const hasResults = result !== undefined;
 
-    const weights = { swot: 15, porter: 15, bcg: 15, pestel: 15, mix: 20, submit: 10, results: 10 };
+    const weights = { swot: 12, porter: 12, bcg: 12, pestel: 12, segmentation: 12, mix: 20, submit: 10, results: 10 };
     let progress = 0;
     if (hasSwot) progress += weights.swot;
     if (hasPorter) progress += weights.porter;
     if (hasBcg) progress += weights.bcg;
     if (hasPestel) progress += weights.pestel;
+    if (hasSegmentation) progress += weights.segmentation;
     if (hasMarketingMixDraft) progress += weights.mix;
     if (isSubmitted) progress += weights.submit;
     if (hasResults) progress += weights.results;
 
-    type NextActionKey = "swot" | "porter" | "bcg" | "pestel" | "mix" | "submit" | "results";
+    type NextActionKey = "swot" | "porter" | "bcg" | "pestel" | "segmentation" | "mix" | "submit" | "results";
     interface NextAction {
       key: NextActionKey;
       title: string;
@@ -2274,6 +2337,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       nextAction = { key: "bcg", title: "Matriz BCG", description: "Classifique seus produtos no portfólio.", href: "/analises" };
     } else if (!hasPestel) {
       nextAction = { key: "pestel", title: "Análise PESTEL", description: "Avalie fatores externos que impactam o negócio.", href: "/analises" };
+    } else if (!hasSegmentation) {
+      nextAction = { key: "segmentation", title: "Segmentação de Mercado", description: "Defina os segmentos de clientes que sua empresa vai atender.", href: "/analises" };
     } else if (!hasMarketingMixDraft) {
       nextAction = { key: "mix", title: "Decisões 4Ps", description: "Defina produto, preço, praça e promoção.", href: "/decisoes" };
     } else if (!isSubmitted) {
@@ -2289,6 +2354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       hasPorter,
       hasBcg,
       hasPestel,
+      hasSegmentation,
       hasMarketingMixDraft,
       isSubmitted,
       hasResults,
@@ -2819,11 +2885,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // ⚠️ VALIDAÇÃO OBRIGATÓRIA: Verificar se todas as análises estratégicas foram completadas
-    const [swot, porter, bcgList, pestel] = await Promise.all([
+    const [swot, porter, bcgList, pestel, segmentationList, classDataForGate] = await Promise.all([
       storage.getSwotAnalysis(team.id, activeRound.id),
       storage.getPorterAnalysis(team.id, activeRound.id),
       storage.getBcgAnalyses(team.id, activeRound.id),
       storage.getPestelAnalysis(team.id, activeRound.id),
+      storage.getMarketSegmentationsByTeamAndRound(team.id, activeRound.id),
+      storage.getClass(team.classId),
     ]);
 
     const missingAnalyses = [];
@@ -2831,16 +2899,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!porter) missingAnalyses.push("5 Forças de Porter");
     if (!bcgList || bcgList.length === 0) missingAnalyses.push("Matriz BCG");
     if (!pestel) missingAnalyses.push("Análise PESTEL");
+    if (!isSegmentationComplete(segmentationList, classDataForGate?.businessType)) missingAnalyses.push("Segmentação de Mercado");
 
     if (missingAnalyses.length > 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: "⚠️ ETAPA OBRIGATÓRIA: Complete todas as Análises Estratégicas primeiro!",
         details: `Você deve completar as seguintes análises antes de configurar o Marketing Mix: ${missingAnalyses.join(", ")}.`,
         missingAnalyses,
-        nextStep: "Acesse 'Análises Estratégicas' no menu e complete todas as 4 ferramentas: SWOT, Porter, BCG e PESTEL."
+        nextStep: "Acesse 'Análises Estratégicas' no menu e complete todas as 5 ferramentas: SWOT, Porter, BCG, PESTEL e Segmentação de Mercado."
       });
     }
-    
+
     // Verifica se já foi submetida (não pode editar após submissão)
     const existing = await storage.getMarketingMix(team.id, activeRound.id);
     if (existing?.submittedAt) {
@@ -2942,13 +3011,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Validação OBRIGATÓRIA de Ferramentas Estratégicas
-      const [swot, porter, bcgList, pestel] = await Promise.all([
+      const [swot, porter, bcgList, pestel, segmentationList] = await Promise.all([
         storage.getSwotAnalysis(team.id, activeRound.id),
         storage.getPorterAnalysis(team.id, activeRound.id),
         storage.getBcgAnalyses(team.id, activeRound.id),
         storage.getPestelAnalysis(team.id, activeRound.id),
+        storage.getMarketSegmentationsByTeamAndRound(team.id, activeRound.id),
       ]);
-      
+
       const missingTools: string[] = [];
       
       // SWOT: Exigir pelo menos 1 item em CADA categoria
@@ -3007,7 +3077,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       };
       
-      if (!pestel || 
+      if (!pestel ||
           !isValidPestelArray(pestel.political) ||
           !isValidPestelArray(pestel.economic) ||
           !isValidPestelArray(pestel.social) ||
@@ -3016,11 +3086,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           !isValidPestelArray(pestel.legal)) {
         missingTools.push("PESTEL (mínimo 1 item válido em cada categoria)");
       }
-      
+
+      // Segmentação de Mercado: exige a(s) linha(s) correspondente(s) ao
+      // businessType da turma (as duas, em turma híbrida), cada uma com
+      // pelo menos 1 item válido em cada categoria do seu formulário.
+      if (!isSegmentationComplete(segmentationList, classData?.businessType)) {
+        missingTools.push("Segmentação de Mercado (mínimo 1 item válido em cada categoria)");
+      }
+
       if (missingTools.length > 0) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: "Ferramentas estratégicas obrigatórias não preenchidas",
-          details: `As ferramentas estratégicas (SWOT, Porter, BCG e PESTEL) são obrigatórias. Cada tópico deve ter pelo menos 1 informação. A falta de preenchimento gera penalização automática de -10% no desempenho da rodada. Complete as seguintes ferramentas: ${missingTools.join(", ")}`,
+          details: `As ferramentas estratégicas (SWOT, Porter, BCG, PESTEL e Segmentação de Mercado) são obrigatórias. Cada tópico deve ter pelo menos 1 informação. A falta de preenchimento gera penalização automática de -10% no desempenho da rodada. Complete as seguintes ferramentas: ${missingTools.join(", ")}`,
           missingTools: missingTools,
           warning: "⚠️ Ferramentas incompletas resultam em -10% de penalização no desempenho final"
         });
@@ -3685,8 +3762,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         await storage.updatePestelAnalysis(existing.id, updateData);
         analysisFound = true;
+      } else if (toolType === "segmentacao_b2c" || toolType === "segmentacao_b2b") {
+        const segmentType = toolType === "segmentacao_b2b" ? "b2b" : "b2c";
+        const existing = await storage.getMarketSegmentation(teamId, roundId, segmentType);
+        if (!existing) {
+          return res.status(404).json({ error: "Análise de Segmentação de Mercado não encontrada para esta equipe/rodada" });
+        }
+        await storage.updateMarketSegmentation(existing.id, updateData);
+        analysisFound = true;
       } else {
-        return res.status(400).json({ error: "Tipo de ferramenta inválido. Use: swot, porter, bcg, ou pestel" });
+        return res.status(400).json({ error: "Tipo de ferramenta inválido. Use: swot, porter, bcg, pestel, segmentacao_b2c ou segmentacao_b2b" });
       }
 
       if (analysisFound) {
@@ -4005,17 +4090,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Checar conclusão de ferramentas estratégicas na última rodada
         let toolsCompleted = 0;
         if (lastCompletedRound) {
-          const [swot, porter, bcg, pestel] = await Promise.all([
+          const [swot, porter, bcg, pestel, segmentationList] = await Promise.all([
             storage.getSwotAnalysis(team.id, lastCompletedRound.id),
             storage.getPorterAnalysis(team.id, lastCompletedRound.id),
             storage.getBcgAnalyses(team.id, lastCompletedRound.id),
             storage.getPestelAnalysis(team.id, lastCompletedRound.id),
+            storage.getMarketSegmentationsByTeamAndRound(team.id, lastCompletedRound.id),
           ]);
-          
+
           if (swot) toolsCompleted++;
           if (porter) toolsCompleted++;
           if (bcg && bcg.length > 0) toolsCompleted++;
           if (pestel) toolsCompleted++;
+          if (isSegmentationComplete(segmentationList, classData.businessType)) toolsCompleted++;
         }
 
         return {
@@ -4085,14 +4172,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(403).json({ error: "Você não tem permissão para acessar esta equipe" });
     }
 
-    const [swot, porter, bcgList, pestel] = await Promise.all([
+    const [swot, porter, bcgList, pestel, segmentationList] = await Promise.all([
       storage.getSwotAnalysis(teamId, roundId),
       storage.getPorterAnalysis(teamId, roundId),
       storage.getBcgAnalyses(teamId, roundId),
       storage.getPestelAnalysis(teamId, roundId),
+      storage.getMarketSegmentationsByTeamAndRound(teamId, roundId),
     ]);
 
-    res.json({ swot, porter, bcg: bcgList, pestel });
+    const segmentation = {
+      b2c: segmentationList.find(s => s.segmentType === "b2c"),
+      b2b: segmentationList.find(s => s.segmentType === "b2b"),
+    };
+
+    res.json({ swot, porter, bcg: bcgList, pestel, segmentation });
   });
 
   app.get("/api/admin/results", async (req, res) => {
@@ -4118,14 +4211,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
 
-    const [swot, porter, bcgList, pestel] = await Promise.all([
+    const [swot, porter, bcgList, pestel, segmentationList] = await Promise.all([
       storage.getSwotAnalysis(team.id, req.params.roundId),
       storage.getPorterAnalysis(team.id, req.params.roundId),
       storage.getBcgAnalyses(team.id, req.params.roundId),
       storage.getPestelAnalysis(team.id, req.params.roundId),
+      storage.getMarketSegmentationsByTeamAndRound(team.id, req.params.roundId),
     ]);
 
-    res.json({ swot, porter, bcg: bcgList, pestel });
+    const segmentation = {
+      b2c: segmentationList.find(s => s.segmentType === "b2c"),
+      b2b: segmentationList.find(s => s.segmentType === "b2b"),
+    };
+
+    res.json({ swot, porter, bcg: bcgList, pestel, segmentation });
   });
 
   app.post("/api/strategy/swot", async (req, res) => {
@@ -4312,6 +4411,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.logRoundAccess(data.roundId, team.classId, req.session.userId, "equipe", "pestel_saved");
 
       res.json(pestel);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/strategy/segmentation", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+
+    const team = await storage.getTeamByUser(req.session.userId);
+    if (!team) {
+      return res.status(404).json({ error: "Equipe não encontrada" });
+    }
+
+    try {
+      const data = insertMarketSegmentationSchema.parse(req.body);
+
+      if (data.segmentType !== "b2c" && data.segmentType !== "b2b") {
+        return res.status(400).json({ error: "segmentType inválido. Use: b2c ou b2b" });
+      }
+
+      const round = await storage.getRound(data.roundId);
+      if (!round) {
+        return res.status(404).json({ error: "Rodada não encontrada" });
+      }
+      if (round.classId !== team.classId) {
+        return res.status(403).json({ error: "Esta rodada não pertence à sua turma" });
+      }
+      if (round.status !== "active") {
+        return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
+      }
+
+      const existing = await storage.getMarketSegmentation(team.id, data.roundId, data.segmentType);
+
+      let segmentation;
+      if (existing) {
+        segmentation = await storage.updateMarketSegmentation(existing.id, data);
+      } else {
+        segmentation = await storage.createMarketSegmentation({ ...data, teamId: team.id });
+      }
+
+      await storage.logRoundAccess(data.roundId, team.classId, req.session.userId, "equipe", `segmentation_${data.segmentType}_saved`);
+
+      res.json(segmentation);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
@@ -4651,6 +4795,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
               environmental: analyses.pestel.environmental,
               legal: analyses.pestel.legal,
             });
+          }
+
+          // Segmentação de Mercado — regenera só o(s) segmentType exigido(s)
+          // pelo businessType da turma (ver getRequiredSegmentTypes acima).
+          for (const segmentType of getRequiredSegmentTypes(classData.businessType)) {
+            const segData = segmentType === "b2b" ? analyses.segmentation.b2b : analyses.segmentation.b2c;
+            const segFields = {
+              demographic: segmentType === "b2c" ? (segData as typeof analyses.segmentation.b2c).demographic : [],
+              geographic: segData.geographic,
+              psychographic: segmentType === "b2c" ? (segData as typeof analyses.segmentation.b2c).psychographic : [],
+              behavioral: segData.behavioral,
+              firmographic: segmentType === "b2b" ? (segData as typeof analyses.segmentation.b2b).firmographic : [],
+              buyingCenter: segmentType === "b2b" ? (segData as typeof analyses.segmentation.b2b).buyingCenter : [],
+            };
+
+            const existingSegmentation = await storage.getMarketSegmentation(team.id, round.id, segmentType);
+            if (existingSegmentation) {
+              await storage.updateMarketSegmentation(existingSegmentation.id, segFields);
+            } else {
+              await storage.createMarketSegmentation({
+                teamId: team.id,
+                roundId: round.id,
+                segmentType,
+                ...segFields,
+              });
+            }
           }
 
           const existingRecommendations = await storage.getStrategicRecommendations(team.id, round.id);
@@ -5533,11 +5703,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Só se aplica ao envio final (isDraft === false) — um rascunho pode ser salvo a
       // qualquer momento, mesmo com as análises estratégicas ainda incompletas.
       if (isDraft === false) {
-        const [swot, porter, bcgList, pestel] = await Promise.all([
+        const [swot, porter, bcgList, pestel, segmentationList, classDataForGate] = await Promise.all([
           storage.getSwotAnalysis(team.id, roundId),
           storage.getPorterAnalysis(team.id, roundId),
           storage.getBcgAnalyses(team.id, roundId),
           storage.getPestelAnalysis(team.id, roundId),
+          storage.getMarketSegmentationsByTeamAndRound(team.id, roundId),
+          storage.getClass(team.classId),
         ]);
 
         const missingAnalyses = [];
@@ -5545,13 +5717,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!porter) missingAnalyses.push("5 Forças de Porter");
         if (!bcgList || bcgList.length === 0) missingAnalyses.push("Matriz BCG");
         if (!pestel) missingAnalyses.push("Análise PESTEL");
+        if (!isSegmentationComplete(segmentationList, classDataForGate?.businessType)) missingAnalyses.push("Segmentação de Mercado");
 
         if (missingAnalyses.length > 0) {
           return res.status(400).json({
             error: "⚠️ ETAPA OBRIGATÓRIA: Complete todas as Análises Estratégicas primeiro!",
             details: `Você deve completar as seguintes análises antes de configurar qualquer produto: ${missingAnalyses.join(", ")}.`,
             missingAnalyses,
-            nextStep: "Acesse 'Análises Estratégicas' no menu e complete todas as 4 ferramentas: SWOT, Porter, BCG e PESTEL."
+            nextStep: "Acesse 'Análises Estratégicas' no menu e complete todas as 5 ferramentas: SWOT, Porter, BCG, PESTEL e Segmentação de Mercado."
           });
         }
       }

@@ -16,7 +16,8 @@ export interface CarryForwardResult {
 
 /**
  * Herda, para a rodada que está começando, a análise estratégica (SWOT,
- * Porter, BCG e PESTEL) que a equipe deixou salva na rodada anterior —
+ * Porter, BCG, PESTEL e Segmentação de Mercado) que a equipe deixou salva
+ * na rodada anterior —
  * pedido do professor (2026-09): a equipe preenche as análises na primeira
  * rodada e, se continuar achando que estão corretas, não precisa reescrever
  * nada nas rodadas seguintes; só mexe se quiser editar, excluir ou
@@ -157,6 +158,35 @@ export async function carryForwardStrategyAnalyses(
             editedByUser: item.editedByUser,
           });
         }
+        carriedAny = true;
+      }
+
+      // Segmentação de Mercado (5ª ferramenta, pedido do professor 2026-09):
+      // mesma lógica das outras 4, mas pode existir mais de uma linha por
+      // equipe/rodada (uma "b2c" e uma "b2b", para turmas híbridas) — copia
+      // cada linha da rodada anterior que ainda não tenha equivalente
+      // (mesmo segmentType) na rodada atual.
+      const existingSegmentations = await storage.getMarketSegmentationsByTeamAndRound(team.id, round.id);
+      const prevSegmentations = await storage.getMarketSegmentationsByTeamAndRound(team.id, previousRound.id);
+      const existingSegmentTypes = new Set(existingSegmentations.map(s => s.segmentType));
+
+      for (const prevSeg of prevSegmentations) {
+        if (existingSegmentTypes.has(prevSeg.segmentType)) continue;
+        await storage.createMarketSegmentation({
+          teamId: team.id,
+          roundId: round.id,
+          productId: prevSeg.productId,
+          segmentType: prevSeg.segmentType,
+          demographic: prevSeg.demographic,
+          geographic: prevSeg.geographic,
+          psychographic: prevSeg.psychographic,
+          behavioral: prevSeg.behavioral,
+          firmographic: prevSeg.firmographic,
+          buyingCenter: prevSeg.buyingCenter,
+          aiGeneratedPercentage: prevSeg.aiGeneratedPercentage,
+          originalAIContent: prevSeg.originalAIContent as any,
+          editedByUser: prevSeg.editedByUser,
+        });
         carriedAny = true;
       }
 

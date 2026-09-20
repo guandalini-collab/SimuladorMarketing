@@ -44,6 +44,20 @@ const strategicAnalysesResponseSchema = z.object({
     environmental: z.array(z.string()).min(1).max(5),
     legal: z.array(z.string()).min(1).max(5),
   }),
+  segmentation: z.object({
+    b2c: z.object({
+      demographic: z.array(z.string()).min(1).max(5),
+      geographic: z.array(z.string()).min(1).max(5),
+      psychographic: z.array(z.string()).min(1).max(5),
+      behavioral: z.array(z.string()).min(1).max(5),
+    }),
+    b2b: z.object({
+      firmographic: z.array(z.string()).min(1).max(5),
+      geographic: z.array(z.string()).min(1).max(5),
+      behavioral: z.array(z.string()).min(1).max(5),
+      buyingCenter: z.array(z.string()).min(1).max(5),
+    }),
+  }),
   recommendations: z.object({
     product: z.array(z.string()).min(1).max(5),
     price: z.array(z.string()).min(1).max(5),
@@ -86,6 +100,20 @@ const minimalStrategicAnalysesSchema = z.object({
     environmental: z.array(z.string()).length(1),
     legal: z.array(z.string()).length(1),
   }),
+  segmentation: z.object({
+    b2c: z.object({
+      demographic: z.array(z.string()).length(1),
+      geographic: z.array(z.string()).length(1),
+      psychographic: z.array(z.string()).length(1),
+      behavioral: z.array(z.string()).length(1),
+    }),
+    b2b: z.object({
+      firmographic: z.array(z.string()).length(1),
+      geographic: z.array(z.string()).length(1),
+      behavioral: z.array(z.string()).length(1),
+      buyingCenter: z.array(z.string()).length(1),
+    }),
+  }),
   recommendations: z.object({
     product: z.array(z.string()).length(1),
     price: z.array(z.string()).length(1),
@@ -127,6 +155,20 @@ export interface StrategicAnalyses {
     technological: string[];
     environmental: string[];
     legal: string[];
+  };
+  segmentation: {
+    b2c: {
+      demographic: string[];
+      geographic: string[];
+      psychographic: string[];
+      behavioral: string[];
+    };
+    b2b: {
+      firmographic: string[];
+      geographic: string[];
+      behavioral: string[];
+      buyingCenter: string[];
+    };
   };
   recommendations: {
     product: string[];
@@ -182,7 +224,7 @@ export async function generateStrategicAnalyses(params: StrategyGenerationParams
       messages: [
         {
           role: "system",
-          content: `Você é um consultor especialista em estratégia empresarial e marketing, com profundo conhecimento em análises SWOT, Forças de Porter, Matriz BCG e PESTEL. Sua missão é gerar análises estratégicas completas e realistas para empresas em um simulador educacional de marketing.
+          content: `Você é um consultor especialista em estratégia empresarial e marketing, com profundo conhecimento em análises SWOT, Forças de Porter, Matriz BCG, PESTEL e Segmentação de Mercado (STP). Sua missão é gerar análises estratégicas completas e realistas para empresas em um simulador educacional de marketing.
 
 **Seu papel:**
 - Criar análises estratégicas detalhadas e contextualizadas
@@ -360,6 +402,45 @@ Gere análises estratégicas completas que orientem as decisões de marketing de
       "Fator legal 3"
     ]
   },
+  "segmentation": {
+    "b2c": {
+      "demographic": [
+        "Critério demográfico 1 (idade, gênero, renda, escolaridade)",
+        "Critério demográfico 2",
+        "Critério demográfico 3"
+      ],
+      "geographic": [
+        "Critério geográfico 1 (região, urbano/rural, clima)",
+        "Critério geográfico 2"
+      ],
+      "psychographic": [
+        "Critério psicográfico 1 (estilo de vida, valores, personalidade)",
+        "Critério psicográfico 2"
+      ],
+      "behavioral": [
+        "Critério comportamental 1 (frequência de uso, fidelidade, ocasião de compra)",
+        "Critério comportamental 2"
+      ]
+    },
+    "b2b": {
+      "firmographic": [
+        "Critério firmográfico 1 (porte da empresa, setor, faturamento)",
+        "Critério firmográfico 2"
+      ],
+      "geographic": [
+        "Critério geográfico 1 (alcance regional/nacional das empresas-alvo)",
+        "Critério geográfico 2"
+      ],
+      "behavioral": [
+        "Critério comportamental/operacional 1 (volume de compra, frequência, critérios de decisão)",
+        "Critério comportamental/operacional 2"
+      ],
+      "buyingCenter": [
+        "Critério do centro de compras 1 (quem decide: usuários, influenciadores, decisores, compradores)",
+        "Critério do centro de compras 2"
+      ]
+    }
+  },
   "recommendations": {
     "product": [
       "Recomendação 1 sobre qualidade/características do produto",
@@ -388,6 +469,7 @@ Gere análises estratégicas completas que orientem as decisões de marketing de
 - Scores de Porter devem ser de 1-10
 - BCG: marketGrowth e relativeMarketShare são números decimais
 - BCG: quadrant pode ser "star", "cash_cow", "question_mark", ou "dog"
+- Segmentação: gere as DUAS seções ("b2c" e "b2b") mesmo que o Tipo de Negócio da turma seja só um deles — quem consome esta resposta decide qual seção usar de fato, então preencha as duas com conteúdo plausível e específico ao setor
 - Cada categoria deve ter 3-5 itens
 - Seja específico ao setor ${sectorName}
 - Use dados realistas do mercado brasileiro`;
@@ -429,6 +511,20 @@ function generateEmptyStructure(classData: Class, teamData: Team): StrategicAnal
       technological: [""],
       environmental: [""],
       legal: [""],
+    },
+    segmentation: {
+      b2c: {
+        demographic: [""],
+        geographic: [""],
+        psychographic: [""],
+        behavioral: [""],
+      },
+      b2b: {
+        firmographic: [""],
+        geographic: [""],
+        behavioral: [""],
+        buyingCenter: [""],
+      },
     },
     recommendations: {
       product: [""],
@@ -479,6 +575,20 @@ function applyPartialAssistance(fullAnalyses: StrategicAnalyses): StrategicAnaly
       technological: [...removeEveryThirdItem(fullAnalyses.pestel.technological), ""],
       environmental: [...removeEveryThirdItem(fullAnalyses.pestel.environmental), ""],
       legal: [...removeEveryThirdItem(fullAnalyses.pestel.legal), ""],
+    },
+    segmentation: {
+      b2c: {
+        demographic: [...removeEveryThirdItem(fullAnalyses.segmentation.b2c.demographic), ""],
+        geographic: [...removeEveryThirdItem(fullAnalyses.segmentation.b2c.geographic), ""],
+        psychographic: [...removeEveryThirdItem(fullAnalyses.segmentation.b2c.psychographic), ""],
+        behavioral: [...removeEveryThirdItem(fullAnalyses.segmentation.b2c.behavioral), ""],
+      },
+      b2b: {
+        firmographic: [...removeEveryThirdItem(fullAnalyses.segmentation.b2b.firmographic), ""],
+        geographic: [...removeEveryThirdItem(fullAnalyses.segmentation.b2b.geographic), ""],
+        behavioral: [...removeEveryThirdItem(fullAnalyses.segmentation.b2b.behavioral), ""],
+        buyingCenter: [...removeEveryThirdItem(fullAnalyses.segmentation.b2b.buyingCenter), ""],
+      },
     },
     recommendations: {
       product: [...removeEveryThirdItem(fullAnalyses.recommendations.product), ""],
@@ -601,6 +711,20 @@ function buildMinimalStrategyPrompt(
     "environmental": ["1 fator ambiental importante (máx 2 frases)"],
     "legal": ["1 regulação/lei relevante (máx 2 frases)"]
   },
+  "segmentation": {
+    "b2c": {
+      "demographic": ["1 critério demográfico (idade, gênero, renda) (máx 2 frases)"],
+      "geographic": ["1 critério geográfico (máx 2 frases)"],
+      "psychographic": ["1 critério psicográfico (estilo de vida, valores) (máx 2 frases)"],
+      "behavioral": ["1 critério comportamental (frequência, fidelidade) (máx 2 frases)"]
+    },
+    "b2b": {
+      "firmographic": ["1 critério firmográfico (porte, setor) (máx 2 frases)"],
+      "geographic": ["1 critério geográfico (máx 2 frases)"],
+      "behavioral": ["1 critério comportamental/operacional (volume, critérios de compra) (máx 2 frases)"],
+      "buyingCenter": ["1 critério do centro de compras (quem decide) (máx 2 frases)"]
+    }
+  },
   "recommendations": {
     "product": ["1 recomendação sobre produto (máx 2 frases)"],
     "price": ["1 recomendação sobre preço (máx 2 frases)"],
@@ -615,6 +739,7 @@ function buildMinimalStrategyPrompt(
 - Scores Porter: 1-10
 - BCG: apenas 1 produto
 - Quadrante BCG: "star", "cash_cow", "question_mark", ou "dog"
+- Segmentação: gere as DUAS seções ("b2c" e "b2b") mesmo que a empresa opere em só um dos mercados
 - Seja ESPECÍFICO ao ${sectorName}`;
 }
 
