@@ -27,7 +27,9 @@ import Login from "@/pages/login";
 import Professor from "@/pages/professor";
 import ProfessorAnalytics from "@/pages/professor-analytics";
 import Admin from "@/pages/admin";
+import SuperAdmin from "@/pages/super-admin";
 import Aprovacoes from "@/pages/aprovacoes";
+import Onboarding from "@/pages/onboarding";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
@@ -37,6 +39,8 @@ interface User {
   email: string;
   name: string;
   role: string;
+  isAdmin?: boolean;
+  onboardingCompletedAt?: string | null;
 }
 
 function AuthenticatedApp() {
@@ -85,6 +89,7 @@ function AuthenticatedApp() {
       <ProfessorLayout>
         <Switch>
           <Route path="/admin" component={Admin} />
+          {user.isAdmin && <Route path="/super-admin" component={SuperAdmin} />}
           <Route path="/professor" component={Professor} />
           <Route path="/professor/analytics/:classId">
             {(params) => <ProfessorAnalytics classId={params.classId} />}
@@ -94,6 +99,15 @@ function AuthenticatedApp() {
         </Switch>
       </ProfessorLayout>
     );
+  }
+
+  // Pedido do professor (2026-09): Rodada 0 — antes do aluno acessar
+  // qualquer outra parte do jogo pela primeira vez, ele precisa concluir a
+  // introdução obrigatória (ver client/src/pages/onboarding.tsx). Só depois
+  // disso o restante do app (sidebar, dashboard, Manual do Aluno etc.)
+  // fica acessível. onboardingCompletedAt vem de /api/auth/me.
+  if (user.role === "equipe" && !user.onboardingCompletedAt) {
+    return <Onboarding onLogout={() => logoutMutation.mutate()} />;
   }
 
   const style = {

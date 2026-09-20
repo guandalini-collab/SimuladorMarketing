@@ -508,29 +508,36 @@ function calculatePromotionScore(mix: MarketingMix): number {
 
 function calculateEventImpact(events: MarketEvent[]): number {
   if (events.length === 0) return 1.0;
-  
+
   let totalImpact = 0;
-  
+
   for (const event of events) {
     let eventMultiplier = 0;
-    
+
     if (event.severity === "baixo") eventMultiplier = 0.05;
     else if (event.severity === "medio") eventMultiplier = 0.1;
     else if (event.severity === "alto") eventMultiplier = 0.15;
     else if (event.severity === "critico") eventMultiplier = 0.25;
-    
-    if (event.type === "economico" || event.type === "competitivo") {
+
+    // Pedido do professor (2026-09): o sinal do impacto agora vem do campo
+    // "sentiment" do próprio evento (escolhido pelo professor ao criar o
+    // evento manualmente, ou pela IA quando a geração automática for
+    // liberada — ver aiEventGenerator.ts), em vez de ser inferido
+    // rigidamente pelo "type". Isso corrige o bug antigo em que eventos
+    // "regulatorio" (e "ambiental") nunca tinham efeito numérico algum,
+    // mesmo quando claramente positivos ou negativos (ex.: "Aumento de
+    // Impostos" vs. "Redução de Impostos" tinham o mesmo type). Eventos
+    // migrados do comportamento antigo mantêm o sinal equivalente (ver
+    // ensureMarketEventSentiment.ts); "neutro" fica sem efeito numérico —
+    // o evento continua valendo para leitura/análise estratégica (PESTEL
+    // etc.), só não move o resultado calculado.
+    if (event.sentiment === "positivo") {
+      totalImpact += eventMultiplier;
+    } else if (event.sentiment === "negativo") {
       totalImpact -= eventMultiplier;
-    } else if (event.type === "tecnologico" || event.type === "social") {
-      totalImpact += eventMultiplier * 0.5;
     }
-    // "regulatorio" fica sem efeito numérico por ora — os eventos dessa
-    // categoria têm sentido misto (ex.: "Aumento de Impostos" é negativo,
-    // "Redução de Impostos" é positivo) e o cálculo atual só decide pelo
-    // tipo+severidade, sem ler o conteúdo do evento. Tratar com mais calma
-    // antes de atribuir uma direção única a essa categoria.
   }
-  
+
   return Math.max(0.5, Math.min(1.5, 1 + totalImpact));
 }
 

@@ -20,6 +20,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { getEnv, getAuthorizedProfessorEmails } from "./config";
+import { ONBOARDING_SECTION_IDS, ONBOARDING_MIN_SECONDS_PER_SECTION, isOnboardingSectionId, isOnboardingComplete, type OnboardingProgress } from "@shared/onboarding";
 
 const PgSessionStore = connectPgSimple(session);
 
@@ -328,13 +329,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       req.session.userId = user.id;
-      res.json({ 
-        id: user.id, 
-        email: user.email, 
-        name: user.name, 
-        role: user.role, 
+      res.json({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
         status: user.status,
-        mustChangePassword: usingTemporaryPassword || user.mustChangePassword
+        mustChangePassword: usingTemporaryPassword || user.mustChangePassword,
+        isAdmin: user.isAdmin,
+        onboardingCompletedAt: user.onboardingCompletedAt,
       });
     } catch (error) {
       res.status(400).json({ error: "Erro no login" });
@@ -552,7 +555,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!user) {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
-    res.json({ id: user.id, email: user.email, name: user.name, role: user.role, status: user.status });
+    res.json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+      isAdmin: user.isAdmin,
+      onboardingCompletedAt: user.onboardingCompletedAt,
+    });
+  });
+
+  /* ============================================
+     RODADA 0 — ONBOARDING OBRIGATÓRIO DO ALUNO
+     ============================================
+     Pedido do professor (2026-09): antes do aluno acessar o resto do jogo
+     pela primeira vez, ele precisa ler (e permanecer pelo menos 2 minutos
+     por seção — imposto aqui no servidor, nunca só no cliente) uma
+     introdução explicando como o Simula+ funciona. As seções obrigatórias
+     estão definidas em shared/onboarding.ts, a única fonte de verdade
+     compartilhada entre cliente e servidor. */
+
+  app.get("/api/onboarding/status", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+    const progress = (user.onboardingProgress || {}) as OnboardingProgress;
+    res.json({
+      completed: Boolean(user.onboardingCompletedAt),
+      completedAt: user.onboardingCompletedAt,
+      progress,
+      sectionIds: ONBOARDING_SECTION_IDS,
+      minSecondsPerSection: ONBOARDING_MIN_SECONDS_PER_SECTION,
+    });
+  });
+
+  app.post("/api/onboarding/section/:sectionId/start", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const { sectionId } = req.params;
+    if (!isOnboardingSectionId(sectionId)) {
+      return res.status(400).json({ error: "Seção inválida" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+
+    const progress = { ...(user.onboardingProgress || {}) } as OnboardingProgress;
+    // Idempotente: se a seção já foi iniciada antes, não reinicia o
+    // cronômetro (evita que recarregar a página "resete" o tempo já
+    // decorrido, e também evita que reabrir a seção zere um progresso
+    // que já estava contando).
+    if (!progress[sectionId]) {
+      progress[sectionId] = { startedAt: new Date().toISOString(), completedAt: null };
+      await storage.updateUser(user.id, { onboardingProgress: progress });
+    }
+    res.json({ progress });
+  });
+
+  app.post("/api/onboarding/section/:sectionId/complete", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const { sectionId } = req.params;
+    if (!isOnboardingSectionId(sectionId)) {
+      return res.status(400).json({ error: "Seção inválida" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+
+    const progress = { ...(user.onboardingProgress || {}) } as OnboardingProgress;
+    const section = progress[sectionId];
+    if (!section) {
+      return res.status(400).json({ error: "Seção ainda não foi iniciada" });
+    }
+
+    const elapsedSeconds = (Date.now() - new Date(section.startedAt).getTime()) / 1000;
+    if (elapsedSeconds < ONBOARDING_MIN_SECONDS_PER_SECTION) {
+      return res.status(400).json({
+        error: "Tempo mínimo de leitura ainda não atingido",
+        remainingSeconds: Math.ceil(ONBOARDING_MIN_SECONDS_PER_SECTION - elapsedSeconds),
+      });
+    }
+
+    if (!section.completedAt) {
+      progress[sectionId] = { ...section, completedAt: new Date().toISOString() };
+    }
+
+    const updates: Partial<typeof user> = { onboardingProgress: progress };
+    const nowComplete = isOnboardingComplete(progress);
+    if (nowComplete && !user.onboardingCompletedAt) {
+      updates.onboardingCompletedAt = new Date();
+    }
+
+    const updated = await storage.updateUser(user.id, updates);
+    res.json({
+      completed: Boolean(updated?.onboardingCompletedAt),
+      completedAt: updated?.onboardingCompletedAt ?? null,
+      progress,
+    });
   });
 
   app.post("/api/admin/create-professor", async (req, res) => {
@@ -4634,6 +4743,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           description: event.description,
           impact: event.impact,
           severity: event.severity,
+          // Pedido do professor (2026-09): a polaridade agora vem da própria
+          // IA (decidida pelo conteúdo do evento, não pelo "type" — ver
+          // aiEventGenerator.ts), pronta para quando a geração automática
+          // for liberada.
+          sentiment: event.sentiment,
           active: true,
         };
         const savedEvent = await storage.createMarketEvent(eventData);

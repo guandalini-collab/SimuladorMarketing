@@ -388,29 +388,42 @@ function calculateEventImpact(event: MarketEvent): EventImpact {
 
   const severityFactor = getSeverityFactor(event.severity);
 
-  switch (event.type) {
-    case "economico":
-      demandMultiplier = 1 - severityFactor * 0.15;
-      revenueMultiplier = 1 - severityFactor * 0.12;
-      break;
-    case "competitivo":
-      revenueMultiplier = 1 - severityFactor * 0.08;
-      demandMultiplier = 1 - severityFactor * 0.05;
-      break;
-    case "tecnologico":
-      revenueMultiplier = 1 + severityFactor * 0.08;
-      costMultiplier = 1 - severityFactor * 0.05;
-      break;
-    case "social":
-      demandMultiplier = 1 + severityFactor * 0.10;
-      break;
-    // "regulatorio" fica sem efeito numérico por ora — os eventos dessa
-    // categoria têm sentido misto (ex.: "Aumento de Impostos" é negativo,
-    // "Redução de Impostos" é positivo) e o cálculo atual só decide pelo
-    // tipo+severidade, sem ler o conteúdo do evento. Tratar com mais calma
-    // antes de atribuir uma direção única a essa categoria.
-    default:
-      break;
+  // Pedido do professor (2026-09): a direção do efeito (favorável ou
+  // desfavorável) agora vem do campo "sentiment" do evento — escolhido
+  // pelo professor ao criar o evento manualmente, ou pela IA quando a
+  // geração automática for liberada (ver aiEventGenerator.ts) — em vez de
+  // ser fixa por "type". "type" continua decidindo QUAIS dimensões
+  // (receita/custo/demanda) o evento afeta e com que peso relativo;
+  // "sentiment" decide apenas o sinal. Um evento "neutro" não altera
+  // nenhum multiplicador, qualquer que seja o type — corrige o bug antigo
+  // em que "regulatorio" (e "ambiental") nunca tinham efeito numérico
+  // algum, mesmo quando claramente positivos ou negativos.
+  const sign = event.sentiment === "positivo" ? 1 : event.sentiment === "negativo" ? -1 : 0;
+
+  if (sign !== 0) {
+    switch (event.type) {
+      case "economico":
+        demandMultiplier = 1 + sign * severityFactor * 0.15;
+        revenueMultiplier = 1 + sign * severityFactor * 0.12;
+        break;
+      case "competitivo":
+        revenueMultiplier = 1 + sign * severityFactor * 0.08;
+        demandMultiplier = 1 + sign * severityFactor * 0.05;
+        break;
+      case "tecnologico":
+        revenueMultiplier = 1 + sign * severityFactor * 0.08;
+        costMultiplier = 1 - sign * severityFactor * 0.05;
+        break;
+      case "social":
+        demandMultiplier = 1 + sign * severityFactor * 0.10;
+        break;
+      default:
+        // "regulatorio", "ambiental" e outros tipos futuros: efeito
+        // moderado em receita e demanda, mesma lógica dos demais.
+        demandMultiplier = 1 + sign * severityFactor * 0.10;
+        revenueMultiplier = 1 + sign * severityFactor * 0.08;
+        break;
+    }
   }
 
   const explanation = `Evento "${event.title}" (${event.type}, ${event.severity}): ${event.description}. Impacto: Receita ${formatMultiplier(revenueMultiplier)}, Custos ${formatMultiplier(costMultiplier)}, Demanda ${formatMultiplier(demandMultiplier)}.`;

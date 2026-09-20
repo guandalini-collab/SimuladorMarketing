@@ -93,6 +93,12 @@ const eventFormSchema = insertMarketEventSchema.extend({
   description: z.string().min(1, "Descrição é obrigatória"),
   impact: z.string().min(1, "Impacto é obrigatório"),
   severity: z.string().min(1, "Severidade é obrigatória"),
+  // Pedido do professor (2026-09): antes o efeito (positivo/negativo) de um
+  // evento era inferido rigidamente pelo "type" dentro de
+  // calculateEventImpact (server/calculator.ts), o que fazia eventos
+  // "regulatorio" nunca terem efeito nenhum. Agora o professor escolhe
+  // explicitamente ao criar o evento manualmente.
+  sentiment: z.enum(["positivo", "negativo", "neutro"], { required_error: "Selecione o efeito do evento" }),
   roundId: z.string().min(1, "Rodada é obrigatória"),
   classId: z.string().min(1),
   active: z.boolean(),
@@ -1284,6 +1290,7 @@ function MarketEventsManager({ classId, rounds }: { classId: string; rounds: Rou
       description: "",
       impact: "",
       severity: "medio",
+      sentiment: "neutro",
       roundId: "",
       classId,
       active: true,
@@ -1437,6 +1444,17 @@ function MarketEventsManager({ classId, rounds }: { classId: string; rounds: Rou
                       <h4 className="font-semibold text-sm">{event.title}</h4>
                       <Badge variant={event.severity === "critico" ? "destructive" : event.severity === "alto" ? "default" : "secondary"} className="text-xs">
                         {event.severity}
+                      </Badge>
+                      <Badge
+                        className={`text-xs ${
+                          event.sentiment === "positivo"
+                            ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300 hover:bg-green-100"
+                            : event.sentiment === "negativo"
+                              ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 hover:bg-red-100"
+                              : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-100"
+                        }`}
+                      >
+                        {event.sentiment === "positivo" ? "Positivo" : event.sentiment === "negativo" ? "Negativo" : "Neutro"}
                       </Badge>
                       <Badge variant="outline" className="text-xs">R{round?.roundNumber}</Badge>
                     </div>
@@ -1610,6 +1628,27 @@ function MarketEventsManager({ classId, rounds }: { classId: string; rounds: Rou
                   )}
                 />
               </div>
+              <FormField
+                control={form.control}
+                name="sentiment"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Efeito no mercado</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger><SelectValue placeholder="Selecione o efeito" /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="positivo">Positivo (favorece as equipes)</SelectItem>
+                        <SelectItem value="negativo">Negativo (prejudica as equipes)</SelectItem>
+                        <SelectItem value="neutro">Neutro (sem efeito no cálculo)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Define se este evento aumenta, reduz ou não altera o resultado calculado das equipes.</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => { form.reset(); setIsDialogOpen(false); }}>Cancelar</Button>
                 <Button type="submit" disabled={createEventMutation.isPending}>

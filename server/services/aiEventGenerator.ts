@@ -13,6 +13,14 @@ export interface GeneratedEvent {
   impact: string;
   severity: "baixo" | "medio" | "alto";
   pestelCategory: string;
+  // Pedido do professor (2026-09): a polaridade do evento (se ele favorece,
+  // prejudica ou é neutro para o mercado) agora é decidida pela própria IA
+  // a partir do conteúdo gerado, em vez de inferida rigidamente pelo "type"
+  // (ver shared/schema.ts -> marketEvents.sentiment e calculateEventImpact
+  // em calculator.ts / simulation/marketEngine.ts). A geração automática
+  // por IA continua pausada até o professor liberar o uso de créditos da
+  // API — este campo só fica pronto para quando isso acontecer.
+  sentiment: "positivo" | "negativo" | "neutro";
 }
 
 // Grupo E (auditoria de 2026-09): a IA gera o campo "type" em inglês
@@ -120,12 +128,14 @@ const VALID_EVENT_TYPES = new Set<GeneratedEvent["type"]>([
   "economic", "technological", "social", "competitive", "regulatory", "environmental",
 ]);
 const VALID_EVENT_SEVERITIES = new Set<GeneratedEvent["severity"]>(["baixo", "medio", "alto"]);
+const VALID_EVENT_SENTIMENTS = new Set<GeneratedEvent["sentiment"]>(["positivo", "negativo", "neutro"]);
 const REQUIRED_STRING_FIELDS: (keyof GeneratedEvent)[] = ["title", "description", "impact", "pestelCategory"];
 
 export function isValidGeneratedEvent(event: any): event is GeneratedEvent {
   if (!event || typeof event !== "object") return false;
   if (!VALID_EVENT_TYPES.has(event.type)) return false;
   if (!VALID_EVENT_SEVERITIES.has(event.severity)) return false;
+  if (!VALID_EVENT_SENTIMENTS.has(event.sentiment)) return false;
   return REQUIRED_STRING_FIELDS.every(
     (field) => typeof event[field] === "string" && event[field].trim().length > 0
   );
@@ -178,9 +188,10 @@ ${sector.opportunities.map((o, i) => `${i + 1}. ${o}`).join('\n')}
    - description: descrição detalhada do evento e como ele afeta o mercado (150-250 caracteres)
    - impact: explicação clara do impacto nas decisões de marketing das equipes (100-150 caracteres)
    - severity: "baixo", "medio" ou "alto"
+   - sentiment: "positivo", "negativo" ou "neutro" — decida pelo CONTEÚDO real do evento, não pela categoria. Um evento "regulatory" pode ser positivo (ex.: redução de impostos) ou negativo (ex.: aumento de impostos); um evento "competitive" pode ser positivo para a equipe (ex.: concorrente fecha as portas) ou negativo (ex.: novo concorrente forte entra no mercado). Use "neutro" só quando o evento tiver efeito genuinamente misto ou desprezível.
    - pestelCategory: categoria PESTEL por extenso ("Político", "Econômico", "Social", "Tecnológico", "Ambiental", "Legal")
 
-4. Eventos devem ser variados em severidade (distribua entre baixo, médio e alto)
+4. Eventos devem ser variados em severidade (distribua entre baixo, médio e alto) e em sentiment (não gere só eventos negativos nem só positivos)
 5. Use dados e tendências REAIS do mercado brasileiro de ${currentYear}
 6. Seja específico e prático - os eventos devem influenciar decisões de preço, produto, praça e promoção
 
@@ -193,6 +204,7 @@ ${sector.opportunities.map((o, i) => `${i + 1}. ${o}`).join('\n')}
       "description": "string",
       "impact": "string",
       "severity": "baixo" | "medio" | "alto",
+      "sentiment": "positivo" | "negativo" | "neutro",
       "pestelCategory": "string"
     }
   ]

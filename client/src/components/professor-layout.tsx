@@ -39,6 +39,7 @@ import {
   ArrowRight,
   MapPin,
   Shield,
+  ShieldCheck,
 } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -48,6 +49,7 @@ interface User {
   name: string;
   email: string;
   role: string;
+  isAdmin?: boolean;
 }
 
 interface NavItem {
@@ -183,6 +185,14 @@ export function ProfessorLayout({ children }: ProfessorLayoutProps) {
     },
   });
 
+  // Pedido do professor (2026-09): "Super Admin" só aparece para a conta
+  // com isAdmin=true (flag independente de role — ver
+  // server/ensureSuperAdminAccount.ts). O restante da navegação do
+  // professor continua igual para todo mundo.
+  const items: NavItem[] = user?.isAdmin
+    ? [...navigationItems, { title: "Super Admin", href: "/super-admin", icon: ShieldCheck }]
+    : navigationItems;
+
   const handleLogout = async () => {
     try {
       await apiRequest("POST", "/api/auth/logout");
@@ -215,7 +225,7 @@ export function ProfessorLayout({ children }: ProfessorLayoutProps) {
             <Separator orientation="vertical" className="h-6 hidden md:block" />
             
             <nav className="hidden md:flex items-center gap-1">
-              {navigationItems.slice(0, 4).map((item) => {
+              {items.slice(0, 4).map((item) => {
                 const isActive = location === item.href || 
                   (item.href === "/professor" && location === "/") ||
                   (item.href !== "/professor" && location.startsWith(item.href));
@@ -276,6 +286,14 @@ export function ProfessorLayout({ children }: ProfessorLayoutProps) {
                     Admin Avançado
                   </DropdownMenuItem>
                 </Link>
+                {user?.isAdmin && (
+                  <Link href="/super-admin">
+                    <DropdownMenuItem className="gap-2 cursor-pointer" data-testid="menu-super-admin">
+                      <ShieldCheck className="h-4 w-4" />
+                      Super Admin
+                    </DropdownMenuItem>
+                  </Link>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="gap-2 cursor-pointer text-destructive focus:text-destructive" 
@@ -292,7 +310,7 @@ export function ProfessorLayout({ children }: ProfessorLayoutProps) {
         
         <nav className="md:hidden border-t px-4 py-2 overflow-x-auto">
           <div className="flex items-center gap-1">
-            {navigationItems.map((item) => {
+            {items.map((item) => {
               const isActive = location === item.href || 
                 (item.href === "/professor" && location === "/");
               return (

@@ -138,13 +138,14 @@ export default function Mercado() {
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2">
               {marketEvents.map((event, index) => (
-                <MarketEventCard 
-                  key={event.id || index} 
+                <MarketEventCard
+                  key={event.id || index}
                   type={event.type}
                   title={event.title}
                   description={event.description}
                   impact={event.impact}
                   severity={event.severity as "baixo" | "medio" | "alto" | "critico"}
+                  sentiment={event.sentiment as "positivo" | "negativo" | "neutro" | undefined}
                 />
               ))}
             </div>

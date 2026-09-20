@@ -1087,6 +1087,7 @@ export default function AdminPage() {
                           <TableHead>Título</TableHead>
                           <TableHead>Tipo</TableHead>
                           <TableHead>Severidade</TableHead>
+                          <TableHead>Efeito</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Turma</TableHead>
                           <TableHead>Rodada</TableHead>
@@ -1116,6 +1117,19 @@ export default function AdminPage() {
                                 </Badge>
                               </TableCell>
                               <TableCell>
+                                <Badge
+                                  className={
+                                    event.sentiment === "positivo"
+                                      ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300"
+                                      : event.sentiment === "negativo"
+                                        ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
+                                        : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                  }
+                                >
+                                  {event.sentiment === "positivo" ? "Positivo" : event.sentiment === "negativo" ? "Negativo" : "Neutro"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
                                 <Badge variant={event.active ? 'default' : 'outline'} className="gap-1">
                                   {event.active ? (
                                     <><CircleDot className="h-3 w-3" /> Ativo</>
@@ -1131,7 +1145,7 @@ export default function AdminPage() {
                         })}
                         {(!events || events.length === 0) && (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                               Nenhum evento registrado
                             </TableCell>
                           </TableRow>

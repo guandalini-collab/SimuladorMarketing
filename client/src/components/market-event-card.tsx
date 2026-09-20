@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, TrendingUp, TrendingDown, Info, Zap } from "lucide-react";
+import { AlertTriangle, TrendingUp, TrendingDown, Info, Zap, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 
 interface MarketEventCardProps {
   type: string;
@@ -8,7 +8,31 @@ interface MarketEventCardProps {
   description: string;
   impact: string;
   severity: "baixo" | "medio" | "alto" | "critico";
+  // Pedido do professor (2026-09): mostra ao aluno se o evento favorece,
+  // prejudica ou é neutro para o resultado calculado da equipe — antes essa
+  // informação não existia (o sinal do impacto era um detalhe interno do
+  // cálculo). Campo opcional para não quebrar quem ainda não repassa
+  // sentiment (ex.: componente de exemplo).
+  sentiment?: "positivo" | "negativo" | "neutro";
 }
+
+const sentimentConfig = {
+  positivo: {
+    icon: ArrowUpRight,
+    badgeClass: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300 border-transparent",
+    label: "Favorável",
+  },
+  negativo: {
+    icon: ArrowDownRight,
+    badgeClass: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 border-transparent",
+    label: "Desfavorável",
+  },
+  neutro: {
+    icon: Minus,
+    badgeClass: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-transparent",
+    label: "Neutro",
+  },
+};
 
 const severityConfig = {
   baixo: {
@@ -73,9 +97,12 @@ export function MarketEventCard({
   description,
   impact,
   severity,
+  sentiment,
 }: MarketEventCardProps) {
   const config = severityConfig[severity] || severityConfig.medio;
   const Icon = config.icon;
+  const sentimentCfg = sentiment ? sentimentConfig[sentiment] : undefined;
+  const SentimentIcon = sentimentCfg?.icon;
 
   return (
     <Card className="hover-elevate">
@@ -89,7 +116,15 @@ export function MarketEventCard({
             <p className="text-sm text-muted-foreground">{typeLabels[type] || type}</p>
           </div>
         </div>
-        <Badge className={config.badgeClass}>{config.label}</Badge>
+        <div className="flex flex-col items-end gap-1.5">
+          <Badge className={config.badgeClass}>{config.label}</Badge>
+          {sentimentCfg && SentimentIcon && (
+            <Badge className={`${sentimentCfg.badgeClass} flex items-center gap-1`}>
+              <SentimentIcon className="h-3 w-3" />
+              {sentimentCfg.label}
+            </Badge>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-2">
         <p className="text-sm">{description}</p>
