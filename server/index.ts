@@ -13,6 +13,7 @@ import { ensureMarketSegmentationTable } from "./ensureMarketSegmentationTable";
 import { ensureMarketEventSentiment } from "./ensureMarketEventSentiment";
 import { ensureOnboardingColumns } from "./ensureOnboardingColumns";
 import { ensureSuperAdminAccount } from "./ensureSuperAdminAccount";
+import { ensureAdminTemporaryPassword } from "./ensureAdminTemporaryPassword";
 
 const app = express();
 
@@ -72,6 +73,7 @@ app.use((req, res, next) => {
   await ensureMarketEventSentiment();
   await ensureOnboardingColumns();
   await ensureSuperAdminAccount();
+  await ensureAdminTemporaryPassword();
 
   const server = await registerRoutes(app);
 
