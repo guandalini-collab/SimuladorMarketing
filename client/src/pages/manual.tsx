@@ -504,13 +504,13 @@ export default function Manual() {
                   <AccordionTrigger>5.1 Análises Automáticas via IA</AccordionTrigger>
                   <AccordionContent className="space-y-3">
                     <div className="bg-[#1447e6]/10 dark:bg-[#1447e6]/15 border-l-4 border-[#1447e6] p-4 rounded-md mb-4">
-                      <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">✨ Geração Automática nas Rodadas 1, 2 e 3</p>
+                      <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">✨ Geração Automática na Rodada 1</p>
                       <p className="text-sm text-blue-800 dark:text-blue-200">
-                        O sistema gera automaticamente análises estratégicas (SWOT, Porter, BCG, PESTEL) quando as 3 primeiras rodadas são liberadas. 
+                        O sistema gera automaticamente análises estratégicas (SWOT, Porter, BCG, PESTEL) quando a Rodada 1 é liberada.
                         Você receberá análises prontas que servem como ponto de partida - personalize e aprimore conforme necessário!
                       </p>
                       <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
-                        <strong>A partir da Rodada 4:</strong> As análises ficam em branco para você preencher do zero, demonstrando autonomia estratégica.
+                        <strong>A partir da Rodada 2:</strong> a análise que sua equipe deixou salva na rodada anterior continua valendo automaticamente - você não precisa reescrever nada. Só mexa se quiser editar, excluir ou acrescentar algo novo. Mas reveja sempre: se a análise não bater com o que sua equipe está realmente praticando no mix de marketing, isso reduz a pontuação de alinhamento estratégico.
                       </p>
                     </div>
 
@@ -676,7 +676,7 @@ export default function Manual() {
                           <li><strong>PESTEL:</strong> Identifique tendências macro-ambientais (políticas, econômicas, sociais, tecnológicas, ambientais, legais)</li>
                         </ul>
                         <p className="text-xs text-blue-700 dark:text-blue-300 mt-2 italic">
-                          💡 Dica: Nas rodadas 1-3, você recebe análises automáticas geradas por IA. Personalize-as com insights da sua equipe!
+                          💡 Dica: Na rodada 1, você recebe análises automáticas geradas por IA. Personalize-as com insights da sua equipe - elas continuam valendo nas rodadas seguintes até você decidir mudar algo.
                         </p>
                       </div>
 

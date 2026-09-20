@@ -1,6 +1,7 @@
 import type { IStorage } from "../storage";
 import { processRoundCompletion } from "./roundCompletion";
 import { autoGenerateMinimalAnalysesForAllTeams } from "./autoStrategicGeneration";
+import { carryForwardStrategyAnalyses } from "./strategyCarryForward";
 
 export class RoundScheduler {
   private storage: IStorage;
@@ -83,7 +84,7 @@ export class RoundScheduler {
 
           console.log(`[ROUND_SCHEDULER] Rodada ${round.id} ativada com sucesso`);
 
-          if (round.roundNumber <= 3) {
+          if (round.roundNumber === 1) {
             console.log(`[ROUND_SCHEDULER] Gerando análises estratégicas automáticas para rodada ${round.roundNumber}...`);
             try {
               const result = await autoGenerateMinimalAnalysesForAllTeams(this.storage, round.id);
@@ -92,7 +93,18 @@ export class RoundScheduler {
               console.error(`[ROUND_SCHEDULER] Erro ao gerar análises automáticas para rodada ${round.id}:`, error);
             }
           } else {
-            console.log(`[ROUND_SCHEDULER] Rodada ${round.roundNumber}: sem geração automática (rodada ≥ 4)`);
+            // Pedido do professor (2026-09): a partir da Rodada 2, em vez de a
+            // IA gerar uma sugestão nova (ou a tela começar em branco), a
+            // análise que a equipe deixou salva na rodada anterior passa a
+            // valer automaticamente nesta rodada — a equipe só mexe se
+            // quiser editar, excluir ou acrescentar algo novo.
+            console.log(`[ROUND_SCHEDULER] Herdando análises estratégicas da rodada anterior para a rodada ${round.roundNumber}...`);
+            try {
+              const result = await carryForwardStrategyAnalyses(this.storage, round.id);
+              console.log(`[ROUND_SCHEDULER] Análises herdadas: ${result.carriedCount}/${result.totalTeams} equipes`);
+            } catch (error) {
+              console.error(`[ROUND_SCHEDULER] Erro ao herdar análises estratégicas para rodada ${round.id}:`, error);
+            }
           }
         } catch (error: any) {
           if (error?.code === "23505") {

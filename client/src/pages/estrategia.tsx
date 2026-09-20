@@ -155,6 +155,7 @@ export default function Estrategia() {
 
 function SwotTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; roundNumber: number; roundStatus: string; data?: any }) {
   const { toast } = useToast();
+  const hasData = Boolean(data);
   const [swot, setSwot] = useState({
     strengths: data?.strengths || [],
     weaknesses: data?.weaknesses || [],
@@ -216,14 +217,18 @@ function SwotTab({ roundId, roundNumber, roundStatus, data }: { roundId: string;
           <AlertDescription>
             <div className="space-y-1">
               <p className="font-medium">
-                {roundNumber <= 3 
-                  ? `✨ Rodada ${roundNumber}: Análise gerada automaticamente pela IA`
-                  : "📝 Rodada aberta - Preencha sua análise estratégica"}
+                {roundNumber === 1
+                  ? "✨ Rodada 1: Análise gerada automaticamente pela IA"
+                  : hasData
+                    ? "📋 Análise herdada da rodada anterior"
+                    : "📝 Preencha sua análise estratégica"}
               </p>
               <p className="text-sm text-muted-foreground">
-                {roundNumber <= 3 
+                {roundNumber === 1
                   ? "Esta análise foi criada pela IA como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
-                  : "Esta rodada começa em branco para você demonstrar autonomia estratégica. Preencha a análise e lembre-se de clicar em 'Salvar' para preservar seus dados."}
+                  : hasData
+                    ? "Você já preencheu essa análise antes, e ela continua valendo automaticamente nesta rodada — não precisa reescrever nada. Reveja se ainda faz sentido: edite, exclua ou adicione itens se sua estratégia mudou. Atenção: se a análise não bater com o que você está realmente praticando no mix de marketing, isso reduz sua pontuação de alinhamento estratégico."
+                    : "Preencha sua análise estratégica e clique em 'Salvar' — ela vai continuar valendo nas próximas rodadas até você decidir mudar algo."}
               </p>
             </div>
           </AlertDescription>
@@ -284,6 +289,7 @@ function SwotTab({ roundId, roundNumber, roundStatus, data }: { roundId: string;
 
 function PorterTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; roundNumber: number; roundStatus: string; data?: any }) {
   const { toast } = useToast();
+  const hasData = Boolean(data);
   const [porter, setPorter] = useState({
     competitiveRivalry: data?.competitiveRivalry || 5,
     supplierPower: data?.supplierPower || 5,
@@ -339,14 +345,18 @@ function PorterTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
           <AlertDescription>
             <div className="space-y-1">
               <p className="font-medium">
-                {roundNumber <= 3 
-                  ? `✨ Rodada ${roundNumber}: Análise gerada automaticamente pela IA`
-                  : "📝 Rodada aberta - Preencha sua análise estratégica"}
+                {roundNumber === 1
+                  ? "✨ Rodada 1: Análise gerada automaticamente pela IA"
+                  : hasData
+                    ? "📋 Análise herdada da rodada anterior"
+                    : "📝 Preencha sua análise estratégica"}
               </p>
               <p className="text-sm text-muted-foreground">
-                {roundNumber <= 3 
+                {roundNumber === 1
                   ? "Esta análise foi criada pela IA como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
-                  : "Esta rodada começa em branco para você demonstrar autonomia estratégica. Preencha a análise e lembre-se de clicar em 'Salvar' para preservar seus dados."}
+                  : hasData
+                    ? "Você já preencheu essa análise antes, e ela continua valendo automaticamente nesta rodada — não precisa reescrever nada. Reveja se ainda faz sentido: edite, exclua ou adicione itens se sua estratégia mudou. Atenção: se a análise não bater com o que você está realmente praticando no mix de marketing, isso reduz sua pontuação de alinhamento estratégico."
+                    : "Preencha sua análise estratégica e clique em 'Salvar' — ela vai continuar valendo nas próximas rodadas até você decidir mudar algo."}
               </p>
             </div>
           </AlertDescription>
@@ -397,6 +407,7 @@ function PorterTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
 
 function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; roundNumber: number; roundStatus: string; data: any[] }) {
   const { toast } = useToast();
+  const hasData = data.length > 0;
   const [products, setProducts] = useState(data);
   const [newProduct, setNewProduct] = useState({
     productName: "",
@@ -460,14 +471,18 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
           <AlertDescription>
             <div className="space-y-1">
               <p className="font-medium">
-                {roundNumber <= 3 
-                  ? `✨ Rodada ${roundNumber}: Análise gerada automaticamente pela IA`
-                  : "📝 Rodada aberta - Preencha sua análise estratégica"}
+                {roundNumber === 1
+                  ? "✨ Rodada 1: Análise gerada automaticamente pela IA"
+                  : hasData
+                    ? "📋 Análise herdada da rodada anterior"
+                    : "📝 Preencha sua análise estratégica"}
               </p>
               <p className="text-sm text-muted-foreground">
-                {roundNumber <= 3 
+                {roundNumber === 1
                   ? "Esta análise foi criada pela IA como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
-                  : "Esta rodada começa em branco para você demonstrar autonomia estratégica. Preencha a análise e lembre-se de clicar em 'Salvar' para preservar seus dados."}
+                  : hasData
+                    ? "Você já mapeou seus produtos antes, e eles continuam valendo automaticamente nesta rodada — não precisa reinserir nada. Reveja se ainda fazem sentido: edite, exclua ou adicione produtos se sua estratégia mudou. Atenção: se o quadrante não bater com o que você está realmente praticando no mix de marketing, isso reduz sua pontuação de alinhamento estratégico."
+                    : "Adicione seus produtos à matriz — eles vão continuar valendo nas próximas rodadas até você decidir mudar algo."}
               </p>
             </div>
           </AlertDescription>
@@ -561,6 +576,7 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
 
 function PestelTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; roundNumber: number; roundStatus: string; data?: any }) {
   const { toast } = useToast();
+  const hasData = Boolean(data);
   const [pestel, setPestel] = useState({
     political: data?.political || [],
     economic: data?.economic || [],
@@ -635,14 +651,18 @@ function PestelTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
           <AlertDescription>
             <div className="space-y-1">
               <p className="font-medium">
-                {roundNumber <= 3 
-                  ? `✨ Rodada ${roundNumber}: Análise gerada automaticamente pela IA`
-                  : "📝 Rodada aberta - Preencha sua análise estratégica"}
+                {roundNumber === 1
+                  ? "✨ Rodada 1: Análise gerada automaticamente pela IA"
+                  : hasData
+                    ? "📋 Análise herdada da rodada anterior"
+                    : "📝 Preencha sua análise estratégica"}
               </p>
               <p className="text-sm text-muted-foreground">
-                {roundNumber <= 3 
+                {roundNumber === 1
                   ? "Esta análise foi criada pela IA como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
-                  : "Esta rodada começa em branco para você demonstrar autonomia estratégica. Preencha a análise e lembre-se de clicar em 'Salvar' para preservar seus dados."}
+                  : hasData
+                    ? "Você já preencheu essa análise antes, e ela continua valendo automaticamente nesta rodada — não precisa reescrever nada. Reveja se ainda faz sentido: edite, exclua ou adicione itens se sua estratégia mudou. Atenção: se a análise não bater com o que você está realmente praticando no mix de marketing, isso reduz sua pontuação de alinhamento estratégico."
+                    : "Preencha sua análise estratégica e clique em 'Salvar' — ela vai continuar valendo nas próximas rodadas até você decidir mudar algo."}
               </p>
             </div>
           </AlertDescription>

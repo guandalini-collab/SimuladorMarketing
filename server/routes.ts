@@ -1230,12 +1230,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     await applyProductCountBudgetAdjustment(req.params.classId, previousProductCount, productCount);
 
     // Gerar análises estratégicas mínimas automaticamente para todas as equipes
-    // APENAS nas primeiras 3 rodadas (conforme regras do sistema)
+    // APENAS na primeira rodada (a partir da Rodada 2, a análise que a
+    // equipe deixou salva na rodada anterior passa a valer automaticamente
+    // — pedido do professor, 2026-09: ver strategyCarryForward.ts)
     // Executa em background (assíncrono) para não bloquear resposta
-    if (nextRoundNumber <= 3) {
+    if (nextRoundNumber === 1) {
       (async () => {
         try {
-          console.log(`[ROUND-START] Iniciando geração automática de análises mínimas para rodada ${round.roundNumber} (rodada <= 3)`);
+          console.log(`[ROUND-START] Iniciando geração automática de análises mínimas para rodada ${round.roundNumber} (rodada 1)`);
           const { autoGenerateMinimalAnalysesForAllTeams } = await import("./services/autoStrategicGeneration");
           const result = await autoGenerateMinimalAnalysesForAllTeams(storage, round.id);
 
@@ -1250,7 +1252,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       })();
     } else {
-      console.log(`[ROUND-START] Rodada ${nextRoundNumber}: sem geração automática (rodada > 3)`);
+      // Não chama IA nenhuma — apenas copia (se ainda não existir nesta
+      // rodada) a análise que a equipe já tinha na rodada anterior. É uma
+      // operação rápida (só leitura/escrita no banco), por isso é aguardada
+      // aqui em vez de rodar em background: assim, quando a resposta volta,
+      // a rodada já está com as análises herdadas prontas para a tela de
+      // Estratégia exibir.
+      try {
+        console.log(`[ROUND-START] Herdando análises estratégicas da rodada anterior para a rodada ${nextRoundNumber}...`);
+        const { carryForwardStrategyAnalyses } = await import("./services/strategyCarryForward");
+        const result = await carryForwardStrategyAnalyses(storage, round.id);
+        console.log(`[ROUND-START] ✓ Análises herdadas: ${result.carriedCount}/${result.totalTeams} equipes`);
+      } catch (error: any) {
+        console.error("[ROUND-START] Erro ao herdar análises estratégicas:", error);
+        // Não falha a criação da rodada - a equipe ainda pode preencher manualmente
+      }
     }
 
     res.json(round);
@@ -1315,15 +1331,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     await applyProductCountBudgetAdjustment(req.params.classId, previousProductCount, productCount);
 
     // Gerar análises estratégicas mínimas automaticamente para todas as equipes
-    // APENAS nas primeiras 3 rodadas (conforme regras do sistema)
+    // APENAS na primeira rodada (a partir da Rodada 2, a análise que a
+    // equipe deixou salva na rodada anterior passa a valer automaticamente
+    // — pedido do professor, 2026-09: ver strategyCarryForward.ts)
     // Executa em background (assíncrono) para não bloquear resposta
-    if (nextRoundNumber <= 3) {
+    if (nextRoundNumber === 1) {
       (async () => {
         try {
-          console.log(`[ROUND-CREATE] Iniciando geração automática de análises mínimas para rodada ${round.roundNumber} (rodada <= 3)`);
+          console.log(`[ROUND-CREATE] Iniciando geração automática de análises mínimas para rodada ${round.roundNumber} (rodada 1)`);
           const { autoGenerateMinimalAnalysesForAllTeams } = await import("./services/autoStrategicGeneration");
           const result = await autoGenerateMinimalAnalysesForAllTeams(storage, round.id);
-          
+
           if (result.success) {
             console.log(`[ROUND-CREATE] ✓ Análises mínimas geradas: ${result.successCount}/${result.totalTeams} equipes`);
           } else {
@@ -1335,7 +1353,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       })();
     } else {
-      console.log(`[ROUND-CREATE] Rodada ${nextRoundNumber}: sem geração automática (rodada > 3)`);
+      // Mesma lógica da rota irmã POST /api/rounds/:classId/start — ver o
+      // comentário lá: só copia (aguardando, por ser rápido) o que a equipe
+      // já tinha na rodada anterior, sem chamar IA nenhuma.
+      try {
+        console.log(`[ROUND-CREATE] Herdando análises estratégicas da rodada anterior para a rodada ${nextRoundNumber}...`);
+        const { carryForwardStrategyAnalyses } = await import("./services/strategyCarryForward");
+        const result = await carryForwardStrategyAnalyses(storage, round.id);
+        console.log(`[ROUND-CREATE] ✓ Análises herdadas: ${result.carriedCount}/${result.totalTeams} equipes`);
+      } catch (error: any) {
+        console.error("[ROUND-CREATE] Erro ao herdar análises estratégicas:", error);
+        // Não falha a criação da rodada - a equipe ainda pode preencher manualmente
+      }
     }
 
     res.json(round);
