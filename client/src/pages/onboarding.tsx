@@ -208,7 +208,18 @@ export default function Onboarding({ onLogout }: OnboardingProps) {
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSection?.id, status?.progress?.[currentSection?.id ?? ""]?.startedAt]);
+    // BUG CORRIGIDO (2026-09): faltava "Boolean(status)" aqui. Sem ele, na
+    // primeira renderização (status ainda undefined) o efeito saía cedo no
+    // "if (!status...) return" — e quando o status terminava de carregar,
+    // status?.progress?.[id]?.startedAt continuava avaliando para
+    // "undefined" nas duas renderizações (undefined?.progress... e
+    // {}.progress[id]?.startedAt), então o array de dependências não
+    // mudava e o efeito nunca rodava de verdade. Resultado: o cronômetro
+    // ficava travado em 2:00 para sempre na primeira seção de qualquer
+    // aluno que abrisse a Rodada 0 pela primeira vez (só "descongelava" se
+    // desse F5 depois do status já ter carregado). Achado ao tentar gravar
+    // as telas do Manual do Aluno com uma conta de teste nova.
+  }, [currentSection?.id, Boolean(status), status?.progress?.[currentSection?.id ?? ""]?.startedAt]);
 
   const canAdvance = remainingSeconds <= 0;
 
