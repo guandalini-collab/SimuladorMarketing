@@ -9,6 +9,27 @@ const ACCENT_COLOR = '#22d3ee'; // Cyan
 const TEXT_COLOR = '#1f2937'; // Gray 800
 const LIGHT_GRAY = '#f3f4f6'; // Gray 100
 const DARK_GRAY = '#6b7280'; // Gray 500
+const ALERT_BORDER = '#f59e0b'; // Amber 500 — mesma paleta do Manual do Professor
+const ALERT_BG = '#fffbeb'; // Amber 50
+const ALERT_TEXT = '#78350f'; // Amber 900
+
+// A fonte padrão do pdfkit (Helvetica/WinAnsi) não tem glyphs para emoji
+// nem para vários símbolos tipográficos usados no conteúdo deste manual
+// (emojis como \u26A0\uFE0F/\uD83D\uDE80, setas "\u2192", etc.) — sem
+// tratamento, eles imprimem caracteres quebrados no PDF. Mesmo utilitário
+// usado em manualProfessorPDF.ts, mas aqui aplicado via monkey-patch em
+// doc.text() logo após a criação do documento (ver generateManualAlunoPDF),
+// porque o conteúdo deste arquivo não vem de um único markdown-fonte —
+// está espalhado em dezenas de chamadas .text() literais pelo arquivo.
+function stripUnsupportedGlyphs(text: string): string {
+  return text
+    .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]|\uFE0F/g, '')
+    .replace(/\u2192/g, '->')
+    .replace(/\u2265/g, '>=')
+    .replace(/\u2264/g, '<=')
+    .replace(/\u2212/g, '-')
+    .replace(/[ \t]+\n/g, '\n');
+}
 
 const LOGO_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Simula_logo_wordmark_crop.png');
 // ^ versão recortada rente ao conteúdo visível do logo — ver o comentário
@@ -31,6 +52,20 @@ export function generateManualAlunoPDF(): PassThrough {
       Subject: 'Guia Completo do Simulador de Marketing',
     }
   });
+
+  // Sanitiza automaticamente TODO texto passado para doc.text(...) daqui
+  // em diante — evita ter que editar uma por uma as centenas de chamadas
+  // .text() literais espalhadas pelo arquivo.
+  const originalText = doc.text.bind(doc);
+  (doc as any).text = function (text: unknown, ...rest: unknown[]) {
+    const safe = typeof text === 'string' ? stripUnsupportedGlyphs(text) : text;
+    return (originalText as any)(safe, ...rest);
+  };
+  const originalHeightOfString = doc.heightOfString.bind(doc);
+  (doc as any).heightOfString = function (text: unknown, ...rest: unknown[]) {
+    const safe = typeof text === 'string' ? stripUnsupportedGlyphs(text) : text;
+    return (originalHeightOfString as any)(safe, ...rest);
+  };
 
   const stream = new PassThrough();
   doc.pipe(stream);
@@ -117,55 +152,54 @@ function addCoverPage(doc: PDFKit.PDFDocument) {
     });
   }
 
-  // Título
-  doc.fontSize(48)
+  // Título — capa simplificada: a marca já está representada pela
+  // logomarca no cartão acima, então não repetimos "Simula+" /
+  // "Simulador de Marketing no Mercado" como texto (mesmo ajuste feito
+  // na capa do Manual do Professor).
+  doc.fontSize(44)
      .font('Helvetica-Bold')
      .fillColor('#ffffff')
-     .text('MANUAL DO ALUNO', 60, 304, {
+     .text('MANUAL DO ALUNO', 60, 310, {
        width: pageWidth - 120,
        align: 'center'
      });
 
-  // Subtítulo
-  doc.fontSize(28)
+  doc.fontSize(12)
      .font('Helvetica')
-     .text('Simula+', 60, 374, {
-       width: pageWidth - 120,
-       align: 'center'
-     });
-
-  doc.fontSize(18)
-     .text('Simulador de Marketing no Mercado', 60, 414, {
-       width: pageWidth - 120,
-       align: 'center'
-     });
+     .fillColor('#e0e7ff')
+     .text(
+       'Guia passo a passo para participar das rodadas, tomar as decisões de cada ferramenta e acompanhar seus resultados',
+       80, 385,
+       { align: 'center', width: pageWidth - 160, lineGap: 4 }
+     );
 
   // Autor
-  doc.moveDown(3);
   doc.fontSize(16)
      .font('Helvetica-Bold')
-     .text('Alexandre Guandalini Bossa', 60, 524, {
+     .fillColor('#ffffff')
+     .text('Alexandre Guandalini Bossa', 60, 470, {
        width: pageWidth - 120,
        align: 'center'
      });
-  
+
   doc.fontSize(14)
      .font('Helvetica')
-     .text('Professor de Marketing', 60, 554, {
+     .text('Professor de Marketing', 60, 500, {
        width: pageWidth - 120,
        align: 'center'
      });
 
   // Versão
-  doc.fontSize(14)
-     .text('Versão 1.1', 60, 704, {
+  doc.fontSize(11)
+     .fillColor('#c7d2fe')
+     .text('Versão 1.2', 60, pageHeight - 90, {
        width: pageWidth - 120,
        align: 'center'
      });
 
   // Ano
-  doc.fontSize(12)
-     .text(`© ${new Date().getFullYear()} - Todos os direitos reservados`, 60, 774, {
+  doc.fontSize(10)
+     .text(`© ${new Date().getFullYear()} - Todos os direitos reservados`, 60, pageHeight - 68, {
        width: pageWidth - 120,
        align: 'center'
      });
@@ -340,12 +374,11 @@ function addHowItWorksSection(doc: PDFKit.PDFDocument) {
   doc.moveDown(0.5);
 
   addWarningBox(doc,
-    '🚨 SEQUÊNCIA FORÇADA PELO SISTEMA\n\n' +
-    'ETAPA 1 → Análises Estratégicas (BLOQUEADO até completar)\n' +
-    'ETAPA 2 → Marketing Mix dos 4 Produtos\n' +
-    'ETAPA 3 → Submissão Final\n\n' +
-    'Você NÃO CONSEGUE pular para ETAPA 2 sem completar ETAPA 1!\n' +
-    'O sistema impede tecnicamente o acesso.'
+    'ETAPA 1 -> Análises Estratégicas (bloqueado até completar)\n' +
+    'ETAPA 2 -> Marketing Mix dos 4 Produtos\n' +
+    'ETAPA 3 -> Submissão Final\n\n' +
+    'Não é possível pular para a ETAPA 2 sem completar a ETAPA 1 — o sistema impede tecnicamente o acesso.',
+    'Sequência forçada pelo sistema'
   );
 
   doc.moveDown();
@@ -471,8 +504,8 @@ function addHowItWorksSection(doc: PDFKit.PDFDocument) {
   addBulletPoint(doc, 'Score < 30: -25% receita, -35% lucro, -15% market share');
 
   doc.moveDown();
-  addWarningBox(doc, 
-    '⚠️ ATENÇÃO: Copiar análises da IA sem editar resulta em penalizações severas! Conteúdo não editado entre 70-100% de similaridade aplica -30 pontos no score de alinhamento.'
+  addWarningBox(doc,
+    'Conteúdo não editado entre 70% e 100% de similaridade com o texto gerado pela IA aplica -30 pontos no score de alinhamento.'
   );
 }
 
@@ -919,7 +952,7 @@ function addFormulasSection(doc: PDFKit.PDFDocument) {
 
   doc.moveDown();
   addWarningBox(doc,
-    '⚠️ IMPORTANTE: Todas as fórmulas são aplicadas de forma integrada. O desempenho final é resultado da combinação de decisões de marketing, análises estratégicas, eventos econômicos e alinhamento entre estratégia e execução.'
+    'Todas as fórmulas são aplicadas de forma integrada. O resultado final combina decisões de marketing, análises estratégicas, eventos econômicos e alinhamento entre estratégia e execução.'
   );
 }
 
@@ -958,10 +991,8 @@ function addStepByStepSection(doc: PDFKit.PDFDocument) {
 
   doc.moveDown();
   addWarningBox(doc,
-    '⚠️ IMPORTANTE SOBRE RECUPERAÇÃO DE SENHA\n\n' +
-    '• O link de recuperação expira em 1 HORA\n' +
-    '• Verifique a pasta de SPAM se não receber o email\n' +
-    '• Se não receber, tente novamente ou contate o professor'
+    'O link de recuperação expira em 1 hora. Verifique a pasta de spam se não receber o e-mail; se ainda assim não chegar, tente novamente ou contate o professor.',
+    'Recuperação de senha'
   );
 
   doc.moveDown();
@@ -978,10 +1009,8 @@ function addStepByStepSection(doc: PDFKit.PDFDocument) {
   doc.moveDown(0.5);
 
   addWarningBox(doc,
-    '⚠️ ATENÇÃO - ORDEM OBRIGATÓRIA\n\n' +
-    'O sistema BLOQUEIA o acesso ao Marketing Mix até que você complete TODAS as 4 análises estratégicas.\n\n' +
-    'Você NÃO PODE configurar produtos antes de completar: SWOT, Porter, BCG e PESTEL.\n\n' +
-    'Esta é uma regra FORÇADA pelo sistema - não é opcional!'
+    'O sistema bloqueia o acesso ao Marketing Mix até que as 4 análises estratégicas (SWOT, Porter, BCG e PESTEL) estejam completas — não é possível configurar produtos antes disso. Essa regra é aplicada pelo sistema, não é opcional.',
+    'Ordem obrigatória'
   );
 
   doc.moveDown();
@@ -1013,10 +1042,8 @@ function addStepByStepSection(doc: PDFKit.PDFDocument) {
   doc.moveDown(0.5);
 
   addWarningBox(doc,
-    '🎯 CONCEITO FUNDAMENTAL\n\n' +
-    'Você configura CADA um dos 4 produtos SEPARADAMENTE, um de cada vez.\n' +
-    'Cada produto pode ter uma estratégia DIFERENTE (ex: Produto 1 = Premium, Produto 2 = Popular).\n' +
-    'O sistema calcula KPIs para CADA produto individualmente e depois CONSOLIDA tudo.'
+    'Cada um dos 4 produtos é configurado separadamente, um de cada vez, e cada produto pode receber decisões diferentes. O sistema calcula os KPIs de cada produto individualmente e depois consolida o resultado da equipe.',
+    'Conceito fundamental'
   );
 
   doc.moveDown();
@@ -1068,18 +1095,14 @@ function addStepByStepSection(doc: PDFKit.PDFDocument) {
   );
 
   doc.moveDown();
-  addWarningBox(doc, 
-    '❌ ERROS COMUNS A EVITAR\n\n' +
-    '• Copiar conteúdo da IA sem editar (PENALIZAÇÃO SEVERA!)\n' +
-    '• Submeter análises incompletas\n' +
-    '• Ignorar o alinhamento entre SWOT/Porter/BCG/PESTEL e 4Ps\n' +
-    '• Configurar apenas 1 ou 2 produtos (todos os 4 são obrigatórios)\n' +
-    '• Não salvar rascunhos (risco de perder trabalho)\n' +
-    '• Escolher preço sem considerar a estratégia de precificação\n' +
-    '• Ignorar o orçamento disponível\n' +
-    '• Não ler o feedback da rodada anterior\n' +
-    '• Deixar para última hora (sistema fecha automaticamente)\n' +
-    '• Não comunicar com a equipe'
+  addWarningBox(doc,
+    '- Copiar conteúdo da IA sem editar (penalização no score de alinhamento)\n' +
+    '- Submeter análises incompletas\n' +
+    '- Configurar apenas 1, 2 ou 3 produtos quando todos são obrigatórios\n' +
+    '- Não salvar rascunhos (risco de perder o trabalho digitado)\n' +
+    '- Deixar para enviar na última hora (a rodada fecha automaticamente no horário programado)\n' +
+    '- Não se comunicar com a equipe sobre quem vai submeter a decisão final',
+    'Erros operacionais comuns'
   );
 
   doc.moveDown();
@@ -1262,7 +1285,7 @@ function addReferencesSection(doc: PDFKit.PDFDocument) {
   doc.moveDown(0.5);
   doc.fontSize(9).font('Helvetica-Oblique').fillColor(DARK_GRAY);
   doc.text('Simula+ - Transformando estudantes em estrategistas', { align: 'center' });
-  doc.text(`Versão 1.1 | ${new Date().getFullYear()}`, { align: 'center' });
+  doc.text(`Versão 1.2 | ${new Date().getFullYear()}`, { align: 'center' });
 }
 
 // =====================
@@ -1361,40 +1384,52 @@ function addInfoBox(doc: PDFKit.PDFDocument, title: string, content: string) {
   doc.moveDown(0.5);
 }
 
-function addWarningBox(doc: PDFKit.PDFDocument, content: string) {
-  const margin = 60;
+// Quadro de alerta — mesma lógica visual usada no Manual do Professor
+// (server/services/manualProfessorPDF.ts -> renderAlertBox): fundo âmbar,
+// barra lateral colorida e título em negrito. Usado para qualquer coisa
+// que o aluno não pode esquecer (regras do sistema, prazos, bloqueios).
+// Sem símbolo/emoji no título ou no corpo: as fontes padrão do PDFKit
+// (Helvetica) não têm esses glifos no encoding WinAnsi e renderizam um
+// caractere errado no lugar — o alerta já fica claro pela barra lateral
+// colorida, o fundo âmbar e o título em negrito.
+function addWarningBox(doc: PDFKit.PDFDocument, content: string, title: string = 'Atenção') {
+  const boxX = 60;
+  const boxWidth = 475;
+  const barWidth = 4;
+  const paddingX = 14;
+  const paddingY = 10;
+  const innerX = boxX + barWidth + paddingX;
+  const innerWidth = boxWidth - barWidth - paddingX * 2;
+
+  doc.font('Helvetica-Bold').fontSize(10.5);
+  const titleHeight = doc.heightOfString(title, { width: innerWidth });
+
+  doc.font('Helvetica').fontSize(9.5);
+  const bodyHeight = doc.heightOfString(content, { width: innerWidth, lineGap: 2 });
+
+  const boxHeight = paddingY * 2 + titleHeight + 6 + bodyHeight;
+
   const pageHeight = doc.page.height;
   const bottomMargin = doc.page.margins.bottom;
-  
-  if (doc.y > pageHeight - bottomMargin - 120) {
+  const remaining = pageHeight - bottomMargin - doc.y;
+  if (boxHeight > remaining && boxHeight <= pageHeight - doc.page.margins.top - bottomMargin) {
     doc.addPage();
   }
-  
-  const startY = doc.y;
-  const WARNING_COLOR = '#f59e0b'; // Amber
-  
-  doc.rect(60, startY, 475, 0)
-     .lineWidth(0)
-     .fillOpacity(0.1)
-     .fill(WARNING_COLOR)
-     .fillOpacity(1);
 
-  doc.fontSize(9)
-     .font('Helvetica')
-     .fillColor(TEXT_COLOR)
-     .text(content, 70, startY + 10, { width: 455, lineGap: 2 });
-  
-  const endY = doc.y + 10;
-  const boxHeight = endY - startY;
-  
-  doc.rect(60, startY, 475, boxHeight)
-     .lineWidth(2)
-     .strokeOpacity(0.8)
-     .stroke(WARNING_COLOR)
-     .strokeOpacity(1);
-  
-  doc.y = endY;
-  doc.moveDown(0.5);
+  const boxY = doc.y;
+  doc.rect(boxX, boxY, boxWidth, boxHeight).fill(ALERT_BG);
+  doc.rect(boxX, boxY, barWidth, boxHeight).fill(ALERT_BORDER);
+
+  let cursorY = boxY + paddingY;
+  doc.font('Helvetica-Bold').fontSize(10.5).fillColor(ALERT_BORDER)
+     .text(title, innerX, cursorY, { width: innerWidth });
+  cursorY += titleHeight + 6;
+
+  doc.font('Helvetica').fontSize(9.5).fillColor(ALERT_TEXT)
+     .text(content, innerX, cursorY, { width: innerWidth, lineGap: 2 });
+
+  doc.y = boxY + boxHeight;
+  doc.moveDown(0.6);
 }
 
 function addFormulaBox(doc: PDFKit.PDFDocument, title: string, formula: string) {
