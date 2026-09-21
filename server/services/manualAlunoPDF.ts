@@ -28,6 +28,9 @@ function stripUnsupportedGlyphs(text: string): string {
     .replace(/\u2265/g, '>=')
     .replace(/\u2264/g, '<=')
     .replace(/\u2212/g, '-')
+    .replace(/\u03A3/g, 'Soma de')
+    .replace(/\u25B6/g, '->')
+    .replace(/\u25C0/g, '<-')
     .replace(/[ \t]+\n/g, '\n');
 }
 
@@ -41,6 +44,10 @@ const PORTER_DIAGRAM_PATH = path.join(process.cwd(), 'attached_assets', 'generat
 const BCG_DIAGRAM_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Matriz_BCG_em_português_023ea876.png');
 const PESTEL_DIAGRAM_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Diagrama_PESTEL_em_português_823fea8b.png');
 const FUNNEL_DIAGRAM_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Funil_de_marketing_português_18ac4bd9.png');
+// Prints de tela reais capturados navegando o aplicativo como aluno teste —
+// ver server/manual-assets/aluno/. Mesmo tratamento visual (borda leve +
+// legenda) usado para os screenshots do Manual do Professor.
+const SCREENSHOTS_DIR = path.join(process.cwd(), 'server', 'manual-assets', 'aluno');
 
 export function generateManualAlunoPDF(): PassThrough {
   const doc = new PDFDocument({
@@ -286,7 +293,7 @@ function addTableOfContents(doc: PDFKit.PDFDocument) {
     { title: '   3.2 As 5 Forças de Porter' },
     { title: '   3.3 Matriz BCG' },
     { title: '   3.4 Análise PESTEL' },
-    { title: '4. Fórmulas Matemáticas Utilizadas' },
+    { title: '4. Como os Resultados São Calculados' },
     { title: '5. Passo a Passo para os Alunos' },
     { title: '6. Perguntas Frequentes (FAQ)' },
     { title: '7. Referências Bibliográficas' },
@@ -340,7 +347,7 @@ function addPresentationSection(doc: PDFKit.PDFDocument) {
   addSubsectionTitle(doc, 'Diferenciais do Simula+');
   doc.moveDown(0.5);
 
-  addBulletPoint(doc, 'Sistema multi-produto: gerencie 4 produtos simultaneamente no mesmo setor');
+  addBulletPoint(doc, 'Sistema multi-produto: gerencie um ou mais produtos por rodada (a quantidade é definida pelo professor) dentro do mesmo setor');
   addBulletPoint(doc, 'Assistência de IA progressiva: apoio de 100% na Rodada 1, diminuindo até 0% na Rodada 3');
   addBulletPoint(doc, '19 KPIs calculados automaticamente com base em suas decisões');
   addBulletPoint(doc, 'Eventos econômicos dinâmicos que afetam o mercado');
@@ -374,10 +381,10 @@ function addHowItWorksSection(doc: PDFKit.PDFDocument) {
   doc.moveDown(0.5);
 
   addWarningBox(doc,
-    'ETAPA 1 -> Análises Estratégicas (bloqueado até completar)\n' +
-    'ETAPA 2 -> Marketing Mix dos 4 Produtos\n' +
-    'ETAPA 3 -> Submissão Final\n\n' +
-    'Não é possível pular para a ETAPA 2 sem completar a ETAPA 1 — o sistema impede tecnicamente o acesso.',
+    'ETAPA 1 -> Análises Estratégicas (bloqueado até completar SWOT, Porter, BCG e PESTEL)\n' +
+    'ETAPA 2 -> Marketing Mix (Produto, Preço, Praça, Promoção de cada produto da rodada)\n' +
+    'ETAPA 3 -> Envio da Decisão da Equipe\n\n' +
+    'Não é possível acessar a ETAPA 2 sem completar a ETAPA 1 — o sistema impede tecnicamente o acesso e informa quais análises estão faltando.',
     'Sequência forçada pelo sistema'
   );
 
@@ -393,7 +400,7 @@ function addHowItWorksSection(doc: PDFKit.PDFDocument) {
   doc.text('2. Decisões de Marketing Mix (4 Ps)', { continued: false });
   doc.font('Helvetica').fontSize(10);
   addParagraph(doc,
-    'Com base nas análises, as equipes configuram independentemente o mix de marketing para cada um dos 4 produtos disponíveis em seu setor:'
+    'Com base nas análises, a equipe configura o mix de marketing de cada produto da rodada. O professor define quantos produtos cada equipe gerencia; a tela "Selecione o Produto", no topo do Marketing Mix, mostra quantos e quais produtos estão disponíveis:'
   );
   addBulletPoint(doc, 'Produto: qualidade, características e design');
   addBulletPoint(doc, 'Preço: estratégia de precificação e valor');
@@ -404,20 +411,17 @@ function addHowItWorksSection(doc: PDFKit.PDFDocument) {
   doc.text('3. Submissão e Cálculo de Resultados', { continued: false });
   doc.font('Helvetica').fontSize(10);
   addParagraph(doc,
-    'Após configurar todos os 4 produtos e completar as análises estratégicas, a equipe submete suas decisões. O sistema usa um PROCESSO HÍBRIDO importante de compreender:'
+    'Após configurar todos os produtos da rodada e completar as análises estratégicas, a equipe submete suas decisões clicando em "Enviar Decisão da Equipe". O sistema calcula os resultados em duas etapas:'
   );
 
-  addInfoBox(doc, '🔄 PROCESSAMENTO INDIVIDUAL → CONSOLIDADO', 
+  addInfoBox(doc, '🔄 PROCESSAMENTO INDIVIDUAL → CONSOLIDADO',
     'ETAPA 1 - Cálculo Individual:\n' +
-    '• Sistema calcula KPIs para CADA produto separadamente\n' +
-    '• Produto 1: Receita, Lucro, Market Share próprios\n' +
-    '• Produto 2: Receita, Lucro, Market Share próprios\n' +
-    '• Produto 3 e 4: Mesma coisa\n\n' +
+    '• O sistema calcula os KPIs de cada produto separadamente (Receita, Lucro, Market Share próprios)\n\n' +
     'ETAPA 2 - Consolidação:\n' +
-    '• Receita Total = Soma das 4 receitas\n' +
-    '• Lucro Total = Soma dos 4 lucros\n' +
-    '• Market Share Médio = Média dos 4 market shares\n\n' +
-    'RESULTADO: Você vê AMBOS os resultados (individuais + consolidado)'
+    '• Receita Total = soma das receitas de todos os produtos da equipe\n' +
+    '• Lucro Total = soma dos lucros de todos os produtos\n' +
+    '• Market Share = média entre os produtos\n\n' +
+    'RESULTADO: a tela "Resultados e KPIs" mostra o desempenho consolidado da equipe e a comparação entre os produtos na aba "Desempenho por Produto".'
   );
 
   doc.moveDown(0.5);
@@ -493,19 +497,13 @@ function addHowItWorksSection(doc: PDFKit.PDFDocument) {
   );
 
   addParagraph(doc,
-    'O score de alinhamento impacta diretamente os KPIs através de modificadores:'
+    'Esse score aparece na tela "Resultados", na seção "Alinhamento Estratégico", junto com uma lista de "Inconsistências Detectadas" sempre que alguma análise está incompleta ou desalinhada das decisões de marketing (mais detalhes na seção 4 deste manual).'
   );
-
-  doc.moveDown(0.3);
-  addBulletPoint(doc, 'Score ≥ 90: +15% receita, +20% lucro, +10% market share');
-  addBulletPoint(doc, 'Score 70-89: +5% receita, +10% lucro, +5% market share');
-  addBulletPoint(doc, 'Score 50-69: sem modificadores');
-  addBulletPoint(doc, 'Score 30-49: -10% receita, -15% lucro, -5% market share');
-  addBulletPoint(doc, 'Score < 30: -25% receita, -35% lucro, -15% market share');
 
   doc.moveDown();
   addWarningBox(doc,
-    'Conteúdo não editado entre 70% e 100% de similaridade com o texto gerado pela IA aplica -30 pontos no score de alinhamento.'
+    'Copiar o conteúdo gerado pela IA sem editar é detectado pelo sistema e reduz o score de alinhamento estratégico. Edite sempre as análises com suas próprias ideias antes de salvar.',
+    'Penalização por conteúdo de IA não editado'
   );
 }
 
@@ -541,15 +539,10 @@ function addStrategicToolsSection(doc: PDFKit.PDFDocument) {
   );
 
   addParagraph(doc,
-    'Como o Simulador Usa SWOT:'
+    'Na tela "Ferramentas Estratégicas", a aba SWOT tem quatro campos — Forças, Fraquezas, Oportunidades e Ameaças — cada um com um botão "+" para adicionar itens e uma lixeira para remover. Na Rodada 1, a IA pré-preenche um item de exemplo em cada quadrante; edite ou complemente e clique em "Salvar Análise SWOT" para gravar.'
   );
-  addBulletPoint(doc, 'Forças e Oportunidades aumentam percepção de marca, satisfação e lealdade');
-  addBulletPoint(doc, 'Fraquezas e Ameaças reduzem esses indicadores');
-  addBulletPoint(doc, 'O alinhamento entre SWOT e decisões de marketing impacta o score estratégico');
 
-  addParagraph(doc,
-    'Como Interpretar Resultados: Uma SWOT bem construída deve ter entre 3-5 itens em cada quadrante, ser específica ao contexto do setor escolhido e estar diretamente conectada às decisões do mix de marketing (THOMPSON; STRICKLAND, 2000).'
-  );
+  renderScreenshot(doc, 'ft-01-swot.jpg', 'Tela de Análise SWOT no Simula+, com os quatro quadrantes e o botão Salvar Análise SWOT');
 
   // ========== PORTER ==========
   doc.moveDown(0.8);
@@ -576,16 +569,10 @@ function addStrategicToolsSection(doc: PDFKit.PDFDocument) {
   );
 
   addParagraph(doc,
-    'Como o Simulador Usa Porter:'
+    'Na tela "Ferramentas Estratégicas", a aba "5 Forças" traz um controle deslizante de 1 a 10 para cada força, com um campo de texto logo abaixo para a justificativa. Clique em "Salvar Análise de Porter" para gravar.'
   );
-  addBulletPoint(doc, 'Cada força é avaliada em escala de 1 (baixa) a 10 (alta)');
-  addBulletPoint(doc, 'Forças altas (≥7) indicam maior pressão competitiva');
-  addBulletPoint(doc, 'A soma das forças impacta a receita e market share');
-  addBulletPoint(doc, 'Análises detalhadas nas notas de cada força aumentam o score');
 
-  addParagraph(doc,
-    'Como Interpretar Resultados: Indústrias com soma de forças alta (>35) são altamente competitivas e exigem estratégias diferenciadas. Setores com forças baixas (<25) oferecem maior margem para lucratividade (PORTER, 2008).'
-  );
+  renderScreenshot(doc, 'ft-02-porter.jpg', 'Tela das 5 Forças de Porter no Simula+, com os controles deslizantes de 1 a 10 e os campos de notas');
 
   // ========== BCG ==========
   doc.moveDown(0.8);
@@ -611,17 +598,10 @@ function addStrategicToolsSection(doc: PDFKit.PDFDocument) {
   );
 
   addParagraph(doc,
-    'Como o Simulador Usa BCG:'
+    'Na tela "Ferramentas Estratégicas", a aba BCG pede o nome do produto e dois controles deslizantes — Crescimento do Mercado (%) e Participação Relativa. O botão "Adicionar Produto" grava o item na lista "Produtos Mapeados", já classificado automaticamente no quadrante correspondente (Estrela, Vaca Leiteira, Interrogação ou Abacaxi). Diferente das outras ferramentas, a Matriz BCG salva a cada produto adicionado — não existe um botão "Salvar" separado.'
   );
-  addBulletPoint(doc, 'Cada produto é posicionado em um quadrante');
-  addBulletPoint(doc, 'Crescimento de mercado ≥ 5% = alto crescimento');
-  addBulletPoint(doc, 'Participação relativa ≥ 1.0 = alta participação');
-  addBulletPoint(doc, 'Produtos "Estrela" recebem bônus de receita e percepção');
-  addBulletPoint(doc, '"Abacaxis" sofrem penalizações se receberem alto investimento');
 
-  addParagraph(doc,
-    'Como Interpretar Resultados: Um portfólio equilibrado deve ter Vacas Leiteiras financiando Estrelas e Interrogações selecionadas. Muitos Abacaxis indicam desperdício de recursos (KOTLER; KELLER, 2012).'
-  );
+  renderScreenshot(doc, 'ft-03-bcg.jpg', 'Tela da Matriz BCG no Simula+, com os campos de nome do produto, os controles deslizantes e a lista de Produtos Mapeados');
 
   // ========== PESTEL ==========
   doc.moveDown(0.8);
@@ -649,24 +629,34 @@ function addStrategicToolsSection(doc: PDFKit.PDFDocument) {
   );
 
   addParagraph(doc,
-    'Como o Simulador Usa PESTEL:'
+    'Na tela "Ferramentas Estratégicas", a aba PESTEL tem seis campos — Político, Econômico, Social, Tecnológico, Ambiental e Legal — cada um com um botão "+" para adicionar fatores. Clique em "Salvar Análise PESTEL" para gravar.'
   );
-  addBulletPoint(doc, 'Cada dimensão deve ter 1-5 fatores identificados');
-  addBulletPoint(doc, 'Fatores econômicos têm peso maior nos cálculos');
-  addBulletPoint(doc, 'Análises completas (todas dimensões preenchidas) maximizam o score');
-  addBulletPoint(doc, 'A PESTEL conecta-se aos eventos econômicos ativos no jogo');
+
+  renderScreenshot(doc, 'ft-04-pestel.jpg', 'Tela de Análise PESTEL no Simula+, com os seis fatores macroambientais');
+
+  doc.moveDown(0.8);
+  addSubsectionTitle(doc, '3.5 Segmentação de Mercado');
+  doc.moveDown(0.6);
 
   addParagraph(doc,
-    'Como Interpretar Resultados: Uma PESTEL eficaz antecipa mudanças no ambiente externo e permite adaptação proativa. Segundo Johnson, Scholes e Whittington (2007), organizações que monitoram sistematicamente o macroambiente têm vantagem competitiva.'
+    'A quinta aba de "Ferramentas Estratégicas" é a Segmentação de Mercado, com quatro campos — Demográfica, Geográfica, Psicográfica e Comportamental —, preenchidos da mesma forma que a SWOT e a PESTEL. Clique em "Salvar Segmentação" para gravar.'
+  );
+
+  renderScreenshot(doc, 'ft-05-segmentacao.jpg', 'Tela de Segmentação de Mercado no Simula+, com os quatro campos de critérios');
+
+  doc.moveDown();
+  addWarningBox(doc,
+    'A Segmentação de Mercado NÃO aparece no painel "Ferramentas Estratégicas Obrigatórias" do Marketing Mix e não é exigida para desbloquear essa tela — mas o sistema recusa o envio da decisão final se ela estiver vazia, mostrando o erro "ETAPA OBRIGATÓRIA: Complete todas as Análises Estratégicas primeiro!" mesmo com SWOT, Porter, BCG e PESTEL completas. Preencha e salve a Segmentação de Mercado antes de enviar a decisão da equipe.',
+    'Segmentação também é exigida no envio da decisão'
   );
 }
 
 function addFormulasSection(doc: PDFKit.PDFDocument) {
-  addSectionTitle(doc, '4. FÓRMULAS MATEMÁTICAS UTILIZADAS');
+  addSectionTitle(doc, '4. COMO OS RESULTADOS SÃO CALCULADOS');
   doc.moveDown();
 
   addParagraph(doc,
-    'O Simula+ utiliza 19 indicadores-chave de desempenho (KPIs) calculados automaticamente. Abaixo estão as fórmulas matemáticas que regem o sistema:'
+    'Ao final de cada rodada, o Simula+ calcula automaticamente os indicadores de desempenho (KPIs) da equipe a partir das decisões de marketing mix, das análises estratégicas preenchidas e dos eventos econômicos ativos no período. Este manual não detalha os pesos e fórmulas internas de cálculo — qual estratégia seguir é uma decisão sua e da sua equipe.'
   );
 
   addQuoteBox(doc,
@@ -674,285 +664,41 @@ function addFormulasSection(doc: PDFKit.PDFDocument) {
     'Peter Drucker, 2001'
   );
 
-  // Custos
+  addSubsectionTitle(doc, 'Onde ver os resultados');
+  doc.moveDown(0.5);
+
+  addParagraph(doc,
+    'Depois que o professor encerra a rodada, os resultados ficam disponíveis em dois lugares:'
+  );
+  addBulletPoint(doc, 'No Dashboard: cartões resumidos de Orçamento Disponível, ROI Médio, Participação de Mercado e Rodadas Concluídas');
+  addBulletPoint(doc, 'Em "Resultados", no menu lateral: a tela completa de KPIs e Desempenho');
+
+  doc.moveDown(0.3);
+  addBulletPoint(doc, 'Aba "KPIs e Desempenho": Receita, Lucro, Margem, ROI, Market Share e Fidelização, seguidos dos blocos "KPIs Completos" (indicadores de clientes, DRE e Balanço Patrimonial) e "Alinhamento Estratégico"');
+  addBulletPoint(doc, 'Aba "Demonstrativo Financeiro": a DRE completa da rodada, linha a linha, com opção de exportar para Excel');
+
   doc.moveDown();
-  addFormulaBox(doc, '1. CUSTOS DE MARKETING', 
-    'Custos = Custo_Base × Multiplicador_Total\n\n' +
-    'Onde:\n' +
-    'Custo_Base = R$ 10.000\n\n' +
-    'Multiplicador_Total = 1.0 + ajustes:\n' +
-    '  • Qualidade Premium: +0.4\n' +
-    '  • Qualidade Média: +0.2\n' +
-    '  • Qualidade Básica: +0.1\n' +
-    '  • Características Completas: +0.3\n' +
-    '  • Características Intermediárias: +0.15\n' +
-    '  • Canais de Distribuição: +0.1 por canal\n' +
-    '  • Mix Promocional: +0.15 por mídia\n' +
-    '  • Intensidade Intensiva: +0.5\n' +
-    '  • Intensidade Alta: +0.3\n' +
-    '  • Intensidade Média: +0.15\n' +
-    '  • Cobertura Internacional: +0.4\n' +
-    '  • Cobertura Nacional: +0.25\n' +
-    '  • Cobertura Regional: +0.1'
-  );
+  addSubsectionTitle(doc, 'Alinhamento Estratégico');
+  doc.moveDown(0.5);
 
-  // Receita
-  doc.moveDown(0.8);
-  addFormulaBox(doc, '2. RECEITA', 
-    'Receita = Demanda_Base × Score_Produto × Score_Preço × Score_Praça × Score_Promoção × Impacto_Eventos × (Orçamento/100000)\n\n' +
-    'Onde:\n' +
-    'Demanda_Base: varia por setor e tipo de negócio (B2B/B2C)\n' +
-    'Scores: valores de 0 a 100 normalizados para 0.0 a 1.0\n' +
-    'Impacto_Eventos: multiplicador de eventos econômicos (0.5 a 1.5)\n' +
-    'Orçamento: orçamento da equipe (padrão R$ 100.000)'
-  );
-
-  // Score Produto
-  addFormulaBox(doc, '2.1 Score do Produto', 
-    'Score_Produto = 50 + ajustes:\n' +
-    '  • Qualidade Premium: +40\n' +
-    '  • Qualidade Média: +25\n' +
-    '  • Qualidade Básica: +10\n' +
-    '  • Características Completas: +25\n' +
-    '  • Características Intermediárias: +15\n' +
-    '  • Características Básicas: +5\n\n' +
-    'Máximo: 100'
-  );
-
-  // Score Preço
-  addFormulaBox(doc, '2.2 Score do Preço', 
-    'Score_Preço = 50 + ajuste_estratégia + ajuste_otimalidade + ajuste_tipo_negócio\n\n' +
-    'Ajuste por Estratégia:\n' +
-    '  • Penetração (preço < 50): +30\n' +
-    '  • Competitivo (50 ≤ preço ≤ 100): +35\n' +
-    '  • Skimming (preço > 100): +30\n' +
-    '  • Valor: +25\n\n' +
-    'Otimalidade = 100 - |75 - preço| × 0.5\n\n' +
-    'Ajuste Tipo Negócio:\n' +
-    '  • B2B com preço > 80: +10\n' +
-    '  • B2C com preço < 90: +5'
-  );
-
-  // Score Praça
-  doc.moveDown(0.8);
-  addFormulaBox(doc, '2.3 Score da Praça', 
-    'Score_Praça = 40 + (nº canais × 8) + ajuste_cobertura + ajuste_tipo\n\n' +
-    'Ajuste Cobertura:\n' +
-    '  • Internacional: +40\n' +
-    '  • Nacional: +30\n' +
-    '  • Regional: +20\n' +
-    '  • Local: +10\n\n' +
-    'Ajuste Tipo Negócio:\n' +
-    '  • B2B com ≥2 canais: +10\n' +
-    '  • B2C com ≥3 canais: +10\n\n' +
-    'Máximo: 100'
-  );
-
-  // Score Promoção
-  addFormulaBox(doc, '2.4 Score da Promoção', 
-    'Score_Promoção = 40 + (nº mídias × 10) + ajuste_intensidade\n\n' +
-    'Ajuste Intensidade:\n' +
-    '  • Intensivo: +40\n' +
-    '  • Alto: +30\n' +
-    '  • Médio: +20\n' +
-    '  • Baixo: +10\n\n' +
-    'Máximo: 100'
-  );
-
-  // Impacto de Eventos
-  addFormulaBox(doc, '2.5 Impacto de Eventos Econômicos', 
-    'Impacto_Total = 1.0 + Σ(impacto_individual)\n\n' +
-    'Para cada evento ativo:\n' +
-    '  Severidade Crítica: ±0.25\n' +
-    '  Severidade Alta: ±0.15\n' +
-    '  Severidade Média: ±0.10\n' +
-    '  Severidade Baixa: ±0.05\n\n' +
-    'Sinal:\n' +
-    '  • Economia/Competição: negativo (-)\n' +
-    '  • Tecnologia/Social: positivo (+) × 0.5\n\n' +
-    'Limites: 0.5 ≤ Impacto_Total ≤ 1.5'
-  );
-
-  // Lucro e Margem
-  doc.moveDown(0.8);
-  addFormulaBox(doc, '3. LUCRO', 
-    'Lucro = Receita - Custos'
-  );
-
-  addFormulaBox(doc, '4. MARGEM (%)', 
-    'Margem = (Lucro / Receita) × 100\n\n' +
-    'Interpretação:\n' +
-    '  • > 30%: Excelente\n' +
-    '  • 15-30%: Boa\n' +
-    '  • 5-15%: Moderada\n' +
-    '  • < 5%: Baixa'
-  );
-
-  // Market Share
-  addFormulaBox(doc, '5. PARTICIPAÇÃO DE MERCADO (Market Share)', 
-    'Market_Share = (Receita_Equipe / Tamanho_Mercado_Total) × 100 × Fator_Competição\n\n' +
-    'Onde:\n' +
-    'Tamanho_Mercado_Total: definido por setor\n' +
-    'Fator_Competição:\n' +
-    '  • Competição Baixa: 1.2\n' +
-    '  • Competição Média: 1.0\n' +
-    '  • Competição Alta: 0.8\n' +
-    '  • Competição Muito Alta: 0.6'
-  );
-
-  // ROI
-  addFormulaBox(doc, '6. RETORNO SOBRE INVESTIMENTO (ROI)', 
-    'ROI = (Lucro / Custos) × 100\n\n' +
-    'Interpretação:\n' +
-    '  • > 100%: Excelente retorno\n' +
-    '  • 50-100%: Bom retorno\n' +
-    '  • 20-50%: Retorno moderado\n' +
-    '  • < 20%: Retorno baixo'
-  );
-
-  // Percepção de Marca
-  doc.moveDown(0.8);
-  addFormulaBox(doc, '7. PERCEPÇÃO DE MARCA', 
-    'Percepção = (Score_Produto × 0.4 + Score_Promoção × 0.3 + Alinhamento_Mercado × 0.3) + Bônus_SWOT\n\n' +
-    'Bônus_SWOT:\n' +
-    '  • Por Força identificada: +2 pontos\n' +
-    '  • Por Oportunidade: +1.5 pontos\n\n' +
-    'Máximo: 100'
-  );
-
-  // Satisfação do Cliente
-  addFormulaBox(doc, '8. SATISFAÇÃO DO CLIENTE', 
-    'Satisfação = (Score_Produto × 0.35 + Score_Preço × 0.25 + Score_Praça × 0.2 + Score_Promoção × 0.2)\n\n' +
-    'Ajustes:\n' +
-    '  • Preço adequado ao tipo negócio: +5\n' +
-    '  • Alta cobertura de distribuição: +3\n\n' +
-    'Máximo: 100'
-  );
-
-  // Lealdade
-  addFormulaBox(doc, '9. LEALDADE DO CLIENTE', 
-    'Lealdade = (Satisfação × 0.5 + Percepção × 0.3 + Score_Produto × 0.2) + Bônus_SWOT\n\n' +
-    'Bônus_SWOT: +1 ponto por Força\n\n' +
-    'Máximo: 100'
-  );
-
-  // CAC
-  addFormulaBox(doc, '10. CUSTO DE AQUISIÇÃO DE CLIENTE (CAC)', 
-    'CAC = Custos_Totais / Nº_Clientes_Estimados\n\n' +
-    'Onde:\n' +
-    'Nº_Clientes = Receita / Preço_Médio\n\n' +
-    'Meta: CAC < (LTV / 3)'
-  );
-
-  // Ticket Médio
-  doc.moveDown(0.8);
-  addFormulaBox(doc, '11. TICKET MÉDIO', 
-    'Ticket_Médio = Receita / Nº_Clientes\n\n' +
-    'Interpretação:\n' +
-    'Indica o valor médio gasto por cliente'
-  );
-
-  // LTV
-  addFormulaBox(doc, '12. LIFETIME VALUE (LTV)', 
-    'LTV = Ticket_Médio × (1 + Lealdade/100) × (1 + Satisfação/200)\n\n' +
-    'Fatores que aumentam LTV:\n' +
-    '  • Alta lealdade do cliente\n' +
-    '  • Alta satisfação\n' +
-    '  • Ticket médio elevado'
-  );
-
-  // Razão LTV/CAC
-  addFormulaBox(doc, '13. RAZÃO LTV/CAC', 
-    'Razão_LTV_CAC = LTV / CAC\n\n' +
-    'Interpretação:\n' +
-    '  • > 3.0: Excelente - Investimento sustentável\n' +
-    '  • 2.0-3.0: Bom - Equilíbrio adequado\n' +
-    '  • 1.0-2.0: Atenção - Melhorar eficiência\n' +
-    '  • < 1.0: Crítico - Negócio insustentável'
-  );
-
-  // Taxa de Conversão
-  addFormulaBox(doc, '14. TAXA DE CONVERSÃO (%)', 
-    'Taxa_Conversão = Base × (Score_Produto/100) × (Score_Preço/100) × (Score_Praça/100) × (Score_Promoção/100) × Ajuste_Competição\n\n' +
-    'Onde:\n' +
-    'Base:\n' +
-    '  • B2C: 3.5%\n' +
-    '  • B2B: 2.0%\n' +
-    '  • Híbrido: 2.75%\n\n' +
-    'Ajuste_Competição:\n' +
-    '  • Alta: ×0.7\n' +
-    '  • Média: ×1.0\n' +
-    '  • Baixa: ×1.3'
-  );
-
-  // NPS
-  doc.moveDown(0.8);
-  addFormulaBox(doc, '15. NET PROMOTER SCORE (NPS)', 
-    'NPS = (Satisfação × 0.4 + Lealdade × 0.4 + Percepção × 0.2) - 50\n\n' +
-    'Escala: -100 a +100\n\n' +
-    'Interpretação:\n' +
-    '  • 75-100: Zona de Excelência\n' +
-    '  • 50-74: Zona de Qualidade\n' +
-    '  • 0-49: Zona de Aperfeiçoamento\n' +
-    '  • -100 a -1: Zona Crítica'
-  );
-
-  // Tempo Médio de Conversão
-  addFormulaBox(doc, '16. TEMPO MÉDIO DE CONVERSÃO (dias)', 
-    'Tempo = Base - (Score_Produto × 0.2) - (Score_Preço × 0.15) + Ajuste_Competição\n\n' +
-    'Onde:\n' +
-    'Base:\n' +
-    '  • B2C: 15 dias\n' +
-    '  • B2B: 45 dias\n' +
-    '  • Híbrido: 30 dias\n\n' +
-    'Ajuste_Competição:\n' +
-    '  • Alta: +10 dias\n' +
-    '  • Média: +5 dias\n' +
-    '  • Baixa: 0 dias\n\n' +
-    'Mínimo: 1 dia'
-  );
-
-  // Receita Bruta e Líquida
-  addFormulaBox(doc, '17. RECEITA BRUTA E LÍQUIDA', 
-    'Receita_Bruta = Receita (calculada anteriormente)\n\n' +
-    'Receita_Líquida = Receita_Bruta × (1 - Taxa_Dedução)\n\n' +
-    'Taxa_Dedução base: 5%\n\n' +
-    'Acréscimos:\n' +
-    '  • Promoções de desconto/cupons: +8%\n' +
-    '  • Marketplaces: +12%'
-  );
-
-  // Margem de Contribuição
-  doc.moveDown(0.8);
-  addFormulaBox(doc, '18. MARGEM DE CONTRIBUIÇÃO (%)', 
-    'Margem_Contribuição = ((Receita_Líquida - Custos_Variáveis) / Receita_Líquida) × 100\n\n' +
-    'Onde:\n' +
-    'Custos_Variáveis = Custos_Totais × 0.6 (60% dos custos)\n\n' +
-    'Interpretação:\n' +
-    '  • > 50%: Excelente contribuição\n' +
-    '  • 30-50%: Boa contribuição\n' +
-    '  • 15-30%: Moderada\n' +
-    '  • < 15%: Baixa - risco de inviabilidade'
-  );
-
-  // Modificadores Estratégicos
-  addFormulaBox(doc, '19. MODIFICADORES DE ALINHAMENTO ESTRATÉGICO', 
-    'Score_Alinhamento = Σ(Completude + Alinhamento_SWOT + Alinhamento_Porter + Alinhamento_BCG + Alinhamento_PESTEL) - Penalidades_IA\n\n' +
-    'Penalidades por Conteúdo IA não editado:\n' +
-    '  • 70-100% similaridade: -30 pontos (severa)\n' +
-    '  • 30-69% similaridade: -10 pontos (moderada)\n' +
-    '  • 0-29% similaridade: sem penalidade\n\n' +
-    'Impacto nos KPIs:\n' +
-    '  Score ≥ 90: Receita +15%, Lucro +20%, Market Share +10%\n' +
-    '  Score 70-89: Receita +5%, Lucro +10%, Market Share +5%\n' +
-    '  Score 50-69: Sem modificadores\n' +
-    '  Score 30-49: Receita -10%, Lucro -15%, Market Share -5%\n' +
-    '  Score < 30: Receita -25%, Lucro -35%, Market Share -15%'
+  addParagraph(doc,
+    'O sistema calcula um score de 0 a 100 que mede a coerência entre as análises estratégicas (SWOT, Porter, BCG, PESTEL) e as decisões de marketing mix. Esse score aparece na tela "Resultados", junto com uma lista de "Inconsistências Detectadas" sempre que alguma análise está incompleta ou desalinhada.'
   );
 
   doc.moveDown();
   addWarningBox(doc,
-    'Todas as fórmulas são aplicadas de forma integrada. O resultado final combina decisões de marketing, análises estratégicas, eventos econômicos e alinhamento entre estratégia e execução.'
+    'O critério de "completa" usado no score de Alinhamento Estratégico é mais rigoroso do que o critério que libera o envio da decisão no Marketing Mix. Uma análise pode aparecer como "Completa" no painel "Ferramentas Estratégicas Obrigatórias" e, mesmo assim, ser listada em "Inconsistências Detectadas" na tela de Resultados. Preencha as análises com conteúdo próprio, não apenas o mínimo para desbloquear a próxima tela.',
+    'Duas checagens diferentes de completude'
+  );
+
+  doc.moveDown();
+  addWarningBox(doc,
+    'Copiar o conteúdo gerado pela IA sem editar é detectado pelo sistema e reduz o score de Alinhamento Estratégico.'
+  );
+
+  doc.moveDown();
+  addParagraph(doc,
+    'Na aba "Desempenho por Produto", cada produto da rodada aparece com sua Receita, Lucro, ROI e Margem individuais. Em algumas telas, essa área pode mostrar o identificador interno do produto (um código técnico) em vez do nome cadastrado — é uma exibição do sistema, não um erro seu.'
   );
 }
 
@@ -968,7 +714,7 @@ function addStepByStepSection(doc: PDFKit.PDFDocument) {
   addNumberedStep(doc, '3', 'Preencha: Nome, Email, Senha, Código da Turma (fornecido pelo professor)');
 
   doc.moveDown();
-  addInfoBox(doc, 'CADASTRO EXCLUSIVO - EMAIL INSTITUCIONAL', 
+  addInfoBox(doc, 'CADASTRO EXCLUSIVO - EMAIL INSTITUCIONAL',
     'O cadastro exige seu email institucional de aluno do IFFar:\n\n' +
     '• @aluno.iffar.edu.br\n' +
     '• Maiúsculas/minúsculas NÃO importam (@ALUNO.IFFAR.EDU.BR funciona!)\n\n' +
@@ -996,13 +742,44 @@ function addStepByStepSection(doc: PDFKit.PDFDocument) {
   );
 
   doc.moveDown();
-  addSubsectionTitle(doc, 'Como Formar/Entrar em uma Equipe');
+  addSubsectionTitle(doc, 'Introdução ao Jogo (Rodada 0)');
   doc.moveDown(0.5);
 
-  addNumberedStep(doc, '1', 'No dashboard, clique em "Criar Equipe" ou "Entrar em Equipe"');
-  addNumberedStep(doc, '2', 'Se criar: escolha nome da equipe, setor e produtos');
-  addNumberedStep(doc, '3', 'Se entrar: digite o código da equipe existente');
-  addNumberedStep(doc, '4', 'Equipes têm até 5 membros');
+  addParagraph(doc,
+    'No primeiro acesso, antes de qualquer rodada valendo nota, o sistema abre a "Rodada 0 — Introdução ao jogo": uma leitura guiada em 6 seções (Bem-vindo ao Simula+, Como o Jogo Funciona: Rodadas, O Mix de Marketing (4 Ps), Ferramentas Estratégicas, Eventos de Mercado e Resultados, Trabalho em Equipe e Regras). Cada seção libera o botão "Próxima seção" só depois de um tempo mínimo de leitura (contador visível no canto inferior); a última seção libera "Concluir introdução".'
+  );
+
+  renderScreenshot(doc, 'r0-01-boasvindas.jpg', 'Primeira seção da Rodada 0 - Introdução ao jogo, com o contador de leitura mínima');
+
+  addWarningBox(doc,
+    'A Rodada 0 é individual: cada integrante da equipe precisa concluí-la, não apenas um representante. Ela não conta para nenhuma nota ou estatística do jogo — existe só para nivelar o entendimento antes da primeira decisão real.',
+    'Conceito fundamental'
+  );
+
+  renderScreenshot(doc, 'r0-06-equiperegras.jpg', 'Última seção da Rodada 0, com o botão Concluir introdução');
+
+  doc.moveDown();
+  addSubsectionTitle(doc, 'Como Criar ou Entrar em uma Equipe');
+  doc.moveDown(0.5);
+
+  addParagraph(doc,
+    'Depois de concluir a Rodada 0, o sistema mostra a tela "Selecione ou Crie uma Equipe", com as equipes já existentes na turma (se houver) e a opção de criar uma nova.'
+  );
+
+  renderScreenshot(doc, 'eq-01-selecionar-criar.jpg', 'Tela Selecione ou Crie uma Equipe, com as equipes existentes na turma');
+
+  addNumberedStep(doc, '1', 'Para entrar em uma equipe existente, clique nela na lista');
+  addNumberedStep(doc, '2', 'Para criar uma equipe nova, clique em "Criar Nova Equipe" e informe o Nome da Equipe');
+  addNumberedStep(doc, '3', 'Quem cria a equipe se torna automaticamente o líder, com o orçamento padrão definido pelo professor para a turma');
+
+  renderScreenshot(doc, 'eq-02-criar-nova-equipe-form.jpg', 'Formulário Criar Nova Equipe, com o campo Nome da Equipe');
+
+  doc.moveDown();
+  addParagraph(doc,
+    'Depois de criar ou entrar na equipe, o Dashboard mostra o "Roteiro da Rodada": um checklist com as etapas da rodada atual.'
+  );
+
+  renderScreenshot(doc, 'eq-03-dashboard-equipe-criada.jpg', 'Dashboard da equipe recém-criada, com o Roteiro da Rodada 1');
 
   doc.moveDown();
   addSubsectionTitle(doc, '🚨 ETAPA 1 (OBRIGATÓRIA): Análises Estratégicas PRIMEIRO');
@@ -1014,143 +791,156 @@ function addStepByStepSection(doc: PDFKit.PDFDocument) {
   );
 
   doc.moveDown();
-  addNumberedStep(doc, '1', 'Acesse "Análises Estratégicas" no menu lateral');
-  addNumberedStep(doc, '2', 'Complete AS 4 FERRAMENTAS obrigatórias:');
-  
+  addNumberedStep(doc, '1', 'Acesse "Ferramentas Estratégicas" no menu lateral');
+  addNumberedStep(doc, '2', 'Complete AS 4 FERRAMENTAS obrigatórias para o Marketing Mix (mais a Segmentação de Mercado, exigida no envio final — ver seção 3.5):');
+
   doc.fontSize(9).font('Helvetica-Bold').fillColor(PRIMARY_COLOR);
-  addBulletPoint(doc, '✓ SWOT: Mínimo 1 item em cada quadrante (Forças, Fraquezas, Oportunidades, Ameaças)');
-  addBulletPoint(doc, '✓ PORTER: Avaliar as 5 forças de 1-10 com notas explicativas');
-  addBulletPoint(doc, '✓ BCG: Posicionar os 4 produtos nos quadrantes');
-  addBulletPoint(doc, '✓ PESTEL: Analisar os 6 fatores macroambientais');
+  addBulletPoint(doc, '✓ SWOT: mínimo 1 item em cada quadrante (Forças, Fraquezas, Oportunidades, Ameaças)');
+  addBulletPoint(doc, '✓ PORTER: avaliar as 5 forças de 1 a 10 com notas explicativas');
+  addBulletPoint(doc, '✓ BCG: adicionar cada produto da rodada na Matriz BCG');
+  addBulletPoint(doc, '✓ PESTEL: preencher os 6 fatores macroambientais');
   doc.moveDown(0.3);
 
   addNumberedStep(doc, '3', 'Na Rodada 1: use o botão "Gerar com IA" como ponto de partida');
-  addNumberedStep(doc, '4', '⚠️ IMPORTANTE: SEMPRE edite o conteúdo da IA! Copiar sem editar gera penalizações');
-  addNumberedStep(doc, '5', 'Salve rascunhos frequentemente');
-  addNumberedStep(doc, '6', '✅ SUBMETA todas as 4 ferramentas');
+  addNumberedStep(doc, '4', 'IMPORTANTE: sempre edite o conteúdo da IA — copiar sem editar reduz o score de alinhamento');
+  addNumberedStep(doc, '5', 'Clique no botão "Salvar" de cada ferramenta depois de editar (a Matriz BCG salva ao clicar em "Adicionar Produto")');
 
   doc.moveDown();
-  addInfoBox(doc, '🔒 O QUE ACONTECE SE NÃO COMPLETAR?', 
-    'Se tentar acessar Marketing Mix sem completar as análises, você verá:\n\n' +
-    '"⚠️ ETAPA OBRIGATÓRIA: Complete todas as Análises Estratégicas primeiro!"\n\n' +
-    'O sistema informará exatamente quais análises estão faltando.\n' +
-    'Você será IMPEDIDO de salvar qualquer decisão de produto até completar TODAS.'
+  addInfoBox(doc, '🔒 O QUE ACONTECE SE NÃO COMPLETAR?',
+    'Se tentar acessar o Marketing Mix sem completar as 4 análises, você verá:\n\n' +
+    '"ETAPA OBRIGATÓRIA: Complete todas as Análises Estratégicas primeiro!"\n\n' +
+    'O sistema informa exatamente quais análises estão faltando, e você não consegue salvar nenhuma decisão de produto até completar todas.'
   );
 
   doc.moveDown();
-  addSubsectionTitle(doc, 'Como Configurar o Marketing Mix (4 Produtos Individuais)');
+  addSubsectionTitle(doc, 'Como Configurar o Marketing Mix');
   doc.moveDown(0.5);
 
   addWarningBox(doc,
-    'Cada um dos 4 produtos é configurado separadamente, um de cada vez, e cada produto pode receber decisões diferentes. O sistema calcula os KPIs de cada produto individualmente e depois consolida o resultado da equipe.',
+    'O número de produtos que a equipe configura por rodada é definido pelo professor (na Rodada 1, o padrão é 1 produto por equipe). A tela "Selecione o Produto", no topo do Marketing Mix, mostra os produtos disponíveis na rodada; cada produto é configurado separadamente, e o sistema calcula os KPIs de cada um individualmente antes de consolidar o resultado da equipe.',
     'Conceito fundamental'
   );
 
-  doc.moveDown();
-  addNumberedStep(doc, '1', 'Acesse "Marketing Mix" no menu lateral');
-  addNumberedStep(doc, '2', 'Selecione PRODUTO 1 - Configure os 4 Ps completos:');
-  
-  doc.fontSize(9).font('Helvetica').fillColor(TEXT_COLOR);
-  addBulletPoint(doc, 'PRODUTO: Qualidade (alta/média/básica), Características, Posicionamento');
-  addBulletPoint(doc, 'PREÇO: Estratégia (premium/competitivo/penetração), Valor em R$');
-  addBulletPoint(doc, 'PRAÇA: Canais de distribuição, Cobertura geográfica');
-  addBulletPoint(doc, 'PROMOÇÃO: Mix promocional, Intensidade, Orçamento por canal');
-  doc.moveDown(0.3);
+  addNumberedStep(doc, '1', 'Acesse "Mix de Marketing (4 Ps)" no menu lateral');
+  addNumberedStep(doc, '2', 'Em "Selecione o Produto", escolha o produto que vai configurar (se houver mais de um na rodada)');
 
-  addNumberedStep(doc, '3', '✅ SALVE O RASCUNHO do Produto 1');
-  addNumberedStep(doc, '4', 'Use a SETA DIREITA (▶) para ir ao PRODUTO 2');
-  addNumberedStep(doc, '5', 'Configure o PRODUTO 2 com os 4 Ps (pode ser estratégia diferente!)');
-  addNumberedStep(doc, '6', '✅ SALVE O RASCUNHO do Produto 2');
-  addNumberedStep(doc, '7', 'Repita para PRODUTO 3 e PRODUTO 4');
-  addNumberedStep(doc, '8', 'Revise os 4 produtos navegando com as setas ◀▶');
-  addNumberedStep(doc, '9', '⚠️ SUBMETA TUDO junto quando os 4 estiverem prontos');
+  renderScreenshot(doc, 'mix-01-produto.jpg', 'Aba Produto do Marketing Mix, com Qualidade do Produto, Características e Posicionamento de Marca');
+
+  addNumberedStep(doc, '3', 'Configure a aba PRODUTO: qualidade, características e posicionamento de marca');
+  addNumberedStep(doc, '4', 'Configure a aba PREÇO: estratégia de precificação e valor');
+
+  renderScreenshot(doc, 'mix-03-preco-requisito.jpg', 'Aba Preço do Marketing Mix, com o painel Ferramentas Estratégicas Obrigatórias mostrando o status de cada análise');
+
+  addNumberedStep(doc, '5', 'Configure a aba PRAÇA: canais de distribuição e cobertura geográfica');
+
+  renderScreenshot(doc, 'mix-04-praca.jpg', 'Aba Praça do Marketing Mix, com Canais e Cobertura de Distribuição');
+
+  addNumberedStep(doc, '6', 'Configure a aba PROMOÇÃO: catálogo de mídias e intensidade');
+
+  renderScreenshot(doc, 'mix-05-promocao.jpg', 'Aba Promoção do Marketing Mix, com o Catálogo de Mídias e a Intensidade');
+
+  addNumberedStep(doc, '7', 'Se houver mais de um produto na rodada, repita os passos 3 a 6 para cada um');
 
   doc.moveDown();
-  addInfoBox(doc, '📊 COMO O SISTEMA PROCESSA', 
-    'DURANTE A RODADA:\n' +
-    '• Você salva cada produto individualmente (rascunhos independentes)\n\n' +
-    'AO FINALIZAR A RODADA:\n' +
-    '• Sistema calcula KPIs de CADA produto separadamente\n' +
-    '• Revenue Produto 1 + Revenue Produto 2 + ... = Revenue Total\n' +
-    '• Lucro Produto 1 + Lucro Produto 2 + ... = Lucro Total\n' +
-    '• Market Share = Média dos 4 produtos\n' +
-    '• Você verá resultados INDIVIDUAIS e CONSOLIDADOS'
+  addParagraph(doc,
+    'Ao final da página, o painel "Ferramentas Estratégicas Obrigatórias" mostra o status de SWOT, Porter, BCG e PESTEL (X vermelho = pendente, "Completa" em verde = ok). O botão "Enviar Decisão da Equipe" fica desativado até que as 4 apareçam como "Completa".'
+  );
+
+  renderScreenshot(doc, 'mix-06-envio-bloqueado.jpg', 'Rodapé do Marketing Mix com as 4 ferramentas pendentes e o botão Enviar Decisão da Equipe desativado');
+  renderScreenshot(doc, 'mix-07-envio-liberado.jpg', 'Rodapé do Marketing Mix com as 4 ferramentas completas e o botão Enviar Decisão da Equipe ativo');
+
+  doc.moveDown(0.8);
+  addSubsectionTitle(doc, 'Como Enviar a Decisão da Equipe');
+  doc.moveDown(0.6);
+
+  addParagraph(doc,
+    'Há dois botões distintos no rodapé do Marketing Mix: "Salvar Rascunho", que pode ser usado quantas vezes quiser durante a rodada, e "Enviar Decisão da Equipe", que é o envio final.'
+  );
+
+  addWarningBox(doc,
+    'Depois de clicar em "Confirmar e Enviar" no modal de confirmação, NÃO é possível modificar a decisão até a próxima rodada. Revise as abas de cada produto antes de confirmar.',
+    'Envio é definitivo'
+  );
+
+  addNumberedStep(doc, '1', 'Clique em "Enviar Decisão da Equipe"');
+
+  renderScreenshot(doc, 'mix-08-confirmar-envio-modal.jpg', 'Modal de confirmação Confirmar Envio de Decisão Final, com os botões Revisar Decisão e Confirmar e Enviar');
+
+  addNumberedStep(doc, '2', 'No modal "Confirmar Envio de Decisão Final", clique em "Revisar Decisão" para voltar e ajustar, ou em "Confirmar e Enviar" para enviar definitivamente');
+
+  doc.moveDown();
+  addInfoBox(doc, 'SE O ENVIO FOR RECUSADO',
+    'Mesmo com SWOT, Porter, BCG e PESTEL completas, o envio pode ser recusado com a mensagem "Falha ao submeter [produto]: ETAPA OBRIGATÓRIA: Complete todas as Análises Estratégicas primeiro!" se a Segmentação de Mercado (seção 3.5) estiver vazia. Preencha e salve a Segmentação e tente enviar novamente.'
+  );
+
+  renderScreenshot(doc, 'mix-09-erro-envio-produto.jpg', 'Mensagem de erro ao tentar enviar a decisão com a Segmentação de Mercado vazia');
+
+  addNumberedStep(doc, '3', 'Depois de corrigir, clique novamente em "Enviar Decisão da Equipe" e confirme');
+
+  renderScreenshot(doc, 'mix-10-decisao-enviada-sucesso.jpg', 'Confirmação Decisão enviada com sucesso, exibida após o envio válido');
+
+  doc.moveDown(0.8);
+  addSubsectionTitle(doc, 'Resultados e KPIs da Rodada');
+  doc.moveDown(0.6);
+
+  addParagraph(doc,
+    'Depois que o professor encerra a rodada, o Dashboard passa a mostrar quatro cartões: Orçamento Disponível, ROI Médio, Participação de Mercado e Rodadas Concluídas.'
+  );
+
+  renderScreenshot(doc, 'res-01-dashboard-pos-rodada.jpg', 'Dashboard da equipe após o encerramento da rodada, com os cartões de KPI');
+
+  addParagraph(doc,
+    'Em "Resultados", no menu lateral, a aba "KPIs e Desempenho" traz Receita, Lucro, Margem, ROI, Market Share e Fidelização em destaque, seguidos do bloco "Alinhamento Estratégico".'
+  );
+
+  renderScreenshot(doc, 'res-02-kpis-desempenho.jpg', 'Tela Resultados e KPIs, aba KPIs e Desempenho, com os indicadores principais e o Alinhamento Estratégico');
+
+  addParagraph(doc,
+    'O bloco "Alinhamento Estratégico" mostra o score de 0 a 100 e, quando aplicável, a lista "Inconsistências Detectadas" — indicando exatamente quais análises o sistema considerou incompletas, mesmo que tenham aparecido como "Completa" no Marketing Mix (ver seção 4).'
+  );
+
+  renderScreenshot(doc, 'res-04-alinhamento-inconsistencias.jpg', 'Bloco Alinhamento Estratégico expandido, com a lista de Inconsistências Detectadas');
+
+  addParagraph(doc,
+    'Clicando em "KPIs Completos", a tela expande para mostrar Indicadores de Clientes (CAC, LTV, LTV/CAC, Taxa de Conversão, Ticket Médio, NPS, Tempo Médio de Conversão), a DRE da rodada e o Balanço Patrimonial.'
+  );
+
+  renderScreenshot(doc, 'res-05-kpis-completos-dre.jpg', 'Bloco KPIs Completos expandido, com Indicadores de Clientes e a DRE');
+
+  addParagraph(doc,
+    'A aba "Demonstrativo Financeiro" mostra a DRE completa em formato de tabela, linha a linha, com um botão "Exportar Excel".'
+  );
+
+  renderScreenshot(doc, 'res-07-demonstrativo-financeiro-dre.jpg', 'Aba Demonstrativo Financeiro, com a DRE completa e o botão Exportar Excel');
+
+  doc.moveDown();
+  addWarningBox(doc,
+    'Na aba "Desempenho por Produto", o nome do produto pode aparecer como um código técnico (por exemplo, "2270bcf4-dc68-4c31-...") em vez do nome cadastrado. É uma exibição do sistema — não é um erro seu.'
   );
 
   doc.moveDown(0.8);
   addSubsectionTitle(doc, 'O Que Fazer e o Que Evitar');
   doc.moveDown(0.6);
 
-  addInfoBox(doc, '✅ BOAS PRÁTICAS', 
+  addInfoBox(doc, '✅ BOAS PRÁTICAS',
     '• Leia o Manual do Aluno antes de começar\n' +
-    '• Discuta estratégias com sua equipe antes de decidir\n' +
-    '• Pesquise sobre o setor escolhido (tendências, concorrentes)\n' +
-    '• Edite SEMPRE os conteúdos gerados pela IA\n' +
-    '• Alinhe análises estratégicas com decisões de marketing\n' +
+    '• Edite SEMPRE os conteúdos gerados pela IA antes de salvar\n' +
     '• Salve rascunhos frequentemente\n' +
-    '• Analise os KPIs após cada rodada\n' +
-    '• Leia o feedback inteligente e aplique melhorias\n' +
-    '• Experimente estratégias diferentes entre produtos\n' +
-    '• Monitore eventos econômicos ativos'
+    '• Preencha e salve as 5 ferramentas estratégicas (incluindo Segmentação) antes de tentar enviar a decisão\n' +
+    '• Revise todas as abas de cada produto antes de clicar em Enviar Decisão da Equipe\n' +
+    '• Combine com a equipe quem vai fazer o envio final\n' +
+    '• Leia o feedback automático da rodada em Resultados'
   );
 
   doc.moveDown();
   addWarningBox(doc,
-    '- Copiar conteúdo da IA sem editar (penalização no score de alinhamento)\n' +
-    '- Submeter análises incompletas\n' +
-    '- Configurar apenas 1, 2 ou 3 produtos quando todos são obrigatórios\n' +
+    '- Copiar conteúdo da IA sem editar (reduz o score de alinhamento)\n' +
+    '- Submeter análises incompletas ou deixar a Segmentação de Mercado vazia\n' +
+    '- Configurar menos produtos do que os disponíveis na rodada, quando todos são obrigatórios\n' +
     '- Não salvar rascunhos (risco de perder o trabalho digitado)\n' +
     '- Deixar para enviar na última hora (a rodada fecha automaticamente no horário programado)\n' +
     '- Não se comunicar com a equipe sobre quem vai submeter a decisão final',
     'Erros operacionais comuns'
-  );
-
-  doc.moveDown();
-  addSubsectionTitle(doc, 'Dicas para Maximizar o Desempenho');
-  doc.moveDown(0.5);
-
-  addParagraph(doc,
-    '🎯 Foco no Alinhamento Estratégico: O score de alinhamento (0-100) é o fator mais importante. Garanta que suas decisões de marketing sejam coerentes com suas análises.'
-  );
-
-  addParagraph(doc,
-    '📚 Estude os Conceitos: Entender SWOT, Porter, BCG e PESTEL na teoria facilita a aplicação prática.'
-  );
-
-  addParagraph(doc,
-    '💡 Use a IA como Ferramenta de Aprendizado: Na Rodada 1, a IA gera análises completas. Use-as como exemplo, mas SEMPRE personalize com insights próprios.'
-  );
-
-  addParagraph(doc,
-    '📊 Analise Concorrentes: No painel de Insights, veja como outras equipes estão performando e identifique gaps competitivos.'
-  );
-
-  addParagraph(doc,
-    '🔄 Itere e Melhore: Cada rodada é uma oportunidade de aprender. Ajuste estratégias com base nos resultados anteriores.'
-  );
-
-  doc.moveDown();
-  addInfoBox(doc, '📊 EXEMPLO PRÁTICO DE PRODUTOS INDIVIDUAIS', 
-    'Imagine sua equipe no setor de Tecnologia:\n\n' +
-    'PRODUTO 1 - Smartphone Premium:\n' +
-    '  • Estratégia: Alta qualidade, preço R$ 2.500, distribuição seletiva\n' +
-    '  • Resultado: Receita R$ 80.000, Lucro R$ 25.000, Market Share 3%\n\n' +
-    'PRODUTO 2 - Smartphone Médio:\n' +
-    '  • Estratégia: Custo-benefício, preço R$ 1.200, distribuição ampla\n' +
-    '  • Resultado: Receita R$ 120.000, Lucro R$ 35.000, Market Share 6%\n\n' +
-    'PRODUTO 3 - Smartphone Básico:\n' +
-    '  • Estratégia: Penetração, preço R$ 600, distribuição massiva\n' +
-    '  • Resultado: Receita R$ 90.000, Lucro R$ 18.000, Market Share 8%\n\n' +
-    'PRODUTO 4 - Smartphone Kids:\n' +
-    '  • Estratégia: Nicho, preço R$ 800, distribuição especializada\n' +
-    '  • Resultado: Receita R$ 50.000, Lucro R$ 12.000, Market Share 2%\n\n' +
-    'RESULTADO CONSOLIDADO DA EQUIPE:\n' +
-    '  ✓ Receita Total: R$ 340.000 (soma de todos)\n' +
-    '  ✓ Lucro Total: R$ 90.000 (soma de todos)\n' +
-    '  ✓ Market Share Médio: 4,75% (média dos 4)\n' +
-    '  ✓ Margem: 26,5% (lucro/receita)\n\n' +
-    'Perceba: Produto 2 teve maior receita/lucro, mas Produto 3 teve maior\n' +
-    'market share. Isso é gestão de portfólio real!'
   );
 }
 
@@ -1165,53 +955,48 @@ function addFAQSection(doc: PDFKit.PDFDocument) {
 
   addFAQ(doc, 
     'Como funciona a penalização por uso de IA?',
-    'O sistema rastreia o quanto você editou o conteúdo gerado pela IA usando algoritmo de similaridade (Levenshtein Distance). Se a similaridade for 70-100% (pouco editado), você perde 30 pontos no score de alinhamento. Se for 30-69%, perde 10 pontos. Abaixo de 30% não há penalização. A mensagem é clara: USE a IA para aprender, mas PERSONALIZE com suas análises.'
+    'O sistema mede o quanto você editou o conteúdo gerado pela IA (por similaridade de texto) e aplica uma penalização no score de alinhamento estratégico quando o conteúdo é copiado sem edição significativa. Use a IA como ponto de partida, mas complemente sempre com suas próprias análises antes de salvar.'
   );
 
   addFAQ(doc, 
     'Posso alterar a estratégia ao longo das rodadas?',
-    'Sim! Na verdade, é esperado que você ajuste suas estratégias com base nos resultados anteriores e nas mudanças do mercado (eventos econômicos). Estratégias rígidas raramente funcionam em ambientes dinâmicos (MINTZBERG et al., 2010).'
-  );
-
-  addFAQ(doc, 
-    'Como interpretar meu desempenho?',
-    'Foque em três métricas principais: (1) Score de Alinhamento Estratégico - indica coerência; (2) Lucro e Margem - indicam viabilidade financeira; (3) NPS e Satisfação - indicam sucesso com clientes. Um bom desempenho equilibra as três dimensões.'
+    'Sim. Cada rodada é uma nova oportunidade de revisar suas análises estratégicas e suas decisões de marketing mix antes de enviar.'
   );
 
   doc.moveDown(0.8);
   addFAQ(doc, 
     'O que são os eventos econômicos?',
-    'São situações do mercado (inflação, crise, inovação tecnológica, etc.) que afetam todas as equipes. Eles multiplicam a receita em até ±50%. Eventos negativos (economia/competição) reduzem receita, enquanto positivos (tecnologia/social) aumentam. Monitore-os na tela de Insights.'
+    'São situações do mercado (inflação, crise, inovação tecnológica, etc.) que afetam todas as equipes da turma durante uma rodada. Você pode acompanhar os eventos ativos na tela de Insights de Mercado.'
   );
 
   addFAQ(doc, 
-    'Preciso configurar os 4 produtos ou posso focar em 1?',
-    'Você DEVE configurar todos os 4 produtos. O sistema só aceita submissão quando todos estiverem completos. Isso reflete a realidade de gestão de portfólio, onde empresas gerenciam múltiplos produtos simultaneamente (KOTLER; KELLER, 2012).'
+    'Preciso configurar todos os produtos da rodada?',
+    'Sim — o sistema só aceita o envio da decisão da equipe quando todos os produtos disponíveis na rodada estiverem com as 4 abas completas (Produto, Preço, Praça, Promoção). O professor define quantos produtos cada equipe gerencia por rodada.'
   );
 
   addFAQ(doc, 
     'Como o sistema calcula os resultados: individual ou consolidado?',
-    'O sistema usa um SISTEMA HÍBRIDO muito importante de entender: (1) DURANTE A RODADA: Você configura cada produto separadamente, salvando rascunhos individuais. (2) AO PROCESSAR: O sistema calcula KPIs para CADA produto individualmente (Receita Produto 1, Lucro Produto 1, etc.). (3) CONSOLIDAÇÃO: Soma as receitas dos 4 produtos, soma os lucros, faz média do market share. (4) RESULTADOS: Você vê tanto os resultados INDIVIDUAIS de cada produto quanto o CONSOLIDADO da equipe. Exemplo: Se Produto 1 teve R$ 50k de receita e Produto 2 teve R$ 30k, sua receita total é R$ 80k.'
-  );
-
-  addFAQ(doc, 
-    'Posso usar estratégias diferentes para cada produto?',
-    'SIM! E é altamente recomendado! Produto 1 pode ser premium de alta qualidade, Produto 2 pode ser popular de preço competitivo, Produto 3 pode ser básico de penetração de mercado. Cada produto tem seus próprios 4 Ps independentes. Isso simula a realidade de gestão de portfólio onde produtos diferentes atendem segmentos diferentes (Matriz BCG).'
+    'Durante a rodada, você configura e salva cada produto separadamente. Ao processar a rodada, o sistema calcula os KPIs de cada produto individualmente e depois consolida o resultado da equipe (receita e lucro somados, market share em média). A tela "Resultados" mostra os dois níveis: o consolidado da equipe e, na aba "Desempenho por Produto", o detalhe de cada produto.'
   );
 
   addFAQ(doc, 
     'Por que não consigo acessar o Marketing Mix?',
-    'O sistema BLOQUEIA o acesso ao Marketing Mix até que você complete TODAS as 4 análises estratégicas (SWOT, Porter, BCG, PESTEL) da rodada atual. Esta é uma regra OBRIGATÓRIA forçada tecnicamente pelo sistema. Você verá uma mensagem clara indicando quais análises estão faltando. Complete todas elas primeiro, depois o Marketing Mix será liberado automaticamente.'
+    'O sistema bloqueia o acesso ao Marketing Mix até que você complete as 4 análises estratégicas obrigatórias (SWOT, Porter, BCG, PESTEL) da rodada atual. Você verá uma mensagem indicando quais análises estão faltando; complete todas para que o Marketing Mix seja liberado automaticamente.'
+  );
+
+  addFAQ(doc, 
+    'Preenchi as 4 ferramentas estratégicas e mesmo assim não consigo enviar a decisão. Por quê?',
+    'Confira se a Segmentação de Mercado — a 5ª aba de "Ferramentas Estratégicas" — também está preenchida e salva. Ela não aparece no painel "Ferramentas Estratégicas Obrigatórias" do Marketing Mix, mas o sistema exige que esteja preenchida para aceitar o envio final da decisão.'
   );
 
   addFAQ(doc, 
     'O que significa "Assistência IA: 70%" na Rodada 2?',
-    'Significa que a IA gera análises 70% completas (parciais). Você precisa completar os 30% restantes e editar o que foi gerado. Na Rodada 3+, a assistência é 0% - você cria tudo do zero. Este sistema visa desenvolver sua autonomia gradualmente.'
+    'Significa que a IA gera análises parcialmente preenchidas. Você precisa completar o restante e editar o que foi gerado. Na Rodada 3 em diante, a assistência é 0% — você preenche tudo a partir do zero.'
   );
 
   addFAQ(doc, 
-    'Como funciona a Matriz BCG com 4 produtos?',
-    'Você posiciona cada produto em um dos 4 quadrantes (Estrela, Vaca Leiteira, Interrogação, Abacaxi) com base em crescimento de mercado e participação relativa. O ideal é ter um portfólio equilibrado: Vacas financiando Estrelas, algumas Interrogações promissoras, poucos Abacaxis.'
+    'Como funciono a Matriz BCG quando tenho mais de um produto na rodada?',
+    'Adicione cada produto separadamente pelo botão "Adicionar Produto": o sistema classifica automaticamente cada um no quadrante correspondente (Estrela, Vaca Leiteira, Interrogação ou Abacaxi) com base nos valores de Crescimento do Mercado e Participação Relativa que você informar.'
   );
 
   addFAQ(doc, 
@@ -1220,18 +1005,18 @@ function addFAQSection(doc: PDFKit.PDFDocument) {
   );
 
   addFAQ(doc, 
-    'O que fazer se meu score de alinhamento estiver baixo?',
-    'Revise suas análises estratégicas e decisões de marketing. Identifique incoerências. Por exemplo: se sua SWOT indica "preço competitivo" como força, mas você escolheu preço premium, há desalinhamento. Ajuste na próxima rodada.'
+    'Onde vejo por que meu score de Alinhamento Estratégico ficou baixo?',
+    'Na tela "Resultados", o bloco "Alinhamento Estratégico" mostra o score de 0 a 100 e, abaixo dele, a lista "Inconsistências Detectadas" — indicando exatamente quais análises o sistema considerou incompletas ou desalinhadas das decisões de marketing daquela rodada.'
   );
 
   addFAQ(doc, 
     'Como o orçamento afeta meus resultados?',
-    'O orçamento (padrão R$ 100.000) é usado como multiplicador nos cálculos de receita. Equipes com orçamento maior têm potencial de receita maior, mas isso é definido pelo professor no início e não muda durante o jogo.'
+    'O orçamento da equipe é definido pelo professor no início da turma e aparece no topo de cada tela do simulador. Ele não muda automaticamente durante o jogo.'
   );
 
   addFAQ(doc, 
     'O feedback inteligente é automático?',
-    'Sim. Ao final de cada rodada, o sistema gera automaticamente um feedback personalizado usando IA, analisando suas decisões, resultados, KPIs e sugerindo melhorias. Leia com atenção - é uma ferramenta valiosa de aprendizado.'
+    'Sim. Ao final de cada rodada, o sistema gera automaticamente um feedback personalizado usando IA, analisando suas decisões e resultados. Leia com atenção — é uma ferramenta de aprendizado.'
   );
 }
 
@@ -1604,6 +1389,86 @@ function addDiagramImage(doc: PDFKit.PDFDocument, imagePath: string, caption: st
   doc.fontSize(10)
      .font('Helvetica')
      .fillColor(TEXT_COLOR);
+}
+
+// Leitor mínimo de dimensões JPEG (sem dependência externa) — mesmo
+// utilitário usado em manualProfessorPDF.ts. Necessário para calcular a
+// altura correta ao renderizar um print de tela real (proporção different
+// de um diagrama ilustrativo 16:9).
+function getJpegDimensions(buffer: Buffer): { width: number; height: number } | null {
+  if (buffer.length < 4 || buffer[0] !== 0xff || buffer[1] !== 0xd8) return null;
+  let offset = 2;
+  while (offset + 4 <= buffer.length) {
+    if (buffer[offset] !== 0xff) {
+      offset++;
+      continue;
+    }
+    const marker = buffer[offset + 1];
+    if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+      offset += 2;
+      continue;
+    }
+    if (marker === 0xd9) break; // EOI
+    const length = buffer.readUInt16BE(offset + 2);
+    const isSOF = marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
+    if (isSOF) {
+      const height = buffer.readUInt16BE(offset + 5);
+      const width = buffer.readUInt16BE(offset + 7);
+      return { width, height };
+    }
+    offset += 2 + length;
+  }
+  return null;
+}
+
+// Renderiza um print de tela real (arquivo em SCREENSHOTS_DIR) com borda
+// leve e legenda em itálico abaixo. Se o arquivo não existir, não
+// interrompe a geração do PDF: registra um aviso no console e segue.
+function renderScreenshot(doc: PDFKit.PDFDocument, fileName: string, caption: string) {
+  const fullPath = path.join(SCREENSHOTS_DIR, fileName);
+  if (!fs.existsSync(fullPath)) {
+    console.warn(`[manualAlunoPDF] screenshot não encontrado, ignorando: ${fileName}`);
+    return;
+  }
+
+  const pageWidth = doc.page.width;
+  const pageHeight = doc.page.height;
+  const margin = doc.page.margins.left;
+  const imgWidth = pageWidth - margin * 2;
+  let imgHeight = imgWidth * 0.56;
+  try {
+    const buffer = fs.readFileSync(fullPath);
+    const dims = getJpegDimensions(buffer);
+    if (dims && dims.width > 0) {
+      imgHeight = (imgWidth * dims.height) / dims.width;
+    }
+  } catch {
+    // mantém a altura estimada se a leitura falhar
+  }
+
+  const captionHeight = doc.font('Helvetica-Oblique').fontSize(8.5)
+    .heightOfString(caption, { width: imgWidth });
+  const totalBlockHeight = imgHeight + captionHeight + 20;
+  const remaining = pageHeight - doc.page.margins.bottom - doc.y;
+  if (totalBlockHeight > remaining && totalBlockHeight <= pageHeight - doc.page.margins.top - doc.page.margins.bottom) {
+    doc.addPage();
+  }
+
+  doc.moveDown(0.3);
+  const x = margin;
+  const y = doc.y;
+
+  doc.rect(x - 3, y - 3, imgWidth + 6, imgHeight + 6).fillAndStroke('#ffffff', LIGHT_GRAY);
+  doc.image(fullPath, x, y, { width: imgWidth, height: imgHeight });
+  doc.y = y + imgHeight + 8;
+
+  doc.x = x;
+  doc.font('Helvetica-Oblique').fontSize(8.5).fillColor(DARK_GRAY)
+    .text(caption, x, doc.y, { width: imgWidth, align: 'center' });
+  doc.moveDown(0.6);
+  doc.x = margin;
+
+  doc.fontSize(10).font('Helvetica').fillColor(TEXT_COLOR);
 }
 
 function addMockupBox(doc: PDFKit.PDFDocument, title: string, mockup: string) {
