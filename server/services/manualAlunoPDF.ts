@@ -925,13 +925,11 @@ function addStepByStepSection(doc: PDFKit.PDFDocument) {
   addNumberedStep(doc, '3', 'Preencha: Nome, Email, Senha, Código da Turma (fornecido pelo professor)');
 
   doc.moveDown();
-  addInfoBox(doc, '✅ APROVAÇÃO AUTOMÁTICA - EMAILS INSTITUCIONAIS', 
-    'Se você usar um email institucional, será APROVADO AUTOMATICAMENTE:\n\n' +
-    '• @iffarroupilha.edu.br\n' +
+  addInfoBox(doc, 'CADASTRO EXCLUSIVO - EMAIL INSTITUCIONAL', 
+    'O cadastro exige seu email institucional de aluno do IFFar:\n\n' +
     '• @aluno.iffar.edu.br\n' +
-    '• @aluno.iffarroupilha.edu.br\n' +
     '• Maiúsculas/minúsculas NÃO importam (@ALUNO.IFFAR.EDU.BR funciona!)\n\n' +
-    'Emails de outros domínios precisam de aprovação manual do professor.'
+    'Outros emails não são aceitos no cadastro.'
   );
 
   doc.moveDown();

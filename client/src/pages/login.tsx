@@ -322,9 +322,9 @@ export default function Login() {
         {/* Content */}
         <div className="relative z-10">
           <div className="mb-12">
-            <div className="inline-block bg-white rounded-2xl px-6 py-4 shadow-2xl mb-4">
-              <img src={logoImage} alt="Simula+" className="h-14 w-auto" data-testid="img-logo-hero" />
-            </div>
+            <span className="inline-block text-[#ffcc00] text-xs font-bold tracking-[0.2em] uppercase mb-4 border border-[#ffcc00]/40 rounded-full px-3 py-1" data-testid="text-brand-kicker-hero">
+              Simula+
+            </span>
             <p className="text-white/80 text-base" data-testid="text-app-subtitle-hero">Simulador de Marketing no Mercado</p>
           </div>
 
@@ -377,11 +377,13 @@ export default function Login() {
       {/* Right Form Section */}
       <div className="flex-1 flex items-center justify-center p-6 bg-background">
         <div className="w-full max-w-md">
-          {/* Mobile Logo */}
-          <div className="lg:hidden flex justify-center mb-10">
+          {/* Logo em destaque no painel branco */}
+          <div className="flex justify-center mb-8">
             <div className="text-center">
-              <img src={logoImage} alt="Simula+" className="h-16 w-auto mx-auto mb-3" data-testid="img-logo-mobile" />
-              <p className="text-muted-foreground" data-testid="text-app-subtitle-mobile">Simulador de Marketing no Mercado</p>
+              <div className="inline-block bg-white rounded-2xl px-8 py-6 shadow-xl ring-1 ring-[#0a1830]/10 mb-3">
+                <img src={logoImage} alt="Simula+" className="h-20 w-auto mx-auto" data-testid="img-logo-main" />
+              </div>
+              <p className="text-muted-foreground text-sm font-medium" data-testid="text-app-subtitle-main">Simulador de Marketing no Mercado</p>
             </div>
           </div>
 
