@@ -49,7 +49,11 @@ Uma observação importante sobre os alunos, que evita um mal-entendido comum: *
    7. **Criar Turma** — botão que confirma a criação. Fica habilitado assim que o campo 1 (Nome da Turma) está preenchido; os demais campos podem ficar em branco.
 3. Clique em **Criar Turma** (campo 7 na imagem acima).
 
-**Ponto de atenção**: como só o Nome da Turma é obrigatório, é perfeitamente possível criar uma turma preenchendo apenas esse campo e clicando em Criar. O sistema permite — mas ao tentar iniciar a primeira rodada, ele vai te avisar (sem bloquear) que a configuração de mercado (setor, nível de concorrência, estrutura de mercado) e o orçamento ainda não foram preenchidos. O recomendado é, logo depois de criar a turma, preencher a configuração completa de mercado antes de iniciar a Rodada 1 (ver Seção 4).
+:::alerta Ponto de atenção
+Como só o Nome da Turma é obrigatório, é perfeitamente possível criar uma turma preenchendo apenas esse campo e clicando em Criar. O sistema permite — mas ao tentar iniciar a primeira rodada, ele vai avisar (sem bloquear) que a configuração de mercado (setor, nível de concorrência, estrutura de mercado) e o orçamento ainda não foram preenchidos.
+
+O recomendado é, logo depois de criar a turma, preencher a configuração completa de mercado antes de iniciar a Rodada 1 (ver Seção 4).
+:::
 
 ### 3.1 Completar a configuração de mercado
 
@@ -149,7 +153,13 @@ No mesmo painel de **Gerenciamento de Rodadas**, existe um botão **Adicionar** 
 3. **Adicionar** — cria uma rodada extra já travada, ao final da lista.
 4. **Remover Última** — exclui a última rodada da lista (só funciona se ela ainda não tiver sido iniciada).
 
-**Atenção**: uma rodada criada pelo botão **Adicionar** (marcador 3) sempre nasce configurada para **1 produto por equipe**, independentemente do que estiver selecionado no seletor "Produtos por equipe na próxima rodada" (marcador 1) — esse seletor só vale para o botão **Iniciar Rodada**, não para o **Adicionar**. Se você usa rodadas agendadas (Seção 10) e a rodada foi criada por esse botão "Adicionar", ela vai abrir automaticamente com 1 produto por equipe, a menos que você reconfigure isso manualmente antes da abertura. Na dúvida, prefira sempre iniciar as rodadas manualmente pelo botão **Iniciar Rodada**, que respeita o seletor de quantidade de produtos.
+:::alerta Atenção — quantidade de produtos fica travada
+Uma rodada criada pelo botão **Adicionar** (marcador 3) sempre nasce configurada para **1 produto por equipe**, independentemente do que estiver selecionado no seletor "Produtos por equipe na próxima rodada" (marcador 1) — esse seletor só vale para o botão **Iniciar Rodada**, não para o **Adicionar**.
+
+Se você usa rodadas agendadas (Seção 10) e a rodada foi criada pelo botão "Adicionar", ela vai abrir automaticamente com 1 produto por equipe, a menos que você reconfigure isso manualmente antes da abertura.
+
+Uma vez que a rodada é criada/iniciada, a quantidade de produtos por equipe fica travada: não existe nenhuma forma de alterá-la depois — só é possível definir a configuração para a próxima rodada. Escolher esse número corretamente, no momento certo, é uma decisão do professor: na dúvida, prefira sempre iniciar as rodadas manualmente pelo botão **Iniciar Rodada**, que respeita o seletor de quantidade de produtos, e confira o valor antes de clicar.
+:::
 
 ## 8. Durante uma Rodada Ativa
 
@@ -181,7 +191,11 @@ Ao longo da rodada, acompanhe na aba **Aula** quantas equipes já enviaram suas 
 
 Na aba **Aula**, com a rodada ativa, clique em **Encerrar Rodada** (marcadores 1 ou 4 na imagem acima). Isso dispara o cálculo de todos os resultados e KPIs daquela rodada para todas as equipes, com base nas decisões enviadas.
 
-**Atenção — este é o ponto mais importante deste manual**: se uma equipe **não enviou nenhuma decisão** na rodada, o sistema **não cria nenhum registro de resultado para ela** ao encerrar — ela simplesmente fica de fora do processamento daquela rodada, silenciosamente, sem nenhum aviso ou bloqueio. O contador de "equipes que enviaram" mencionado na Seção 8 é só informativo; ele não impede o encerramento. **Antes de clicar em Encerrar Rodada, confira manualmente na aba Aula se todas as equipes que deveriam participar já enviaram suas decisões.** Se uma equipe ficou de fora por engano, a forma de corrigir depois é reabrir a rodada e reprocessá-la — mais trabalhoso do que simplesmente conferir antes.
+:::alerta Atenção — este é o ponto mais importante deste manual
+Se uma equipe **não enviou nenhuma decisão** na rodada, o sistema **não cria nenhum registro de resultado para ela** ao encerrar — ela simplesmente fica de fora do processamento daquela rodada, silenciosamente, sem nenhum aviso ou bloqueio. O contador de "equipes que enviaram" mencionado na Seção 8 é só informativo; ele não impede o encerramento.
+
+Antes de clicar em Encerrar Rodada, confira manualmente na aba Aula se todas as equipes que deveriam participar já enviaram suas decisões — essa conferência é uma decisão e responsabilidade do professor, feita no momento do encerramento. Se uma equipe ficou de fora por engano, a forma de corrigir depois é reabrir a rodada e reprocessá-la — mais trabalhoso do que simplesmente conferir antes.
+:::
 
 Depois de encerrada, uma rodada não pode ser reaberta pela mesma tela com um clique simples de "desfazer" — trate o encerramento como uma ação que vale a pena confirmar visualmente antes de executar.
 
@@ -439,6 +453,6 @@ WEDEL, Michel; KAMAKURA, Wagner A. **Market Segmentation: Conceptual and Methodo
 
 ---
 
-**Versão**: 2.2
+**Versão**: 2.3
 **Última Atualização**: Setembro 2026
 **Simula+ | Simulador de Marketing no Mercado**

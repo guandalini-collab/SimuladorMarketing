@@ -24,6 +24,9 @@ const TEXT_COLOR = '#1f2937'; // Gray 800
 const DARK_GRAY = '#6b7280'; // Gray 500
 const LIGHT_GRAY = '#f3f4f6'; // Gray 100
 const ZEBRA_GRAY = '#f9fafb'; // Gray 50 (listras de tabela)
+const ALERT_BORDER = '#f59e0b'; // Amber 500 — barra lateral e título do quadro de alerta
+const ALERT_BG = '#fffbeb'; // Amber 50 — fundo do quadro de alerta
+const ALERT_TEXT = '#78350f'; // Amber 900 — texto dentro do quadro, alto contraste sobre o fundo âmbar
 
 const LOGO_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Simula_logo_wordmark_crop.png');
 // ^ versão recortada bem rente ao conteúdo visível do logo (973x252px de
@@ -168,29 +171,25 @@ function addCoverPage(doc: PDFKit.PDFDocument) {
     }
   }
 
+  // Capa simplificada: a marca já está representada pela logomarca no
+  // cartão acima — não repetimos "Simula+" / "Simulador de Marketing no
+  // Mercado" como texto, para não duplicar a identidade visual.
   doc.fillColor('#ffffff')
     .font('Helvetica-Bold')
     .fontSize(34)
-    .text('MANUAL DO PROFESSOR', 60, 320, { width: pageWidth - 120, align: 'center' });
+    .text('MANUAL DO PROFESSOR', 60, 330, { width: pageWidth - 120, align: 'center' });
 
-  doc.font('Helvetica')
-    .fontSize(20)
-    .text('Simula+', 60, 375, { width: pageWidth - 120, align: 'center' });
-
-  doc.fontSize(14)
-    .text('Simulador de Marketing no Mercado', 60, 408, { width: pageWidth - 120, align: 'center' });
-
-  doc.fontSize(11)
+  doc.fontSize(12)
     .fillColor('#e0e7ff')
     .text(
       'Guia completo para configurar turmas, conduzir rodadas e interpretar resultados — e a fundamentação teórica que embasa cada ferramenta do simulador',
-      80, 460,
-      { align: 'center', width: pageWidth - 160, lineGap: 3 }
+      80, 400,
+      { align: 'center', width: pageWidth - 160, lineGap: 4 }
     );
 
   doc.fontSize(9)
     .fillColor('#c7d2fe')
-    .text(`Versão 2.2 | ${new Date().getFullYear()}`, 60, pageHeight - 70, {
+    .text(`Versão 2.3 | ${new Date().getFullYear()}`, 60, pageHeight - 70, {
       width: pageWidth - 120,
       align: 'center',
     });
@@ -424,6 +423,87 @@ function renderScreenshot(doc: PDFKit.PDFDocument, fileName: string, caption: st
   doc.x = doc.page.margins.left;
 }
 
+// Quadro de alerta: no markdown de origem, um bloco
+//   :::alerta Título opcional
+//   Texto do aviso, pode ter **negrito** e "- itens".
+//   :::
+// vira uma caixa com fundo âmbar, barra lateral colorida e um cabeçalho
+// em negrito com o título — usado para qualquer coisa que o professor/aluno
+// não pode
+// esquecer (regras irreversíveis, decisões que precisam ser tomadas no
+// momento certo, comportamentos que surpreendem). Antes desses avisos
+// apareciam só como texto em **negrito** solto no meio do parágrafo, o
+// que passava despercebido numa leitura corrida.
+function renderAlertBox(doc: PDFKit.PDFDocument, title: string, bodyLines: string[]) {
+  const barWidth = 4;
+  const paddingX = 14;
+  const paddingY = 10;
+  const innerX = doc.page.margins.left + barWidth + paddingX;
+  const innerWidth = CONTENT_WIDTH - barWidth - paddingX * 2;
+
+  // Sem símbolo/emoji no título: as fontes padrão do PDFKit (Helvetica)
+  // não têm o glifo "⚠" no encoding WinAnsi e renderizam um caractere
+  // errado no lugar — o alerta já fica claro pela barra lateral colorida,
+  // o fundo âmbar e o título em negrito.
+  const titleText = title;
+  doc.font('Helvetica-Bold').fontSize(10.5);
+  const titleHeight = doc.heightOfString(titleText, { width: innerWidth });
+
+  const lineHeights = bodyLines.map((l) => {
+    const stripped = l.replace(/\*\*/g, '');
+    doc.font('Helvetica').fontSize(10);
+    return doc.heightOfString(stripped, { width: innerWidth });
+  });
+
+  const bodyGap = 4;
+  const totalBodyHeight = lineHeights.reduce((sum, h) => sum + h + bodyGap, 0);
+  const boxHeight = paddingY * 2 + titleHeight + 6 + totalBodyHeight;
+
+  // Evita cortar a caixa entre páginas: se não couber no espaço restante
+  // mas couber numa página nova, pula para a próxima página (mesmo
+  // critério usado em renderScreenshot).
+  const remaining = doc.page.height - doc.page.margins.bottom - doc.y;
+  if (boxHeight > remaining && boxHeight <= doc.page.height - doc.page.margins.top - doc.page.margins.bottom) {
+    doc.addPage();
+  } else {
+    ensureSpace(doc, boxHeight);
+  }
+
+  doc.moveDown(0.3);
+  const boxY = doc.y;
+  const boxX = doc.page.margins.left;
+
+  doc.rect(boxX, boxY, CONTENT_WIDTH, boxHeight).fill(ALERT_BG);
+  doc.rect(boxX, boxY, barWidth, boxHeight).fill(ALERT_BORDER);
+
+  let cursorY = boxY + paddingY;
+  doc.font('Helvetica-Bold').fontSize(10.5).fillColor(ALERT_BORDER)
+    .text(titleText, innerX, cursorY, { width: innerWidth });
+  cursorY += titleHeight + 6;
+
+  bodyLines.forEach((l, i) => {
+    doc.x = innerX;
+    doc.y = cursorY;
+    const parts = l.split(/(\*\*[^*]+\*\*)/g).filter((p) => p.length > 0);
+    if (parts.length === 0) {
+      cursorY += lineHeights[i] + bodyGap;
+      return;
+    }
+    doc.fontSize(10).fillColor(ALERT_TEXT);
+    parts.forEach((part, pi) => {
+      const isBold = part.startsWith('**') && part.endsWith('**');
+      const text = isBold ? part.slice(2, -2) : part;
+      doc.font(isBold ? 'Helvetica-Bold' : 'Helvetica');
+      doc.text(text, { width: innerWidth, continued: pi < parts.length - 1, lineGap: 1 });
+    });
+    cursorY += lineHeights[i] + bodyGap;
+  });
+
+  doc.y = boxY + boxHeight;
+  doc.x = doc.page.margins.left;
+  doc.moveDown(0.6);
+}
+
 function renderTable(doc: PDFKit.PDFDocument, headers: string[], rows: string[][]) {
   const weights = columnWeights(headers.length);
   const colWidths = weights.map((w) => w * CONTENT_WIDTH);
@@ -511,6 +591,21 @@ function renderMarkdown(doc: PDFKit.PDFDocument, markdown: string): TocEntry[] {
     const image = line.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
     if (image) {
       renderScreenshot(doc, image[2].trim(), image[1].trim());
+      continue;
+    }
+
+    // Quadro de alerta: ":::alerta Título" abre o bloco, ":::" fecha.
+    const alertStart = line.trim().match(/^:::alerta\s*(.*)$/);
+    if (alertStart) {
+      const title = alertStart[1].trim() || 'Atenção';
+      const body: string[] = [];
+      let j = idx + 1;
+      while (j < lines.length && lines[j].trim() !== ':::') {
+        if (lines[j].trim() !== '') body.push(lines[j].trim());
+        j++;
+      }
+      renderAlertBox(doc, title, body);
+      idx = j; // pula a linha ":::" de fechamento também
       continue;
     }
 
