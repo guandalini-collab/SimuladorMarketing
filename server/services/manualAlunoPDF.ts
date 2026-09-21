@@ -10,7 +10,11 @@ const TEXT_COLOR = '#1f2937'; // Gray 800
 const LIGHT_GRAY = '#f3f4f6'; // Gray 100
 const DARK_GRAY = '#6b7280'; // Gray 500
 
-const LOGO_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Simula_logo_navy_dourado_final.png');
+const LOGO_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Simula_logo_wordmark_crop.png');
+// ^ versão recortada rente ao conteúdo visível do logo — ver o comentário
+// equivalente em manualProfessorPDF.ts. O PNG original tem uma margem
+// transparente enorme ao redor de um lockup horizontal largo e baixo, o
+// que deixava a logo pequena e desproporcional ao cartão branco da capa.
 const SWOT_DIAGRAM_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Diagrama_SWOT_em_português_0a7241aa.png');
 const PORTER_DIAGRAM_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Diagrama_5_Forças_Porter_português_06e5802d.png');
 const BCG_DIAGRAM_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Matriz_BCG_em_português_023ea876.png');
@@ -91,14 +95,20 @@ function addCoverPage(doc: PDFKit.PDFDocument) {
 
   // Logo corporativo Simula+ (imagem, lockup horizontal navy + dourado)
   // Fica sobre um cartão branco para manter a legibilidade do texto navy no fundo colorido.
+  // Caixa dimensionada para a proporção real do lockup recortado (~3,54:1
+  // largura por altura) — ver o comentário equivalente em
+  // manualProfessorPDF.ts. Auditoria de 2026-09: cartão aumentado e a
+  // logo dentro dele agora ocupa o espaço proporcionalmente, sem sobra de
+  // branco. Todos os textos abaixo foram deslocados para baixo para
+  // acompanhar o cartão maior.
   if (fs.existsSync(LOGO_PATH)) {
-    const boxWidth = 300;
-    const boxHeight = 110;
+    const boxWidth = 420;
+    const boxHeight = 154;
     const boxX = (pageWidth - boxWidth) / 2;
-    const boxY = 120;
-    const padding = 18;
+    const boxY = 100;
+    const padding = 24;
 
-    doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 14).fill('#ffffff');
+    doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 16).fill('#ffffff');
 
     doc.image(LOGO_PATH, boxX + padding, boxY + padding, {
       fit: [boxWidth - padding * 2, boxHeight - padding * 2],
@@ -111,7 +121,7 @@ function addCoverPage(doc: PDFKit.PDFDocument) {
   doc.fontSize(48)
      .font('Helvetica-Bold')
      .fillColor('#ffffff')
-     .text('MANUAL DO ALUNO', 60, 280, {
+     .text('MANUAL DO ALUNO', 60, 304, {
        width: pageWidth - 120,
        align: 'center'
      });
@@ -119,13 +129,13 @@ function addCoverPage(doc: PDFKit.PDFDocument) {
   // Subtítulo
   doc.fontSize(28)
      .font('Helvetica')
-     .text('Simula+', 60, 350, {
+     .text('Simula+', 60, 374, {
        width: pageWidth - 120,
        align: 'center'
      });
 
   doc.fontSize(18)
-     .text('Simulador de Marketing no Mercado', 60, 390, {
+     .text('Simulador de Marketing no Mercado', 60, 414, {
        width: pageWidth - 120,
        align: 'center'
      });
@@ -134,28 +144,28 @@ function addCoverPage(doc: PDFKit.PDFDocument) {
   doc.moveDown(3);
   doc.fontSize(16)
      .font('Helvetica-Bold')
-     .text('Alexandre Guandalini Bossa', 60, 500, {
+     .text('Alexandre Guandalini Bossa', 60, 524, {
        width: pageWidth - 120,
        align: 'center'
      });
   
   doc.fontSize(14)
      .font('Helvetica')
-     .text('Professor de Marketing', 60, 530, {
+     .text('Professor de Marketing', 60, 554, {
        width: pageWidth - 120,
        align: 'center'
      });
 
   // Versão
   doc.fontSize(14)
-     .text('Versão 1.0', 60, 680, {
+     .text('Versão 1.1', 60, 704, {
        width: pageWidth - 120,
        align: 'center'
      });
 
   // Ano
   doc.fontSize(12)
-     .text(`© ${new Date().getFullYear()} - Todos os direitos reservados`, 60, 750, {
+     .text(`© ${new Date().getFullYear()} - Todos os direitos reservados`, 60, 774, {
        width: pageWidth - 120,
        align: 'center'
      });
@@ -1252,7 +1262,7 @@ function addReferencesSection(doc: PDFKit.PDFDocument) {
   doc.moveDown(0.5);
   doc.fontSize(9).font('Helvetica-Oblique').fillColor(DARK_GRAY);
   doc.text('Simula+ - Transformando estudantes em estrategistas', { align: 'center' });
-  doc.text(`Versão 1.0 | ${new Date().getFullYear()}`, { align: 'center' });
+  doc.text(`Versão 1.1 | ${new Date().getFullYear()}`, { align: 'center' });
 }
 
 // =====================
