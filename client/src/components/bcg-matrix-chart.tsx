@@ -26,6 +26,13 @@ interface BcgAnalysis {
 // Os quadrantes são salvos em português (ver getQuadrant em estrategia.tsx),
 // por isso as chaves aqui usam os mesmos rótulos — não "stars"/"cash_cows"
 // em inglês, que nunca combinavam com o valor real salvo no banco.
+//
+// Bug corrigido (2026-09): os gradientes de fundo do gráfico e os rótulos
+// flutuantes dos quadrantes (mais abaixo neste arquivo) ainda liam
+// QUADRANT_COLORS.stars / .question_marks / .cash_cows / .dogs — chaves
+// em inglês que nunca existiram neste objeto, então essas cores sempre
+// vinham undefined (gradiente e texto sem cor). Trocado para as chaves
+// reais em português.
 const QUADRANT_COLORS: Record<string, string> = {
   "Estrela": "#1aa15c",
   "Vaca Leiteira": "#1447e6",
@@ -181,20 +188,20 @@ export function BcgMatrixChart({ teamId, roundId }: BcgMatrixChartProps) {
             <ScatterChart margin={{ top: 20, right: 20, bottom: 60, left: 60 }}>
               <defs>
                 <linearGradient id="starsGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={QUADRANT_COLORS.stars} stopOpacity={0.1} />
-                  <stop offset="100%" stopColor={QUADRANT_COLORS.stars} stopOpacity={0.05} />
+                  <stop offset="0%" stopColor={QUADRANT_COLORS["Estrela"]} stopOpacity={0.1} />
+                  <stop offset="100%" stopColor={QUADRANT_COLORS["Estrela"]} stopOpacity={0.05} />
                 </linearGradient>
                 <linearGradient id="questionMarksGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={QUADRANT_COLORS.question_marks} stopOpacity={0.1} />
-                  <stop offset="100%" stopColor={QUADRANT_COLORS.question_marks} stopOpacity={0.05} />
+                  <stop offset="0%" stopColor={QUADRANT_COLORS["Ponto de Interrogação"]} stopOpacity={0.1} />
+                  <stop offset="100%" stopColor={QUADRANT_COLORS["Ponto de Interrogação"]} stopOpacity={0.05} />
                 </linearGradient>
                 <linearGradient id="cashCowsGradient" x1="0" y1="1" x2="0" y2="0">
-                  <stop offset="0%" stopColor={QUADRANT_COLORS.cash_cows} stopOpacity={0.1} />
-                  <stop offset="100%" stopColor={QUADRANT_COLORS.cash_cows} stopOpacity={0.05} />
+                  <stop offset="0%" stopColor={QUADRANT_COLORS["Vaca Leiteira"]} stopOpacity={0.1} />
+                  <stop offset="100%" stopColor={QUADRANT_COLORS["Vaca Leiteira"]} stopOpacity={0.05} />
                 </linearGradient>
                 <linearGradient id="dogsGradient" x1="0" y1="1" x2="0" y2="0">
-                  <stop offset="0%" stopColor={QUADRANT_COLORS.dogs} stopOpacity={0.1} />
-                  <stop offset="100%" stopColor={QUADRANT_COLORS.dogs} stopOpacity={0.05} />
+                  <stop offset="0%" stopColor={QUADRANT_COLORS["Abacaxi"]} stopOpacity={0.1} />
+                  <stop offset="100%" stopColor={QUADRANT_COLORS["Abacaxi"]} stopOpacity={0.05} />
                 </linearGradient>
               </defs>
 
@@ -299,16 +306,16 @@ export function BcgMatrixChart({ teamId, roundId }: BcgMatrixChartProps) {
             </ScatterChart>
           </ResponsiveContainer>
 
-          <div className="absolute top-8 left-20 text-sm font-semibold" style={{ color: QUADRANT_COLORS.question_marks }}>
+          <div className="absolute top-8 left-20 text-sm font-semibold" style={{ color: QUADRANT_COLORS["Ponto de Interrogação"] }}>
             Interrogações
           </div>
-          <div className="absolute top-8 right-24 text-sm font-semibold" style={{ color: QUADRANT_COLORS.stars }}>
+          <div className="absolute top-8 right-24 text-sm font-semibold" style={{ color: QUADRANT_COLORS["Estrela"] }}>
             Estrelas
           </div>
-          <div className="absolute bottom-24 left-20 text-sm font-semibold" style={{ color: QUADRANT_COLORS.dogs }}>
+          <div className="absolute bottom-24 left-20 text-sm font-semibold" style={{ color: QUADRANT_COLORS["Abacaxi"] }}>
             Abacaxis
           </div>
-          <div className="absolute bottom-24 right-24 text-sm font-semibold" style={{ color: QUADRANT_COLORS.cash_cows }}>
+          <div className="absolute bottom-24 right-24 text-sm font-semibold" style={{ color: QUADRANT_COLORS["Vaca Leiteira"] }}>
             Vacas Leiteiras
           </div>
         </div>
