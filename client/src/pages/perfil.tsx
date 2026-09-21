@@ -237,7 +237,7 @@ export default function Perfil() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <ul className="list-disc list-inside space-y-1">
-            <li>Use uma senha forte com no mínimo 8 caracteres</li>
+            <li>Use uma senha forte com no mínimo 6 caracteres</li>
             <li>Combine letras maiúsculas, minúsculas, números e símbolos</li>
             <li>Não compartilhe sua senha com outras pessoas</li>
             <li>Altere sua senha periodicamente para maior segurança</li>
