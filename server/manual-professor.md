@@ -2,26 +2,263 @@
 
 ## Sobre este manual
 
-Este manual tem dois objetivos complementares. O primeiro é operacional: explicar, passo a passo, como configurar uma turma, conduzir rodadas e interpretar os resultados. O segundo é acadêmico: mostrar **em que teoria de gestão e marketing cada ferramenta e cada decisão do simulador se apoia**, para que você possa conectar explicitamente o que o aluno faz na tela ao que ele estuda em sala de aula. A Seção 2 concentra esse segundo objetivo; as demais seções tratam do uso prático do sistema.
+Este manual foi escrito para que um professor que **nunca usou o Simula+** consiga, sozinho, ler este documento do início ao fim e sair sabendo configurar uma turma inteira, matricular alunos, conduzir todas as rodadas da simulação e interpretar os resultados — sem depender de treinamento presencial ou de qualquer outra pessoa. Ele está organizado na ordem em que as tarefas realmente acontecem: acesso ao sistema, criação da turma, matrícula dos alunos, formação das equipes, condução das rodadas (abertura, acompanhamento, encerramento), análise dos resultados e, por fim, as configurações e ferramentas administrativas que você usa com menor frequência.
+
+A fundamentação teórica e acadêmica que embasa cada ferramenta do simulador — os autores de marketing e estratégia por trás de cada tela — está reunida no **Apêndice A**, ao final do documento, junto com a lista de referências bibliográficas no padrão ABNT (Apêndice C). Ela não é necessária para operar o sistema, mas é útil caso você queira conectar explicitamente, em sala de aula, o que o aluno faz na tela com a teoria que ele estuda.
+
+Todas as afirmações deste manual foram verificadas diretamente no código-fonte do sistema em setembro de 2026. Onde alguma informação não pôde ser confirmada com segurança, isso é sinalizado explicitamente no texto, em vez de apresentada como certeza.
+
+Este manual também está disponível dentro do próprio sistema: no Painel do Professor, o botão **Manual** (no canto superior direito) abre a versão em PDF deste mesmo documento a qualquer momento.
 
 ## 1. Visão Geral do Sistema
 
-O Simula+ é uma plataforma educacional que simula o ambiente de negócios: equipes de estudantes competem em um mercado virtual, tomando decisões estratégicas de marketing ao longo de rodadas sucessivas.
+O Simula+ é uma plataforma educacional que simula um ambiente de negócios: equipes de estudantes competem em um mercado virtual, tomando decisões estratégicas de marketing ao longo de rodadas sucessivas. Ao final de cada rodada, o sistema calcula resultados financeiros e de mercado para cada equipe, com base nas decisões tomadas e nas condições de mercado configuradas.
 
-### Objetivos Pedagógicos
+Os papéis do sistema são dois: **professor** (que configura a turma, conduz as rodadas e avalia os resultados) e **aluno/equipe** (que toma as decisões de marketing dentro de uma equipe). Um professor pode conduzir múltiplas turmas simultaneamente, cada uma de forma independente.
 
-1. **Aplicação Prática**: transformar teoria de marketing em decisões concretas
-2. **Pensamento Estratégico**: desenvolver a capacidade de análise e planejamento
-3. **Trabalho em Equipe**: promover colaboração e negociação
-4. **Análise de Dados**: interpretar KPIs e métricas de desempenho
+### Objetivos pedagógicos
 
-## 2. Fundamentação Teórica: quais autores embasam o Simula+
+1. **Aplicação prática**: transformar teoria de marketing em decisões concretas, com consequências financeiras simuladas.
+2. **Pensamento estratégico**: desenvolver a capacidade de diagnóstico, planejamento e execução coerente entre eles.
+3. **Trabalho em equipe**: promover colaboração e negociação dentro de cada equipe.
+4. **Análise de dados**: interpretar KPIs e métricas de desempenho ao longo de várias rodadas.
+
+## 2. Antes de Começar: Acesso ao Sistema
+
+O acesso de professor **não é autoautorizável** — diferentemente dos alunos, um professor não consegue simplesmente se cadastrar pela tela de login. Contas de professor são liberadas previamente por quem administra o sistema, por meio de uma lista de emails autorizados. Se você é um novo professor e ainda não tem acesso, entre em contato com o administrador do sistema na sua instituição para que seu email seja incluído nessa lista e sua conta seja criada; você receberá as instruções de primeiro acesso diretamente dele.
+
+Depois de autorizado, o login do professor é feito na mesma tela de login do sistema (`www.simulamarketing.com.br`), com email e senha. Ao entrar, você cai diretamente no **Painel do Professor**.
+
+Uma observação importante sobre os alunos, que evita um mal-entendido comum: **os alunos se cadastram sozinhos**, mas apenas com email institucional — o sistema aceita apenas emails terminados em `@aluno.iffar.edu.br` (à data deste manual; se a sua instituição for diferente, confirme o domínio aceito com o administrador do sistema, pois ele é configurado no código do servidor). Qualquer outro email é recusado automaticamente na hora do cadastro, com uma mensagem de erro — não fica pendente de aprovação, simplesmente não é aceito. Isso é relevante porque o menu **Aprovações**, que você verá no topo da tela, é um resquício de uma versão anterior do sistema: hoje, um cadastro de aluno com email aceito é **aprovado automaticamente**, na hora, sem qualquer ação sua. Na prática, você não precisa (e normalmente não vai encontrar nada para fazer) nessa tela. O texto de ajuda que aparece nela também está desatualizado — não leve em conta as instruções escritas lá.
+
+## 3. Passo a Passo: Criar uma Turma
+
+1. No Painel do Professor, clique no botão **Nova Turma** (canto superior direito).
+2. Preencha o formulário "Criar Nova Turma". Os campos disponíveis são:
+   - **Nome da Turma \*** — único campo obrigatório. É o identificador que você e os alunos verão em toda a interface (ex.: "Marketing 2026-2").
+   - **Número de Rodadas** — quantas rodadas a simulação terá ao todo. Valor padrão: 10 (pode variar de 1 a 20). Você pode alterar esse número depois, a qualquer momento, na aba "Aula" da turma.
+   - **Setor de Mercado** — o setor econômico simulado (ver lista completa no Apêndice B). Pode ser deixado em branco e definido depois.
+   - **Tipo de Comércio** — B2C, B2B ou Híbrido. Pode ser deixado em branco e definido depois.
+   - **Orçamento Padrão (R$)** — orçamento inicial de cada equipe a cada rodada. Valor padrão: R$ 100.000,00.
+   - **Nível de Concorrência** — Baixa, Média ou Alta. Pode ser deixado em branco e definido depois.
+3. Clique em **Criar Turma**.
+
+**Ponto de atenção**: como só o Nome da Turma é obrigatório, é perfeitamente possível criar uma turma preenchendo apenas esse campo e clicando em Criar. O sistema permite — mas ao tentar iniciar a primeira rodada, ele vai te avisar (sem bloquear) que a configuração de mercado (setor, nível de concorrência, estrutura de mercado) e o orçamento ainda não foram preenchidos. O recomendado é, logo depois de criar a turma, preencher a configuração completa de mercado antes de iniciar a Rodada 1 (ver Seção 4).
+
+### 3.1 Completar a configuração de mercado
+
+Depois de criar a turma, selecione-a no seletor de turma (barra logo abaixo do topo da tela) e vá até a aba **Configurar** → seção **Configuração de Mercado** → botão **Abrir Configurações de Mercado**. Esse painel reúne todos os parâmetros de mercado da turma, incluindo alguns que não aparecem na tela de criação:
+
+- **Setor** e **Tipo de Comércio** (os mesmos da criação, editáveis a qualquer momento)
+- **Orçamento Padrão (R$)**
+- **Nível de Concorrência**
+- **Número de Concorrentes** — quantas empresas concorrentes o mercado simulado tem
+- **Estrutura de Mercado** — Monopólio, Oligopólio, Concorrência Monopolística, Concorrência Perfeita ou Fragmentado (esse campo já se chamou "Concentração de Mercado" na interface; o nome foi corrigido, mas o valor salvo internamente continua com o nome antigo — isso não afeta seu uso)
+- **Força dos Concorrentes** — Fraca, Média, Forte ou Muito Forte
+
+Clique em **Salvar** ao terminar. Essas configurações valem para toda a turma (não são por rodada) e podem ser revisadas a qualquer momento, inclusive com a simulação já em andamento.
+
+## 4. Passo a Passo: Matricular Alunos
+
+Este é o ponto do fluxo mais fácil de deixar passar despercebido: **um aluno que se cadastra sozinho no sistema não fica automaticamente vinculado a nenhuma turma.** Depois de se cadastrar e entrar, ele vê a mensagem "Você não está matriculado em nenhuma turma" e fica nessa tela, sem conseguir fazer mais nada, até que **você, professor, o matricule manualmente** em uma das suas turmas. Não existe, hoje, nenhuma forma de o próprio aluno escolher ou entrar em uma turma sozinho — mesmo que ele saiba o nome exato da turma.
+
+Há dois caminhos possíveis para matricular um aluno. Você pode combinar os dois livremente dentro da mesma turma.
+
+### Caminho A — o aluno se cadastra primeiro, você matricula depois
+
+1. Peça para o aluno acessar `www.simulamarketing.com.br` e se cadastrar (nome, email institucional, senha), pela própria tela de login (opção de cadastro).
+2. Assim que o aluno se cadastra, a conta já existe no sistema — mesmo sem estar em nenhuma turma ainda.
+3. No Painel do Professor, selecione a turma, vá até a aba **Equipes** → card **Alunos Matriculados** → use o menu suspenso (que lista todos os alunos já cadastrados e ainda sem turma) para selecionar o aluno → clique em **Adicionar**.
+
+### Caminho B — você cadastra o aluno diretamente, já com senha definida
+
+1. Na aba **Equipes** de qualquer turma, clique em **Cadastrar Aluno** (canto superior direito da lista de equipes).
+2. Preencha **Nome Completo**, **Email** e **Senha Inicial** (os três são obrigatórios) — aqui você pode usar qualquer email, inclusive um não institucional, pois essa restrição vale só para o autocadastro do aluno, não para o cadastro feito por você.
+3. Em **Matricular na Turma**, selecione a turma desejada (ou deixe "Não matricular ainda", se quiser só criar a conta por enquanto).
+4. Clique em **Cadastrar**. O aluno já pode fazer login imediatamente com o email e a senha que você definiu.
+
+Esse segundo caminho é o mais prático quando você já tem a lista de alunos da turma e quer economizar o passo de pedir para cada um se cadastrar sozinho.
+
+**Observação sobre a tela de Aprovações**: como explicado na Seção 2, você não precisa aprovar nada — qualquer aluno cadastrado (por qualquer um dos dois caminhos) já está com status aprovado. O trabalho real é apenas matriculá-lo em uma turma, pelos passos acima.
+
+## 5. As Equipes São Formadas Pelos Alunos, Não Por Você
+
+Depois de matriculado em uma turma, o aluno passa a ver, na primeira tela do seu painel, a opção de **criar uma nova equipe** ou **entrar em uma equipe já existente** daquela turma. A formação de equipes é feita pelos próprios alunos — não existe, na interface do professor, nenhum botão para criar uma equipe em nome deles. O aluno que cria a equipe se torna automaticamente o líder dela. A interface mostrada ao aluno sugere um limite de até 5 alunos por equipe, mas esse limite é apenas uma orientação de tela — não há, hoje, um bloqueio no servidor que impeça uma equipe de crescer além disso.
+
+O que você, professor, pode fazer sobre as equipes, na aba **Equipes** de cada turma:
+
+- **Adicionar um membro** a uma equipe já formada (ícone de adicionar membro no card da equipe, informando o email do aluno já matriculado na turma).
+- **Remover um membro** de uma equipe.
+- **Ver as decisões** já tomadas por uma equipe (produtos, mix de marketing, análises estratégicas).
+- Acompanhar, na mesma aba, quantos alunos estão matriculados e quantos ainda estão sem equipe (indicado no card "Alunos Matriculados").
+
+Se, ao iniciar uma rodada, existir alguma equipe sem nenhum membro, o sistema avisa (sem bloquear) que essa equipe não vai conseguir enviar decisões na rodada — vale conferir isso antes de abrir cada rodada, especialmente a primeira.
+
+## 6. Entendendo a "Rodada 0": o tutorial do aluno
+
+Antes de participar da Rodada 1, cada aluno passa por um tutorial interno de boas-vindas, dividido em 6 seções (boas-vindas, como funcionam as rodadas, mix de marketing, ferramentas estratégicas, eventos e resultados, e regras de equipe). O sistema exige um tempo mínimo de leitura de 2 minutos por seção antes de liberar a seção seguinte — é uma trava de tempo, não de conteúdo, pensada para evitar que o aluno pule direto para o final sem ler.
+
+Isso costuma aparecer, informalmente, como "Rodada 0" — mas é importante que fique claro: **não é uma rodada de verdade**. Ela não existe como registro no banco de dados da turma, não conta para o número de rodadas configurado, não aparece no seu painel de professor em nenhum momento, e não afeta a numeração das rodadas reais (a Rodada 1 é sempre a primeira rodada de fato). É inteiramente uma etapa do lado do aluno, e você não precisa fazer nada em relação a ela — apenas saber que, quando um aluno recém-matriculado entra pela primeira vez, é por esse tutorial que ele vai passar antes de ver a tela normal de decisões.
+
+## 7. Passo a Passo: Iniciar a Rodada 1
+
+Com a turma criada, o mercado configurado (Seção 3.1) e ao menos uma equipe formada, você está pronto para abrir a primeira rodada. Isso é feito na aba **Aula** da turma.
+
+1. Selecione a turma no seletor do topo.
+2. Na aba **Aula**, confira o painel **Gerenciamento de Rodadas**. Antes de haver qualquer rodada ativa, ele mostra um seletor de **"Produtos por equipe na próxima rodada"** — defina quantos produtos cada equipe vai poder cadastrar e decidir nesta rodada.
+3. Clique em **Iniciar Rodada**.
+4. Se houver algum ponto de atenção — equipe sem nenhum aluno, configuração de mercado incompleta, ou orçamento padrão em R$ 0 — o sistema mostra um aviso listando exatamente o que falta, mas **não bloqueia o início da rodada**: você pode prosseguir mesmo assim, se for uma decisão intencional (por exemplo, uma turma de teste). Se não houver nenhum ponto de atenção, a rodada é iniciada direto, sem esse aviso aparecer.
+
+A partir daqui, a Rodada 1 fica ativa e as equipes já podem tomar decisões.
+
+### 7.1 Um detalhe importante sobre rodadas futuras pré-adicionadas
+
+No mesmo painel de **Gerenciamento de Rodadas**, existe um botão **Adicionar** que cria uma rodada extra já travada ("bloqueada"), ao final da lista — útil quando você quer garantir o número total de rodadas com antecedência. **Atenção**: uma rodada criada por esse botão sempre nasce configurada para **1 produto por equipe**, independentemente do que estiver selecionado no seletor "Produtos por equipe na próxima rodada" descrito acima — esse seletor só vale para o botão **Iniciar Rodada**, não para o **Adicionar**. Se você usa rodadas agendadas (Seção 10) e a rodada foi criada por esse botão "Adicionar", ela vai abrir automaticamente com 1 produto por equipe, a menos que você reconfigure isso manualmente antes da abertura. Na dúvida, prefira sempre iniciar as rodadas manualmente pelo botão **Iniciar Rodada**, que respeita o seletor de quantidade de produtos.
+
+## 8. Durante uma Rodada Ativa
+
+Enquanto uma rodada está ativa, as equipes completam as ferramentas de diagnóstico estratégico e, em seguida, tomam as decisões de Mix de Marketing (ambas descritas com a base teórica no Apêndice A). Há uma regra de acesso que vale a pena explicar à turma logo no início, para evitar confusão:
+
+- As quatro ferramentas **SWOT, 5 Forças de Porter, Matriz BCG e PESTEL são obrigatórias**: sem completar as quatro, a equipe não consegue nem abrir a tela de Decisões (Mix de Marketing).
+- A **Segmentação de Mercado não bloqueia** esse acesso — mas conta na pontuação de Alinhamento Estratégico da equipe (Seção 11.2). É comum um aluno perceber que "destravou" as decisões e deixar a Segmentação de lado, sem perceber que isso reduz sua nota de alinhamento; vale reforçar isso em sala.
+
+Durante a rodada, você tem três ferramentas à disposição na aba **Aula**, seção **Eventos de Mercado**:
+
+1. **Criar Manual** — você mesmo escreve um evento (tipo, severidade, título, descrição e impacto esperado) e aplica a uma rodada específica.
+2. **Gerar com IA** — você escolhe uma quantidade e a IA gera eventos contextualizados para a turma, com base no setor configurado e em dados econômicos reais (câmbio, inflação).
+3. **Geração automática** — um interruptor liga/desliga a criação automática de eventos toda vez que uma rodada é encerrada, além dos que você cria manualmente ou por IA. Fica desligado por padrão.
+
+Os dois primeiros botões (Criar Manual e Gerar com IA) só ficam habilitados quando já existe ao menos uma rodada ativa ou concluída na turma — ou seja, **você não consegue criar eventos de mercado antes de iniciar a primeira rodada**.
+
+Ao longo da rodada, acompanhe na aba **Aula** quantas equipes já enviaram suas decisões — o número aparece diretamente ali, e a própria aba mostra um indicador (um número em destaque) quando há equipes com decisões pendentes. Isso é só um indicador visual: nada no sistema te impede de encerrar a rodada mesmo com equipes pendentes, o que nos leva ao ponto mais importante desta seção.
+
+## 9. Passo a Passo: Encerrar uma Rodada
+
+Na aba **Aula**, com a rodada ativa, clique em **Encerrar Rodada**. Isso dispara o cálculo de todos os resultados e KPIs daquela rodada para todas as equipes, com base nas decisões enviadas.
+
+**Atenção — este é o ponto mais importante deste manual**: se uma equipe **não enviou nenhuma decisão** na rodada, o sistema **não cria nenhum registro de resultado para ela** ao encerrar — ela simplesmente fica de fora do processamento daquela rodada, silenciosamente, sem nenhum aviso ou bloqueio. O contador de "equipes que enviaram" mencionado na Seção 8 é só informativo; ele não impede o encerramento. **Antes de clicar em Encerrar Rodada, confira manualmente na aba Aula se todas as equipes que deveriam participar já enviaram suas decisões.** Se uma equipe ficou de fora por engano, a forma de corrigir depois é reabrir a rodada e reprocessá-la — mais trabalhoso do que simplesmente conferir antes.
+
+Depois de encerrada, uma rodada não pode ser reaberta pela mesma tela com um clique simples de "desfazer" — trate o encerramento como uma ação que vale a pena confirmar visualmente antes de executar.
+
+## 10. Rodadas Seguintes e Agendamento
+
+Repita o ciclo: abra a próxima rodada (Seção 7), acompanhe eventos e submissões (Seção 8), encerre conferindo as equipes pendentes (Seção 9). Duas diferenças em relação à Rodada 1 valem menção:
+
+- A partir da Rodada 2, as análises estratégicas (SWOT, Porter, BCG, PESTEL, Segmentação) da rodada anterior são **copiadas automaticamente** para a nova rodada como ponto de partida da equipe, que pode então ajustá-las — não é gerado conteúdo novo por IA nesse momento, apenas um carregamento do que já existia.
+- O **Sistema de Notas** (Seção 11.3) nunca considera a Rodada 1 no cálculo — ela é tratada como rodada de aprendizado, sem nota.
+
+Você pode ajustar o número total de rodadas da turma a qualquer momento na aba **Aula**, no campo **Total de Rodadas** (não pode ser menor que a rodada atual). Também é possível remover a última rodada da lista, mas só se ela ainda estiver bloqueada (não iniciada) e sem nenhum dado associado — o botão **Remover Última** fica desabilitado automaticamente quando isso não é possível, e explica o motivo ao passar o mouse.
+
+Como alternativa ao controle manual, cada rodada pode ser **agendada**: no card da rodada, o botão **Agendar** permite definir uma data de início e uma data de término automáticos (sempre à meia-noite no horário de Brasília). Com isso definido, o sistema abre e encerra aquela rodada sozinho, sem que você precise clicar em Iniciar Rodada ou Encerrar Rodada manualmente — mas o alerta da Seção 9 sobre equipes sem decisões continua valendo: o encerramento automático também não verifica se todas as equipes enviaram algo.
+
+## 11. Analisar Resultados
+
+Depois de encerrar ao menos uma rodada, a aba **Analisar** da turma reúne tudo o que você precisa para interpretar o desempenho das equipes.
+
+### 11.1 Ranking
+
+Uma tabela mostra, para a última rodada concluída, cada equipe ordenada por lucro, com Receita, Lucro, ROI e Market Share. Ao lado de cada equipe, um botão de feedback permite gerar (ou visualizar, se já gerado) um retorno personalizado por IA para aquela equipe naquela rodada, combinando análise de desempenho e das decisões tomadas.
+
+### 11.2 Relatório de Alinhamento Estratégico
+
+Logo abaixo do ranking, o Relatório de Alinhamento mostra **todas as equipes da turma**, classificadas por criticidade:
+
+- **Crítico**: score de alinhamento abaixo de 30
+- **Fraco**: score entre 30 e 49
+- **Sem dados**: equipe que não submeteu nada na rodada
+- **OK**: score igual ou acima de 50
+
+Cada linha traz os principais problemas identificados naquela equipe (por exemplo, ferramentas estratégicas incompletas ou inconsistência entre o diagnóstico e as decisões de preço). É o primeiro lugar a olhar depois de encerrar uma rodada — comece pelas equipes em Crítico e Sem dados.
+
+O score de alinhamento combina dois blocos: 70% mede a coerência entre as cinco ferramentas de diagnóstico e as decisões de Mix de Marketing realmente tomadas; 30% mede a completude das cinco ferramentas. Os detalhes teóricos desse mecanismo estão no Apêndice A.3.
+
+### 11.3 Sistema de Notas
+
+A partir da segunda rodada concluída, aparece a seção **Sistema de Notas**, com uma nota combinada por equipe, calculada por uma fórmula fixa com os seguintes pesos:
+
+| Métrica | Peso |
+|---|---|
+| Lucro Líquido | 25% |
+| ROI | 20% |
+| Market Share | 15% |
+| NPS (satisfação do cliente) | 15% |
+| Margem | 15% |
+| Alinhamento Estratégico | 10% |
+
+Cada métrica é normalizada (0 a 100) comparando o desempenho da equipe com o das demais equipes da mesma turma naquela rodada, antes de aplicar os pesos — ou seja, é uma nota relativa à turma, não uma escala absoluta. **A Rodada 1 nunca entra nesse cálculo**, propositalmente, por ser considerada rodada de aprendizado.
+
+A tabela de notas pode ser exportada em CSV diretamente pela tela, para uso em planilha externa ou lançamento em outro sistema de avaliação.
+
+### 11.4 Penalidade por cópia de IA
+
+Para incentivar que o aluno realmente personalize as análises geradas por IA (Seção 8), análises copiadas quase sem alteração recebem penalidade automática no score de alinhamento, por faixa de similaridade:
+
+- 0% a 29% de similaridade: sem penalidade
+- 30% a 69%: penalidade moderada (−10 pontos)
+- 70% a 100%: penalidade severa (−30 pontos)
+
+Essa penalidade afeta o score de alinhamento e, por consequência, os KPIs financeiros e a nota da equipe.
+
+## 12. A Aba Configurar
+
+A aba **Configurar** reúne o que você mexe com pouca frequência, depois da configuração inicial da turma:
+
+- **Configuração de Mercado** — já descrita na Seção 3.1.
+- **Relatório de Acessos** — um painel expansível que mostra o histórico de acessos dos alunos à turma (quem acessou, quando), com exportação em CSV.
+- **Enviar Email para Equipes** — permite mandar uma mensagem por email para uma ou mais equipes da turma diretamente pelo sistema.
+- **Zona de Perigo** — exclusão definitiva da turma. Apaga permanentemente equipes, alunos matriculados nela, rodadas e todas as decisões. Não há como desfazer; use apenas quando tiver certeza absoluta.
+
+## 13. Painel de Administração (Dados Brutos)
+
+O botão **Admin**, no topo do Painel do Professor, abre um painel separado com seis abas de dados brutos, sempre restritos às suas próprias turmas: **Usuários**, **Turmas**, **Equipes**, **Rodadas**, **Mix Marketing** e **Eventos**. É útil quando você precisa consultar ou conferir um dado específico fora do fluxo normal das telas (por exemplo, verificar rapidamente um registro de decisão de uma equipe). Para o uso do dia a dia descrito neste manual, você não vai precisar dele — ele é um recurso de consulta avançada, não uma etapa obrigatória do fluxo.
+
+## 14. Recuperação de Senha dos Alunos
+
+Quando um aluno esquece a senha, ele tem duas opções na tela de login, no link **"Esqueci minha senha"**:
+
+1. **Aba "Código"**: no momento do cadastro, cada aluno recebe um código de recuperação no formato `XXXX-XXXX-XXXX`, mostrado uma única vez, em uma janela que pede explicitamente para ele guardar ou fotografar o código. Com email + código + nova senha, o aluno redefine a senha na hora, sem depender de email.
+2. **Aba "Email"**: um link de redefinição de senha é enviado para o email cadastrado do aluno.
+
+Vale orientar a turma, logo na apresentação do sistema, a guardar esse código de recuperação assim que se cadastrarem — é o caminho mais rápido, e o código não é mostrado de novo depois.
+
+## 15. Checklist Resumido
+
+Para consulta rápida, depois de já ter lido o manual completo uma vez:
+
+1. Criar a turma (Nome da Turma é o único campo obrigatório).
+2. Completar a configuração de mercado em Configurar → Configuração de Mercado.
+3. Matricular os alunos (pedir que se cadastrem sozinhos com email institucional e depois adicioná-los à turma, ou cadastrá-los você mesmo já com turma definida).
+4. Aguardar os alunos formarem suas próprias equipes (você não cria equipes).
+5. Definir a quantidade de produtos por equipe e clicar em Iniciar Rodada.
+6. Acompanhar submissões e, se quiser, criar ou gerar eventos de mercado.
+7. Conferir se todas as equipes enviaram decisões antes de clicar em Encerrar Rodada.
+8. Analisar o ranking e o Relatório de Alinhamento na aba Analisar.
+9. Repetir os passos 5 a 8 para cada rodada seguinte.
+10. A partir da segunda rodada concluída, consultar o Sistema de Notas.
+
+## 16. Solução de Problemas Comuns
+
+**Uma equipe ficou de fora dos resultados de uma rodada** — normalmente é porque ela não enviou nenhuma decisão antes do encerramento (Seção 9). Não há aviso automático disso; é preciso conferir antes de encerrar.
+
+**Uma rodada pré-adicionada abriu com só 1 produto por equipe, mesmo eu tendo configurado mais** — é o comportamento do botão "Adicionar" descrito na Seção 7.1. Ajuste manualmente antes da abertura, ou prefira sempre o botão "Iniciar Rodada".
+
+**Um aluno diz que se cadastrou mas não consegue fazer nada** — confira se ele já foi matriculado em uma turma (Seção 4). Cadastro sozinho não inclui matrícula automática.
+
+**Não consigo achar onde configurar algo, e o botão de ajuda "Onde está o quê?" do sistema me manda para uma aba que não existe** — esse painel de ajuda interno ainda referencia nomes antigos de abas (por exemplo, "Resultados" e "Notas", que hoje são a aba "Analisar"; ou "Visão Geral" e "Acessos", que hoje ficam dentro de "Aula" e "Configurar"). Use a estrutura de abas real descrita neste manual (Aula, Equipes, Analisar, Configurar) em vez do texto desse painel.
+
+**O aluno não consegue se cadastrar** — confira se o email usado é institucional (termina no domínio aceito pelo sistema). Qualquer outro email é recusado automaticamente, com uma mensagem de erro explicando o motivo.
+
+**As equipes não conseguem acessar as Decisões de Marketing Mix** — lembre que SWOT, Porter, BCG e PESTEL são obrigatórias antes; a Segmentação não bloqueia, mas conta na nota (Seção 8).
+
+---
+
+## Apêndice A — Fundamentação Teórica
 
 Nenhuma regra do simulador foi criada de forma arbitrária: cada ferramenta de análise estratégica e cada decisão de Mix de Marketing tem uma teoria de referência específica, que orientou tanto o desenho pedagógico quanto — sempre que aplicável — a lógica de cálculo implementada no sistema. Esta seção existe para que você possa, em sala de aula, dizer ao aluno não apenas "preencha a Matriz BCG", mas "preencha a Matriz BCG porque ela aplica o modelo de Bruce Henderson (1970) de gestão de portfólio de produtos".
 
-### 2.1 As cinco ferramentas de diagnóstico estratégico
+### A.1 As cinco ferramentas de diagnóstico estratégico
 
-As cinco ferramentas ficam na tela **Estratégia**. Quatro delas são pré-requisito obrigatório para a equipe acessar a tela de Decisões (Marketing Mix); a quinta (Segmentação de Mercado) não bloqueia esse acesso, mas compõe a pontuação de Alinhamento Estratégico da equipe — ambas, portanto, merecem atenção do professor, ainda que por razões distintas (ver Seção 4).
+As cinco ferramentas ficam na tela **Estratégia**. Quatro delas são pré-requisito obrigatório para a equipe acessar a tela de Decisões (Marketing Mix); a quinta (Segmentação de Mercado) não bloqueia esse acesso, mas compõe a pontuação de Alinhamento Estratégico da equipe (ver Seção 11.2).
 
 | Ferramenta | Autor(es) de referência | Conceito-chave | O que ela ensina ao aluno |
 |---|---|---|---|
@@ -32,7 +269,7 @@ As cinco ferramentas ficam na tela **Estratégia**. Quatro delas são pré-requi
 | **Segmentação — B2C** | Kotler & Keller (modelo STP: Segmentation, Targeting, Positioning); Wedel & Kamakura | Critérios demográfico, geográfico, psicográfico e comportamental | Ajustar preço e canal ao segmento-alvo declarado, evitando dissonância entre discurso e prática |
 | **Segmentação — B2B** | Hutt & Speh; Kotler & Armstrong | Variáveis firmográficas e centro de compras organizacional | Reconhecer que a lógica de segmentação organizacional difere estruturalmente da segmentação de consumidor final |
 
-### 2.2 As decisões de Mix de Marketing (4 Ps)
+### A.2 As decisões de Mix de Marketing (4 Ps)
 
 | Decisão | Autor(es) de referência | Ideia central aplicada |
 |---|---|---|
@@ -43,13 +280,32 @@ As cinco ferramentas ficam na tela **Estratégia**. Quatro delas são pré-requi
 | Seleção de Mídias e Intensidade Promocional | Kotler & Armstrong (mix promocional); Krugman (1972), Naples (1979), Tellis (1997) — frequência efetiva de mídia; Pride & Ferrell | Planejar composição e intensidade de mídia sob restrição orçamentária, com retornos decrescentes |
 | Identidade da Empresa (nome, slogan, logomarca) | Aaker (1991) — Brand Equity | Construção de identidade de marca como exercício próprio, complementar ao cálculo financeiro |
 
-### 2.3 O elo entre teoria e prática: o Alinhamento Estratégico
+### A.3 O elo entre teoria e prática: o Alinhamento Estratégico
 
-A pontuação de **Alinhamento Estratégico** — descrita em detalhe na Seção 9 — não é uma ferramenta isolada: é o mecanismo que conecta as cinco ferramentas de diagnóstico (Seção 2.1) às decisões de Mix de Marketing (Seção 2.2). Cada uma das cinco ferramentas contribui igualmente para o bloco de coerência (70% da pontuação); a completude das cinco ferramentas soma os 30% restantes. Pedagogicamente, é neste ponto que o simulador testa se o aluno integrou diagnóstico e execução — não apenas se preencheu cada instrumento isoladamente. Vale destacar isso para a turma: uma SWOT bem escrita que não se reflete no preço praticado é penalizada, exatamente como aconteceria numa análise real malconduzida.
+A pontuação de Alinhamento Estratégico (Seção 11.2) não é uma ferramenta isolada: é o mecanismo que conecta as cinco ferramentas de diagnóstico (A.1) às decisões de Mix de Marketing (A.2). Cada uma das cinco ferramentas contribui igualmente para o bloco de coerência (70% da pontuação); a completude das cinco ferramentas soma os 30% restantes. Pedagogicamente, é neste ponto que o simulador testa se o aluno integrou diagnóstico e execução — não apenas se preencheu cada instrumento isoladamente. Vale destacar isso para a turma: uma SWOT bem escrita que não se reflete no preço praticado é penalizada, exatamente como aconteceria numa análise real malconduzida.
 
-### 2.4 Referências bibliográficas
+## Apêndice B — Setores de Mercado Disponíveis
 
-As obras abaixo compõem o aparato acadêmico já incorporado ao Simula+ (citado no manual do aluno embutido no aplicativo). Duas entradas têm a edição/editora da tradução brasileira ainda não confirmada com segurança bibliográfica — isso está sinalizado explicitamente, em vez de apresentar uma edição não verificada como certa.
+Os setores disponíveis para configurar uma turma (Seção 3) são:
+
+1. Eletrônicos e Tecnologia
+2. Alimentos e Bebidas
+3. Vestuário e Moda
+4. Cosméticos e Beleza
+5. Móveis e Decoração
+6. Automotivo
+7. Esportes e Fitness
+8. Saúde e Bem-estar
+9. Educação e Cursos
+10. Pet Care
+11. Construção e Materiais
+12. Entretenimento e Mídia
+
+Cada setor tem quatro categorias de produto associadas, além de parâmetros próprios de tamanho de mercado, crescimento e margem média — usados internamente pelo sistema para calibrar a simulação daquele setor.
+
+## Apêndice C — Referências Bibliográficas (ABNT)
+
+As obras abaixo compõem o aparato acadêmico incorporado ao Simula+. Duas entradas têm a edição/editora da tradução brasileira ainda não confirmada com segurança bibliográfica — isso está sinalizado explicitamente, em vez de apresentar uma edição não verificada como certa.
 
 AAKER, David A. **Managing Brand Equity**. New York: Free Press, 1991.
 
@@ -121,268 +377,8 @@ VYGOTSKY, Lev S. **Mind in Society: The Development of Higher Psychological Proc
 
 WEDEL, Michel; KAMAKURA, Wagner A. **Market Segmentation: Conceptual and Methodological Foundations**. 2. ed. Boston: Kluwer Academic Publishers. [Edição consultada não confirmada com segurança.]
 
-## 3. Como Configurar uma Turma
-
-### 3.1 Criar Nova Turma
-
-1. Acesse o **Painel do Professor**
-2. Clique em **Nova Turma**
-3. Preencha os dados:
-   - **Nome da Turma**: identificação única
-   - **Código de Acesso**: senha para estudantes se registrarem
-   - **Número de Rodadas**: quantas rodadas a simulação terá (sugerido: 5-10)
-   - **Setor de Mercado**: setor econômico da simulação
-   - **Orçamento Inicial**: valor que cada equipe começará (padrão: R$ 100.000)
-
-### 3.2 Configurar Parâmetros de Mercado
-
-Após criar a turma, você pode ajustar:
-
-- **Tamanho do Mercado**: número de consumidores potenciais
-- **Taxa de Crescimento**: expansão ou retração do mercado
-- **Nível de Competição**: intensidade competitiva
-- **Número de Concorrentes**: quantas empresas competem
-- **Concentração de Mercado**: distribuição de market share
-- **Força dos Concorrentes**: nível de sofisticação da concorrência
-
-### 3.3 Gerenciar Rodadas
-
-**Configuração Automática (Recomendado)**
-
-- Defina data/hora de início e fim para cada rodada
-- O sistema automaticamente ativa a rodada no horário definido, completa e processa resultados ao final, e calcula KPIs e rankings
-
-**Controle Manual**
-
-- **Iniciar Rodada**: libera para as equipes fazerem decisões
-- **Finalizar Rodada**: processa decisões e gera resultados
-- **Avançar Rodada**: move para a próxima rodada
-
-## 4. Fluxo de Trabalho da Simulação
-
-### Antes da Rodada
-
-1. **Preparação**:
-   - Configure eventos de mercado (opcional)
-   - Revise configurações da turma
-   - Comunique prazos aos estudantes
-
-2. **Ferramentas do Professor**:
-   - **Gerar Análises Estratégicas**: use IA para criar análises automáticas (SWOT, Porter, BCG, PESTEL)
-   - **Criar Eventos de Mercado**: adicione eventos que impactam o mercado (crise, tendência, regulação)
-
-### Durante a Rodada
-
-Os estudantes devem completar as cinco ferramentas estratégicas, mas com regras de acesso diferentes:
-
-- **SWOT, 5 Forças de Porter, Matriz BCG e PESTEL — obrigatórias**: sem as quatro completas, a equipe não consegue acessar a tela de Decisões (Marketing Mix)
-- **Segmentação de Mercado (B2C e/ou B2B) — não bloqueia o acesso**, mas compõe 20% da pontuação de Alinhamento Estratégico da equipe (ver Seção 2.1 e Seção 9)
-
-Vale orientar a turma explicitamente sobre essa diferença: é comum um aluno concluir (corretamente) que "destravou" o Marketing Mix e deixar a Segmentação de lado, sem perceber que isso reduz sua pontuação de alinhamento.
-
-Depois, os estudantes tomam as **Decisões de Marketing Mix** para cada produto:
-
-- **Produto**: qualidade, características, posicionamento de marca
-- **Preço**: estratégia e valor de precificação
-- **Praça**: canais de distribuição e cobertura
-- **Promoção**: seleção de mídias e intensidade promocional
-
-### Após a Rodada
-
-1. **Análise de Resultados**:
-   - Acesse **Ver Analytics** na turma
-   - Visualize ranking de equipes, evolução de KPIs ao longo do tempo, métricas de engajamento e comparativos entre equipes
-
-2. **Feedback**:
-   - Use o botão **Regenerar Feedback** para criar análises de IA para as equipes
-   - O feedback é personalizado com base em desempenho e decisões
-
-## 5. Sistema de IA e Assistência Estratégica
-
-### Como funciona, tecnicamente
-
-O sistema tem três níveis de assistência de IA definidos no código (parâmetro por rodada), com comportamentos distintos de geração das cinco ferramentas estratégicas:
-
-- **Nível 1** (padrão): a IA gera uma versão inicial completa das cinco ferramentas estratégicas, que o aluno deve revisar e personalizar
-- **Nível 2**: a IA gera uma versão parcial, deixando lacunas para o aluno preencher
-- **Nível 3**: a IA não gera conteúdo — o aluno parte do zero
-
-### Ponto de atenção para o professor
-
-O Nível 1 (assistência completa) é o valor padrão de toda rodada nova, e **não foi localizado, na interface do professor atual, nenhum controle para alterar esse nível por rodada**. Na prática, portanto, isso significa que todas as rodadas de uma turma operam no Nível 1, a menos que o parâmetro seja alterado diretamente no banco de dados. A ideia de uma progressão automática de assistência ao longo das rodadas (por exemplo, 100% na Rodada 1, caindo nas rodadas seguintes) não foi confirmada no código-fonte atual e não deve ser presumida como comportamento real do sistema nesta versão. Se a sua instituição precisar desse controle por rodada, trate-o como uma solicitação de melhoria ao desenvolvedor, não como um recurso já disponível.
-
-### Sistema de Penalização por Cópia
-
-Para incentivar a personalização, análises copiadas diretamente da IA e não editadas pelo aluno recebem penalidades conforme o percentual de similaridade:
-
-- **0-29% similar**: sem penalidade
-- **30-69% similar**: penalidade moderada (−10 pontos)
-- **70-100% similar**: penalidade severa (−30 pontos)
-
-Essas penalidades afetam o score de alinhamento estratégico e, por consequência, os KPIs financeiros (receita, lucro) e o market share da equipe.
-
-## 6. KPIs Calculados Automaticamente
-
-O sistema calcula 19 KPIs para cada equipe:
-
-**Financeiros**: Receita, Lucro, Margem de Lucro, ROI (Return on Investment), Custo de Aquisição de Cliente (CAC)
-
-**Mercado**: Market Share, Taxa de Crescimento, Alcance de Mercado, Índice de Satisfação do Cliente
-
-**Eficiência**: Eficiência de Campanha, Taxa de Conversão, Valor do Tempo de Vida do Cliente (LTV), Relação LTV/CAC
-
-**Estratégicos**: Brand Equity, Score de Alinhamento Estratégico, Nível de Inovação, Índice de Competitividade
-
-**Adicionais**: Engajamento da Equipe, Qualidade das Decisões
-
-## 7. Eventos de Mercado
-
-### Tipos de Eventos
-
-1. **Positivos**: aumento de demanda, tendências favoráveis
-2. **Negativos**: crise econômica, regulações, concorrência
-3. **Neutros**: mudanças estruturais do mercado
-
-### Como Criar Eventos
-
-1. Selecione a rodada
-2. Clique em **Criar Evento Manual** ou **Gerar com IA**
-3. Configure tipo e severidade, título e descrição, impacto esperado
-
-### Geração por IA
-
-A geração é baseada em: contexto do setor, dados econômicos reais (câmbio, inflação), histórico da turma e momento da simulação.
-
-## 8. Aprovações e Gerenciamento
-
-### Aprovação de Equipes
-
-1. Acesse **Aprovações** no menu
-2. Revise solicitações de registro
-3. Aprove ou rejeite equipes
-4. Gerencie membros das equipes
-
-### Adição Manual de Membros
-
-- Adicione estudantes diretamente às equipes
-- Remova membros quando necessário
-- Ajuste lideranças
-
-## 9. Análise de Turma (Analytics)
-
-### Dashboard do Professor
-
-O dashboard é organizado em abas:
-
-1. **Visão Geral**: cards de estatísticas (turmas, equipes, rodadas ativas, alunos), dados econômicos atuais, eventos de mercado ativos e visão geral das decisões de Marketing Mix
-2. **Equipes**: lista de equipes com busca, cards expansíveis com gestão de membros, ajuste de orçamento e matrícula de alunos
-3. **Rodadas**: timeline visual com status de cada rodada, agendamento automático de início/fim e geração de análises estratégicas por IA
-4. **Resultados**: ranking de equipes por KPIs, geração de feedback por IA e o Relatório de Alinhamento Estratégico (ver abaixo)
-
-### Relatório de Alinhamento Estratégico
-
-O relatório mostra **todas as equipes da turma**, ordenadas por criticidade:
-
-- **Crítico**: equipes com score < 30
-- **Fraco**: equipes com score entre 30 e 49
-- **Sem dados**: equipes que não submeteram
-- **OK**: equipes com score ≥ 50
-
-**Recursos**: alerta visual destacando equipes que precisam de atenção urgente, ícones de status em cada linha da tabela, linhas coloridas por criticidade e lista dos principais problemas detectados por equipe.
-
-**Como usar**:
-1. Acesse a aba **Resultados** no dashboard
-2. O relatório aparece após o encerramento de uma rodada
-3. Foque primeiro nas equipes em **Crítico** e **Sem dados**
-4. Use os problemas listados para orientar feedback individual
-
-## 10. Boas Práticas Pedagógicas
-
-### Preparação
-
-1. **Apresente o Sistema**: faça uma aula introdutória explicando o Simula+ — esta é uma boa oportunidade para apresentar a Seção 2 deste manual e situar cada ferramenta na teoria que o aluno já viu (ou verá) em sala
-2. **Forme Equipes**: 3-5 membros por equipe é o ideal
-3. **Defina Objetivos**: esclareça o que será avaliado
-4. **Estabeleça Cronograma**: prazos claros para cada rodada
-
-### Durante a Simulação
-
-1. **Monitore Progresso**: use o Analytics para identificar equipes com dificuldades
-2. **Promova Discussões**: debata decisões e resultados em sala
-3. **Conecte com Teoria**: relacione resultados com os autores da Seção 2 — por exemplo, discutir por que uma equipe "Estrela" na Matriz BCG que investiu pouco em promoção foi penalizada é uma forma direta de retomar Henderson em sala
-4. **Incentive Reflexão**: peça relatórios ou apresentações pós-rodada
-
-### Avaliação
-
-Sugestões de critérios:
-
-1. **Desempenho** (40%): KPIs alcançados, evolução ao longo das rodadas, ranking final
-2. **Qualidade Estratégica** (30%): completude de análises (SWOT, Porter, BCG, PESTEL, Segmentação), alinhamento entre estratégia e decisões, originalidade (não copiar da IA)
-3. **Participação** (30%): engajamento da equipe, pontualidade nas entregas, contribuição de todos os membros
-
-## 11. Solução de Problemas Comuns
-
-### Estudantes esqueceram a senha
-
-O sistema oferece duas opções de recuperação de senha para estudantes:
-
-1. **Por Código de Recuperação** (recomendado): no cadastro, cada estudante recebe um código no formato `XXXX-XXXX-XXXX`, exibido apenas uma vez, após o registro. Na tela de login, o estudante clica em "Esqueci minha senha" → aba "Código", e informa email + código + nova senha
-2. **Por Email**: na tela de login, o estudante clica em "Esqueci minha senha" → aba "Email". Um link de recuperação é enviado para o email cadastrado e expira em 1 hora
-
-**Importante**: oriente os estudantes a anotarem ou fotografarem o código de recuperação logo após o cadastro, pois ele não será exibido novamente.
-
-### Estudantes não conseguem se registrar
-- Verifique se o código de acesso está correto
-- Confirme se a turma está ativa
-- Revise aprovações pendentes
-
-### KPIs parecem inconsistentes
-- Verifique configurações de mercado
-- Revise eventos ativos na rodada
-- Confira o alinhamento estratégico da equipe
-
-### Equipes não completam análises estratégicas
-- Lembre que a SWOT, o Porter, a BCG e o PESTEL são obrigatórias antes do Marketing Mix (a Segmentação não bloqueia, mas conta na pontuação — ver Seção 4)
-- Use o sistema de notificações
-- Considere prazo maior para rodadas iniciais
-
-### Feedback da IA não está funcionando
-- Verifique se a rodada foi finalizada
-- Confirme que as decisões foram submetidas
-- Use o botão "Regenerar Feedback" se necessário
-
-## 12. Recursos Técnicos
-
-**Escalabilidade**: suporta 40+ estudantes simultâneos, PostgreSQL serverless auto-scaling, cache de dados econômicos
-
-**Segurança**: autenticação baseada em sessão, isolamento de dados entre turmas, controle de acesso por papel (professor/estudante)
-
-**Integrações**: API de câmbio (USD/BRL em tempo real), OpenAI GPT-4o-mini para IA, sistema de agendamento automatizado
-
-## 13. Suporte e Contato
-
-Para questões técnicas ou sugestões:
-
-- Email: suporte@simulamarketing.com.br
-- Site: https://simulamarketing.com.br
-
-## Apêndice: Setores Disponíveis
-
-1. Tecnologia e Inovação
-2. Alimentos e Bebidas
-3. Moda e Vestuário
-4. Saúde e Bem-Estar
-5. Educação
-6. Turismo e Hospitalidade
-7. Entretenimento e Lazer
-8. Automóveis
-9. Imobiliário
-10. Serviços Financeiros
-11. Varejo
-12. Sustentabilidade e Meio Ambiente
-
 ---
 
-**Versão**: 1.2
+**Versão**: 2.0
 **Última Atualização**: Setembro 2026
 **Simula+ | Simulador de Marketing no Mercado**

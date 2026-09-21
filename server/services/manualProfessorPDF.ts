@@ -173,7 +173,7 @@ function addCoverPage(doc: PDFKit.PDFDocument) {
 
   doc.fontSize(9)
     .fillColor('#c7d2fe')
-    .text(`Versão 1.2 | ${new Date().getFullYear()}`, 60, pageHeight - 70, {
+    .text(`Versão 2.0 | ${new Date().getFullYear()}`, 60, pageHeight - 70, {
       width: pageWidth - 120,
       align: 'center',
     });
