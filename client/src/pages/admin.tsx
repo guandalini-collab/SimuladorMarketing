@@ -50,7 +50,8 @@ import {
   ChevronUp,
   Eye,
   BarChart3,
-  TrendingUp
+  TrendingUp,
+  BookOpen
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -743,10 +744,27 @@ export default function AdminPage() {
                 </p>
               </div>
             </div>
-            <Badge variant="outline" className="gap-1 border-white/30 text-white bg-white/10">
-              <Activity className="h-3 w-3" />
-              Sistema Ativo
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-white/90 hover:text-white hover:bg-white/10 border border-white/20"
+                    onClick={() => window.open('/api/manual/professor/pdf', '_blank')}
+                    data-testid="button-manual-professor-admin"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    <span className="hidden sm:inline">Manual do Professor</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Baixar Manual do Professor (PDF)</TooltipContent>
+              </Tooltip>
+              <Badge variant="outline" className="gap-1 border-white/30 text-white bg-white/10">
+                <Activity className="h-3 w-3" />
+                Sistema Ativo
+              </Badge>
+            </div>
           </div>
         </div>
       </div>
