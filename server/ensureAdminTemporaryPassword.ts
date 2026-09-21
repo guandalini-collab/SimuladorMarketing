@@ -32,7 +32,7 @@ const EXPIRY_DAYS = 30;
 export async function ensureAdminTemporaryPassword(): Promise<void> {
   try {
     const existing = await pool.query(
-      `SELECT id, temporary_password FROM users WHERE lower(email) = lower($1)`,
+      `SELECT id, temporary_password, must_change_password FROM users WHERE lower(email) = lower($1)`,
       [ADMIN_EMAIL]
     );
 
@@ -44,6 +44,24 @@ export async function ensureAdminTemporaryPassword(): Promise<void> {
     const row = existing.rows[0];
     if (row.temporary_password) {
       console.log(`[BOOT] Senha temporária do admin (${ADMIN_EMAIL}) já definida e ainda válida — nada a fazer.`);
+      return;
+    }
+
+    // Bug corrigido (2026-09): a checagem original só olhava para
+    // `temporary_password`. Quando o professor trocava a senha temporária
+    // pela senha definitiva (POST /api/auth/change-temporary-password),
+    // `updatePasswordAndClearTemporary` limpa `temporary_password` E
+    // `must_change_password` — mas isso fazia esta função "achar" que era a
+    // primeira execução de novo no PRÓXIMO deploy, recriando a senha
+    // temporária e marcando must_change_password=true outra vez, mesmo com
+    // uma senha permanente já definida e funcionando. Resultado: a cada
+    // `git push` (cada deploy reinicia o processo e roda este boot script),
+    // o login voltava a exigir "trocar a senha" de novo, indefinidamente.
+    // Agora também pulamos se a conta já passou pela troca uma vez
+    // (must_change_password já é false) — sinal de que o fluxo já foi
+    // concluído e não deve ser reaberto.
+    if (row.must_change_password === false) {
+      console.log(`[BOOT] Conta do admin (${ADMIN_EMAIL}) já tem senha permanente definida — nada a fazer.`);
       return;
     }
 
