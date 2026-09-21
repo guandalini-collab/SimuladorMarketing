@@ -36,16 +36,18 @@ Uma observação importante sobre os alunos, que evita um mal-entendido comum: *
 ## 3. Passo a Passo: Criar uma Turma
 
 1. No Painel do Professor, clique no botão **Nova Turma** (canto superior direito).
-2. Preencha o formulário "Criar Nova Turma". Os campos disponíveis são:
-   - **Nome da Turma** (obrigatório) — é o identificador que você e os alunos verão em toda a interface (ex.: "Marketing 2026-2"). É o único campo que precisa ser preenchido nesta tela.
-   - **Número de Rodadas** — quantas rodadas a simulação terá ao todo. Valor padrão: 10 (pode variar de 1 a 20). Você pode alterar esse número depois, a qualquer momento, na aba "Aula" da turma.
-   - **Setor de Mercado** — o setor econômico simulado (ver lista completa no Apêndice B). Pode ser deixado em branco e definido depois.
-   - **Tipo de Comércio** — B2C, B2B ou Híbrido. Pode ser deixado em branco e definido depois.
-   - **Orçamento Padrão (R$)** — orçamento inicial de cada equipe a cada rodada. Valor padrão: R$ 100.000,00.
-   - **Nível de Concorrência** — Baixa, Média ou Alta. Pode ser deixado em branco e definido depois.
-3. Clique em **Criar Turma**.
+2. Preencha o formulário "Criar Nova Turma". A imagem abaixo numera cada campo do diálogo; a lista logo depois explica cada número:
 
-![Tela de criação de turma — Nome da Turma é o único campo obrigatório.](01-criar-turma.jpg)
+![Diálogo "Criar Nova Turma" com cada campo numerado.](14-criar-turma-campos.jpg)
+
+   1. **Nome da Turma** (obrigatório) — é o identificador que você e os alunos verão em toda a interface (ex.: "Marketing 2026-2"). É o único campo que precisa ser preenchido nesta tela.
+   2. **Número de Rodadas** — quantas rodadas a simulação terá ao todo. Valor padrão: 10 (pode variar de 1 a 20). Você pode alterar esse número depois, a qualquer momento, na aba "Aula" da turma.
+   3. **Setor de Mercado** — o setor econômico simulado (ver lista completa no Apêndice B). Pode ser deixado em branco e definido depois.
+   4. **Tipo de Comércio** — B2C, B2B ou Híbrido. Pode ser deixado em branco e definido depois.
+   5. **Orçamento Padrão (R$)** — orçamento inicial de cada equipe a cada rodada. Valor padrão: R$ 100.000,00.
+   6. **Nível de Concorrência** — Baixa, Média ou Alta. Pode ser deixado em branco e definido depois.
+   7. **Criar Turma** — botão que confirma a criação. Fica habilitado assim que o campo 1 (Nome da Turma) está preenchido; os demais campos podem ficar em branco.
+3. Clique em **Criar Turma** (campo 7 na imagem acima).
 
 **Ponto de atenção**: como só o Nome da Turma é obrigatório, é perfeitamente possível criar uma turma preenchendo apenas esse campo e clicando em Criar. O sistema permite — mas ao tentar iniciar a primeira rodada, ele vai te avisar (sem bloquear) que a configuração de mercado (setor, nível de concorrência, estrutura de mercado) e o orçamento ainda não foram preenchidos. O recomendado é, logo depois de criar a turma, preencher a configuração completa de mercado antes de iniciar a Rodada 1 (ver Seção 4).
 
@@ -99,8 +101,19 @@ Depois de matriculado em uma turma, o aluno passa a ver, na primeira tela do seu
 
 O que você, professor, pode fazer sobre as equipes, na aba **Equipes** de cada turma:
 
+![Aba Equipes completa: cadastro de aluno, cards de equipe, lista de matriculados e a tabela de orçamentos.](16-equipes-completo.jpg)
+
+1. **Cadastrar Aluno** — cria a conta do aluno diretamente (Caminho B da Seção 4), já com senha definida por você.
+2. **Card da equipe** — clique para expandir e ver detalhes; o ícone de adicionar membro (ao lado do card) matricula um aluno já cadastrado na turma dentro dessa equipe.
+3. **Adicionar** (na lista "Alunos Matriculados") — matricula, na turma, um aluno que já tem conta no sistema mas ainda não está nesta turma.
+4. **Orçamento (R$) da equipe** — campo editável, na tabela "Orçamentos das Equipes": permite ajustar manualmente o orçamento de uma equipe específica, sem alterar o Orçamento Padrão da turma (útil para corrigir um caso pontual, por exemplo).
+5. **Ícone de lixeira** — exclui a equipe (ação irreversível; os alunos que eram membros dela ficam sem equipe, mas continuam matriculados na turma).
+
+O que você, professor, pode fazer sobre as equipes, na aba **Equipes** de cada turma:
+
 - **Adicionar um membro** a uma equipe já formada (ícone de adicionar membro no card da equipe, informando o email do aluno já matriculado na turma).
 - **Remover um membro** de uma equipe.
+- **Ajustar o orçamento** de uma equipe específica, na tabela "Orçamentos das Equipes" (marcador 4 acima).
 - **Ver as decisões** já tomadas por uma equipe (produtos, mix de marketing, análises estratégicas).
 - Acompanhar, na mesma aba, quantos alunos estão matriculados e quantos ainda estão sem equipe (indicado no card "Alunos Matriculados").
 
@@ -127,7 +140,16 @@ A partir daqui, a Rodada 1 fica ativa e as equipes já podem tomar decisões.
 
 ### 7.1 Um detalhe importante sobre rodadas futuras pré-adicionadas
 
-No mesmo painel de **Gerenciamento de Rodadas**, existe um botão **Adicionar** que cria uma rodada extra já travada ("bloqueada"), ao final da lista — útil quando você quer garantir o número total de rodadas com antecedência. **Atenção**: uma rodada criada por esse botão sempre nasce configurada para **1 produto por equipe**, independentemente do que estiver selecionado no seletor "Produtos por equipe na próxima rodada" descrito acima — esse seletor só vale para o botão **Iniciar Rodada**, não para o **Adicionar**. Se você usa rodadas agendadas (Seção 10) e a rodada foi criada por esse botão "Adicionar", ela vai abrir automaticamente com 1 produto por equipe, a menos que você reconfigure isso manualmente antes da abertura. Na dúvida, prefira sempre iniciar as rodadas manualmente pelo botão **Iniciar Rodada**, que respeita o seletor de quantidade de produtos.
+No mesmo painel de **Gerenciamento de Rodadas**, existe um botão **Adicionar** que cria uma rodada extra já travada ("bloqueada"), ao final da lista — útil quando você quer garantir o número total de rodadas com antecedência.
+
+![Painel Gerenciamento de Rodadas: seletor de produtos, total de rodadas e os botões Adicionar/Remover Última.](15-adicionar-rodadas.jpg)
+
+1. **Produtos por equipe na próxima rodada** — vale apenas para o botão **Iniciar Rodada** (canto 3 do passo a passo da Seção 7).
+2. **Total de Rodadas** — quantas rodadas a turma terá ao todo; editável a qualquer momento.
+3. **Adicionar** — cria uma rodada extra já travada, ao final da lista.
+4. **Remover Última** — exclui a última rodada da lista (só funciona se ela ainda não tiver sido iniciada).
+
+**Atenção**: uma rodada criada pelo botão **Adicionar** (marcador 3) sempre nasce configurada para **1 produto por equipe**, independentemente do que estiver selecionado no seletor "Produtos por equipe na próxima rodada" (marcador 1) — esse seletor só vale para o botão **Iniciar Rodada**, não para o **Adicionar**. Se você usa rodadas agendadas (Seção 10) e a rodada foi criada por esse botão "Adicionar", ela vai abrir automaticamente com 1 produto por equipe, a menos que você reconfigure isso manualmente antes da abertura. Na dúvida, prefira sempre iniciar as rodadas manualmente pelo botão **Iniciar Rodada**, que respeita o seletor de quantidade de produtos.
 
 ## 8. Durante uma Rodada Ativa
 
@@ -148,9 +170,16 @@ Os dois primeiros botões (Criar Manual e Gerar com IA) só ficam habilitados qu
 
 Ao longo da rodada, acompanhe na aba **Aula** quantas equipes já enviaram suas decisões — o número aparece diretamente ali, e a própria aba mostra um indicador (um número em destaque) quando há equipes com decisões pendentes. Isso é só um indicador visual: nada no sistema te impede de encerrar a rodada mesmo com equipes pendentes, o que nos leva ao ponto mais importante desta seção.
 
+![Cabeçalho e painel "Situação da Aula" com a Rodada 1 ativa: contador de submissões, botão Acompanhar Submissões e os dois pontos onde se encerra a rodada.](18-rodada-ativa.jpg)
+
+1. **Encerrar** (canto superior direito, ao lado do nome da turma) — atalho rápido para encerrar a rodada ativa a partir de qualquer aba.
+2. **"0 de 1 equipes enviaram"** — contador de quantas equipes já enviaram as decisões desta rodada, atualizado em tempo real.
+3. **Acompanhar Submissões** — abre o detalhamento de quais equipes específicas já enviaram e quais ainda faltam.
+4. **Encerrar Rodada** — o mesmo botão do marcador 1, disponível também dentro do card "Rodadas da Turma".
+
 ## 9. Passo a Passo: Encerrar uma Rodada
 
-Na aba **Aula**, com a rodada ativa, clique em **Encerrar Rodada**. Isso dispara o cálculo de todos os resultados e KPIs daquela rodada para todas as equipes, com base nas decisões enviadas.
+Na aba **Aula**, com a rodada ativa, clique em **Encerrar Rodada** (marcadores 1 ou 4 na imagem acima). Isso dispara o cálculo de todos os resultados e KPIs daquela rodada para todas as equipes, com base nas decisões enviadas.
 
 **Atenção — este é o ponto mais importante deste manual**: se uma equipe **não enviou nenhuma decisão** na rodada, o sistema **não cria nenhum registro de resultado para ela** ao encerrar — ela simplesmente fica de fora do processamento daquela rodada, silenciosamente, sem nenhum aviso ou bloqueio. O contador de "equipes que enviaram" mencionado na Seção 8 é só informativo; ele não impede o encerramento. **Antes de clicar em Encerrar Rodada, confira manualmente na aba Aula se todas as equipes que deveriam participar já enviaram suas decisões.** Se uma equipe ficou de fora por engano, a forma de corrigir depois é reabrir a rodada e reprocessá-la — mais trabalhoso do que simplesmente conferir antes.
 
@@ -221,12 +250,14 @@ Essa penalidade afeta o score de alinhamento e, por consequência, os KPIs finan
 
 ![Aba Configurar, com as quatro seções de configuração pouco frequente.](09-configurar-tab.jpg)
 
+![Aba Configurar rolada até o final, mostrando o botão de configuração de mercado e a Zona de Perigo.](17-configurar-completo.jpg)
+
 A aba **Configurar** reúne o que você mexe com pouca frequência, depois da configuração inicial da turma:
 
-- **Configuração de Mercado** — já descrita na Seção 3.1.
+1. **Abrir Configurações de Mercado** — já descrita na Seção 3.1.
 - **Relatório de Acessos** — um painel expansível que mostra o histórico de acessos dos alunos à turma (quem acessou, quando), com exportação em CSV.
 - **Enviar Email para Equipes** — permite mandar uma mensagem por email para uma ou mais equipes da turma diretamente pelo sistema.
-- **Zona de Perigo** — exclusão definitiva da turma. Apaga permanentemente equipes, alunos matriculados nela, rodadas e todas as decisões. Não há como desfazer; use apenas quando tiver certeza absoluta.
+2. **Excluir Turma** (dentro da **Zona de Perigo**) — exclusão definitiva da turma. Apaga permanentemente equipes, alunos matriculados nela, rodadas e todas as decisões. Não há como desfazer; use apenas quando tiver certeza absoluta.
 
 ## 13. Painel de Administração (Dados Brutos)
 
@@ -405,6 +436,6 @@ WEDEL, Michel; KAMAKURA, Wagner A. **Market Segmentation: Conceptual and Methodo
 
 ---
 
-**Versão**: 2.0
+**Versão**: 2.1
 **Última Atualização**: Setembro 2026
 **Simula+ | Simulador de Marketing no Mercado**
