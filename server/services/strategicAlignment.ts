@@ -218,7 +218,7 @@ function isSegmentationComplete(segmentation: MarketSegmentation[], businessType
   });
 }
 
-function isSwotComplete(swot: SwotAnalysis): boolean {
+export function isSwotComplete(swot: SwotAnalysis): boolean {
   return (
     swot.strengths.length >= 1 &&
     swot.weaknesses.length >= 1 &&
@@ -227,7 +227,7 @@ function isSwotComplete(swot: SwotAnalysis): boolean {
   );
 }
 
-function isPorterComplete(porter: PorterAnalysis): boolean {
+export function isPorterComplete(porter: PorterAnalysis): boolean {
   const isValidNote = (note: string | null): boolean => {
     if (!note) return false;
     const trimmed = note.trim();
@@ -246,7 +246,7 @@ function isPorterComplete(porter: PorterAnalysis): boolean {
   );
 }
 
-function isBcgComplete(bcg: BcgAnalysis): boolean {
+export function isBcgComplete(bcg: BcgAnalysis): boolean {
   if (!bcg.productName || bcg.productName.trim().length === 0) return false;
   if (bcg.productName.toLowerCase() === "seu produto") return false;
   
@@ -259,7 +259,7 @@ function isBcgComplete(bcg: BcgAnalysis): boolean {
   return true;
 }
 
-function isPestelComplete(pestel: PestelAnalysis): boolean {
+export function isPestelComplete(pestel: PestelAnalysis): boolean {
   const isValidArray = (arr: string[]): boolean => {
     if (arr.length < 1) return false;
     return arr.some(item => {

@@ -21,6 +21,7 @@ import path from "path";
 import fs from "fs";
 import { getEnv, getAuthorizedProfessorEmails } from "./config";
 import { ONBOARDING_SECTION_IDS, ONBOARDING_MIN_SECONDS_PER_SECTION, isOnboardingSectionId, isOnboardingComplete, type OnboardingProgress } from "@shared/onboarding";
+import { isSwotComplete, isPorterComplete, isBcgComplete, isPestelComplete } from "./services/strategicAlignment";
 
 const PgSessionStore = connectPgSimple(session);
 
@@ -2426,13 +2427,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       storage.getClass(team.classId)
     ]);
 
-    const hasSwot = swotList.length > 0;
-    const hasPorter = porterList.length > 0;
-    const hasBcg = bcgList.length > 0;
-    const hasPestel = pestelList.length > 0;
-    const hasSegmentation = getRequiredSegmentTypes(classData?.businessType).every(
-      type => segmentationList.some(s => s.segmentType === type)
-    );
+    // Bug corrigido (2026-09): antes, o card "Roteiro da Rodada" do
+    // Dashboard marcava cada ferramenta como concluída só por existir uma
+    // linha salva (mesmo vazia/placeholder) — igual ao que a auditoria do
+    // professor encontrou ao revisar a Segmentação de Mercado, só que
+    // aqui valia para as 5 ferramentas. Agora reusa a mesma validação de
+    // conteúdo (isXComplete) já usada no cálculo de Alinhamento
+    // Estratégico, então o checklist só marca "concluído" quando a equipe
+    // de fato preencheu a análise. Isso é só a exibição do checklist —
+    // não muda a regra de envio da decisão (ainda exige apenas que a
+    // linha exista, ver isSegmentationComplete abaixo para a exceção
+    // já existente da Segmentação).
+    const hasSwot = swotList.some(isSwotComplete);
+    const hasPorter = porterList.some(isPorterComplete);
+    const hasBcg = bcgList.some(isBcgComplete);
+    const hasPestel = pestelList.some(isPestelComplete);
+    const hasSegmentation = isSegmentationComplete(segmentationList, classData?.businessType);
     const hasMarketingMixDraft = mixList.length > 0;
     const isSubmitted = mixList.some(m => m.submittedAt !== null);
     const hasResults = result !== undefined;
