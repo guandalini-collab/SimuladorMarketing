@@ -27,6 +27,11 @@ const ZEBRA_GRAY = '#f9fafb'; // Gray 50 (listras de tabela)
 
 const LOGO_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Simula_logo_navy_dourado_final.png');
 
+// Prints de tela do sistema usados para ilustrar o manual, capturados em
+// setembro/2026. Cada arquivo é referenciado no markdown como
+// ![legenda](arquivo.jpg) e resolvido dentro desta pasta.
+const SCREENSHOTS_DIR = path.join(process.cwd(), 'server', 'manual-assets', 'professor');
+
 const PAGE_MARGIN = { top: 50, bottom: 50, left: 60, right: 60 };
 const CONTENT_WIDTH = 595.28 - PAGE_MARGIN.left - PAGE_MARGIN.right; // A4 width em pt
 
@@ -324,6 +329,89 @@ function columnWeights(colCount: number): number[] {
   return new Array(colCount).fill(equal);
 }
 
+// Leitor mínimo de dimensões JPEG (sem dependência externa): percorre os
+// marcadores do arquivo até achar um segmento SOFn, de onde vêm largura e
+// altura reais da imagem — necessário para calcular a altura renderizada
+// no PDF e reservar o espaço certo antes de desenhar.
+function getJpegDimensions(buffer: Buffer): { width: number; height: number } | null {
+  if (buffer.length < 4 || buffer[0] !== 0xff || buffer[1] !== 0xd8) return null;
+  let offset = 2;
+  while (offset + 4 <= buffer.length) {
+    if (buffer[offset] !== 0xff) {
+      offset++;
+      continue;
+    }
+    const marker = buffer[offset + 1];
+    if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+      offset += 2;
+      continue;
+    }
+    if (marker === 0xd9) break; // EOI
+    const length = buffer.readUInt16BE(offset + 2);
+    const isSOF = marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
+    if (isSOF) {
+      const height = buffer.readUInt16BE(offset + 5);
+      const width = buffer.readUInt16BE(offset + 7);
+      return { width, height };
+    }
+    offset += 2 + length;
+  }
+  return null;
+}
+
+// Renderiza um print de tela (![legenda](arquivo.jpg) no markdown de
+// origem) como uma imagem de largura total, com borda leve e legenda em
+// itálico logo abaixo — mesmo tratamento visual das tabelas (borda em
+// LIGHT_GRAY). Se o arquivo não existir, não interrompe a geração do PDF:
+// registra um aviso no console e segue para a próxima linha.
+function renderScreenshot(doc: PDFKit.PDFDocument, fileName: string, caption: string) {
+  const fullPath = path.join(SCREENSHOTS_DIR, fileName);
+  if (!fs.existsSync(fullPath)) {
+    console.warn(`[manualProfessorPDF] screenshot não encontrado, ignorando: ${fileName}`);
+    return;
+  }
+
+  let imgWidth = CONTENT_WIDTH;
+  let imgHeight = CONTENT_WIDTH * 0.6;
+  try {
+    const buffer = fs.readFileSync(fullPath);
+    const dims = getJpegDimensions(buffer);
+    if (dims && dims.width > 0) {
+      imgHeight = (CONTENT_WIDTH * dims.height) / dims.width;
+    }
+  } catch {
+    // Mantém a altura estimada padrão se a leitura falhar.
+  }
+
+  const captionHeight = doc.font('Helvetica-Oblique').fontSize(8.5)
+    .heightOfString(caption, { width: CONTENT_WIDTH });
+  const totalBlockHeight = imgHeight + captionHeight + 20;
+
+  // Bloco de imagem + legenda não deve ser quebrado ao meio entre páginas;
+  // se não couber inteiro no espaço restante, mas couber numa página nova,
+  // pula para a próxima página em vez de fatiar a imagem.
+  const remaining = doc.page.height - doc.page.margins.bottom - doc.y;
+  if (totalBlockHeight > remaining && totalBlockHeight <= doc.page.height - doc.page.margins.top - doc.page.margins.bottom) {
+    doc.addPage();
+  } else {
+    ensureSpace(doc, totalBlockHeight);
+  }
+
+  doc.moveDown(0.3);
+  const x = doc.page.margins.left;
+  const y = doc.y;
+
+  doc.rect(x - 3, y - 3, imgWidth + 6, imgHeight + 6).fillAndStroke('#ffffff', LIGHT_GRAY);
+  doc.image(fullPath, x, y, { width: imgWidth, height: imgHeight });
+  doc.y = y + imgHeight + 8;
+
+  doc.x = x;
+  doc.font('Helvetica-Oblique').fontSize(8.5).fillColor(DARK_GRAY)
+    .text(caption, x, doc.y, { width: CONTENT_WIDTH, align: 'center' });
+  doc.moveDown(0.6);
+  doc.x = doc.page.margins.left;
+}
+
 function renderTable(doc: PDFKit.PDFDocument, headers: string[], rows: string[][]) {
   const weights = columnWeights(headers.length);
   const colWidths = weights.map((w) => w * CONTENT_WIDTH);
@@ -402,6 +490,15 @@ function renderMarkdown(doc: PDFKit.PDFDocument, markdown: string): TocEntry[] {
     const line = raw.trimEnd();
 
     if (line.trim() === '') {
+      continue;
+    }
+
+    // Imagem ilustrativa: ![legenda](arquivo.jpg), resolvida dentro de
+    // SCREENSHOTS_DIR. Precisa vir antes de qualquer outro tratamento de
+    // linha, já que "![...]" também bateria com o parágrafo comum.
+    const image = line.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+    if (image) {
+      renderScreenshot(doc, image[2].trim(), image[1].trim());
       continue;
     }
 

@@ -31,17 +31,21 @@ Depois de autorizado, o login do professor é feito na mesma tela de login do si
 
 Uma observação importante sobre os alunos, que evita um mal-entendido comum: **os alunos se cadastram sozinhos**, mas apenas com email institucional — o sistema aceita apenas emails terminados em `@aluno.iffar.edu.br` (à data deste manual; se a sua instituição for diferente, confirme o domínio aceito com o administrador do sistema, pois ele é configurado no código do servidor). Qualquer outro email é recusado automaticamente na hora do cadastro, com uma mensagem de erro — não fica pendente de aprovação, simplesmente não é aceito. Isso é relevante porque o menu **Aprovações**, que você verá no topo da tela, é um resquício de uma versão anterior do sistema: hoje, um cadastro de aluno com email aceito é **aprovado automaticamente**, na hora, sem qualquer ação sua. Na prática, você não precisa (e normalmente não vai encontrar nada para fazer) nessa tela. O texto de ajuda que aparece nela também está desatualizado — não leve em conta as instruções escritas lá.
 
+![Tela de Aprovações: o texto "Como funciona?" cita o domínio @iffarroupilha.edu.br, diferente do domínio realmente aceito pelo sistema — outro sinal de que esse texto ficou desatualizado.](12-aprovacoes.jpg)
+
 ## 3. Passo a Passo: Criar uma Turma
 
 1. No Painel do Professor, clique no botão **Nova Turma** (canto superior direito).
 2. Preencha o formulário "Criar Nova Turma". Os campos disponíveis são:
-   - **Nome da Turma \*** — único campo obrigatório. É o identificador que você e os alunos verão em toda a interface (ex.: "Marketing 2026-2").
+   - **Nome da Turma** (obrigatório) — é o identificador que você e os alunos verão em toda a interface (ex.: "Marketing 2026-2"). É o único campo que precisa ser preenchido nesta tela.
    - **Número de Rodadas** — quantas rodadas a simulação terá ao todo. Valor padrão: 10 (pode variar de 1 a 20). Você pode alterar esse número depois, a qualquer momento, na aba "Aula" da turma.
    - **Setor de Mercado** — o setor econômico simulado (ver lista completa no Apêndice B). Pode ser deixado em branco e definido depois.
    - **Tipo de Comércio** — B2C, B2B ou Híbrido. Pode ser deixado em branco e definido depois.
    - **Orçamento Padrão (R$)** — orçamento inicial de cada equipe a cada rodada. Valor padrão: R$ 100.000,00.
    - **Nível de Concorrência** — Baixa, Média ou Alta. Pode ser deixado em branco e definido depois.
 3. Clique em **Criar Turma**.
+
+![Tela de criação de turma — Nome da Turma é o único campo obrigatório.](01-criar-turma.jpg)
 
 **Ponto de atenção**: como só o Nome da Turma é obrigatório, é perfeitamente possível criar uma turma preenchendo apenas esse campo e clicando em Criar. O sistema permite — mas ao tentar iniciar a primeira rodada, ele vai te avisar (sem bloquear) que a configuração de mercado (setor, nível de concorrência, estrutura de mercado) e o orçamento ainda não foram preenchidos. O recomendado é, logo depois de criar a turma, preencher a configuração completa de mercado antes de iniciar a Rodada 1 (ver Seção 4).
 
@@ -55,6 +59,8 @@ Depois de criar a turma, selecione-a no seletor de turma (barra logo abaixo do t
 - **Número de Concorrentes** — quantas empresas concorrentes o mercado simulado tem
 - **Estrutura de Mercado** — Monopólio, Oligopólio, Concorrência Monopolística, Concorrência Perfeita ou Fragmentado (esse campo já se chamou "Concentração de Mercado" na interface; o nome foi corrigido, mas o valor salvo internamente continua com o nome antigo — isso não afeta seu uso)
 - **Força dos Concorrentes** — Fraca, Média, Forte ou Muito Forte
+
+![Diálogo Configurações de Mercado, com os sete parâmetros de mercado da turma.](02-config-mercado.jpg)
 
 Clique em **Salvar** ao terminar. Essas configurações valem para toda a turma (não são por rodada) e podem ser revisadas a qualquer momento, inclusive com a simulação já em andamento.
 
@@ -75,6 +81,8 @@ Há dois caminhos possíveis para matricular um aluno. Você pode combinar os do
 1. Na aba **Equipes** de qualquer turma, clique em **Cadastrar Aluno** (canto superior direito da lista de equipes).
 2. Preencha **Nome Completo**, **Email** e **Senha Inicial** (os três são obrigatórios) — aqui você pode usar qualquer email, inclusive um não institucional, pois essa restrição vale só para o autocadastro do aluno, não para o cadastro feito por você.
 3. Em **Matricular na Turma**, selecione a turma desejada (ou deixe "Não matricular ainda", se quiser só criar a conta por enquanto).
+![Diálogo Cadastrar Novo Aluno.](03-cadastrar-aluno.jpg)
+
 4. Clique em **Cadastrar**. O aluno já pode fazer login imediatamente com o email e a senha que você definiu.
 
 Esse segundo caminho é o mais prático quando você já tem a lista de alunos da turma e quer economizar o passo de pedir para cada um se cadastrar sozinho.
@@ -82,6 +90,10 @@ Esse segundo caminho é o mais prático quando você já tem a lista de alunos d
 **Observação sobre a tela de Aprovações**: como explicado na Seção 2, você não precisa aprovar nada — qualquer aluno cadastrado (por qualquer um dos dois caminhos) já está com status aprovado. O trabalho real é apenas matriculá-lo em uma turma, pelos passos acima.
 
 ## 5. As Equipes São Formadas Pelos Alunos, Não Por Você
+
+![Aba Equipes, com uma equipe já formada pelos alunos e o card "Alunos Matriculados".](04-equipes-tab.jpg)
+
+![Antes de qualquer equipe existir, a aba Aula mostra "Turma sem equipes" e um atalho para os alunos criarem a primeira.](05-aula-sem-equipes.jpg)
 
 Depois de matriculado em uma turma, o aluno passa a ver, na primeira tela do seu painel, a opção de **criar uma nova equipe** ou **entrar em uma equipe já existente** daquela turma. A formação de equipes é feita pelos próprios alunos — não existe, na interface do professor, nenhum botão para criar uma equipe em nome deles. O aluno que cria a equipe se torna automaticamente o líder dela. A interface mostrada ao aluno sugere um limite de até 5 alunos por equipe, mas esse limite é apenas uma orientação de tela — não há, hoje, um bloqueio no servidor que impeça uma equipe de crescer além disso.
 
@@ -109,6 +121,8 @@ Com a turma criada, o mercado configurado (Seção 3.1) e ao menos uma equipe fo
 3. Clique em **Iniciar Rodada**.
 4. Se houver algum ponto de atenção — equipe sem nenhum aluno, configuração de mercado incompleta, ou orçamento padrão em R$ 0 — o sistema mostra um aviso listando exatamente o que falta, mas **não bloqueia o início da rodada**: você pode prosseguir mesmo assim, se for uma decisão intencional (por exemplo, uma turma de teste). Se não houver nenhum ponto de atenção, a rodada é iniciada direto, sem esse aviso aparecer.
 
+![Painel Gerenciamento de Rodadas, pronto para iniciar a primeira rodada.](06-iniciar-rodada.jpg)
+
 A partir daqui, a Rodada 1 fica ativa e as equipes já podem tomar decisões.
 
 ### 7.1 Um detalhe importante sobre rodadas futuras pré-adicionadas
@@ -129,6 +143,8 @@ Durante a rodada, você tem três ferramentas à disposição na aba **Aula**, s
 3. **Geração automática** — um interruptor liga/desliga a criação automática de eventos toda vez que uma rodada é encerrada, além dos que você cria manualmente ou por IA. Fica desligado por padrão.
 
 Os dois primeiros botões (Criar Manual e Gerar com IA) só ficam habilitados quando já existe ao menos uma rodada ativa ou concluída na turma — ou seja, **você não consegue criar eventos de mercado antes de iniciar a primeira rodada**.
+
+![Painel de acompanhamento da rodada, com os dados econômicos do momento e o aviso de que nenhuma decisão foi enviada ainda.](07-durante-rodada.jpg)
 
 Ao longo da rodada, acompanhe na aba **Aula** quantas equipes já enviaram suas decisões — o número aparece diretamente ali, e a própria aba mostra um indicador (um número em destaque) quando há equipes com decisões pendentes. Isso é só um indicador visual: nada no sistema te impede de encerrar a rodada mesmo com equipes pendentes, o que nos leva ao ponto mais importante desta seção.
 
@@ -152,6 +168,8 @@ Você pode ajustar o número total de rodadas da turma a qualquer momento na aba
 Como alternativa ao controle manual, cada rodada pode ser **agendada**: no card da rodada, o botão **Agendar** permite definir uma data de início e uma data de término automáticos (sempre à meia-noite no horário de Brasília). Com isso definido, o sistema abre e encerra aquela rodada sozinho, sem que você precise clicar em Iniciar Rodada ou Encerrar Rodada manualmente — mas o alerta da Seção 9 sobre equipes sem decisões continua valendo: o encerramento automático também não verifica se todas as equipes enviaram algo.
 
 ## 11. Analisar Resultados
+
+![Aba Analisar antes de qualquer rodada ser encerrada.](08-analisar-vazio.jpg)
 
 Depois de encerrar ao menos uma rodada, a aba **Analisar** da turma reúne tudo o que você precisa para interpretar o desempenho das equipes.
 
@@ -201,6 +219,8 @@ Essa penalidade afeta o score de alinhamento e, por consequência, os KPIs finan
 
 ## 12. A Aba Configurar
 
+![Aba Configurar, com as quatro seções de configuração pouco frequente.](09-configurar-tab.jpg)
+
 A aba **Configurar** reúne o que você mexe com pouca frequência, depois da configuração inicial da turma:
 
 - **Configuração de Mercado** — já descrita na Seção 3.1.
@@ -209,6 +229,10 @@ A aba **Configurar** reúne o que você mexe com pouca frequência, depois da co
 - **Zona de Perigo** — exclusão definitiva da turma. Apaga permanentemente equipes, alunos matriculados nela, rodadas e todas as decisões. Não há como desfazer; use apenas quando tiver certeza absoluta.
 
 ## 13. Painel de Administração (Dados Brutos)
+
+![Painel de Administração, aba Usuários.](10-admin-usuarios.jpg)
+
+![Painel de Administração, aba Turmas.](11-admin-turmas.jpg)
 
 O botão **Admin**, no topo do Painel do Professor, abre um painel separado com seis abas de dados brutos, sempre restritos às suas próprias turmas: **Usuários**, **Turmas**, **Equipes**, **Rodadas**, **Mix Marketing** e **Eventos**. É útil quando você precisa consultar ou conferir um dado específico fora do fluxo normal das telas (por exemplo, verificar rapidamente um registro de decisão de uma equipe). Para o uso do dia a dia descrito neste manual, você não vai precisar dele — ele é um recurso de consulta avançada, não uma etapa obrigatória do fluxo.
 
@@ -245,6 +269,8 @@ Para consulta rápida, depois de já ter lido o manual completo uma vez:
 **Um aluno diz que se cadastrou mas não consegue fazer nada** — confira se ele já foi matriculado em uma turma (Seção 4). Cadastro sozinho não inclui matrícula automática.
 
 **Não consigo achar onde configurar algo, e o botão de ajuda "Onde está o quê?" do sistema me manda para uma aba que não existe** — esse painel de ajuda interno ainda referencia nomes antigos de abas (por exemplo, "Resultados" e "Notas", que hoje são a aba "Analisar"; ou "Visão Geral" e "Acessos", que hoje ficam dentro de "Aula" e "Configurar"). Use a estrutura de abas real descrita neste manual (Aula, Equipes, Analisar, Configurar) em vez do texto desse painel.
+
+![O painel "Onde está o quê?" (Mapa do Painel do Professor) ainda referencia abas antigas, como "Aba Rodadas" e "Aba Resultados".](13-onde-esta-o-que.jpg)
 
 **O aluno não consegue se cadastrar** — confira se o email usado é institucional (termina no domínio aceito pelo sistema). Qualquer outro email é recusado automaticamente, com uma mensagem de erro explicando o motivo.
 
