@@ -189,6 +189,14 @@ export default function InsightsMercado() {
     );
   }
 
+  // Nota (auditoria 2026-09): "Margem" vem de um valor real por setor
+  // (insights.sectorInfo.averageMargin, definido em server/data/marketData.ts
+  // — varia por setor, ex.: 12% a 75%). Os demais benchmarks (ROI 40,
+  // Market Share 25, Satisfação 70, NPS 60) são metas de referência FIXAS,
+  // iguais para todos os setores — não são médias calculadas da turma nem
+  // valores específicos do setor. Por isso os rótulos na tela dizem "Meta
+  // de Referência", nunca "média do setor" ou algo que sugira um cálculo
+  // real (ver também os rótulos abaixo, no Radar e no BarChart).
   const sectorData = [
     { metric: "Margem", value: currentResult?.margin || 0, benchmark: insights.sectorInfo.averageMargin },
     { metric: "ROI", value: Math.min(currentResult?.roi || 0, 100), benchmark: 40 },
@@ -197,6 +205,12 @@ export default function InsightsMercado() {
     { metric: "NPS", value: ((currentResult?.nps || 0) + 100) / 2, benchmark: 60 },
   ];
 
+  // O limite de 100 acima (ROI do Radar) não é inconsistente com o limite de
+  // 150 abaixo — são propositalmente diferentes: o Radar tem eixo fixo
+  // 0-100 (PolarRadiusAxis domain={[0, 100]}), então precisa desse teto
+  // para não distorcer o desenho; o BarChart abaixo não tem eixo fixo (a
+  // escala se ajusta sozinha) e só usa 150 como teto de sanidade contra um
+  // outlier extremo, sem achatar o gráfico.
   const performanceComparison = [
     {
       category: "Sua Equipe",
@@ -205,7 +219,7 @@ export default function InsightsMercado() {
       marketShare: currentResult?.marketShare || 0,
     },
     {
-      category: "Média do Setor",
+      category: "Meta de Referência",
       margem: insights.sectorInfo.averageMargin,
       roi: 40,
       marketShare: 25,
@@ -374,7 +388,7 @@ export default function InsightsMercado() {
               </div>
               <div>
                 <CardTitle>Comparação com o Setor</CardTitle>
-                <CardDescription>Sua performance vs. média do mercado</CardDescription>
+                <CardDescription>Sua performance vs. metas de referência do setor</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -392,7 +406,7 @@ export default function InsightsMercado() {
                   fillOpacity={0.6}
                 />
                 <Radar
-                  name="Benchmark Setor"
+                  name="Meta de Referência"
                   dataKey="benchmark"
                   stroke="#ffcc00"
                   fill="#ffcc00"

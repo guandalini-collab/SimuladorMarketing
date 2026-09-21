@@ -343,7 +343,13 @@ export default function Mercado() {
                 <CardContent className="pt-6">
                   <div className="grid gap-6 md:grid-cols-2">
                     <div>
-                      <h3 className="font-semibold text-sm mb-3">Estrutura de Mercado</h3>
+                      {/* Bug corrigido (2026-09): este título de coluna repetia o mesmo texto
+                          do rótulo do campo "Estrutura de Mercado" (marketConcentration)
+                          logo abaixo, dando a impressão de informação duplicada na tela.
+                          O rótulo do campo é o correto (terminologia ajustada no diálogo
+                          do professor) — aqui o título passa a descrever a coluna como um
+                          todo (concorrência + estrutura). */}
+                      <h3 className="font-semibold text-sm mb-3">Concorrência de Mercado</h3>
                       <div className="space-y-4">
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Nível de Concorrência</p>
