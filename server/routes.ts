@@ -864,6 +864,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const data = insertClassFormSchema.parse({ ...req.body, professorId: user.id });
+
+      // Impede que o MESMO professor tenha duas turmas com o mesmo nome
+      // (comparação sem diferenciar maiúsculas/minúsculas e ignorando espaços
+      // nas pontas). Turmas de professores diferentes podem ter nomes iguais
+      // normalmente — a checagem é sempre restrita às turmas do próprio professor.
+      const existingClasses = await storage.getClassesByProfessor(user.id);
+      const normalizedName = data.name.trim().toLowerCase();
+      const duplicate = existingClasses.find(
+        (c) => c.name.trim().toLowerCase() === normalizedName
+      );
+      if (duplicate) {
+        // O front-end (toast de erro) só exibe o campo "error", não "details"
+        // (ver client/src/lib/queryClient.ts) — por isso a mensagem completa,
+        // já com a sugestão, vai toda no campo "error".
+        return res.status(400).json({
+          error: `Você já tem uma turma chamada "${duplicate.name}". Escolha um nome diferente (ex.: acrescente o semestre ou a turma, como "${data.name} - Turma B").`,
+        });
+      }
+
       const newClass = await storage.createClass(data);
       res.json(newClass);
     } catch (error) {

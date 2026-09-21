@@ -40,7 +40,7 @@ Uma observação importante sobre os alunos, que evita um mal-entendido comum: *
 
 ![Diálogo "Criar Nova Turma" com cada campo numerado.](14-criar-turma-campos.jpg)
 
-   1. **Nome da Turma** (obrigatório) — é o identificador que você e os alunos verão em toda a interface (ex.: "Marketing 2026-2"). É o único campo que precisa ser preenchido nesta tela.
+   1. **Nome da Turma** (obrigatório) — é o identificador que você e os alunos verão em toda a interface (ex.: "Marketing 2026-2"). É o único campo que precisa ser preenchido nesta tela. O sistema **não permite que você tenha duas turmas suas com o mesmo nome** (a comparação ignora maiúsculas/minúsculas e espaços nas pontas); se tentar, aparece um aviso pedindo para escolher outro nome. Essa restrição vale só entre turmas do mesmo professor — professores diferentes podem, sim, ter turmas com nomes iguais (por exemplo, duas turmas "Marketing 2026-1" de professores diferentes).
    2. **Número de Rodadas** — quantas rodadas a simulação terá ao todo. Valor padrão: 10 (pode variar de 1 a 20). Você pode alterar esse número depois, a qualquer momento, na aba "Aula" da turma.
    3. **Setor de Mercado** — o setor econômico simulado (ver lista completa no Apêndice B). Pode ser deixado em branco e definido depois.
    4. **Tipo de Comércio** — B2C, B2B ou Híbrido. Pode ser deixado em branco e definido depois.
@@ -293,7 +293,10 @@ Para consulta rápida, depois de já ter lido o manual completo uma vez:
 
 ## 16. Solução de Problemas Comuns
 
-**Uma equipe ficou de fora dos resultados de uma rodada** — normalmente é porque ela não enviou nenhuma decisão antes do encerramento (Seção 9). Não há aviso automático disso; é preciso conferir antes de encerrar.
+**Uma equipe ficou de fora dos resultados de uma rodada** — normalmente é porque ela não enviou nenhuma decisão antes do encerramento (Seção 9). Não há aviso automático disso; é preciso conferir antes de encerrar. Dois pontos importantes para reduzir esse risco:
+
+- **A responsabilidade pelo envio é do líder da equipe**: o sistema só permite que o líder submeta as decisões de Mix de Marketing — os demais membros podem preencher e salvar rascunhos, mas não enviar. Se uma equipe está com decisões pendentes, é o líder quem precisa entrar e clicar em enviar; vale reforçar isso com a turma logo no início.
+- **Recomendação de prazo**: cerca de **3 horas antes do horário previsto para encerrar a rodada** (manualmente ou por agendamento, Seção 10), verifique na aba Aula quais equipes ainda não enviaram e avise **todos os membros** dessas equipes — não só o líder, já que qualquer um pode preencher o rascunho, mesmo que só o líder consiga enviar. A forma mais direta é pelo recurso **Enviar Email para Equipes** (Seção 12): selecione a(s) equipe(s) pendente(s) e envie a mensagem — o sistema manda o email para o endereço cadastrado de cada membro da equipe automaticamente, não é preciso digitar os emails um a um. Isso dá tempo hábil para a equipe corrigir antes do fechamento, já que o sistema não bloqueia nem avisa automaticamente sobre equipes pendentes.
 
 **Uma rodada pré-adicionada abriu com só 1 produto por equipe, mesmo eu tendo configurado mais** — é o comportamento do botão "Adicionar" descrito na Seção 7.1. Ajuste manualmente antes da abertura, ou prefira sempre o botão "Iniciar Rodada".
 
@@ -436,6 +439,6 @@ WEDEL, Michel; KAMAKURA, Wagner A. **Market Segmentation: Conceptual and Methodo
 
 ---
 
-**Versão**: 2.1
+**Versão**: 2.2
 **Última Atualização**: Setembro 2026
 **Simula+ | Simulador de Marketing no Mercado**

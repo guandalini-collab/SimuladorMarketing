@@ -25,7 +25,12 @@ const DARK_GRAY = '#6b7280'; // Gray 500
 const LIGHT_GRAY = '#f3f4f6'; // Gray 100
 const ZEBRA_GRAY = '#f9fafb'; // Gray 50 (listras de tabela)
 
-const LOGO_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Simula_logo_navy_dourado_final.png');
+const LOGO_PATH = path.join(process.cwd(), 'attached_assets', 'generated_images', 'Simula_logo_wordmark_crop.png');
+// ^ versão recortada bem rente ao conteúdo visível do logo (973x252px de
+// conteúdo real dentro do PNG original de 1024x1024 — o arquivo original
+// tem uma margem transparente enorme ao redor de um lockup horizontal
+// largo e baixo; usar o PNG original com `fit` deixava muito espaço em
+// branco dentro do cartão da capa, mesmo aumentando o cartão).
 
 // Prints de tela do sistema usados para ilustrar o manual, capturados em
 // setembro/2026. Cada arquivo é referenciado no markdown como
@@ -138,13 +143,20 @@ function addCoverPage(doc: PDFKit.PDFDocument) {
   // mesmo tratamento usado na capa do Manual do Aluno.
   if (fs.existsSync(LOGO_PATH)) {
     try {
-      const boxWidth = 300;
-      const boxHeight = 110;
+      // Caixa dimensionada para a proporção real do lockup (logo recortada,
+      // ~3,54:1 de largura por altura). Auditoria de 2026-09 (2ª rodada):
+      // a primeira correção aumentou o cartão mas manteve o PNG original
+      // (com margem transparente enorme), então o "fit" calculava a escala
+      // com base numa área quase quadrada — a logo continuava pequena e
+      // sobrava muito branco ao redor. Com o PNG já recortado, o cartão
+      // pode acompanhar de perto a proporção real do lockup.
+      const boxWidth = 420;
+      const boxHeight = 154;
       const boxX = (pageWidth - boxWidth) / 2;
-      const boxY = 120;
-      const padding = 18;
+      const boxY = 130;
+      const padding = 24;
 
-      doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 14).fill('#ffffff');
+      doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 16).fill('#ffffff');
       doc.image(LOGO_PATH, boxX + padding, boxY + padding, {
         fit: [boxWidth - padding * 2, boxHeight - padding * 2],
         align: 'center',
@@ -159,26 +171,26 @@ function addCoverPage(doc: PDFKit.PDFDocument) {
   doc.fillColor('#ffffff')
     .font('Helvetica-Bold')
     .fontSize(34)
-    .text('MANUAL DO PROFESSOR', 60, 290, { width: pageWidth - 120, align: 'center' });
+    .text('MANUAL DO PROFESSOR', 60, 320, { width: pageWidth - 120, align: 'center' });
 
   doc.font('Helvetica')
     .fontSize(20)
-    .text('Simula+', 60, 345, { width: pageWidth - 120, align: 'center' });
+    .text('Simula+', 60, 375, { width: pageWidth - 120, align: 'center' });
 
   doc.fontSize(14)
-    .text('Simulador de Marketing no Mercado', 60, 378, { width: pageWidth - 120, align: 'center' });
+    .text('Simulador de Marketing no Mercado', 60, 408, { width: pageWidth - 120, align: 'center' });
 
   doc.fontSize(11)
     .fillColor('#e0e7ff')
     .text(
       'Guia completo para configurar turmas, conduzir rodadas e interpretar resultados — e a fundamentação teórica que embasa cada ferramenta do simulador',
-      80, 430,
+      80, 460,
       { align: 'center', width: pageWidth - 160, lineGap: 3 }
     );
 
   doc.fontSize(9)
     .fillColor('#c7d2fe')
-    .text(`Versão 2.1 | ${new Date().getFullYear()}`, 60, pageHeight - 70, {
+    .text(`Versão 2.2 | ${new Date().getFullYear()}`, 60, pageHeight - 70, {
       width: pageWidth - 120,
       align: 'center',
     });
