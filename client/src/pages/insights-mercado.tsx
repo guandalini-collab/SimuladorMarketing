@@ -443,7 +443,7 @@ export default function InsightsMercado() {
               <CardTitle>Recomendações Estratégicas</CardTitle>
             </div>
             <Badge className="bg-[#7c3aed] text-white border-transparent hover:bg-[#7c3aed]" data-testid="badge-ai-generated">
-              <span className="mr-1">✨</span> Gerado por IA
+              <span className="mr-1">✨</span> Automático
             </Badge>
           </div>
           <CardDescription>

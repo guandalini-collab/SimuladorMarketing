@@ -89,7 +89,7 @@ const SECTIONS: SectionContent[] = [
     color: "#1aa15c",
     body: [
       "Antes de decidir o Mix de Marketing, sua equipe conta com 5 ferramentas clássicas de análise estratégica: SWOT (forças, fraquezas, oportunidades e ameaças), 5 Forças de Porter (competitividade do setor), Matriz BCG (portfólio de produtos), PESTEL (fatores macroambientais) e Segmentação de Mercado (quem é o seu público-alvo).",
-      "Na Rodada 1, a Inteligência Artificial já gera uma versão inicial dessas análises para a sua turma, como ponto de partida — mas o valor real está em você revisar, editar e personalizar com a visão da sua equipe, não só aceitar o que veio pronto.",
+      "Na Rodada 1, sua equipe já encontra uma versão inicial dessas análises preenchida, como ponto de partida — mas o valor real está em você revisar, editar e personalizar com a visão da sua equipe, não só aceitar o que veio pronto.",
       "Cada ferramenta é preenchida uma vez e continua valendo nas rodadas seguintes (você edita quando quiser). O sistema mede o alinhamento entre o que você registrou nessas análises e o que sua equipe realmente pratica no Mix de Marketing — quanto mais coerente, melhor sua pontuação de alinhamento estratégico. Se a análise não bate com a prática, isso é penalizado.",
     ],
   },
@@ -111,7 +111,7 @@ const SECTIONS: SectionContent[] = [
     color: "#0891b2",
     body: [
       "O Simula+ é jogado em equipe, e por isso cada integrante — não só um representante — precisa concluir esta introdução individualmente. Discutir as decisões junto com o time antes de enviar é o que torna a experiência mais próxima de uma gestão real.",
-      "Sobre o uso da IA nas análises estratégicas: ela existe para te dar um ponto de partida, não para substituir o raciocínio da equipe. Analises copiadas sem revisão tendem a não bater com as decisões reais do Mix de Marketing — e isso reduz sua pontuação de alinhamento.",
+      "Sobre a versão inicial das análises estratégicas: ela existe para te dar um ponto de partida, não para substituir o raciocínio da equipe. Análises copiadas sem revisão tendem a não bater com as decisões reais do Mix de Marketing — e isso reduz sua pontuação de alinhamento.",
       "Fique de olho nos prazos de cada rodada: submissões fora do prazo não são aceitas. Se tiver dúvidas sobre qualquer mecânica do jogo, o Manual do Aluno completo (liberado no menu assim que você concluir esta introdução) traz o detalhamento de cada ferramenta, fórmula e regra do simulador.",
     ],
   },

@@ -210,6 +210,8 @@ Você pode ajustar o número total de rodadas da turma a qualquer momento na aba
 
 Como alternativa ao controle manual, cada rodada pode ser **agendada**: no card da rodada, o botão **Agendar** permite definir uma data de início e uma data de término automáticos (sempre à meia-noite no horário de Brasília). Com isso definido, o sistema abre e encerra aquela rodada sozinho, sem que você precise clicar em Iniciar Rodada ou Encerrar Rodada manualmente — mas o alerta da Seção 9 sobre equipes sem decisões continua valendo: o encerramento automático também não verifica se todas as equipes enviaram algo.
 
+O fechamento é sempre à meia-noite **oficial de Brasília** (UTC-3), independente do fuso horário do dispositivo de cada aluno. Tanto no card da rodada (aba Aula) quanto no painel do aluno aparece um contador de tempo restante até esse fechamento, atualizado automaticamente.
+
 ## 11. Analisar Resultados
 
 ![Aba Analisar antes de qualquer rodada ser encerrada.](08-analisar-vazio.jpg)

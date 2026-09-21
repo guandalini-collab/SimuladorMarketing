@@ -86,6 +86,7 @@ import {
 } from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
 import { FormattedMoneyInput } from "@/components/formatted-input";
+import { RoundCountdown } from "@/components/round-countdown";
 
 const eventFormSchema = insertMarketEventSchema.extend({
   type: z.string().min(1, "Tipo é obrigatório"),
@@ -2000,6 +2001,10 @@ function RoundsTimeline({
                     </p>
                   )}
                 </div>
+              )}
+
+              {round.status === "active" && round.scheduledEndAt && (
+                <RoundCountdown endDate={round.scheduledEndAt} className="mb-2" />
               )}
 
               {round.status === "locked" && (

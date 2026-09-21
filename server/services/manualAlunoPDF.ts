@@ -348,7 +348,7 @@ function addPresentationSection(doc: PDFKit.PDFDocument) {
   doc.moveDown(0.5);
 
   addBulletPoint(doc, 'Sistema multi-produto: gerencie um ou mais produtos por rodada (a quantidade é definida pelo professor) dentro do mesmo setor');
-  addBulletPoint(doc, 'Assistência de IA progressiva: apoio de 100% na Rodada 1, diminuindo até 0% na Rodada 3');
+  addBulletPoint(doc, 'Você recebe uma versão inicial das análises estratégicas na Rodada 1 — a partir da Rodada 2, você preenche e ajusta por conta própria');
   addBulletPoint(doc, '19 KPIs calculados automaticamente com base em suas decisões');
   addBulletPoint(doc, 'Eventos econômicos dinâmicos que afetam o mercado');
   addBulletPoint(doc, 'Feedback inteligente pós-rodada para aprendizado contínuo');
@@ -431,63 +431,16 @@ function addHowItWorksSection(doc: PDFKit.PDFDocument) {
   addBulletPoint(doc, 'As decisões de marketing mix de cada produto');
   addBulletPoint(doc, 'O alinhamento entre análises estratégicas e decisões');
   addBulletPoint(doc, 'Eventos econômicos ativos');
-  addBulletPoint(doc, 'Penalizações por uso inadequado de IA');
+  addBulletPoint(doc, 'Penalizações por conteúdo pré-preenchido copiado sem edição');
 
   doc.fontSize(10).font('Helvetica-Bold').fillColor(TEXT_COLOR);
   doc.text('4. Análise de Desempenho e Feedback', { continued: false });
   doc.font('Helvetica').fontSize(10);
   addParagraph(doc,
-    'Ao final da rodada, as equipes recebem feedback inteligente gerado por IA, analisando suas decisões, comparando com os resultados obtidos e sugerindo melhorias para a próxima rodada.'
+    'Ao final da rodada, as equipes recebem o Feedback Inteligente, analisando suas decisões, comparando com os resultados obtidos e sugerindo melhorias para a próxima rodada.'
   );
 
   doc.moveDown(0.8);
-  addSubsectionTitle(doc, 'Sistema de Assistência de IA Progressiva');
-  doc.moveDown(0.6);
-
-  addParagraph(doc,
-    'O Simula+ implementa um sistema pedagógico de scaffolding (andaime educacional) que gradualmente reduz o apoio da IA conforme os alunos avançam:'
-  );
-
-  doc.moveDown(0.5);
-  
-  // Tabela de assistência
-  const tableTop = doc.y;
-  const col1 = 60;
-  const col2 = 180;
-  const col3 = 350;
-  const rowHeight = 25;
-
-  // Cabeçalho
-  doc.rect(col1, tableTop, 490, rowHeight).fillAndStroke(PRIMARY_COLOR, PRIMARY_COLOR);
-  doc.fontSize(10).font('Helvetica-Bold').fillColor('#ffffff');
-  doc.text('Rodada', col1 + 10, tableTop + 8);
-  doc.text('Assistência IA', col2 + 10, tableTop + 8);
-  doc.text('Descrição', col3 + 10, tableTop + 8);
-
-  // Linha 1
-  doc.rect(col1, tableTop + rowHeight, 490, rowHeight).stroke(DARK_GRAY);
-  doc.fontSize(9).font('Helvetica').fillColor(TEXT_COLOR);
-  doc.text('Rodada 1', col1 + 10, tableTop + rowHeight + 8);
-  doc.text('100%', col2 + 10, tableTop + rowHeight + 8);
-  doc.text('Análises pré-geradas + recomendações', col3 + 10, tableTop + rowHeight + 8);
-
-  // Linha 2
-  doc.rect(col1, tableTop + 2 * rowHeight, 490, rowHeight).stroke(DARK_GRAY);
-  doc.text('Rodada 2', col1 + 10, tableTop + 2 * rowHeight + 8);
-  doc.text('70%', col2 + 10, tableTop + 2 * rowHeight + 8);
-  doc.text('Análises parciais para editar', col3 + 10, tableTop + 2 * rowHeight + 8);
-
-  // Linha 3
-  doc.rect(col1, tableTop + 3 * rowHeight, 490, rowHeight).stroke(DARK_GRAY);
-  doc.text('Rodada 3+', col1 + 10, tableTop + 3 * rowHeight + 8);
-  doc.text('0%', col2 + 10, tableTop + 3 * rowHeight + 8);
-  doc.text('Autonomia total - sem assistência', col3 + 10, tableTop + 3 * rowHeight + 8);
-
-  doc.y = tableTop + 4 * rowHeight + 10;
-
-  addParagraph(doc,
-    'Este sistema, fundamentado nos princípios de Vygotsky sobre zona de desenvolvimento proximal, permite que os estudantes desenvolvam autonomia gradualmente (VYGOTSKY, 1978).'
-  );
 
   addSubsectionTitle(doc, 'Sistema de Pontuação e Alinhamento Estratégico');
   doc.moveDown(0.5);
@@ -502,8 +455,8 @@ function addHowItWorksSection(doc: PDFKit.PDFDocument) {
 
   doc.moveDown();
   addWarningBox(doc,
-    'Copiar o conteúdo gerado pela IA sem editar é detectado pelo sistema e reduz o score de alinhamento estratégico. Edite sempre as análises com suas próprias ideias antes de salvar.',
-    'Penalização por conteúdo de IA não editado'
+    'Copiar o conteúdo pré-preenchido sem editar é detectado pelo sistema e reduz o score de alinhamento estratégico. Edite sempre as análises com suas próprias ideias antes de salvar.',
+    'Penalização por conteúdo não editado'
   );
 }
 
@@ -539,7 +492,7 @@ function addStrategicToolsSection(doc: PDFKit.PDFDocument) {
   );
 
   addParagraph(doc,
-    'Na tela "Ferramentas Estratégicas", a aba SWOT tem quatro campos — Forças, Fraquezas, Oportunidades e Ameaças — cada um com um botão "+" para adicionar itens e uma lixeira para remover. Na Rodada 1, a IA pré-preenche um item de exemplo em cada quadrante; edite ou complemente e clique em "Salvar Análise SWOT" para gravar.'
+    'Na tela "Ferramentas Estratégicas", a aba SWOT tem quatro campos — Forças, Fraquezas, Oportunidades e Ameaças — cada um com um botão "+" para adicionar itens e uma lixeira para remover. Na Rodada 1, cada quadrante já vem com um item de exemplo preenchido; edite ou complemente e clique em "Salvar Análise SWOT" para gravar.'
   );
 
   renderScreenshot(doc, 'ft-01-swot.jpg', 'Tela de Análise SWOT no Simula+, com os quatro quadrantes e o botão Salvar Análise SWOT');
@@ -693,7 +646,7 @@ function addFormulasSection(doc: PDFKit.PDFDocument) {
 
   doc.moveDown();
   addWarningBox(doc,
-    'Copiar o conteúdo gerado pela IA sem editar é detectado pelo sistema e reduz o score de Alinhamento Estratégico.'
+    'Copiar o conteúdo pré-preenchido sem editar é detectado pelo sistema e reduz o score de Alinhamento Estratégico.'
   );
 
   doc.moveDown();
@@ -801,8 +754,8 @@ function addStepByStepSection(doc: PDFKit.PDFDocument) {
   addBulletPoint(doc, '✓ PESTEL: preencher os 6 fatores macroambientais');
   doc.moveDown(0.3);
 
-  addNumberedStep(doc, '3', 'Na Rodada 1: use o botão "Gerar com IA" como ponto de partida');
-  addNumberedStep(doc, '4', 'IMPORTANTE: sempre edite o conteúdo da IA — copiar sem editar reduz o score de alinhamento');
+  addNumberedStep(doc, '3', 'Na Rodada 1: os campos já vêm com uma versão inicial preenchida — use como ponto de partida');
+  addNumberedStep(doc, '4', 'IMPORTANTE: sempre edite o conteúdo pré-preenchido — copiar sem editar reduz o score de alinhamento');
   addNumberedStep(doc, '5', 'Clique no botão "Salvar" de cada ferramenta depois de editar (a Matriz BCG salva ao clicar em "Adicionar Produto")');
 
   doc.moveDown();
@@ -860,6 +813,12 @@ function addStepByStepSection(doc: PDFKit.PDFDocument) {
   addWarningBox(doc,
     'Depois de clicar em "Confirmar e Enviar" no modal de confirmação, NÃO é possível modificar a decisão até a próxima rodada. Revise as abas de cada produto antes de confirmar.',
     'Envio é definitivo'
+  );
+
+  doc.moveDown();
+  addWarningBox(doc,
+    'A rodada sempre fecha à meia-noite oficial de Brasília (UTC-3), independente do fuso horário ou do relógio do seu dispositivo. Um contador de tempo restante até o fechamento aparece no card "Roteiro da Rodada", na tela inicial.',
+    'A rodada fecha à meia-noite de Brasília'
   );
 
   addNumberedStep(doc, '1', 'Clique em "Enviar Decisão da Equipe"');
@@ -924,7 +883,7 @@ function addStepByStepSection(doc: PDFKit.PDFDocument) {
 
   addInfoBox(doc, '✅ BOAS PRÁTICAS',
     '• Leia o Manual do Aluno antes de começar\n' +
-    '• Edite SEMPRE os conteúdos gerados pela IA antes de salvar\n' +
+    '• Edite SEMPRE os conteúdos pré-preenchidos antes de salvar\n' +
     '• Salve rascunhos frequentemente\n' +
     '• Preencha e salve as 5 ferramentas estratégicas (incluindo Segmentação) antes de tentar enviar a decisão\n' +
     '• Revise todas as abas de cada produto antes de clicar em Enviar Decisão da Equipe\n' +
@@ -934,7 +893,7 @@ function addStepByStepSection(doc: PDFKit.PDFDocument) {
 
   doc.moveDown();
   addWarningBox(doc,
-    '- Copiar conteúdo da IA sem editar (reduz o score de alinhamento)\n' +
+    '- Copiar conteúdo pré-preenchido sem editar (reduz o score de alinhamento)\n' +
     '- Submeter análises incompletas ou deixar a Segmentação de Mercado vazia\n' +
     '- Configurar menos produtos do que os disponíveis na rodada, quando todos são obrigatórios\n' +
     '- Não salvar rascunhos (risco de perder o trabalho digitado)\n' +
@@ -950,12 +909,12 @@ function addFAQSection(doc: PDFKit.PDFDocument) {
 
   addFAQ(doc, 
     'O que acontece se eu não enviar as decisões no prazo?',
-    'Se a rodada encerrar sem que sua equipe tenha submetido as decisões, vocês receberão pontuação zero naquela rodada. É fundamental respeitar os prazos estabelecidos pelo professor. Recomendamos finalizar com pelo menos 1 dia de antecedência.'
+    'Se a rodada encerrar sem que sua equipe tenha submetido as decisões, vocês receberão pontuação zero naquela rodada. É fundamental respeitar os prazos estabelecidos pelo professor. A rodada sempre fecha à meia-noite oficial de Brasília, independente do seu fuso horário — acompanhe o tempo restante no card "Roteiro da Rodada", na tela inicial. Recomendamos finalizar com pelo menos 1 dia de antecedência.'
   );
 
   addFAQ(doc, 
-    'Como funciona a penalização por uso de IA?',
-    'O sistema mede o quanto você editou o conteúdo gerado pela IA (por similaridade de texto) e aplica uma penalização no score de alinhamento estratégico quando o conteúdo é copiado sem edição significativa. Use a IA como ponto de partida, mas complemente sempre com suas próprias análises antes de salvar.'
+    'Como funciona a penalização por conteúdo não editado?',
+    'O sistema mede o quanto você editou o conteúdo pré-preenchido (por similaridade de texto) e aplica uma penalização no score de alinhamento estratégico quando o conteúdo é copiado sem edição significativa. Use a versão inicial como ponto de partida, mas complemente sempre com suas próprias análises antes de salvar.'
   );
 
   addFAQ(doc, 
@@ -990,11 +949,6 @@ function addFAQSection(doc: PDFKit.PDFDocument) {
   );
 
   addFAQ(doc, 
-    'O que significa "Assistência IA: 70%" na Rodada 2?',
-    'Significa que a IA gera análises parcialmente preenchidas. Você precisa completar o restante e editar o que foi gerado. Na Rodada 3 em diante, a assistência é 0% — você preenche tudo a partir do zero.'
-  );
-
-  addFAQ(doc, 
     'Como funciono a Matriz BCG quando tenho mais de um produto na rodada?',
     'Adicione cada produto separadamente pelo botão "Adicionar Produto": o sistema classifica automaticamente cada um no quadrante correspondente (Estrela, Vaca Leiteira, Interrogação ou Abacaxi) com base nos valores de Crescimento do Mercado e Participação Relativa que você informar.'
   );
@@ -1016,7 +970,7 @@ function addFAQSection(doc: PDFKit.PDFDocument) {
 
   addFAQ(doc, 
     'O feedback inteligente é automático?',
-    'Sim. Ao final de cada rodada, o sistema gera automaticamente um feedback personalizado usando IA, analisando suas decisões e resultados. Leia com atenção — é uma ferramenta de aprendizado.'
+    'Sim. Ao final de cada rodada, o sistema gera automaticamente um feedback personalizado, analisando suas decisões e resultados. Leia com atenção — é uma ferramenta de aprendizado.'
   );
 }
 

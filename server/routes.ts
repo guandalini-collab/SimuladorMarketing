@@ -2487,7 +2487,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       isSubmitted,
       hasResults,
       progress,
-      nextAction
+      nextAction,
+      // Prazo de fechamento da rodada (meia-noite de Brasília), usado pelo
+      // front-end para exibir um contador visível de tempo restante.
+      scheduledEndAt: currentRound.scheduledEndAt ?? null
     });
   });
 

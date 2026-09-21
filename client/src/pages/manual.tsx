@@ -502,12 +502,12 @@ export default function Manual() {
                 </AccordionItem>
 
                 <AccordionItem value="ia-analises">
-                  <AccordionTrigger>5.1 Análises Automáticas via IA</AccordionTrigger>
+                  <AccordionTrigger>5.1 Análises Automáticas da Rodada 1</AccordionTrigger>
                   <AccordionContent className="space-y-3">
                     <div className="bg-[#1447e6]/10 dark:bg-[#1447e6]/15 border-l-4 border-[#1447e6] p-4 rounded-md mb-4">
-                      <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">✨ Geração Automática na Rodada 1</p>
+                      <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">✨ Análises Iniciais na Rodada 1</p>
                       <p className="text-sm text-blue-800 dark:text-blue-200">
-                        O sistema gera automaticamente análises estratégicas (SWOT, Porter, BCG, PESTEL e Segmentação de Mercado) quando a Rodada 1 é liberada.
+                        Quando a Rodada 1 é liberada, sua equipe já encontra as análises estratégicas (SWOT, Porter, BCG, PESTEL e Segmentação de Mercado) preenchidas com uma versão inicial.
                         Você receberá análises prontas que servem como ponto de partida - personalize e aprimore conforme necessário!
                       </p>
                       <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
@@ -516,7 +516,7 @@ export default function Manual() {
                     </div>
 
                     <p><strong>Como funciona:</strong></p>
-                    <p className="text-sm">As análises estratégicas automáticas (SWOT, Porter, BCG, PESTEL e Segmentação de Mercado) são personalizadas considerando:</p>
+                    <p className="text-sm">As análises estratégicas iniciais (SWOT, Porter, BCG, PESTEL e Segmentação de Mercado) são personalizadas considerando:</p>
                     <ul className="list-disc pl-6 text-sm space-y-1">
                       <li>Setor de mercado da turma</li>
                       <li>Contexto econômico atual (câmbio, inflação, PIB)</li>
@@ -526,7 +526,7 @@ export default function Manual() {
                     </ul>
                     
                     <p className="text-sm mt-2"><strong>Recomendações dos 4 Ps:</strong></p>
-                    <p className="text-sm">Além das análises estratégicas, o sistema gera recomendações específicas para cada P do Marketing Mix:</p>
+                    <p className="text-sm">Além das análises estratégicas, o sistema traz recomendações específicas para cada P do Marketing Mix:</p>
                     <ul className="list-disc pl-6 text-sm space-y-1">
                       <li><strong>Produto:</strong> Sugestões sobre qualidade, características e posicionamento</li>
                       <li><strong>Preço:</strong> Orientações sobre estratégia de precificação e margens</li>
@@ -545,9 +545,6 @@ export default function Manual() {
                       </p>
                     </div>
                     
-                    <p className="text-sm text-muted-foreground mt-2">
-                      <em>Nota: O professor também pode gerar análises manualmente através do botão "Gerar Análises IA" na página de Controle de Rodadas, se necessário.</em>
-                    </p>
                   </AccordionContent>
                 </AccordionItem>
 
@@ -682,7 +679,7 @@ export default function Manual() {
                           <li><strong>Segmentação de Mercado:</strong> Defina o perfil dos clientes que sua empresa vai atender - consumidores (B2C) ou empresas (B2B), conforme o tipo de negócio da turma</li>
                         </ul>
                         <p className="text-xs text-blue-700 dark:text-blue-300 mt-2 italic">
-                          💡 Dica: Na rodada 1, você recebe análises automáticas geradas por IA. Personalize-as com insights da sua equipe - elas continuam valendo nas rodadas seguintes até você decidir mudar algo.
+                          💡 Dica: Na rodada 1, você já recebe as análises estratégicas preenchidas como ponto de partida. Personalize-as com insights da sua equipe - elas continuam valendo nas rodadas seguintes até você decidir mudar algo.
                         </p>
                       </div>
 
@@ -745,7 +742,7 @@ export default function Manual() {
                           Análise de Resultados e Aprendizado
                         </h4>
                         <p className="text-sm mb-2">
-                          <strong>O que fazer:</strong> Estudar KPIs, ranking, feedback de IA e preparar próxima rodada
+                          <strong>O que fazer:</strong> Estudar KPIs, ranking, Feedback Inteligente e preparar próxima rodada
                         </p>
                         <p className="text-sm mb-2">
                           <strong>Onde encontrar insights:</strong>
@@ -753,7 +750,7 @@ export default function Manual() {
                         <ul className="list-disc pl-6 text-sm space-y-1">
                           <li><strong>Dashboard:</strong> KPIs, gráficos de evolução, alinhamento estratégico</li>
                           <li><strong>Resultados:</strong> DRE completo, Balanço Patrimonial, análise financeira detalhada</li>
-                          <li><strong>Feedback de IA:</strong> Análise Socrática das suas decisões (perguntas reflexivas)</li>
+                          <li><strong>Feedback Inteligente:</strong> Análise Socrática das suas decisões (perguntas reflexivas)</li>
                           <li><strong>Insights de Mercado:</strong> Análise competitiva, badges de desempenho, comparação com líderes</li>
                         </ul>
                         <p className="text-xs text-orange-700 dark:text-orange-300 mt-2 italic">
@@ -1443,7 +1440,7 @@ export default function Manual() {
                       <p className="font-semibold text-primary mb-2">📝 Como usar Segmentação de Mercado no Simula+</p>
                       <ol className="list-decimal pl-6 text-sm space-y-2">
                         <li>Preencha os critérios relevantes para o seu tipo de negócio (o sistema já mostra apenas as seções B2C, B2B, ou ambas, conforme a classificação da sua turma)</li>
-                        <li>Na Rodada 1, a IA já sugere uma segmentação inicial — revise, edite e complete com sua própria visão de mercado</li>
+                        <li>Na Rodada 1, você já recebe uma sugestão inicial de segmentação — revise, edite e complete com sua própria visão de mercado</li>
                         <li>Uma vez preenchida, a análise continua valendo automaticamente nas rodadas seguintes — não precisa reescrever, apenas ajustar se sua estratégia de público mudar</li>
                         <li>Mantenha coerência entre o segmento declarado e as decisões reais do seu Marketing Mix: preço, canais de distribuição e promoção devem "conversar" com o público que você disse que vai atender</li>
                       </ol>

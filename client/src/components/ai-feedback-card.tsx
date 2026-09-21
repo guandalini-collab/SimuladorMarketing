@@ -88,7 +88,7 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
                 <Sparkles className="h-5 w-5 text-destructive" />
               </div>
               <div>
-                <CardTitle className="text-xl">Feedback Inteligente com IA</CardTitle>
+                <CardTitle className="text-xl">Feedback Inteligente</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
                   Erro ao carregar feedback
                 </p>
@@ -117,7 +117,7 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
-              <CardTitle className="text-xl">Feedback Inteligente com IA</CardTitle>
+              <CardTitle className="text-xl">Feedback Inteligente</CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
                 Análise pedagógica das suas decisões estratégicas
               </p>
@@ -145,15 +145,9 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
               <Sparkles className="h-6 w-6 text-white" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-2xl">Feedback Inteligente</CardTitle>
-                <Badge className="gap-1 bg-[#fff3d6] text-[#7a5300] dark:bg-yellow-900/30 dark:text-yellow-400 border-0">
-                  <Sparkles className="h-3 w-3" />
-                  IA
-                </Badge>
-              </div>
+              <CardTitle className="text-2xl">Feedback Inteligente</CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                Análise pedagógica gerada por GPT-4o-mini
+                Análise pedagógica personalizada da sua rodada
               </p>
             </div>
           </div>

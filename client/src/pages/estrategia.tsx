@@ -242,14 +242,14 @@ function SwotTab({ roundId, roundNumber, roundStatus, data }: { roundId: string;
             <div className="space-y-1">
               <p className="font-medium">
                 {roundNumber === 1
-                  ? "✨ Rodada 1: Análise gerada automaticamente pela IA"
+                  ? "✨ Rodada 1: Análise inicial já disponível"
                   : hasData
                     ? "📋 Análise herdada da rodada anterior"
                     : "📝 Preencha sua análise estratégica"}
               </p>
               <p className="text-sm text-muted-foreground">
                 {roundNumber === 1
-                  ? "Esta análise foi criada pela IA como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
+                  ? "Esta é uma versão inicial fornecida como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
                   : hasData
                     ? "Você já preencheu essa análise antes, e ela continua valendo automaticamente nesta rodada — não precisa reescrever nada. Reveja se ainda faz sentido: edite, exclua ou adicione itens se sua estratégia mudou. Atenção: se a análise não bater com o que você está realmente praticando no mix de marketing, isso reduz sua pontuação de alinhamento estratégico."
                     : "Preencha sua análise estratégica e clique em 'Salvar' — ela vai continuar valendo nas próximas rodadas até você decidir mudar algo."}
@@ -370,14 +370,14 @@ function PorterTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
             <div className="space-y-1">
               <p className="font-medium">
                 {roundNumber === 1
-                  ? "✨ Rodada 1: Análise gerada automaticamente pela IA"
+                  ? "✨ Rodada 1: Análise inicial já disponível"
                   : hasData
                     ? "📋 Análise herdada da rodada anterior"
                     : "📝 Preencha sua análise estratégica"}
               </p>
               <p className="text-sm text-muted-foreground">
                 {roundNumber === 1
-                  ? "Esta análise foi criada pela IA como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
+                  ? "Esta é uma versão inicial fornecida como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
                   : hasData
                     ? "Você já preencheu essa análise antes, e ela continua valendo automaticamente nesta rodada — não precisa reescrever nada. Reveja se ainda faz sentido: edite, exclua ou adicione itens se sua estratégia mudou. Atenção: se a análise não bater com o que você está realmente praticando no mix de marketing, isso reduz sua pontuação de alinhamento estratégico."
                     : "Preencha sua análise estratégica e clique em 'Salvar' — ela vai continuar valendo nas próximas rodadas até você decidir mudar algo."}
@@ -496,14 +496,14 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
             <div className="space-y-1">
               <p className="font-medium">
                 {roundNumber === 1
-                  ? "✨ Rodada 1: Análise gerada automaticamente pela IA"
+                  ? "✨ Rodada 1: Análise inicial já disponível"
                   : hasData
                     ? "📋 Análise herdada da rodada anterior"
                     : "📝 Preencha sua análise estratégica"}
               </p>
               <p className="text-sm text-muted-foreground">
                 {roundNumber === 1
-                  ? "Esta análise foi criada pela IA como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
+                  ? "Esta é uma versão inicial fornecida como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
                   : hasData
                     ? "Você já mapeou seus produtos antes, e eles continuam valendo automaticamente nesta rodada — não precisa reinserir nada. Reveja se ainda fazem sentido: edite, exclua ou adicione produtos se sua estratégia mudou. Atenção: se o quadrante não bater com o que você está realmente praticando no mix de marketing, isso reduz sua pontuação de alinhamento estratégico."
                     : "Adicione seus produtos à matriz — eles vão continuar valendo nas próximas rodadas até você decidir mudar algo."}
@@ -676,14 +676,14 @@ function PestelTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
             <div className="space-y-1">
               <p className="font-medium">
                 {roundNumber === 1
-                  ? "✨ Rodada 1: Análise gerada automaticamente pela IA"
+                  ? "✨ Rodada 1: Análise inicial já disponível"
                   : hasData
                     ? "📋 Análise herdada da rodada anterior"
                     : "📝 Preencha sua análise estratégica"}
               </p>
               <p className="text-sm text-muted-foreground">
                 {roundNumber === 1
-                  ? "Esta análise foi criada pela IA como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
+                  ? "Esta é uma versão inicial fornecida como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
                   : hasData
                     ? "Você já preencheu essa análise antes, e ela continua valendo automaticamente nesta rodada — não precisa reescrever nada. Reveja se ainda faz sentido: edite, exclua ou adicione itens se sua estratégia mudou. Atenção: se a análise não bater com o que você está realmente praticando no mix de marketing, isso reduz sua pontuação de alinhamento estratégico."
                     : "Preencha sua análise estratégica e clique em 'Salvar' — ela vai continuar valendo nas próximas rodadas até você decidir mudar algo."}
@@ -898,14 +898,14 @@ function SegmentationSection({
             <div className="space-y-1">
               <p className="font-medium">
                 {roundNumber === 1
-                  ? "✨ Rodada 1: Análise gerada automaticamente pela IA"
+                  ? "✨ Rodada 1: Análise inicial já disponível"
                   : hasData
                     ? "📋 Análise herdada da rodada anterior"
                     : "📝 Preencha sua análise estratégica"}
               </p>
               <p className="text-sm text-muted-foreground">
                 {roundNumber === 1
-                  ? "Esta análise foi criada pela IA como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
+                  ? "Esta é uma versão inicial fornecida como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
                   : hasData
                     ? "Você já preencheu essa análise antes, e ela continua valendo automaticamente nesta rodada — não precisa reescrever nada. Reveja se ainda faz sentido: edite, exclua ou adicione itens se sua estratégia mudou. Atenção: se a segmentação não bater com o que você está realmente praticando no mix de marketing (preço, canais), isso reduz sua pontuação de alinhamento estratégico."
                     : "Preencha sua análise estratégica e clique em 'Salvar' — ela vai continuar valendo nas próximas rodadas até você decidir mudar algo."}

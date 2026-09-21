@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Circle, ArrowRight, AlertCircle, Users, ListChecks } from "lucide-react";
 import { Link } from "wouter";
+import { RoundCountdown } from "@/components/round-countdown";
 
 interface NextAction {
   key: "swot" | "porter" | "bcg" | "pestel" | "mix" | "submit" | "results";
@@ -25,6 +26,7 @@ interface RoundStatus {
   progress: number;
   nextAction: NextAction | null;
   noTeam?: boolean;
+  scheduledEndAt?: string | null;
 }
 
 interface ChecklistItem {
@@ -127,6 +129,9 @@ export function RoundChecklistCard() {
         <p className="text-sm text-muted-foreground">
           Siga estas etapas para concluir a rodada com segurança.
         </p>
+        {data.scheduledEndAt && (
+          <RoundCountdown endDate={data.scheduledEndAt} className="mt-1" />
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <Progress value={data.progress} className="h-2 [&>div]:bg-[#1447e6]" data-testid="progress-round" />
