@@ -1,0 +1,51 @@
+name: Backup do banco de dados
+
+# Roda todo dia às 03:00 (horário de Brasília, UTC-3 = 06:00 UTC).
+# Também pode ser disparado manualmente na aba "Actions" do GitHub
+# (botão "Run workflow"), útil para testar a configuração.
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar cliente PostgreSQL
+        run: sudo apt-get update -y && sudo apt-get install -y postgresql-client gnupg
+
+      - name: Gerar dump do banco
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::Secret DATABASE_URL não configurado nas Actions do repositório."
+            exit 1
+          fi
+          FILENAME="simula-plus-backup-$(date -u +%Y-%m-%d_%H%M%S)UTC.sql.gz"
+          pg_dump "$DATABASE_URL" --no-owner --no-privileges | gzip -9 > "$FILENAME"
+          echo "Dump gerado: $FILENAME ($(du -h "$FILENAME" | cut -f1))"
+          echo "BACKUP_FILE=$FILENAME" >> "$GITHUB_ENV"
+
+      - name: Criptografar o dump (AES-256, GPG simétrico)
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PASSPHRASE:-}" ]; then
+            echo "::error::Secret BACKUP_PASSPHRASE não configurado nas Actions do repositório."
+            exit 1
+          fi
+          gpg --batch --yes --passphrase "$PASSPHRASE" --symmetric --cipher-algo AES256 \
+            -o "${BACKUP_FILE}.gpg" "$BACKUP_FILE"
+          rm "$BACKUP_FILE"
+          echo "BACKUP_FILE_ENC=${BACKUP_FILE}.gpg" >> "$GITHUB_ENV"
+
+      - name: Publicar backup como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: ${{ env.BACKUP_FILE_ENC }}
+          retention-days: 90
