@@ -1,3 +1,5 @@
+import { SYSTEM_FROM_EMAIL } from "../config";
+
 interface EmailPayload {
   to: string[];
   subject: string;
@@ -6,7 +8,10 @@ interface EmailPayload {
 
 export class EmailService {
   private apiKey: string;
-  private fromEmail: string = "noreply@simulamarketing.com.br";
+  // Pedido do professor (2026-09): usar simula@simulamarketing.com.br como
+  // remetente único do sistema (antes era noreply@..., diferente do que
+  // email-service.ts usava). Ver SYSTEM_FROM_EMAIL em server/config.ts.
+  private fromEmail: string = SYSTEM_FROM_EMAIL;
 
   constructor() {
     this.apiKey = process.env.RESEND_API_KEY || "";

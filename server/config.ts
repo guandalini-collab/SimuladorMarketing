@@ -45,6 +45,14 @@ export function getEnv(): AppEnv {
   return env;
 }
 
+// Endereço "de" único para todos os e-mails automáticos do sistema (pedido
+// do professor, 2026-09). Antes havia dois remetentes diferentes: um fixo
+// em server/services/email.ts (noreply@simulamarketing.com.br) e outro
+// vindo dinamicamente da configuração do conector Resend no Replit, em
+// server/email-service.ts — o que podia divergir sem ninguém perceber.
+// Import este valor nos dois lugares em vez de repetir a string.
+export const SYSTEM_FROM_EMAIL = "simula@simulamarketing.com.br";
+
 export function getAuthorizedProfessorEmails(env: AppEnv): string[] {
   const raw = env.AUTHORIZED_PROFESSOR_EMAILS?.trim();
   if (!raw) return [];
