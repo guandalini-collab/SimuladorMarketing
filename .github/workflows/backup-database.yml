@@ -24,7 +24,7 @@ jobs:
             exit 1
           fi
           FILENAME="simula-plus-backup-$(date -u +%Y-%m-%d_%H%M%S)UTC.sql.gz"
-          pg_dump "$DATABASE_URL" --no-owner --no-privileges | gzip -9 > "$FILENAME"
+          /usr/lib/postgresql/18/bin/pg_dump "$DATABASE_URL" --no-owner --no-privileges | gzip -9 > "$FILENAME"
           echo "Dump gerado: $FILENAME ($(du -h "$FILENAME" | cut -f1))"
           echo "BACKUP_FILE=$FILENAME" >> "$GITHUB_ENV"
 
