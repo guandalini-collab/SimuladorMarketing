@@ -1275,6 +1275,84 @@ function FeedbackButton({
 }
 
 /* ============================================
+   COMPONENTE: Botão de Feedback em Lote (Todas as Equipes)
+   Reaproveita a mesma rota de geração usada pelo botão
+   individual (FeedbackButton) acima — nenhuma lógica de
+   cálculo ou rota nova no servidor. Gera sempre de novo
+   (substitui feedback já existente), uma equipe por vez.
+   ============================================ */
+function BulkFeedbackButton({
+  teams,
+  roundId,
+}: {
+  teams: { teamId: string; teamName: string }[];
+  roundId: string;
+}) {
+  const { toast } = useToast();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
+
+  const handleGenerateAll = async () => {
+    if (teams.length === 0 || isGenerating) return;
+    setIsGenerating(true);
+    setProgress({ done: 0, total: teams.length });
+
+    const failures: string[] = [];
+
+    for (const team of teams) {
+      try {
+        const res = await apiRequest("POST", `/api/feedback/generate/${team.teamId}/${roundId}`, {});
+        await res.json();
+      } catch (error: any) {
+        failures.push(team.teamName);
+      } finally {
+        setProgress((prev) => ({ ...prev, done: prev.done + 1 }));
+      }
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["/api/feedback"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/feedbacks/teams"] });
+
+    setIsGenerating(false);
+
+    if (failures.length === 0) {
+      toast({
+        title: "Feedback gerado para todas as equipes!",
+        description: `${teams.length} equipe(s) processada(s) com sucesso.`,
+      });
+    } else {
+      toast({
+        title: "Concluído com algumas falhas",
+        description: `Não foi possível gerar para: ${failures.join(", ")}. As demais equipes foram geradas normalmente.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <Button
+      variant="default"
+      size="sm"
+      onClick={handleGenerateAll}
+      disabled={isGenerating || teams.length === 0}
+      data-testid="button-generate-feedback-all"
+    >
+      {isGenerating ? (
+        <>
+          <Activity className="h-4 w-4 mr-1 animate-spin" />
+          Gerando {progress.done}/{progress.total}...
+        </>
+      ) : (
+        <>
+          <Sparkles className="h-4 w-4 mr-1" />
+          Gerar Feedback para Todas
+        </>
+      )}
+    </Button>
+  );
+}
+
+/* ============================================
    COMPONENTE: Gerenciador de Eventos de Mercado
    ============================================ */
 function MarketEventsManager({ classId, rounds }: { classId: string; rounds: Round[] }) {
@@ -4206,11 +4284,18 @@ export default function Professor() {
                   {/* Ranking */}
                   {rankingResults.length > 0 && lastCompletedRound && (
                     <Card>
-                      <CardHeader>
+                      <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0 flex-wrap">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Trophy className="h-5 w-5 text-[#ffcc00]" />
                           Ranking - Rodada {lastCompletedRound.roundNumber}
                         </CardTitle>
+                        <BulkFeedbackButton
+                          teams={rankingResults.map((result: any) => ({
+                            teamId: result.teamId,
+                            teamName: result.companyName || result.teamName,
+                          }))}
+                          roundId={lastCompletedRound.id}
+                        />
                       </CardHeader>
                       <CardContent>
                         <div className="border rounded-lg overflow-x-auto">
