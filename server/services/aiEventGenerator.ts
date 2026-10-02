@@ -81,7 +81,7 @@ export async function generateMarketEvents(params: EventGenerationParams): Promi
       messages: [
         {
           role: "system",
-          content: "Você é a redação do Simula+ News, o jornal fixo de economia e negócios do simulador. Sua tarefa é redigir eventos de mercado realistas, no formato de matéria jornalística, baseados em análise PESTEL (Político, Econômico, Social, Tecnológico, Ambiental, Legal). Baseie-se em dinâmicas econômicas reais do Brasil — é proibido inventar instituições, indicadores ou dados fictícios apresentados como reais. Tom corporativo, factual e direto, sem linguagem motivacional. Nunca mencione, sugira ou admita ser uma inteligência artificial, modelo de linguagem, ChatGPT ou software externo — você é a redação do jornal, nativa do ecossistema do simulador."
+          content: "Você é a redação do Simula+ News, o jornal fixo de economia e negócios do simulador. Sua tarefa é redigir, no formato estrito de página principal de jornal impresso, eventos de mercado realistas baseados em análise PESTEL (Político, Econômico, Social, Tecnológico, Ambiental, Legal). Baseie-se em dinâmicas econômicas reais do Brasil — é proibido inventar instituições, indicadores ou dados fictícios apresentados como reais. Tom estritamente jornalístico, profissional, informativo e frio — livre de bajulações, cortesias ou linguagem motivacional. Nunca mencione, sugira ou admita ser uma inteligência artificial, modelo de linguagem, ChatGPT ou software externo — você é a redação do jornal, nativa do ecossistema do simulador."
         },
         {
           role: "user",
@@ -182,11 +182,16 @@ ${sector.opportunities.map((o, i) => `${i + 1}. ${o}`).join('\n')}
    - **Ambiental**: Sustentabilidade, mudanças climáticas, ESG
    - **Legal**: Novas leis, regulamentações setoriais
 
-3. FORMATO EDITORIAL OBRIGATÓRIO — cada evento é uma matéria do jornal fixo "Simula+ News". Preencha os campos assim:
+3. FORMATO EDITORIAL OBRIGATÓRIO — cada evento é a página principal do jornal fixo "Simula+ News". Preencha os campos assim, com os rótulos entre colchetes exatamente como abaixo (eles fazem parte do texto gerado):
    - type: uma das categorias ("economic", "technological", "social", "competitive", "regulatory", "environmental")
-   - title (Manchete): manchete de jornal econômico, direta e factual, sem "Simula+ News" no texto (máx. 90 caracteres)
-   - description (Lead + Coluna Macroeconômica): comece com "Simula+ News — " seguido do Lead jornalístico (quem, o quê, quando, onde, por quê, em 1-2 frases objetivas). Em seguida, na mesma string, inclua "Coluna Macroeconômica:" com dados concretos e reais do setor/mercado brasileiro (números, percentuais, indicadores). Total: 250-450 caracteres.
-   - impact (Análise de Tendência): comece com "Análise de Tendência:" e explique a tendência de mercado por trás do evento com fundamento teórico real (PESTEL, Porter, Kotler ou equivalente quando cabível), e como ela deve orientar as decisões de marketing das equipes. 150-300 caracteres.
+   - title (Manchete Principal): manchete de jornal econômico — forte, direta e factual sobre o acontecimento de mercado, sem "Simula+ News" no texto (máx. 90 caracteres)
+   - description: três elementos nesta ordem, na mesma string:
+     1. "Jornal: Simula+ News"
+     2. "[Lead]: " seguido de UMA ÚNICA FRASE objetiva contendo o quê, quem, quando e o impacto geral do evento
+     3. "[Coluna Macroeconômica]: " seguido de um bloco analítico e frio com os dados numéricos reais do setor/mercado brasileiro (números, percentuais, indicadores) necessários para a tomada de decisão do aluno
+     Total: 300-500 caracteres.
+   - impact: "[Análise de Tendência]: " seguido de um parágrafo fundamentado — de forma implícita ou explícita — em teorias reais de mercado (ex: movimentos nas Forças de Porter ou na categoria PESTEL correspondente ao evento), forçando o aluno a interpretar o cenário sob a ótica acadêmica correta para tomar sua decisão de Mix de Marketing. 150-300 caracteres.
+   - Tom estritamente jornalístico, profissional, informativo e frio em todos os campos — livre de bajulações, cortesias ou linguagem motivacional.
    - severity: "baixo", "medio" ou "alto"
    - sentiment: "positivo", "negativo" ou "neutro" — decida pelo CONTEÚDO real do evento, não pela categoria. Um evento "regulatory" pode ser positivo (ex.: redução de impostos) ou negativo (ex.: aumento de impostos); um evento "competitive" pode ser positivo para a equipe (ex.: concorrente fecha as portas) ou negativo (ex.: novo concorrente forte entra no mercado). Use "neutro" só quando o evento tiver efeito genuinamente misto ou desprezível.
    - pestelCategory: categoria PESTEL por extenso ("Político", "Econômico", "Social", "Tecnológico", "Ambiental", "Legal")
