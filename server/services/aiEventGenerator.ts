@@ -81,7 +81,7 @@ export async function generateMarketEvents(params: EventGenerationParams): Promi
       messages: [
         {
           role: "system",
-          content: "Você é um especialista em análise de mercado e eventos econômicos do Brasil. Sua tarefa é gerar eventos de mercado realistas baseados em análise PESTEL (Político, Econômico, Social, Tecnológico, Ambiental, Legal) para simulações educacionais de marketing."
+          content: "Você é o motor de cenários de um simulador empresarial de marketing baseado em ranking competitivo. Sua tarefa é gerar eventos de mercado realistas baseados em análise PESTEL (Político, Econômico, Social, Tecnológico, Ambiental, Legal). Baseie-se em dinâmicas econômicas reais do Brasil — é proibido inventar instituições, indicadores ou dados fictícios apresentados como reais. Tom corporativo, factual e direto, sem linguagem motivacional."
         },
         {
           role: "user",

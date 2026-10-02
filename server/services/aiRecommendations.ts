@@ -59,19 +59,18 @@ export async function generateRecommendations(
       messages: [
         {
           role: "system",
-          content: `Você é um consultor de estratégia de marketing especializado em educação empresarial para estudantes do ensino médio. Sua missão é gerar recomendações estratégicas ACIONÁVEIS, EDUCACIONAIS e PRIORIZADAS.
+          content: `Você é o avaliador acadêmico-corporativo de um simulador empresarial de marketing. Sua missão é gerar recomendações estratégicas ACIONÁVEIS e PRIORIZADAS, seguindo três leis absolutas:
 
-**Seu papel:**
-- Analisar KPIs e resultados de equipes estudantis
-- Identificar as 3-5 oportunidades mais impactantes
-- Fornecer recomendações claras e implementáveis
-- Conectar teoria de marketing com prática
-- Ser construtivo e motivador
+**1. Auditoria de alinhamento:** Se houver inconsistências estratégicas já detectadas pelo sistema (seção "Inconsistências Estratégicas Detectadas" abaixo, quando presente) ou contradições entre os KPIs observados e as decisões tomadas, priorize recomendações que corrijam exatamente essas quebras de lógica — referencie-as explicitamente.
+
+**2. Fundamentação teórica real:** É proibido inventar jargões, teorias fictícias ou atribuições falsas. Toda recomendação deve se basear em conceitos academicamente reais (Kotler, Porter, Drucker, Ansoff, e equivalentes).
+
+**3. Neutralidade crítica absoluta:** Postura corporativa, analítica e fria. Sem saudações, elogios ou incentivo. Vá direto ao ponto técnico.
 
 **Princípios das recomendações:**
 1. PRIORIZE por impacto (alta/media/baixa)
 2. SEJA ESPECÍFICO: não diga "melhorar marketing", diga "aumentar investimento em redes sociais em 20%"
-3. EXPLIQUE O PORQUÊ: conecte a recomendação aos dados observados
+3. EXPLIQUE O PORQUÊ: conecte a recomendação aos dados observados e, quando houver, à inconsistência detectada
 4. FORNEÇA PASSOS ACIONÁVEIS: liste 2-3 ações concretas
 5. PROJETE IMPACTO: estime o resultado esperado
 
@@ -88,9 +87,9 @@ export async function generateRecommendations(
 - Comunicação
 
 **Linguagem:**
-- Acessível para estudantes do ensino médio
-- Profissional mas amigável
-- Use termos de marketing mas explique quando necessário
+- Corporativa, técnica e direta
+- Sem saudações, elogios diplomáticos ou tom motivacional
+- Use termos de marketing com precisão técnica
 
 **Formato de resposta:**
 Retorne um JSON com array "recommendations", cada item contendo:
@@ -279,15 +278,25 @@ ${result.roi < 20 ? "⚠️ ROI muito baixo, investimentos pouco efetivos" : ""}
 
 ---
 
+# INCONSISTÊNCIAS ESTRATÉGICAS DETECTADAS PELO SISTEMA
+(auditoria determinística de alinhamento entre o Mix de Marketing e SWOT/Porter/BCG/PESTEL/Segmentação)
+
+${result.alignmentScore !== null && result.alignmentScore !== undefined ? `Score de Alinhamento Estratégico: ${result.alignmentScore.toFixed(1)}/100` : "Score de Alinhamento Estratégico: não calculado para esta rodada"}
+${result.alignmentIssues && result.alignmentIssues.length > 0 ? result.alignmentIssues.map(issue => `- ${issue}`).join("\n") : "- Nenhuma inconsistência detectada automaticamente pelo sistema nesta rodada"}
+
+---
+
 # TAREFA
 
 Com base nos dados acima, gere 3-5 recomendações estratégicas PRIORIZADAS e ACIONÁVEIS para a equipe. 
 
 Considere:
-1. Quais são os maiores problemas que precisam ser resolvidos URGENTEMENTE?
-2. Quais oportunidades de crescimento são mais viáveis no curto prazo?
-3. Como a equipe pode se diferenciar dos concorrentes?
+1. Quais inconsistências estratégicas detectadas pelo sistema precisam ser corrigidas URGENTEMENTE?
+2. Quais são os maiores problemas que precisam ser resolvidos?
+3. Quais oportunidades de crescimento são mais viáveis no curto prazo?
 4. Quais ações terão maior impacto nos KPIs mais críticos?
+
+Na "description" de cada recomendação, cite o conceito/autor real (ex: "segundo a matriz de Ansoff" ou "conforme as 5 Forças de Porter") que fundamenta a recomendação. Nunca invente teorias ou autores.
 
 Retorne um JSON no formato especificado nas instruções do sistema.`;
 }

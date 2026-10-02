@@ -62,27 +62,16 @@ export async function generateFeedback(params: FeedbackGenerationParams): Promis
       messages: [
         {
           role: "system",
-          content: `Você é um professor especialista em marketing e estratégia empresarial com ampla experiência em educação. Sua abordagem pedagógica é baseada no método socrático: você NÃO dá respostas diretas, mas faz perguntas provocativas que levam os alunos a refletirem e descobrirem as soluções por si mesmos.
+          content: `Você é a inteligência analítica e o avaliador acadêmico-corporativo de um simulador empresarial de marketing baseado em ranking competitivo. Suas respostas seguem três leis absolutas, sem exceção:
 
-**Seu papel:**
-- Analisar decisões de marketing de equipes de estudantes do ensino médio
-- Identificar acertos e erros nas estratégias aplicadas
-- Fazer perguntas que estimulem pensamento crítico
-- Sugerir literatura específica para aprofundamento
-- Ser construtivo, encorajador e educacional
+**1. Auditoria sistêmica de alinhamento e impacto no ranking:**
+Seu objetivo principal é identificar e expor quebras de lógica no encadeamento das decisões da equipe. Audite rigorosamente se o Mix de Marketing praticado é coerente com o diagnóstico estratégico (SWOT, Porter, BCG, PESTEL, Segmentação). O sistema já detectou automaticamente inconsistências estratégicas desta equipe — elas aparecem abaixo em "Inconsistências Estratégicas Detectadas pelo Sistema"; referencie-as explicitamente e explique como cada uma prejudicou o desempenho no ranking competitivo (lucro, ROI, market share). Se identificar OUTRAS contradições conceituais nas decisões em si (ex: posicionamento premium combinado com preço baixo, alta rivalidade competitiva com investimento promocional insuficiente), aponte-as também, de forma explícita e direta — nunca de forma velada.
 
-**Princípios pedagógicos:**
-1. NUNCA diga diretamente "você deveria ter feito X"
-2. SEMPRE faça perguntas como "Por que você escolheu Y? Quais outras opções considerou?"
-3. Conecte decisões aos resultados de forma educativa
-4. Use linguagem acessível para estudantes do ensino médio
-5. Reforce aprendizados positivos e ajude a descobrir erros
+**2. Obrigatoriedade de teorias reais e fontes bibliográficas:**
+É terminantemente proibido inventar jargões, criar teorias fictícias, simular links ou fazer falsas atribuições. Toda fundamentação teórica deve se basear exclusivamente em conceitos academicamente reais de autores clássicos (Kotler, Porter, Drucker, Ansoff, e equivalentes). Para cada erro ou inconsistência apontada, é OBRIGATÓRIO indicar o nome do livro e o capítulo/assunto real da literatura correspondente, para direcionar o estudo da equipe.
 
-**Abordagem de feedback:**
-- Pontos fortes: Celebre acertos e explique POR QUE funcionou
-- Pontos fracos: Apresente como oportunidades de aprendizado com perguntas reflexivas
-- Sugestões: Oriente sem dar a resposta pronta, estimule a investigação
-- Literatura: Sugira leituras específicas e acessíveis, explicando o que encontrarão`
+**3. Neutralidade crítica absoluta:**
+Adote postura estritamente corporativa, analítica e fria. Elimine saudações, elogios diplomáticos, mensagens de incentivo ou bajulação. Não celebre acertos com entusiasmo pedagógico — apenas registre, tecnicamente, o que funcionou e por quê, com base em teoria real. Vá direto ao ponto técnico de cada decisão auditada.`
         },
         {
           role: "user",
@@ -129,7 +118,7 @@ function buildFeedbackPrompt(
   const promotionBudgets = marketingMix.promotionBudgets as Record<string, number> || {};
   const totalPromotionBudget = Object.values(promotionBudgets).reduce((sum, val) => sum + val, 0);
 
-  return `Analise as decisões de marketing desta equipe de estudantes do ensino médio e forneça feedback educacional construtivo.
+  return `Audite as decisões de marketing desta equipe e produza o relatório de feedback técnico da rodada.
 
 **Contexto da Turma:**
 - Setor: ${classData.sector || "Não definido"}
@@ -184,48 +173,52 @@ ${Object.entries(promotionBudgets).map(([tool, value]) => `  - ${tool}: R$ ${val
 **Eventos de Mercado Ativos:**
 ${marketEvents.length > 0 ? marketEvents.map(e => `- [${e.severity.toUpperCase()}] ${e.title}: ${e.impact}`).join('\n') : '- Nenhum evento significativo'}
 
+**Inconsistências Estratégicas Detectadas pelo Sistema (auditoria determinística de alinhamento SWOT/Porter/BCG/PESTEL/Segmentação):**
+${result.alignmentScore !== null && result.alignmentScore !== undefined ? `- Score de Alinhamento Estratégico: ${result.alignmentScore.toFixed(1)}/100` : '- Score de Alinhamento Estratégico: não calculado para esta rodada'}
+${result.alignmentIssues && result.alignmentIssues.length > 0 ? result.alignmentIssues.map(issue => `- ${issue}`).join('\n') : '- Nenhuma inconsistência detectada automaticamente pelo sistema nesta rodada'}
+
 ${previousResults.length > 0 ? `**Evolução:**
 ${hasImprovement ? '✅ Lucro AUMENTOU em relação à rodada anterior' : '⚠️ Lucro DIMINUIU em relação à rodada anterior'}
 - Rodada anterior: R$ ${previousResults[previousResults.length - 1].profit.toLocaleString('pt-BR')}
 - Rodada atual: R$ ${result.profit.toLocaleString('pt-BR')}` : '**Primeira Rodada:** Esta é a primeira rodada da equipe.'}
 
 **Sua Tarefa:**
-Forneça uma análise educacional completa no formato JSON especificado. Lembre-se:
-- Use método socrático (perguntas > respostas)
-- Conecte decisões aos resultados
-- Seja específico e construtivo
-- Linguagem acessível para ensino médio
+Produza o relatório de auditoria no formato JSON especificado. Lembre-se:
+- Exponha quebras de lógica de forma explícita e direta (nunca por perguntas ou insinuação)
+- Conecte cada decisão ao resultado obtido e, quando aplicável, à inconsistência estratégica já detectada pelo sistema
+- Fundamente cada erro em teoria acadêmica real, com livro e capítulo/assunto
+- Tom corporativo, analítico, frio — sem saudações, elogios ou incentivo
 
 **Formato de Resposta (JSON obrigatório):**
 {
-  "overallAnalysis": "Análise geral da estratégia (2-3 parágrafos). Conecte as decisões aos resultados obtidos de forma educativa.",
+  "overallAnalysis": "Análise técnica da estratégia (2-3 parágrafos). Conecte decisões, inconsistências detectadas e resultados, de forma direta e analítica.",
   "strengths": [
-    "Ponto forte 1 - Explique o acerto e por que funcionou",
-    "Ponto forte 2 - Conecte à teoria de marketing (ex: precificação premium + qualidade alta)",
-    "Ponto forte 3 - Celebre a decisão e o resultado positivo"
+    "Ponto 1 - Registre o que funcionou e por que, com base em conceito teórico real",
+    "Ponto 2 - Conecte à teoria de marketing (ex: precificação premium + qualidade alta, segundo Kotler)",
+    "Ponto 3 - Decisão e resultado, sem tom de celebração"
   ],
   "weaknesses": [
-    "Oportunidade de melhoria 1 - Apresente como pergunta reflexiva (ex: 'Por que investir tanto em X quando Y estava em alta?')",
-    "Oportunidade de melhoria 2 - Aponte o resultado negativo sem culpar",
-    "Oportunidade de melhoria 3 - Sugira reflexão sobre alternativas"
+    "Falha 1 - Aponte o erro explicitamente, citando a inconsistência estratégica detectada quando houver (ex: 'Posicionamento declarado como premium é incompatível com preço abaixo da média do setor')",
+    "Falha 2 - Aponte o resultado negativo e sua causa direta",
+    "Falha 3 - Exponha a contradição conceitual, se houver, sem suavizar"
   ],
   "suggestions": [
-    "Sugestão 1 - Oriente sem dar resposta pronta (ex: 'Investigue como seus concorrentes estão precificando produtos similares')",
-    "Sugestão 2 - Proponha experimento ou análise adicional",
-    "Sugestão 3 - Conecte com ferramentas estratégicas disponíveis (SWOT, Porter, BCG, PESTEL)"
+    "Sugestão 1 - Instrução direta e objetiva (ex: 'Ajustar o preço para compatibilidade com o posicionamento premium declarado')",
+    "Sugestão 2 - Ação concreta a tomar na próxima rodada",
+    "Sugestão 3 - Correção específica em relação às ferramentas estratégicas (SWOT, Porter, BCG, PESTEL, Segmentação)"
   ],
   "literatureRecommendations": [
     {
       "title": "Princípios de Marketing",
       "author": "Philip Kotler & Gary Armstrong",
-      "chapter": "Capítulo específico relacionado ao tema (ex: 'Capítulo 10: Estratégias de Preço')",
-      "reason": "Por que esta leitura ajudará (ex: 'Aprofunda estratégias de precificação baseadas em valor')"
+      "chapter": "Capítulo real e específico relacionado ao erro apontado (ex: 'Capítulo 10: Estratégias de Preço')",
+      "reason": "Relação direta entre o erro cometido e o conteúdo do capítulo"
     },
     {
       "title": "Estratégia Competitiva",
       "author": "Michael Porter",
-      "chapter": "Capítulo ou conceito específico",
-      "reason": "Como esta leitura complementa a análise"
+      "chapter": "Capítulo ou conceito real específico",
+      "reason": "Relação direta entre o erro cometido e o conceito"
     }
   ]
 }
@@ -233,6 +226,7 @@ Forneça uma análise educacional completa no formato JSON especificado. Lembre-
 **Importante:**
 - Máximo de 3-5 pontos em cada categoria
 - Seja específico ao setor ${classData.sector || "do negócio"}
-- Referencie os eventos de mercado quando relevante
+- Referencie os eventos de mercado e as inconsistências estratégicas detectadas quando relevante
+- NUNCA invente teorias, autores, livros ou atribuições — use exclusivamente literatura acadêmica real
 - Sugira literatura em português quando possível`;
 }

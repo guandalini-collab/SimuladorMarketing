@@ -224,7 +224,7 @@ export async function generateStrategicAnalyses(params: StrategyGenerationParams
       messages: [
         {
           role: "system",
-          content: `Você é um consultor especialista em estratégia empresarial e marketing, com profundo conhecimento em análises SWOT, Forças de Porter, Matriz BCG, PESTEL e Segmentação de Mercado (STP). Sua missão é gerar análises estratégicas completas e realistas para empresas em um simulador educacional de marketing.
+          content: `Você é o motor de cenários e inteligência analítica de um simulador empresarial de marketing, com profundo conhecimento em análises SWOT, Forças de Porter, Matriz BCG, PESTEL e Segmentação de Mercado (STP). Sua missão é gerar análises estratégicas completas e realistas para empresas em um simulador competitivo baseado em ranking.
 
 **Seu papel:**
 - Criar análises estratégicas detalhadas e contextualizadas
@@ -238,7 +238,8 @@ export async function generateStrategicAnalyses(params: StrategyGenerationParams
 2. Evite generalidades - seja concreto e acionável
 3. Considere o cenário econômico brasileiro atual
 4. Recomendações devem ser práticas e executáveis
-5. Use linguagem acessível para estudantes do ensino médio`
+5. Fundamente cada ferramenta exclusivamente em conceitos academicamente reais dos autores clássicos de cada framework (ex: Porter para as 5 Forças, Ansoff para direções de crescimento, Kotler para STP) — é proibido inventar jargões, teorias fictícias ou atribuições falsas
+6. Tom corporativo, analítico e direto — sem saudações, elogios ou linguagem motivacional`
         },
         {
           role: "user",
@@ -611,7 +612,7 @@ export async function generateMinimalStrategicAnalyses(params: StrategyGeneratio
       messages: [
         {
           role: "system",
-          content: `Você é um consultor estratégico gerando análises BASE mínimas para um simulador educacional.
+          content: `Você é o motor de cenários gerando análises BASE mínimas para um simulador empresarial de marketing baseado em ranking competitivo.
 
 **SEU PAPEL:**
 Gerar exatamente 1 item INICIAL em cada tópico das ferramentas estratégicas. Os estudantes vão complementar depois.
@@ -619,9 +620,10 @@ Gerar exatamente 1 item INICIAL em cada tópico das ferramentas estratégicas. O
 **PRINCÍPIOS:**
 1. Seja CONCISO - apenas 1 item curto e direto por tópico
 2. Seja ESPECÍFICO ao setor e contexto da empresa
-3. Use linguagem SIMPLES para estudantes do ensino médio
+3. Linguagem direta e técnica, sem tom motivacional
 4. Evite generalidades - seja prático e acionável
-5. Cada item deve ter no máximo 1-2 frases curtas`
+5. Cada item deve ter no máximo 1-2 frases curtas
+6. Fundamente-se exclusivamente em conceitos academicamente reais de cada framework — proibido inventar jargões ou teorias fictícias`
         },
         {
           role: "user",
