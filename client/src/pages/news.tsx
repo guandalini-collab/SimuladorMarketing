@@ -104,11 +104,16 @@ function parseEdition(description: string, impact: string) {
   body = body.replace(/^Jornal:\s*Simula\+\s*News\s*/i, "").trim();
   body = body.replace(/^Simula\+\s*News\s*(—|-)\s*/i, "").trim();
 
-  const leadMatch = body.match(/\[?Lead\]?\s*:\s*([\s\S]*?)(?=\[?Coluna Macroeconômica\]?\s*:|$)/i);
+  // Encontra a Coluna Macroeconômica primeiro (com ou sem colchetes, como nas
+  // duas versões já publicadas do prompt) e usa a posição dela para recortar
+  // tudo que vem ANTES como lead — em vez de duas buscas independentes, que
+  // duplicavam o texto quando o evento era de uma versão mais antiga do
+  // prompt (sem o rótulo "[Lead]:" explícito, só "Coluna Macroeconômica:").
   const macroMatch = body.match(/\[?Coluna Macroeconômica\]?\s*:\s*([\s\S]*)$/i);
-
-  const lead = leadMatch?.[1]?.trim() || null;
   const macro = macroMatch?.[1]?.trim() || null;
+
+  const leadSegment = macroMatch ? body.slice(0, macroMatch.index).trim() : body;
+  const lead = leadSegment.replace(/^\[?Lead\]?\s*:\s*/i, "").trim() || null;
 
   const trendMatch = (impact || "").match(/\[?Análise de Tendência\]?\s*:\s*([\s\S]*)$/i);
   const trend = trendMatch?.[1]?.trim() || (impact || "").trim();
