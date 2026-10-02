@@ -10,6 +10,7 @@ import {
   Sparkles,
   Tv,
   User,
+  Newspaper,
 } from "lucide-react";
 import {
   Sidebar,
@@ -47,6 +48,11 @@ const menuItems = [
     title: "Análise de Mercado",
     url: "/mercado",
     icon: TrendingUp,
+  },
+  {
+    title: "Simula+ News",
+    url: "/news",
+    icon: Newspaper,
   },
   {
     title: "Ferramentas Estratégicas",

@@ -14,6 +14,7 @@ import Dashboard from "@/pages/dashboard";
 import Campanhas from "@/pages/campanhas";
 import Decisoes from "@/pages/decisoes";
 import Mercado from "@/pages/mercado";
+import News from "@/pages/news";
 import Analises from "@/pages/analises";
 import InsightsMercado from "@/pages/insights-mercado";
 import Orcamento from "@/pages/orcamento";
@@ -150,6 +151,7 @@ function AuthenticatedApp() {
               <Route path="/campanhas" component={Campanhas} />
               <Route path="/decisoes" component={Decisoes} />
               <Route path="/mercado" component={Mercado} />
+              <Route path="/news" component={News} />
               <Route path="/estrategia" component={Estrategia} />
               <Route path="/analises" component={Analises} />
               <Route path="/insights" component={InsightsMercado} />
