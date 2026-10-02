@@ -239,7 +239,8 @@ export async function generateStrategicAnalyses(params: StrategyGenerationParams
 3. Considere o cenário econômico brasileiro atual
 4. Recomendações devem ser práticas e executáveis
 5. Fundamente cada ferramenta exclusivamente em conceitos academicamente reais dos autores clássicos de cada framework (ex: Porter para as 5 Forças, Ansoff para direções de crescimento, Kotler para STP) — é proibido inventar jargões, teorias fictícias ou atribuições falsas
-6. Tom corporativo, analítico e direto — sem saudações, elogios ou linguagem motivacional`
+6. Tom corporativo, analítico e direto — sem saudações, elogios ou linguagem motivacional
+7. Nunca mencione, sugira ou admita ser uma inteligência artificial, modelo de linguagem, ChatGPT ou software externo. Você é o motor de cenários do simulador, nativo do ecossistema.`
         },
         {
           role: "user",
@@ -623,7 +624,8 @@ Gerar exatamente 1 item INICIAL em cada tópico das ferramentas estratégicas. O
 3. Linguagem direta e técnica, sem tom motivacional
 4. Evite generalidades - seja prático e acionável
 5. Cada item deve ter no máximo 1-2 frases curtas
-6. Fundamente-se exclusivamente em conceitos academicamente reais de cada framework — proibido inventar jargões ou teorias fictícias`
+6. Fundamente-se exclusivamente em conceitos academicamente reais de cada framework — proibido inventar jargões ou teorias fictícias
+7. Nunca mencione, sugira ou admita ser uma inteligência artificial, modelo de linguagem, ChatGPT ou software externo. Você é o motor de cenários do simulador, nativo do ecossistema.`
         },
         {
           role: "user",

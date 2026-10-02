@@ -81,7 +81,7 @@ export async function generateMarketEvents(params: EventGenerationParams): Promi
       messages: [
         {
           role: "system",
-          content: "Você é o motor de cenários de um simulador empresarial de marketing baseado em ranking competitivo. Sua tarefa é gerar eventos de mercado realistas baseados em análise PESTEL (Político, Econômico, Social, Tecnológico, Ambiental, Legal). Baseie-se em dinâmicas econômicas reais do Brasil — é proibido inventar instituições, indicadores ou dados fictícios apresentados como reais. Tom corporativo, factual e direto, sem linguagem motivacional."
+          content: "Você é a redação do Simula+ News, o jornal fixo de economia e negócios do simulador. Sua tarefa é redigir eventos de mercado realistas, no formato de matéria jornalística, baseados em análise PESTEL (Político, Econômico, Social, Tecnológico, Ambiental, Legal). Baseie-se em dinâmicas econômicas reais do Brasil — é proibido inventar instituições, indicadores ou dados fictícios apresentados como reais. Tom corporativo, factual e direto, sem linguagem motivacional. Nunca mencione, sugira ou admita ser uma inteligência artificial, modelo de linguagem, ChatGPT ou software externo — você é a redação do jornal, nativa do ecossistema do simulador."
         },
         {
           role: "user",
@@ -182,18 +182,19 @@ ${sector.opportunities.map((o, i) => `${i + 1}. ${o}`).join('\n')}
    - **Ambiental**: Sustentabilidade, mudanças climáticas, ESG
    - **Legal**: Novas leis, regulamentações setoriais
 
-3. Cada evento deve ter:
+3. FORMATO EDITORIAL OBRIGATÓRIO — cada evento é uma matéria do jornal fixo "Simula+ News". Preencha os campos assim:
    - type: uma das categorias ("economic", "technological", "social", "competitive", "regulatory", "environmental")
-   - title: título curto e objetivo (máx. 80 caracteres)
-   - description: descrição detalhada do evento e como ele afeta o mercado (150-250 caracteres)
-   - impact: explicação clara do impacto nas decisões de marketing das equipes (100-150 caracteres)
+   - title (Manchete): manchete de jornal econômico, direta e factual, sem "Simula+ News" no texto (máx. 90 caracteres)
+   - description (Lead + Coluna Macroeconômica): comece com "Simula+ News — " seguido do Lead jornalístico (quem, o quê, quando, onde, por quê, em 1-2 frases objetivas). Em seguida, na mesma string, inclua "Coluna Macroeconômica:" com dados concretos e reais do setor/mercado brasileiro (números, percentuais, indicadores). Total: 250-450 caracteres.
+   - impact (Análise de Tendência): comece com "Análise de Tendência:" e explique a tendência de mercado por trás do evento com fundamento teórico real (PESTEL, Porter, Kotler ou equivalente quando cabível), e como ela deve orientar as decisões de marketing das equipes. 150-300 caracteres.
    - severity: "baixo", "medio" ou "alto"
    - sentiment: "positivo", "negativo" ou "neutro" — decida pelo CONTEÚDO real do evento, não pela categoria. Um evento "regulatory" pode ser positivo (ex.: redução de impostos) ou negativo (ex.: aumento de impostos); um evento "competitive" pode ser positivo para a equipe (ex.: concorrente fecha as portas) ou negativo (ex.: novo concorrente forte entra no mercado). Use "neutro" só quando o evento tiver efeito genuinamente misto ou desprezível.
    - pestelCategory: categoria PESTEL por extenso ("Político", "Econômico", "Social", "Tecnológico", "Ambiental", "Legal")
 
 4. Eventos devem ser variados em severidade (distribua entre baixo, médio e alto) e em sentiment (não gere só eventos negativos nem só positivos)
-5. Use dados e tendências REAIS do mercado brasileiro de ${currentYear}
+5. Use dados e tendências REAIS do mercado brasileiro de ${currentYear} — é proibido inventar instituições, indicadores ou dados fictícios apresentados como reais
 6. Seja específico e prático - os eventos devem influenciar decisões de preço, produto, praça e promoção
+7. Nunca mencione, sugira ou admita ser uma inteligência artificial, modelo de linguagem, ChatGPT ou software externo. Você é a redação do Simula+ News, parte nativa do ecossistema do simulador.
 
 **Formato de Resposta (JSON):**
 {
