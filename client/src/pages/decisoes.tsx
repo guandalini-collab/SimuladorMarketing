@@ -603,7 +603,10 @@ export default function Decisoes() {
   const savedMix = savedProductMixes.find((mix: any) => mix.productId === selectedProductId);
   const isSubmitted = !!savedMix?.submittedAt || !!currentProductDecisions.submittedAt;
   // canEdit uses controlsDisabled which properly handles loading and refetch states
-  const canEdit = !controlsDisabled && !isSubmitted;
+  // Membro que não é líder: tela só de leitura (o servidor já recusava a
+  // gravação; agora os controles também ficam travados para não dar a
+  // impressão de que as escolhas dele valem).
+  const canEdit = !controlsDisabled && !isSubmitted && !isNonLeader;
 
   return (
     <div className="space-y-8">
@@ -718,8 +721,8 @@ export default function Decisoes() {
           <Users className="h-4 w-4 text-[#1447e6]" />
           <AlertTitle className="text-[#1447e6] dark:text-blue-200">Modo visualização</AlertTitle>
           <AlertDescription className="text-[#1447e6] dark:text-blue-200">
-            Apenas o líder da equipe pode salvar e enviar as decisões. Você pode explorar as opções
-            e discutir com a equipe, mas as alterações feitas aqui não serão gravadas.
+            Você está vendo as decisões da sua equipe. Apenas o líder pode alterá-las, salvar e enviar.
+            Converse com o líder para propor mudanças.
           </AlertDescription>
         </Alert>
       )}
