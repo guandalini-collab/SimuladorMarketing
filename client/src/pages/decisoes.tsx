@@ -227,7 +227,26 @@ export default function Decisoes() {
     strategicTools.pestel.legal.length > 0
   );
 
-  const allToolsComplete = isSwotComplete && isPorterComplete && isBcgComplete && isPestelComplete;
+  // Segmentação de Mercado (5ª ferramenta): o servidor já a exige no envio
+  // do mix (ver isSegmentationComplete em server/routes.ts), mas esta tela
+  // só mostrava 4 ferramentas — a equipe via tudo verde e recebia erro ao
+  // salvar/enviar. Em vez de duplicar a validação aqui, reaproveita o
+  // status calculado pelo próprio servidor no endpoint do "Roteiro da
+  // Rodada" (mesma função usada no bloqueio). Só exibição: nenhuma regra muda.
+  const { data: roundChecklist } = useQuery<{ hasSegmentation?: boolean }>({
+    queryKey: ["/api/team/current-round-status"],
+    enabled: !!activeRoundId,
+  });
+  const isSegmentationComplete = !!roundChecklist?.hasSegmentation;
+
+  const allToolsComplete = isSwotComplete && isPorterComplete && isBcgComplete && isPestelComplete && isSegmentationComplete;
+
+  // Apenas o líder pode salvar/enviar (o servidor responde 403 aos demais).
+  // Antes, o membro não-líder só descobria isso pelo erro ao clicar em salvar.
+  const { data: currentUser } = useQuery<{ id: string }>({
+    queryKey: ["/api/auth/me"],
+  });
+  const isNonLeader = !!team?.leaderId && !!currentUser?.id && team.leaderId !== currentUser.id;
 
   // Carregar decisões salvas para todos os produtos
   useEffect(() => {
@@ -415,7 +434,7 @@ export default function Decisoes() {
     if (!allToolsComplete) {
       toast({
         title: "Ferramentas estratégicas incompletas",
-        description: "Complete todas as ferramentas estratégicas (SWOT, Porter, BCG e PESTEL) antes de submeter suas decisões.",
+        description: "Complete todas as ferramentas estratégicas (SWOT, Porter, BCG, PESTEL e Segmentação de Mercado) antes de submeter suas decisões.",
         variant: "destructive",
       });
       return;
@@ -611,6 +630,17 @@ export default function Decisoes() {
                 Enviado em: {new Date(currentProductDecisions.submittedAt).toLocaleString('pt-BR')}
               </span>
             )}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {isNonLeader && !isSubmitted && !isLocked && (
+        <Alert data-testid="alert-non-leader" className="border-[#1447e6]/40 bg-[#eef2ff] dark:bg-blue-950/20">
+          <Users className="h-4 w-4 text-[#1447e6]" />
+          <AlertTitle className="text-[#1447e6] dark:text-blue-200">Modo visualização</AlertTitle>
+          <AlertDescription className="text-[#1447e6] dark:text-blue-200">
+            Apenas o líder da equipe pode salvar e enviar as decisões. Você pode explorar as opções
+            e discutir com a equipe, mas as alterações feitas aqui não serão gravadas.
           </AlertDescription>
         </Alert>
       )}
@@ -1395,6 +1425,20 @@ export default function Decisoes() {
                   </p>
                 </div>
               </div>
+
+              <div className={`flex items-center gap-2 p-3 rounded-lg ${isSegmentationComplete ? 'bg-[#e6f7ee] dark:bg-green-950' : 'bg-[#fde8e6] dark:bg-red-950'}`} data-testid={`status-segmentation-${isSegmentationComplete ? 'complete' : 'incomplete'}`}>
+                {isSegmentationComplete ? (
+                  <CheckCircle2 className="h-5 w-5 text-[#0f7a44]" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-[#a3241c]" />
+                )}
+                <div>
+                  <p className="font-medium">Segmentação de Mercado</p>
+                  <p className="text-xs text-muted-foreground">
+                    {isSegmentationComplete ? 'Completa' : 'Preencha todos os critérios exigidos para a turma'}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {!allToolsComplete && (
@@ -1415,7 +1459,7 @@ export default function Decisoes() {
           size="lg" 
           variant="outline"
           onClick={handleSaveDraft} 
-          disabled={!canEdit || saveDraftMutation.isPending} 
+          disabled={!canEdit || isNonLeader || saveDraftMutation.isPending}
           data-testid="button-save-draft"
         >
           <Save className="h-4 w-4 mr-2" />
@@ -1425,7 +1469,7 @@ export default function Decisoes() {
         <Button 
           size="lg" 
           onClick={handleSubmitDecision} 
-          disabled={!canEdit || saveDraftMutation.isPending || submitMutation.isPending || !allToolsComplete} 
+          disabled={!canEdit || isNonLeader || saveDraftMutation.isPending || submitMutation.isPending || !allToolsComplete}
           data-testid="button-submit-decision"
         >
           <Send className="h-4 w-4 mr-2" />
