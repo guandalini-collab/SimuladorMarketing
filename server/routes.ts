@@ -185,7 +185,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       cookie: {
         secure: isProduction,
         httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 24 * 7,
+        // 12 horas (antes: 7 dias). Pedido do professor (2026-10): em
+        // computadores compartilhados de laboratório, o login de um aluno
+        // ficava ativo por dias e o próximo usuário entrava direto na conta
+        // do colega se ele não clicasse em "Sair". 12h cobre um dia de aula.
+        maxAge: 1000 * 60 * 60 * 12,
         // A aplicação serve frontend e API sempre pela mesma origem (não há
         // domínio separado nem chamadas cross-site que dependam do cookie de
         // sessão), então "lax" já é suficiente em produção e evita abrir mão
