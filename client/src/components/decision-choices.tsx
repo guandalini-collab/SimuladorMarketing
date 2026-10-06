@@ -1,7 +1,11 @@
+import { useEffect, useState } from "react";
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
+import * as SliderPrimitive from "@radix-ui/react-slider";
 import type { LucideIcon } from "lucide-react";
-import { Check } from "lucide-react";
+import { Check, AlertCircle, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatarNumeroBR } from "@/lib/formatters";
+import { FormattedMoneyInput } from "@/components/formatted-input";
 
 // Controles visuais da tela de Decisões (redesign de UX, etapa 2).
 //
@@ -273,6 +277,282 @@ export function ToggleTiles({ values, onToggle, options, disabled, ariaLabel }: 
           </button>
         );
       })}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Etapa 3 — Preço e Promoção
+// ---------------------------------------------------------------------------
+
+const moeda = (v: number) => formatarNumeroBR(v || 0, "moeda");
+
+// Arredonda para cima até um número "redondo" (1, 2, 2,5 ou 5 × 10^n),
+// para o fim da escala do slider não ficar num valor quebrado.
+function niceCeil(v: number): number {
+  if (v <= 0) return 100;
+  const mag = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 2, 2.5, 5, 10]) {
+    if (m * mag >= v) return m * mag;
+  }
+  return 10 * mag;
+}
+
+function niceStep(max: number): number {
+  const raw = max / 400;
+  if (raw <= 0.01) return 0.01;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1, 2, 5, 10]) {
+    if (m * mag >= raw) return m * mag;
+  }
+  return 10 * mag;
+}
+
+// Faixas de posicionamento relativas ao preço médio da categoria do produto
+// (mesma informação de referência que a tela já exibia). Só rótulo visual.
+export function priceBand(price: number, reference?: number): { label: string; tone: string } {
+  if (!reference || reference <= 0) {
+    return price < 50
+      ? { label: "econômica", tone: "text-[#0f7a44]" }
+      : price < 100
+        ? { label: "média", tone: "text-[#1447e6]" }
+        : { label: "premium", tone: "text-[#7c3aed]" };
+  }
+  const r = price / reference;
+  if (r < 0.85) return { label: "econômica", tone: "text-[#0f7a44]" };
+  if (r <= 1.15) return { label: "de mercado", tone: "text-[#1447e6]" };
+  return { label: "premium", tone: "text-[#7c3aed]" };
+}
+
+interface PriceSliderProps {
+  value: number;
+  onChange: (value: number) => void;
+  disabled?: boolean;
+  reference?: number;
+  inputId?: string;
+}
+
+// Preço: slider para ajuste rápido + campo de digitação para o valor exato.
+// O valor gravado é o mesmo número (priceValue) de antes; o slider só
+// oferece outra forma de escolhê-lo e nunca limita o que pode ser digitado.
+export function PriceSlider({ value, onChange, disabled, reference, inputId }: PriceSliderProps) {
+  const base = Math.max((reference ?? 0) * 2.5, (value || 0) * 1.25, 100);
+  const [max, setMax] = useState(() => niceCeil(base));
+
+  // A escala só cresce quando um valor digitado passa do fim dela (ou a
+  // referência muda); nunca durante o arraste, para o polegar não "fugir".
+  useEffect(() => {
+    if (value > max || (reference && reference * 2.5 > max)) {
+      setMax(niceCeil(Math.max((reference ?? 0) * 2.5, value * 1.25, 100)));
+    }
+  }, [value, reference]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const step = niceStep(max);
+  const pct = (v: number) => Math.min(100, Math.max(0, (v / max) * 100));
+  const band = priceBand(value, reference);
+  const diff = reference ? ((value - reference) / reference) * 100 : null;
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm text-muted-foreground">Preço unitário</p>
+          <p className="text-3xl font-bold tabular-nums" data-testid="text-price-value">{moeda(value)}</p>
+          <p className="mt-1 text-sm">
+            Faixa <span className={cn("font-semibold", band.tone)}>{band.label}</span>
+            {diff !== null && (
+              <span className="text-muted-foreground">
+                {" "}({diff >= 0 ? "+" : ""}{diff.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% em relação à média da categoria)
+              </span>
+            )}
+          </p>
+        </div>
+        <div className="w-full sm:w-56">
+          <label htmlFor={inputId} className="mb-1 block text-sm font-medium">Valor exato</label>
+          <FormattedMoneyInput id={inputId} value={value} onChange={onChange} disabled={disabled} placeholder="50" testId="input-price" />
+        </div>
+      </div>
+
+      <div className="pt-2">
+        <div className="relative">
+          {/* Faixas de referência sob o trilho (só quando há preço médio). */}
+          {reference ? (
+            <div className="pointer-events-none absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-full" aria-hidden="true">
+              <div className="absolute inset-y-0 bg-emerald-300/80 dark:bg-emerald-800/70" style={{ left: 0, width: `${pct(reference * 0.85)}%` }} />
+              <div className="absolute inset-y-0 bg-blue-300/80 dark:bg-blue-800/70" style={{ left: `${pct(reference * 0.85)}%`, width: `${pct(reference * 1.15) - pct(reference * 0.85)}%` }} />
+              <div className="absolute inset-y-0 bg-violet-300/80 dark:bg-violet-800/70" style={{ left: `${pct(reference * 1.15)}%`, right: 0 }} />
+            </div>
+          ) : null}
+          <SliderPrimitive.Root
+            value={[Math.min(value || 0, max)]}
+            min={0}
+            max={max}
+            step={step}
+            disabled={disabled}
+            onValueChange={([v]) => onChange(Math.round(v * 100) / 100)}
+            aria-label="Preço unitário"
+            data-testid="slider-price"
+            className="relative flex h-6 w-full touch-none select-none items-center"
+          >
+            <SliderPrimitive.Track className={cn("relative h-2 w-full grow overflow-hidden rounded-full", reference ? "bg-transparent" : "bg-slate-200 dark:bg-slate-700")}>
+              <SliderPrimitive.Range className={cn("absolute h-full", reference ? "bg-transparent" : "bg-[#1447e6]/30")} />
+            </SliderPrimitive.Track>
+            <SliderPrimitive.Thumb className="block h-6 w-6 rounded-full border-[3px] border-[#1447e6] bg-white shadow-md transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1447e6] focus-visible:ring-offset-2 active:scale-110 disabled:pointer-events-none disabled:opacity-50" />
+          </SliderPrimitive.Root>
+          {reference ? (
+            <div className="pointer-events-none absolute top-0 -translate-x-1/2" style={{ left: `${pct(reference)}%` }} aria-hidden="true">
+              <div className="mx-auto h-6 w-0.5 bg-slate-500 dark:bg-slate-400" />
+              <p className="mt-1 whitespace-nowrap text-xs text-muted-foreground">Média {moeda(reference)}</p>
+            </div>
+          ) : null}
+        </div>
+        <div className={cn("flex justify-between text-xs text-muted-foreground", reference ? "mt-7" : "mt-1")} aria-hidden="true">
+          <span>{moeda(0)}</span>
+          <span>{moeda(max)}</span>
+        </div>
+        {reference ? (
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground" aria-hidden="true">
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-300 dark:bg-emerald-800" />Econômica: abaixo de 85% da média</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-blue-300 dark:bg-blue-800" />De mercado: 85% a 115%</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-violet-300 dark:bg-violet-800" />Premium: acima de 115%</span>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+interface MediaTileProps {
+  id: string;
+  name: string;
+  description?: string | null;
+  minCost: number;
+  checked: boolean;
+  onToggle: () => void;
+  budget: number;
+  onBudgetChange: (value: number) => void;
+  disabled?: boolean;
+}
+
+// Mídia do catálogo: liga/desliga + investimento. Mesmos campos de antes
+// (promotionMix / promotionBudgets) e mesma regra de valor mínimo, que já é
+// validada pelo servidor; aqui ela só fica visível com antecedência.
+export function MediaTile({ id, name, description, minCost, checked, onToggle, budget, onBudgetChange, disabled }: MediaTileProps) {
+  const belowMin = budget > 0 && budget < minCost;
+  return (
+    <div
+      className={cn(
+        "rounded-xl border-2 transition-colors",
+        checked ? "border-[#1447e6] bg-[#1447e6]/[0.04] dark:border-blue-400 dark:bg-blue-500/10" : "border-slate-200 dark:border-slate-800",
+      )}
+    >
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={checked}
+        disabled={disabled}
+        onClick={onToggle}
+        data-testid={`checkbox-${id}`}
+        data-state={checked ? "checked" : "unchecked"}
+        className="flex w-full items-start gap-3 rounded-xl p-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1447e6] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold leading-snug">{name}</span>
+          {description && <span className="mt-0.5 block text-xs text-muted-foreground">{description}</span>}
+          <span className="mt-1.5 block text-xs text-[#7a5300] dark:text-amber-400">Mínimo {moeda(minCost)}</span>
+        </span>
+        <span className={cn("relative mt-0.5 h-6 w-10 shrink-0 rounded-full transition-colors", checked ? "bg-[#1447e6] dark:bg-blue-500" : "bg-slate-300 dark:bg-slate-600")} aria-hidden="true">
+          <span className={cn("absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform duration-150", checked ? "translate-x-5" : "translate-x-1")} />
+        </span>
+      </button>
+      {checked && (
+        <div className="space-y-2 border-t border-[#1447e6]/20 px-3 pb-3 pt-3">
+          <div className="flex items-center gap-2">
+            <FormattedMoneyInput
+              id={`budget-${id}`}
+              value={budget || 0}
+              onChange={onBudgetChange}
+              disabled={disabled}
+              placeholder="0"
+              className="flex-1"
+              testId={`input-budget-${id}`}
+            />
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onBudgetChange(minCost)}
+              className="shrink-0 rounded-md border px-2.5 py-2 text-xs font-medium hover:bg-muted disabled:opacity-60"
+              data-testid={`button-min-${id}`}
+            >
+              Usar mínimo
+            </button>
+          </div>
+          {belowMin ? (
+            <p className="flex items-center gap-1.5 text-xs font-medium text-destructive">
+              <AlertCircle className="h-3.5 w-3.5" /> Abaixo do mínimo de {moeda(minCost)}
+            </p>
+          ) : budget >= minCost && budget > 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Quantidade estimada: {Math.floor(budget / (minCost || 1)).toLocaleString("pt-BR")} unidades
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">Defina quanto investir nesta mídia.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface BudgetMeterProps {
+  productTotal: number;
+  allProductsTotal: number;
+  available: number;
+  productName?: string;
+  mediaCount: number;
+  showAllProducts: boolean;
+}
+
+// Painel de investimento em promoção. É apenas informativo: o orçamento não
+// é um teto no envio (o servidor só valida o mínimo de cada mídia), então
+// nada aqui bloqueia ou altera a decisão.
+export function BudgetMeter({ productTotal, allProductsTotal, available, productName, mediaCount, showAllProducts }: BudgetMeterProps) {
+  const share = available > 0 ? (allProductsTotal / available) * 100 : 0;
+  const over = available > 0 && allProductsTotal > available;
+  return (
+    <div className="space-y-5">
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ffcc00] text-[#0a1830]">
+          <Megaphone className="h-5 w-5" />
+        </span>
+        <div>
+          <p className="text-sm text-muted-foreground">Investimento em promoção{productName ? ` — ${productName}` : ""}</p>
+          <p className="text-3xl font-bold tabular-nums text-[#1447e6] dark:text-blue-300" data-testid="text-total-promotion-budget">
+            {moeda(productTotal)}
+          </p>
+          <p className="text-sm text-muted-foreground">{mediaCount} {mediaCount === 1 ? "mídia selecionada" : "mídias selecionadas"}</p>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-baseline justify-between gap-2 text-sm">
+          <span className="font-medium">{showAllProducts ? "Todos os produtos" : "Uso do orçamento"}</span>
+          <span className="tabular-nums text-muted-foreground">
+            {moeda(allProductsTotal)} de {moeda(available)}
+          </span>
+        </div>
+        <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700" role="img" aria-label={`${share.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% do orçamento disponível`}>
+          <div
+            className={cn("h-full rounded-full transition-[width] duration-300", over ? "bg-[#ff8c1a]" : "bg-[#1447e6]")}
+            style={{ width: `${Math.min(100, share)}%` }}
+          />
+        </div>
+        <p className={cn("text-sm", over ? "font-medium text-[#8a4a00] dark:text-orange-300" : "text-muted-foreground")}>
+          {over
+            ? `O total planejado está ${moeda(allProductsTotal - available)} acima do orçamento disponível.`
+            : `${share.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% do orçamento disponível. O que não for investido continua disponível nas próximas rodadas.`}
+        </p>
+      </div>
     </div>
   );
 }

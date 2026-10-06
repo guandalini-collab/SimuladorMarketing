@@ -1,10 +1,5 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Save, Package, DollarSign, Store, Megaphone, Lock, AlertTriangle, Send, AlertCircle, CheckCircle2, XCircle, Users, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -25,12 +20,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { RecommendationCard } from "@/components/recommendation-card";
-import { FormattedMoneyInput } from "@/components/formatted-input";
 import { formatarNumeroBR } from "@/lib/formatters";
-import { ChoiceCards, ScaleSelector, ToggleTiles, type ChoiceOption } from "@/components/decision-choices";
+import { ChoiceCards, ScaleSelector, ToggleTiles, PriceSlider, MediaTile, BudgetMeter, type ChoiceOption } from "@/components/decision-choices";
 import {
   Award, Tag, Lightbulb, ShoppingCart, Boxes, Warehouse, Network, Handshake,
   MapPin, Map as MapIcon, Flag, Globe,
+  TrendingDown, Scale, Crown, Gem, Volume, Volume1, Volume2, Megaphone as MegaphoneIcon,
 } from "lucide-react";
 
 // Opções das decisões de Produto e Praça. Os "value" são exatamente os
@@ -72,6 +67,20 @@ const COVERAGE_OPTIONS: ChoiceOption[] = [
   { value: "regional", label: "Regional", description: "Múltiplas cidades/estados", icon: MapIcon, testId: "radio-cob-regional" },
   { value: "nacional", label: "Nacional", description: "Todo o país", icon: Flag, testId: "radio-cob-nacional" },
   { value: "internacional", label: "Internacional", description: "Exportação para outros países", icon: Globe, testId: "radio-cob-inter" },
+];
+
+const PRICE_STRATEGY_OPTIONS: ChoiceOption[] = [
+  { value: "penetracao", label: "Penetração", description: "Preço baixo para ganhar mercado rapidamente", icon: TrendingDown, testId: "radio-preco-pen" },
+  { value: "competitivo", label: "Competitivo", description: "Preço similar aos concorrentes", icon: Scale, testId: "radio-preco-comp" },
+  { value: "skimming", label: "Desnatamento (Skimming)", description: "Preço alto para maximizar margem", icon: Crown, testId: "radio-preco-skim" },
+  { value: "valor", label: "Baseado em Valor", description: "Preço baseado no valor percebido", icon: Gem, testId: "radio-preco-valor" },
+];
+
+const INTENSITY_OPTIONS: ChoiceOption[] = [
+  { value: "baixo", label: "Baixa", description: "Investimento reduzido, menor visibilidade", icon: Volume, testId: "radio-promo-intensidade-baixo" },
+  { value: "medio", label: "Média", description: "Investimento e visibilidade equilibrados", icon: Volume1, testId: "radio-promo-intensidade-medio" },
+  { value: "alto", label: "Alta", description: "Presença forte na mídia, custo mais elevado", icon: Volume2, testId: "radio-promo-intensidade-alto" },
+  { value: "intensivo", label: "Intensiva", description: "Máxima visibilidade possível, maior custo", icon: MegaphoneIcon, testId: "radio-promo-intensidade-intensivo" },
 ];
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = {
@@ -561,6 +570,24 @@ export default function Decisoes() {
 
   const totalPromotionBudget = Object.values(promotionBudgets).reduce((sum, val) => sum + val, 0);
 
+  // Total em promoção somando todos os produtos (o orçamento é da equipe).
+  // Só exibição no painel de investimento.
+  const allProductsPromotionTotal = products.reduce((sum: number, product: any) => {
+    const budgets = (product.id === selectedProductId ? promotionBudgets : productDecisions[product.id]?.promotionBudgets) || {};
+    return sum + Object.values(budgets).reduce((s: number, v) => s + (Number(v) || 0), 0);
+  }, 0);
+
+  const midiaNames: Record<string, string> = Object.fromEntries(
+    midias.map((m: any) => [m.id, m.formato ? `${m.nome} — ${m.formato}` : m.nome]),
+  );
+
+  // Categoria do setor correspondente ao produto (ex.: "Smartphone"), para
+  // usar o preço médio certo. Antes a tela mostrava sempre a 1ª categoria.
+  const productCategory = (marketSector?.categories ?? []).find((c: any) =>
+    c.id === selectedProduct?.slug ||
+    (c.name && selectedProduct?.name && c.name.toLowerCase() === String(selectedProduct.name).toLowerCase())
+  ) ?? marketSector?.categories?.[0];
+
   // Use decisionsAllowed from backend as source of truth
   // Only show locked state after initial data has loaded to avoid flash
   // During refetch (isFetching but not isLoading), keep previous state to avoid control flashes
@@ -789,7 +816,7 @@ export default function Decisoes() {
               <AlertDescription>
                 <strong>Informações do Setor:</strong> {marketSector.name} - Margem média de {marketSector.averageMargin}%. 
                 {marketSector.categories && marketSector.categories.length > 0 && (
-                  <span> Preço médio de produtos: R$ {(marketSector.categories[0].averagePrice ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.</span>
+                  <span> Preço médio da categoria {productCategory?.name ?? ''}: R$ {(productCategory?.averagePrice ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.</span>
                 )}
               </AlertDescription>
             </Alert>
@@ -892,61 +919,28 @@ export default function Decisoes() {
             </Alert>
           )}
           
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Estratégia de Precificação</CardTitle>
-                <CardDescription>Abordagem para definir preços</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RadioGroup value={priceStrategy} onValueChange={setPriceStrategy} disabled={!canEdit}>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="penetracao" id="preco-pen" data-testid="radio-preco-pen" />
-                      <Label htmlFor="preco-pen" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Penetração</p>
-                          <p className="text-sm text-muted-foreground">
-                            Preço baixo para ganhar mercado rapidamente
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="competitivo" id="preco-comp" data-testid="radio-preco-comp" />
-                      <Label htmlFor="preco-comp" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Competitivo</p>
-                          <p className="text-sm text-muted-foreground">
-                            Preço similar aos concorrentes
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="skimming" id="preco-skim" data-testid="radio-preco-skim" />
-                      <Label htmlFor="preco-skim" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Desnatamento (Skimming)</p>
-                          <p className="text-sm text-muted-foreground">
-                            Preço alto para maximizar margem
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="valor" id="preco-valor" data-testid="radio-preco-valor" />
-                      <Label htmlFor="preco-valor" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Baseado em Valor</p>
-                          <p className="text-sm text-muted-foreground">
-                            Preço baseado no valor percebido
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
+          <div className="grid gap-6">
+            <Card className="border-2 border-slate-200 dark:border-slate-800">
+              <CardHeader className="bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-[#0a1830] flex items-center justify-center">
+                    <DollarSign className="h-5 w-5 text-[#ffcc00]" />
                   </div>
-                </RadioGroup>
+                  <div>
+                    <CardTitle className="text-lg">Estratégia de Precificação</CardTitle>
+                    <CardDescription className="text-sm">Abordagem para definir preços</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <ChoiceCards
+                  value={priceStrategy}
+                  onValueChange={setPriceStrategy}
+                  disabled={!canEdit}
+                  options={PRICE_STRATEGY_OPTIONS}
+                  columns={4}
+                  ariaLabel="Estratégia de precificação"
+                />
               </CardContent>
             </Card>
 
@@ -958,34 +952,21 @@ export default function Decisoes() {
                   </div>
                   <div>
                     <CardTitle className="text-lg">Valor do Preço</CardTitle>
-                    <CardDescription>Defina o preço unitário do produto</CardDescription>
+                    <CardDescription>Arraste para ajustar ou digite o valor exato</CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-6 pt-6">
-                <div className="space-y-3">
-                  <Label htmlFor="price-input" className="text-base font-semibold">
-                    Preço Unitário
-                  </Label>
-                  <FormattedMoneyInput
-                    id="price-input"
-                    value={price}
-                    onChange={setPrice}
-                    disabled={!canEdit}
-                    placeholder="50"
-                    testId="input-price"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Digite o preço que você deseja cobrar por unidade do produto
-                  </p>
-                </div>
-                <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+              <CardContent className="space-y-4 pt-6">
+                <PriceSlider
+                  value={price}
+                  onChange={setPrice}
+                  disabled={!canEdit}
+                  reference={productCategory?.averagePrice}
+                  inputId="price-input"
+                />
+                <div className="p-4 bg-muted/50 rounded-lg">
                   <p className="text-sm">
-                    <strong>Posicionamento:</strong> Seu preço de R$ {price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} posiciona o produto na faixa{" "}
-                    {price < 50 ? "econômica" : price < 100 ? "média" : "premium"}.
-                  </p>
-                  <p className="text-sm">
-                    <strong>Margem estimada:</strong>{" "}
+                    <strong>Margem estimada para a estratégia escolhida:</strong>{" "}
                     {priceStrategy === "penetracao" ? "Baixa (15-25%)" : 
                      priceStrategy === "competitivo" ? "Média (25-40%)" :
                      priceStrategy === "skimming" ? "Alta (40-60%)" :
@@ -1085,11 +1066,11 @@ export default function Decisoes() {
             </Alert>
           )}
           
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
             <Card>
               <CardHeader>
                 <CardTitle>Catálogo de Mídias</CardTitle>
-                <CardDescription>Selecione as mídias promocionais para sua campanha</CardDescription>
+                <CardDescription>Ative as mídias da campanha e defina quanto investir em cada uma</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
@@ -1104,163 +1085,71 @@ export default function Decisoes() {
                     }, {})
                   ).map(([categoria, categoriaMidias]: [string, any]) => (
                     <div key={categoria} className="space-y-3">
-                      <h4 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground border-b pb-1">
-                        {categoria}
+                      <h4 className="flex items-center justify-between border-b pb-1 text-sm font-semibold text-muted-foreground">
+                        <span>{categoria}</span>
+                        <span className="font-normal">
+                          {categoriaMidias.filter((m: any) => promotionMix.includes(m.id)).length} de {categoriaMidias.length} ativas
+                        </span>
                       </h4>
-                      {categoriaMidias.map((midia: any) => (
-                        <div key={midia.id} className="space-y-2">
-                          <div className="flex items-start space-x-3 p-3 border rounded-lg hover-elevate">
-                            <Checkbox
-                              id={midia.id}
-                              checked={promotionMix.includes(midia.id)}
-                              onCheckedChange={() => handlePromotionToggle(midia.id)}
-                              disabled={!canEdit}
-                              data-testid={`checkbox-${midia.id}`}
-                            />
-                            <Label htmlFor={midia.id} className="flex-1 cursor-pointer">
-                              <div>
-                                <p className="font-semibold">{midia.formato ? `${midia.nome} — ${midia.formato}` : midia.nome}</p>
-                                {midia.descricao && (
-                                  <p className="text-xs text-muted-foreground mt-0.5">{midia.descricao}</p>
-                                )}
-                                <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-                                  <span>Preço unitário: {formatarNumeroBR(midia.custoUnitarioMinimo || 0, 'moeda')}</span>
-                                  <span>•</span>
-                                  <span className="text-[#7a5300] dark:text-amber-500 font-medium">Investimento mínimo: {formatarNumeroBR(midia.custoUnitarioMinimo || 0, 'moeda')}</span>
-                                </div>
-                              </div>
-                            </Label>
-                          </div>
-                          {promotionMix.includes(midia.id) && (
-                            <div className="ml-8 flex flex-col gap-2 p-3 bg-muted/30 rounded-lg">
-                              <div className="flex items-center gap-2">
-                                <Label htmlFor={`budget-${midia.id}`} className="text-sm font-medium whitespace-nowrap">
-                                  Investimento:
-                                </Label>
-                                <FormattedMoneyInput
-                                  id={`budget-${midia.id}`}
-                                  value={promotionBudgets[midia.id] || 0}
-                                  onChange={(value) => handlePromotionBudgetChange(midia.id, value)}
-                                  disabled={!canEdit}
-                                  placeholder="0"
-                                  className="max-w-xs"
-                                  testId={`input-budget-${midia.id}`}
-                                />
-                              </div>
-                              {promotionBudgets[midia.id] > 0 && promotionBudgets[midia.id] < (midia.custoUnitarioMinimo || 0) && (
-                                <Alert variant="destructive" className="py-2">
-                                  <AlertCircle className="h-3 w-3" />
-                                  <AlertDescription className="text-xs">
-                                    Valor abaixo do mínimo de {formatarNumeroBR(midia.custoUnitarioMinimo || 0, 'moeda')}
-                                  </AlertDescription>
-                                </Alert>
-                              )}
-                              {promotionBudgets[midia.id] >= (midia.custoUnitarioMinimo || 0) && (
-                                <p className="text-xs text-muted-foreground">
-                                  Quantidade estimada: {Math.floor(promotionBudgets[midia.id] / (midia.custoUnitarioMinimo || 1))} unidades
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                      <div className="grid items-start gap-3 sm:grid-cols-2">
+                        {categoriaMidias.map((midia: any) => (
+                          <MediaTile
+                            key={midia.id}
+                            id={midia.id}
+                            name={midia.formato ? `${midia.nome} — ${midia.formato}` : midia.nome}
+                            description={midia.descricao}
+                            minCost={midia.custoUnitarioMinimo || 0}
+                            checked={promotionMix.includes(midia.id)}
+                            onToggle={() => handlePromotionToggle(midia.id)}
+                            budget={promotionBudgets[midia.id] || 0}
+                            onBudgetChange={(value) => handlePromotionBudgetChange(midia.id, value)}
+                            disabled={!canEdit}
+                          />
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
 
-            <div className="space-y-6">
+            <div className="space-y-6 lg:sticky lg:top-4 lg:self-start">
+              <Card>
+                <CardContent className="pt-6">
+                  <BudgetMeter
+                    productTotal={totalPromotionBudget}
+                    allProductsTotal={allProductsPromotionTotal}
+                    available={team?.budget || 0}
+                    productName={products.length > 1 ? selectedProduct?.name : undefined}
+                    mediaCount={promotionMix.length}
+                    showAllProducts={products.length > 1}
+                  />
+                  {promotionMix.length > 0 && (
+                    <ul className="mt-4 space-y-1.5 border-t pt-4 text-sm">
+                      {promotionMix.map((id) => (
+                        <li key={id} className="flex items-baseline justify-between gap-3">
+                          <span className="min-w-0 truncate text-muted-foreground">{midiaNames[id] ?? id}</span>
+                          <span className="shrink-0 tabular-nums">{formatarNumeroBR(promotionBudgets[id] || 0, 'moeda')}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle>Intensidade de Promoção</CardTitle>
                   <CardDescription>Nível de investimento e agressividade da campanha</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <RadioGroup value={promotionIntensity} onValueChange={setPromotionIntensity} disabled={!canEdit}>
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-3 p-3 border rounded-lg hover-elevate">
-                        <RadioGroupItem value="baixo" id="promo-int-baixo" data-testid="radio-promo-intensidade-baixo" />
-                        <Label htmlFor="promo-int-baixo" className="flex-1 cursor-pointer">
-                          <div>
-                            <p className="font-semibold">Baixa</p>
-                            <p className="text-sm text-muted-foreground">
-                              Investimento reduzido, menor visibilidade
-                            </p>
-                          </div>
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-3 border rounded-lg hover-elevate">
-                        <RadioGroupItem value="medio" id="promo-int-medio" data-testid="radio-promo-intensidade-medio" />
-                        <Label htmlFor="promo-int-medio" className="flex-1 cursor-pointer">
-                          <div>
-                            <p className="font-semibold">Média</p>
-                            <p className="text-sm text-muted-foreground">
-                              Investimento e visibilidade equilibrados
-                            </p>
-                          </div>
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-3 border rounded-lg hover-elevate">
-                        <RadioGroupItem value="alto" id="promo-int-alto" data-testid="radio-promo-intensidade-alto" />
-                        <Label htmlFor="promo-int-alto" className="flex-1 cursor-pointer">
-                          <div>
-                            <p className="font-semibold">Alta</p>
-                            <p className="text-sm text-muted-foreground">
-                              Presença forte na mídia, custo mais elevado
-                            </p>
-                          </div>
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-3 border rounded-lg hover-elevate">
-                        <RadioGroupItem value="intensivo" id="promo-int-intensivo" data-testid="radio-promo-intensidade-intensivo" />
-                        <Label htmlFor="promo-int-intensivo" className="flex-1 cursor-pointer">
-                          <div>
-                            <p className="font-semibold">Intensiva</p>
-                            <p className="text-sm text-muted-foreground">
-                              Máxima visibilidade possível, maior custo
-                            </p>
-                          </div>
-                        </Label>
-                      </div>
-                    </div>
-                  </RadioGroup>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Resumo do Investimento</CardTitle>
-                  <CardDescription>Total investido em ferramentas promocionais</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg border-2 border-primary/20">
-                    <p className="text-sm text-muted-foreground mb-2">Total Investido em Promoção</p>
-                    <p className="text-3xl font-bold text-primary" data-testid="text-total-promotion-budget">
-                      R$ {totalPromotionBudget.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                  </div>
-
-                  <Alert>
-                    <DollarSign className="h-4 w-4" />
-                    <AlertDescription>
-                      <strong>Orçamento Disponível:</strong> {formatarNumeroBR(team?.budget || 0, 'moeda')}
-                      <br />
-                      <span className="text-sm text-muted-foreground">
-                        Você pode investir livremente sem obrigação de usar 100% do orçamento.
-                        Os valores não gastos ficam disponíveis para as próximas rodadas.
-                      </span>
-                    </AlertDescription>
-                  </Alert>
-
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm font-medium mb-2">Ferramentas Selecionadas ({promotionMix.length})</p>
-                    <p className="text-xs text-muted-foreground">
-                      {promotionMix.length > 0
-                        ? promotionMix.join(", ")
-                        : "Nenhuma ferramenta selecionada"}
-                    </p>
-                  </div>
+                  <ScaleSelector
+                    value={promotionIntensity}
+                    onValueChange={setPromotionIntensity}
+                    disabled={!canEdit}
+                    options={INTENSITY_OPTIONS}
+                    ariaLabel="Intensidade de promoção"
+                  />
                 </CardContent>
               </Card>
             </div>
