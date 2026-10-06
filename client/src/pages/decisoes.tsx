@@ -27,6 +27,58 @@ import {
 import { RecommendationCard } from "@/components/recommendation-card";
 import { FormattedMoneyInput } from "@/components/formatted-input";
 import { formatarNumeroBR } from "@/lib/formatters";
+import { ChoiceCards, ScaleSelector, ToggleTiles, type ChoiceOption } from "@/components/decision-choices";
+import {
+  Award, Tag, Lightbulb, ShoppingCart, Boxes, Warehouse, Network, Handshake,
+  MapPin, Map as MapIcon, Flag, Globe,
+} from "lucide-react";
+
+// Opções das decisões de Produto e Praça. Os "value" são exatamente os
+// valores já aceitos pelo servidor/motor (shared/schema.ts → marketing_mix);
+// os testId são os mesmos data-testid dos controles anteriores.
+const QUALITY_OPTIONS: ChoiceOption[] = [
+  { value: "basico", label: "Básico", description: "Funcional, atende necessidades essenciais", level: 1, testId: "radio-qual-basico" },
+  { value: "medio", label: "Médio", description: "Boa qualidade, custo-benefício equilibrado", level: 2, testId: "radio-qual-medio" },
+  { value: "premium", label: "Premium", description: "Qualidade superior, diferenciação máxima", level: 3, testId: "radio-qual-premium" },
+];
+
+const FEATURES_OPTIONS: ChoiceOption[] = [
+  { value: "basico", label: "Básico", description: "Recursos essenciais apenas", level: 1, testId: "radio-feat-basico" },
+  { value: "intermediario", label: "Intermediário", description: "Recursos principais + extras", level: 2, testId: "radio-feat-inter" },
+  { value: "completo", label: "Completo", description: "Todos os recursos possíveis", level: 3, testId: "radio-feat-completo" },
+];
+
+const POSITIONING_OPTIONS: ChoiceOption[] = [
+  { value: "qualidade", label: "Qualidade", description: "Líder em qualidade", icon: Award, testId: "radio-pos-qual" },
+  { value: "preco", label: "Preço", description: "Melhor custo-benefício", icon: Tag, testId: "radio-pos-preco" },
+  { value: "inovacao", label: "Inovação", description: "Pioneiro em tecnologia", icon: Lightbulb, testId: "radio-pos-inov" },
+];
+
+const CHANNEL_OPTIONS: ChoiceOption[] = [
+  { value: "varejo", label: "Varejo Físico", description: "Lojas físicas tradicionais", icon: Store, testId: "checkbox-varejo" },
+  { value: "ecommerce", label: "E-commerce Próprio", description: "Loja online própria", icon: ShoppingCart, testId: "checkbox-ecommerce" },
+  { value: "marketplace", label: "Marketplaces", description: "Amazon, Mercado Livre, etc", icon: Boxes, testId: "checkbox-marketplace" },
+  { value: "atacado", label: "Atacado", description: "Distribuidores e atacadistas", icon: Warehouse, testId: "checkbox-atacado" },
+  { value: "franquias", label: "Franquias", description: "Rede de franquias", icon: Network, testId: "checkbox-franquias" },
+  { value: "direto", label: "Venda Direta", description: "Vendedores e consultores", icon: Handshake, testId: "checkbox-direto" },
+];
+
+const CHANNEL_LABELS: Record<string, string> = Object.fromEntries(
+  CHANNEL_OPTIONS.map((o) => [o.value, o.label]),
+);
+
+const COVERAGE_OPTIONS: ChoiceOption[] = [
+  { value: "local", label: "Local", description: "Cidade ou região específica", icon: MapPin, testId: "radio-cob-local" },
+  { value: "regional", label: "Regional", description: "Múltiplas cidades/estados", icon: MapIcon, testId: "radio-cob-regional" },
+  { value: "nacional", label: "Nacional", description: "Todo o país", icon: Flag, testId: "radio-cob-nacional" },
+  { value: "internacional", label: "Internacional", description: "Exportação para outros países", icon: Globe, testId: "radio-cob-inter" },
+];
+
+const BUSINESS_TYPE_LABELS: Record<string, string> = {
+  b2c: "B2C",
+  b2b: "B2B",
+  hibrido: "Híbrido (B2C + B2B)",
+};
 
 interface ProductDecisions {
   productQuality: string;
@@ -743,7 +795,7 @@ export default function Decisoes() {
             </Alert>
           )}
           
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-6">
             <Card className="border-2 border-slate-200 dark:border-slate-800">
               <CardHeader className="bg-muted/30">
                 <div className="flex items-center gap-3">
@@ -757,43 +809,14 @@ export default function Decisoes() {
                 </div>
               </CardHeader>
               <CardContent className="pt-6">
-                <RadioGroup value={productQuality} onValueChange={setProductQuality} disabled={!canEdit}>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="basico" id="qual-basico" data-testid="radio-qual-basico" />
-                      <Label htmlFor="qual-basico" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Básico</p>
-                          <p className="text-sm text-muted-foreground">
-                            Funcional, atende necessidades essenciais
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="medio" id="qual-medio" data-testid="radio-qual-medio" />
-                      <Label htmlFor="qual-medio" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Médio</p>
-                          <p className="text-sm text-muted-foreground">
-                            Boa qualidade, custo-benefício equilibrado
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="premium" id="qual-premium" data-testid="radio-qual-premium" />
-                      <Label htmlFor="qual-premium" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Premium</p>
-                          <p className="text-sm text-muted-foreground">
-                            Qualidade superior, diferenciação máxima
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                  </div>
-                </RadioGroup>
+                <ChoiceCards
+                  value={productQuality}
+                  onValueChange={setProductQuality}
+                  disabled={!canEdit}
+                  options={QUALITY_OPTIONS}
+                  columns={3}
+                  ariaLabel="Qualidade do produto"
+                />
               </CardContent>
             </Card>
 
@@ -810,47 +833,18 @@ export default function Decisoes() {
                 </div>
               </CardHeader>
               <CardContent className="pt-6">
-                <RadioGroup value={productFeatures} onValueChange={setProductFeatures} disabled={!canEdit}>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="basico" id="feat-basico" data-testid="radio-feat-basico" />
-                      <Label htmlFor="feat-basico" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Básico</p>
-                          <p className="text-sm text-muted-foreground">
-                            Recursos essenciais apenas
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="intermediario" id="feat-inter" data-testid="radio-feat-inter" />
-                      <Label htmlFor="feat-inter" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Intermediário</p>
-                          <p className="text-sm text-muted-foreground">
-                            Recursos principais + extras
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="completo" id="feat-completo" data-testid="radio-feat-completo" />
-                      <Label htmlFor="feat-completo" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Completo</p>
-                          <p className="text-sm text-muted-foreground">
-                            Todos os recursos possíveis
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                  </div>
-                </RadioGroup>
+                <ChoiceCards
+                  value={productFeatures}
+                  onValueChange={setProductFeatures}
+                  disabled={!canEdit}
+                  options={FEATURES_OPTIONS}
+                  columns={3}
+                  ariaLabel="Características do produto"
+                />
               </CardContent>
             </Card>
 
-            <Card className="lg:col-span-2 border-2 border-slate-200 dark:border-slate-800">
+            <Card className="border-2 border-slate-200 dark:border-slate-800">
               <CardHeader className="bg-muted/30">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-lg bg-[#7c3aed] flex items-center justify-center">
@@ -863,37 +857,14 @@ export default function Decisoes() {
                 </div>
               </CardHeader>
               <CardContent className="pt-6">
-                <RadioGroup value={brandPositioning} onValueChange={setBrandPositioning} disabled={!canEdit}>
-                  <div className="grid md:grid-cols-3 gap-3">
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="qualidade" id="pos-qual" data-testid="radio-pos-qual" />
-                      <Label htmlFor="pos-qual" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Qualidade</p>
-                          <p className="text-sm text-muted-foreground">Líder em qualidade</p>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="preco" id="pos-preco" data-testid="radio-pos-preco" />
-                      <Label htmlFor="pos-preco" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Preço</p>
-                          <p className="text-sm text-muted-foreground">Melhor custo-benefício</p>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="inovacao" id="pos-inov" data-testid="radio-pos-inov" />
-                      <Label htmlFor="pos-inov" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Inovação</p>
-                          <p className="text-sm text-muted-foreground">Pioneiro em tecnologia</p>
-                        </div>
-                      </Label>
-                    </div>
-                  </div>
-                </RadioGroup>
+                <ChoiceCards
+                  value={brandPositioning}
+                  onValueChange={setBrandPositioning}
+                  disabled={!canEdit}
+                  options={POSITIONING_OPTIONS}
+                  columns={3}
+                  ariaLabel="Posicionamento de marca"
+                />
               </CardContent>
             </Card>
           </div>
@@ -1039,10 +1010,13 @@ export default function Decisoes() {
             <Alert>
               <Store className="h-4 w-4" />
               <AlertDescription>
-                <strong>Tipo de Negócio:</strong> {currentClass.businessType}. 
-                {currentClass.businessType === 'B2C' && ' Recomendado: Varejo, E-commerce, Marketplaces.'}
-                {currentClass.businessType === 'B2B' && ' Recomendado: Venda Direta, Atacado, Representantes.'}
-                {currentClass.businessType === 'Híbrido' && ' Combine canais B2B e B2C para maximizar alcance.'}
+                {/* O sistema grava "b2c" | "b2b" | "hibrido" (server/data/marketData.ts);
+                    antes a comparação era com "B2C"/"B2B"/"Híbrido" e a
+                    recomendação nunca aparecia. Só exibição. */}
+                <strong>Tipo de Negócio:</strong> {BUSINESS_TYPE_LABELS[currentClass.businessType] ?? currentClass.businessType}.
+                {currentClass.businessType === 'b2c' && ' Recomendado: Varejo, E-commerce, Marketplaces.'}
+                {currentClass.businessType === 'b2b' && ' Recomendado: Venda Direta, Atacado, Representantes.'}
+                {currentClass.businessType === 'hibrido' && ' Combine canais B2B e B2C para maximizar alcance.'}
               </AlertDescription>
             </Alert>
           )}
@@ -1054,32 +1028,13 @@ export default function Decisoes() {
                 <CardDescription>Selecione os canais onde o produto será vendido</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {[
-                    { value: "varejo", label: "Varejo Físico", desc: "Lojas físicas tradicionais" },
-                    { value: "ecommerce", label: "E-commerce Próprio", desc: "Loja online própria" },
-                    { value: "marketplace", label: "Marketplaces", desc: "Amazon, Mercado Livre, etc" },
-                    { value: "atacado", label: "Atacado", desc: "Distribuidores e atacadistas" },
-                    { value: "franquias", label: "Franquias", desc: "Rede de franquias" },
-                    { value: "direto", label: "Venda Direta", desc: "Vendedores e consultores" },
-                  ].map((channel) => (
-                    <div key={channel.value} className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <Checkbox
-                        id={channel.value}
-                        checked={distributionChannels.includes(channel.value)}
-                        onCheckedChange={() => handleChannelToggle(channel.value)}
-                        disabled={!canEdit}
-                        data-testid={`checkbox-${channel.value}`}
-                      />
-                      <Label htmlFor={channel.value} className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">{channel.label}</p>
-                          <p className="text-sm text-muted-foreground">{channel.desc}</p>
-                        </div>
-                      </Label>
-                    </div>
-                  ))}
-                </div>
+                <ToggleTiles
+                  values={distributionChannels}
+                  onToggle={handleChannelToggle}
+                  disabled={!canEdit}
+                  options={CHANNEL_OPTIONS}
+                  ariaLabel="Canais de distribuição"
+                />
               </CardContent>
             </Card>
 
@@ -1089,59 +1044,18 @@ export default function Decisoes() {
                 <CardDescription>Amplitude geográfica da distribuição</CardDescription>
               </CardHeader>
               <CardContent>
-                <RadioGroup value={distributionCoverage} onValueChange={setDistributionCoverage} disabled={!canEdit}>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="local" id="cob-local" data-testid="radio-cob-local" />
-                      <Label htmlFor="cob-local" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Local</p>
-                          <p className="text-sm text-muted-foreground">
-                            Cidade ou região específica
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="regional" id="cob-regional" data-testid="radio-cob-regional" />
-                      <Label htmlFor="cob-regional" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Regional</p>
-                          <p className="text-sm text-muted-foreground">
-                            Múltiplas cidades/estados
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="nacional" id="cob-nacional" data-testid="radio-cob-nacional" />
-                      <Label htmlFor="cob-nacional" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Nacional</p>
-                          <p className="text-sm text-muted-foreground">
-                            Todo o país
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg hover-elevate">
-                      <RadioGroupItem value="internacional" id="cob-inter" data-testid="radio-cob-inter" />
-                      <Label htmlFor="cob-inter" className="flex-1 cursor-pointer">
-                        <div>
-                          <p className="font-semibold">Internacional</p>
-                          <p className="text-sm text-muted-foreground">
-                            Exportação para outros países
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                  </div>
-                </RadioGroup>
+                <ScaleSelector
+                  value={distributionCoverage}
+                  onValueChange={setDistributionCoverage}
+                  disabled={!canEdit}
+                  options={COVERAGE_OPTIONS}
+                  ariaLabel="Cobertura de distribuição"
+                />
                 <div className="mt-6 p-4 bg-primary/10 rounded-lg border border-primary/20">
                   <p className="text-sm">
                     <strong className="text-primary">Canais selecionados:</strong>{" "}
                     {distributionChannels.length > 0
-                      ? distributionChannels.join(", ")
+                      ? distributionChannels.map((c) => CHANNEL_LABELS[c] ?? c).join(", ")
                       : "Nenhum canal selecionado"}
                   </p>
                 </div>

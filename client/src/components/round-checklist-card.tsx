@@ -7,7 +7,7 @@ import { Link } from "wouter";
 import { RoundCountdown } from "@/components/round-countdown";
 
 interface NextAction {
-  key: "swot" | "porter" | "bcg" | "pestel" | "mix" | "submit" | "results";
+  key: "swot" | "porter" | "bcg" | "pestel" | "segmentation" | "mix" | "submit" | "results";
   title: string;
   description: string;
   href: string;
@@ -20,6 +20,7 @@ interface RoundStatus {
   hasPorter: boolean;
   hasBcg: boolean;
   hasPestel: boolean;
+  hasSegmentation?: boolean;
   hasMarketingMixDraft: boolean;
   isSubmitted: boolean;
   hasResults: boolean;
@@ -107,6 +108,9 @@ export function RoundChecklistCard() {
     { key: "porter", label: "Forças competitivas (Porter)", completed: data.hasPorter },
     { key: "bcg", label: "Portfólio (BCG)", completed: data.hasBcg },
     { key: "pestel", label: "Ambiente externo (PESTEL)", completed: data.hasPestel },
+    // O servidor já calcula hasSegmentation e já o soma na porcentagem do
+    // roteiro, mas o item não aparecia na lista (só exibição).
+    { key: "segmentation", label: "Segmentação de mercado", completed: !!data.hasSegmentation },
     { key: "mix", label: "Decisões (4Ps)", completed: data.hasMarketingMixDraft },
     { key: "submit", label: "Submeter rodada", completed: data.isSubmitted },
     { key: "results", label: "Ver resultados", completed: data.hasResults },
