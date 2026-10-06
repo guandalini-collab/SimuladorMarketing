@@ -99,7 +99,9 @@ const authorizedProfessorEmails = new Set<string>(
 // antes). A única exceção é uma conta de verificação do próprio professor,
 // usada para entrar no sistema e checar problemas ou inconsistências.
 const STUDENT_INSTITUTIONAL_EMAIL_DOMAIN = "@aluno.iffar.edu.br";
-const STUDENT_REGISTRATION_EMAIL_EXCEPTIONS = new Set<string>(["joaoz@gmail.com"]);
+// guandalinib@gmail.com: conta de aluno de teste do professor (2026-10),
+// para testar a visão de um membro que não é líder da equipe.
+const STUDENT_REGISTRATION_EMAIL_EXCEPTIONS = new Set<string>(["joaoz@gmail.com", "guandalinib@gmail.com"]);
 
 // Segmentação de Mercado (5ª ferramenta estratégica, pedido do professor
 // 2026-09): quais segmentType ("b2c" e/ou "b2b") uma turma precisa ter
