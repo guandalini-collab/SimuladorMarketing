@@ -24,7 +24,7 @@ export const users = pgTable("users", {
   // no primeiro acesso do aluno, antes de liberar o resto do jogo. Ver
   // shared/onboarding.ts (lista de seções) e server/routes.ts (rotas
   // /api/onboarding/*). "onboardingProgress" guarda, por seção, quando o
-  // aluno começou a ler e quando concluiu (usado para impor os 2 minutos
+  // aluno começou a ler e quando concluiu (usado para impor os 50 segundos
   // mínimos do lado do servidor, não só na tela); "onboardingCompletedAt"
   // fica nulo até todas as seções obrigatórias serem concluídas.
   onboardingProgress: jsonb("onboarding_progress").notNull().default(sql`'{}'::jsonb`),

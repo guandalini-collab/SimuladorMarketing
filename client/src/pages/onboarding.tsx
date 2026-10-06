@@ -56,7 +56,7 @@ const SECTIONS: SectionContent[] = [
       "O Simula+ é um simulador educacional de marketing: você e sua equipe vão administrar uma empresa fictícia, tomando decisões reais de negócio dentro de um mercado competitivo simulado, junto com outras equipes da sua turma.",
       "O objetivo não é só \"vencer\" — é aplicar, na prática, os conceitos de marketing que você estuda em sala: segmentação, posicionamento, mix de marketing, análise competitiva, indicadores de desempenho. Cada decisão que sua equipe toma tem uma consequência mensurável no resultado da rodada.",
       "O jogo acontece em ciclos chamados Rodadas. Cada rodada tem um prazo definido pelo professor: dentro dele, sua equipe analisa o mercado, define sua estratégia e toma as decisões do Mix de Marketing. Quando a rodada fecha, o sistema calcula os resultados e uma nova rodada começa — com o mercado já tendo reagido às decisões anteriores.",
-      "Esta introdução (Rodada 0) não conta para nenhuma nota nem estatística do jogo. Ela existe só para garantir que todo mundo começa com o mesmo entendimento de como o Simula+ funciona antes de tomar a primeira decisão real. Cada seção pede uma leitura mínima de 2 minutos — não dá pra pular, mas dá pra ler com calma.",
+      "Esta introdução (Rodada 0) não conta para nenhuma nota nem estatística do jogo. Ela existe só para garantir que todo mundo começa com o mesmo entendimento de como o Simula+ funciona antes de tomar a primeira decisão real. Cada seção pede uma leitura mínima de 50 segundos — não dá pra pular, mas dá pra ler com calma.",
     ],
   },
   {

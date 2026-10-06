@@ -577,7 +577,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
      RODADA 0 — ONBOARDING OBRIGATÓRIO DO ALUNO
      ============================================
      Pedido do professor (2026-09): antes do aluno acessar o resto do jogo
-     pela primeira vez, ele precisa ler (e permanecer pelo menos 2 minutos
+     pela primeira vez, ele precisa ler (e permanecer pelo menos 50 segundos
      por seção — imposto aqui no servidor, nunca só no cliente) uma
      introdução explicando como o Simula+ funciona. As seções obrigatórias
      estão definidas em shared/onboarding.ts, a única fonte de verdade

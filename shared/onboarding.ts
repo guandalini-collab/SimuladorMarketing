@@ -10,7 +10,7 @@
  * que os dois lados fiquem dessincronizados sobre a lista de seções.
  */
 
-export const ONBOARDING_MIN_SECONDS_PER_SECTION = 120; // 2 minutos
+export const ONBOARDING_MIN_SECONDS_PER_SECTION = 50; // 50 segundos (era 120 até 2026-10, reduzido a pedido do professor)
 
 export const ONBOARDING_SECTION_IDS = [
   "boas-vindas",
