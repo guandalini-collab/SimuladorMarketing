@@ -210,7 +210,7 @@ export default function ForgotPassword() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-0 top-0 h-11 w-10 hover:bg-transparent"
+                          className="!absolute right-0 top-0 h-11 w-10 hover:bg-transparent"
                           onClick={() => setShowNewPassword(!showNewPassword)}
                           data-testid="button-toggle-new-password"
                         >
@@ -243,7 +243,7 @@ export default function ForgotPassword() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-0 top-0 h-11 w-10 hover:bg-transparent"
+                          className="!absolute right-0 top-0 h-11 w-10 hover:bg-transparent"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           data-testid="button-toggle-confirm-password"
                         >

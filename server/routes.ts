@@ -796,6 +796,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(401).json({ error: "Não autenticado" });
     }
     
+    // Manual ilustrado (versão 2026, com capturas das telas atuais). Se o
+    // arquivo não estiver presente no deploy, mantém o PDF gerado por código.
+    const manualAlunoArquivo = path.join(process.cwd(), 'server', 'assets', 'Manual_do_Aluno_Simula.pdf');
+    if (fs.existsSync(manualAlunoArquivo)) {
+      return res.download(manualAlunoArquivo, 'Manual_do_Aluno_Simula.pdf', (err) => {
+        if (err && !res.headersSent) {
+          console.error("Erro ao enviar o manual do aluno:", err);
+          res.status(500).json({ error: "Erro ao enviar o manual em PDF" });
+        }
+      });
+    }
+
     try {
       const { generateManualAlunoPDF } = await import('./services/manualAlunoPDF');
       const pdfStream = generateManualAlunoPDF();

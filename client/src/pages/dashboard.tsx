@@ -515,7 +515,7 @@ export default function Dashboard() {
                 value={lastPoint ? `${lastPoint.roi.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%` : "—"}
                 icon={Percent}
                 delta={lastPoint && prevPoint ? { value: lastPoint.roi - prevPoint.roi, text: `${pp(lastPoint.roi - prevPoint.roi)} p.p. vs. anterior` } : null}
-                note={avgRoi !== null ? `Média geral: ${avgRoi.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% · ${completedRounds.length} rodadas concluídas` : "Sem rodadas concluídas ainda"}
+                note={avgRoi !== null ? `Média geral: ${avgRoi.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% · ${teamResults.length} ${teamResults.length === 1 ? "rodada" : "rodadas"} com resultado da equipe` : "Sem rodadas concluídas ainda"}
                 series={points.map((p) => p.roi)}
                 testId="text-roi"
               />

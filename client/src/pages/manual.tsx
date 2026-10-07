@@ -52,7 +52,7 @@ export default function Manual() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'Manual_Aluno_Simula_v1.0.pdf';
+      link.download = 'Manual_do_Aluno_Simula.pdf';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -60,7 +60,7 @@ export default function Manual() {
 
       toast({
         title: "PDF gerado com sucesso!",
-        description: "O Manual do Aluno v1.0 foi baixado em formato profissional.",
+        description: "O Manual do Aluno ilustrado foi baixado.",
       });
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
