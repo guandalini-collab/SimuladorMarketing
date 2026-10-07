@@ -1,9 +1,10 @@
-import { KPICard } from "@/components/kpi-card";
+import { HealthCard, TrendKPI, computeHealth, type RoundPoint } from "@/components/dashboard-widgets";
+import { Link } from "wouter";
 import { RoundChecklistCard } from "@/components/round-checklist-card";
-import { DollarSign, TrendingUp, Users, Target, Plus, UserPlus } from "lucide-react";
+import { DollarSign, TrendingUp, Users, Target, Plus, UserPlus, PieChart, Percent, FileText, AlertTriangle, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,25 @@ export default function Dashboard() {
       };
     })
     .sort((a: any, b: any) => a.roundNumber - b.roundNumber);
+
+  // Painel de leitura rápida (etapa 4 do redesign): mesmos resultados, em
+  // ordem de rodada, para indicadores com variação e minigráficos.
+  const points: (RoundPoint & { budgetAfter: number })[] = teamResults
+    .map((r: any) => ({
+      roundNumber: rounds.find((rd: any) => rd.id === r.roundId)?.roundNumber ?? 0,
+      revenue: r.revenue || 0,
+      profit: r.profit || 0,
+      margin: r.margin || 0,
+      marketShare: r.marketShare || 0,
+      roi: r.roi || 0,
+      budgetAfter: r.budgetAfter || 0,
+    }))
+    .sort((a, b) => a.roundNumber - b.roundNumber);
+  const lastPoint = points[points.length - 1];
+  const prevPoint = points.length > 1 ? points[points.length - 2] : undefined;
+  const moedaCurta = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v || 0);
+  const pp = (v: number) => `${v >= 0 ? "+" : ""}${v.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}`;
 
   const { data: users = [] } = useQuery<any[]>({
     queryKey: ["/api/team/members"],
@@ -439,39 +459,157 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <RoundChecklistCard />
+      {(() => {
+        const health = computeHealth(points, team.budget ?? 0, team.initialBudget ?? 0);
+        const budgetDelta = (team.initialBudget ?? 0) > 0 ? ((team.budget ?? 0) / team.initialBudget - 1) * 100 : null;
+        return (
+          <>
+            {health.alert && (
+              <div className="flex items-start gap-3 rounded-xl border-2 border-[#e5484d]/40 bg-[#fde8e6] p-4 text-[#7a1a12] dark:bg-red-950/30 dark:text-red-200" role="alert" data-testid="alert-financial-risk">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-semibold">Risco financeiro</p>
+                  <p className="text-sm">{health.alert}</p>
+                </div>
+              </div>
+            )}
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <KPICard
-          title="Orçamento Disponível"
-          value={`R$ ${(team.budget ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          icon={DollarSign}
-          testId="text-budget"
-          color="green"
-        />
-        <KPICard
-          title="ROI Médio"
-          value={avgRoi !== null ? `${avgRoi.toFixed(1)}%` : "—"}
-          description={avgRoi !== null ? "Média de todas as rodadas concluídas" : "Sem rodadas concluídas ainda"}
-          icon={TrendingUp}
-          testId="text-roi"
-          color="blue"
-        />
-        <KPICard
-          title="Participação de Mercado"
-          value={latestResult ? `${latestResult.marketShare.toFixed(1)}%` : "—"}
-          description={latestResult ? `Última rodada concluída (Rodada ${lastCompletedRound?.roundNumber})` : "Sem rodadas concluídas ainda"}
-          icon={Users}
-          testId="text-reach"
-          color="violet"
-        />
-        <KPICard
-          title="Rodadas Concluídas"
-          value={completedRounds.length}
-          icon={Target}
-          testId="text-active-campaigns"
-          color="orange"
-        />
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+              <RoundChecklistCard />
+              <Card className="border-2 border-slate-200 dark:border-slate-800">
+                <CardContent className="h-full pt-6">
+                  <HealthCard health={health} />
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <TrendKPI
+                title="Orçamento disponível"
+                value={moedaCurta(team.budget ?? 0)}
+                icon={DollarSign}
+                delta={budgetDelta !== null ? { value: budgetDelta, text: `${pp(budgetDelta)}% desde o início` } : null}
+                series={points.filter((p) => p.budgetAfter > 0).map((p) => p.budgetAfter)}
+                testId="text-budget"
+              />
+              <TrendKPI
+                title="Lucro da última rodada"
+                value={lastPoint ? moedaCurta(lastPoint.profit) : "—"}
+                icon={TrendingUp}
+                delta={lastPoint && prevPoint ? { value: lastPoint.profit - prevPoint.profit, text: `${lastPoint.profit - prevPoint.profit >= 0 ? "+" : "−"}${moedaCurta(Math.abs(lastPoint.profit - prevPoint.profit))} vs. anterior` } : null}
+                note={lastPoint ? `Rodada ${lastPoint.roundNumber}` : "Sem rodadas concluídas ainda"}
+                series={points.map((p) => p.profit)}
+                testId="text-last-profit"
+              />
+              <TrendKPI
+                title="Participação de mercado"
+                value={lastPoint ? `${lastPoint.marketShare.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%` : "—"}
+                icon={PieChart}
+                delta={lastPoint && prevPoint ? { value: lastPoint.marketShare - prevPoint.marketShare, text: `${pp(lastPoint.marketShare - prevPoint.marketShare)} p.p. vs. anterior` } : null}
+                note={lastPoint ? undefined : "Sem rodadas concluídas ainda"}
+                series={points.map((p) => p.marketShare)}
+                testId="text-reach"
+              />
+              <TrendKPI
+                title="ROI da última rodada"
+                value={lastPoint ? `${lastPoint.roi.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%` : "—"}
+                icon={Percent}
+                delta={lastPoint && prevPoint ? { value: lastPoint.roi - prevPoint.roi, text: `${pp(lastPoint.roi - prevPoint.roi)} p.p. vs. anterior` } : null}
+                note={avgRoi !== null ? `Média geral: ${avgRoi.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% · ${completedRounds.length} rodadas concluídas` : "Sem rodadas concluídas ainda"}
+                series={points.map((p) => p.roi)}
+                testId="text-roi"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/50 px-5 py-4">
+              <p className="text-sm text-muted-foreground">
+                DRE, balanço e todos os indicadores por rodada e por produto ficam no relatório completo.
+              </p>
+              <Link href="/analises">
+                <Button variant="outline" data-testid="button-full-report">
+                  <FileText className="mr-2 h-4 w-4" /> Ver relatório completo <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </>
+        );
+      })()}
+
+      {/* Performance Charts */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="border-2 border-slate-200 dark:border-slate-800">
+          <CardHeader className="bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-white" />
+              </div>
+              <CardTitle className="text-lg">Receita e Lucro por Rodada</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {evolutionData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={evolutionData}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                  <XAxis dataKey="name" />
+                  <YAxis tickFormatter={(v) => moedaCurta(v)} width={90} />
+                  <Tooltip formatter={(v: number) => moedaCurta(v)} />
+                  <Legend />
+                  <Bar dataKey="receita" name="Receita" fill="#1447e6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="lucro" name="Lucro" fill="#d99a00" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground text-center px-6">
+                Os gráficos aparecem aqui assim que a primeira rodada da sua equipe for concluída.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-2 border-slate-200 dark:border-slate-800">
+          <CardHeader className="bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#1aa15c] flex items-center justify-center">
+                <Target className="h-5 w-5 text-white" />
+              </div>
+              <CardTitle className="text-lg">Tendência de ROI e Participação de Mercado</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {evolutionData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={evolutionData}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                  <XAxis dataKey="name" />
+                  <YAxis tickFormatter={(v) => `${v}%`} />
+                  <Tooltip formatter={(v: number) => `${v.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`} />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="roi"
+                    name="ROI (%)"
+                    stroke="#1447e6"
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="marketShare"
+                    name="Participação de Mercado (%)"
+                    stroke="#1aa15c"
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground text-center px-6">
+                Os gráficos aparecem aqui assim que a primeira rodada da sua equipe for concluída.
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Team Management Section */}
@@ -536,81 +674,6 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Performance Charts */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-2 border-slate-200 dark:border-slate-800">
-          <CardHeader className="bg-muted/30">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-[#1447e6] flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-white" />
-              </div>
-              <CardTitle className="text-lg">Receita e Lucro por Rodada</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            {evolutionData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={evolutionData}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="receita" name="Receita" fill="#1447e6" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="lucro" name="Lucro" fill="#ffcc00" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground text-center px-6">
-                Os gráficos aparecem aqui assim que a primeira rodada da sua equipe for concluída.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 border-slate-200 dark:border-slate-800">
-          <CardHeader className="bg-muted/30">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-[#1aa15c] flex items-center justify-center">
-                <Target className="h-5 w-5 text-white" />
-              </div>
-              <CardTitle className="text-lg">Tendência de ROI e Participação de Mercado</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            {evolutionData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={evolutionData}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="roi"
-                    name="ROI (%)"
-                    stroke="#1447e6"
-                    strokeWidth={3}
-                    dot={{ r: 5 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="marketShare"
-                    name="Participação de Mercado (%)"
-                    stroke="#1aa15c"
-                    strokeWidth={3}
-                    dot={{ r: 5 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground text-center px-6">
-                Os gráficos aparecem aqui assim que a primeira rodada da sua equipe for concluída.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }
