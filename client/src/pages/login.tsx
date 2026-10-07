@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { TrendingUp, Target, BarChart3, Users, GraduationCap, Lightbulb, AlertTriangle, Eye, EyeOff, Copy, CheckCircle2, Shield } from "lucide-react";
+import { Target, BarChart3, Users, GraduationCap, Lightbulb, AlertTriangle, Eye, EyeOff, Copy, CheckCircle2, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import logoImage from "@assets/generated_images/Simula_logo_navy_dourado_final.png";
@@ -309,68 +309,69 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Hero Section - Hidden on mobile */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#0a1830] via-[#0d2348] to-[#0a1830] p-12 flex-col justify-between relative overflow-hidden">
-        {/* Decorative Background Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-20 w-32 h-32 border-4 border-white/10 rounded-full"></div>
-          <div className="absolute bottom-40 right-20 w-48 h-48 border-4 border-[#ffcc00]/15 rounded-2xl rotate-45"></div>
-          <div className="absolute top-1/2 left-1/3 w-24 h-24 border-4 border-white/10 rounded-full"></div>
+    <div className="min-h-screen flex flex-col bg-background">
+      <div className="flex-1 flex">
+      {/* Painel institucional - oculto no celular */}
+      <div className="hidden lg:flex lg:w-[55%] bg-[#0a1830] px-14 py-12 flex-col justify-between relative overflow-hidden">
+        {/* Fundo: grade sutil, brilhos e curva de crescimento */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute inset-0 opacity-[0.05] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:48px_48px]" />
+          <div className="absolute -top-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-[#1447e6]/30 blur-3xl" />
+          <div className="absolute -bottom-40 -left-24 w-[26rem] h-[26rem] rounded-full bg-[#ffcc00]/10 blur-3xl" />
+          <svg className="absolute bottom-0 right-0 w-[85%] h-[55%]" viewBox="0 0 600 360" fill="none" preserveAspectRatio="none">
+            <path d="M0 320 C 90 300, 140 250, 210 262 S 330 190, 390 200 S 500 90, 600 60" stroke="#ffcc00" strokeOpacity="0.35" strokeWidth="2.5" />
+            <path d="M0 320 C 90 300, 140 250, 210 262 S 330 190, 390 200 S 500 90, 600 60 L 600 360 L 0 360 Z" fill="url(#simula-area)" />
+            {[[210, 262], [390, 200], [600, 60]].map(([cx, cy]) => (
+              <circle key={cx} cx={cx} cy={cy} r="5" fill="#0a1830" stroke="#ffcc00" strokeOpacity="0.7" strokeWidth="2.5" />
+            ))}
+            <defs>
+              <linearGradient id="simula-area" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ffcc00" stopOpacity="0.10" />
+                <stop offset="100%" stopColor="#ffcc00" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+          </svg>
         </div>
 
-        {/* Content */}
+        {/* Marca e proposta */}
         <div className="relative z-10">
-          <div className="mb-12">
-            <span className="inline-block text-[#ffcc00] text-xs font-bold tracking-[0.2em] uppercase mb-4 border border-[#ffcc00]/40 rounded-full px-3 py-1" data-testid="text-brand-kicker-hero">
+          <div className="flex items-center gap-3 mb-14">
+            <span className="inline-block text-[#ffcc00] text-xs font-bold tracking-[0.2em] uppercase border border-[#ffcc00]/40 rounded-full px-3 py-1" data-testid="text-brand-kicker-hero">
               Simula+
             </span>
-            <p className="text-white/80 text-base" data-testid="text-app-subtitle-hero">Simulador de Marketing no Mercado</p>
+            <p className="text-white/70 text-sm" data-testid="text-app-subtitle-hero">Simulador educacional de marketing</p>
           </div>
 
-          <div className="space-y-6 text-white/95">
-            <h2 className="text-3xl font-semibold font-accent leading-tight" data-testid="text-hero-headline">
-              Aprenda Marketing na Prática
-            </h2>
-            <p className="text-lg text-white/80 leading-relaxed max-w-md" data-testid="text-hero-description">
-              Simule estratégias reais de marketing, tome decisões estratégicas e veja os resultados em tempo real.
-            </p>
-          </div>
+          <h2 className="text-white text-4xl xl:text-5xl font-bold font-accent leading-[1.1] max-w-xl" data-testid="text-hero-headline">
+            Simulações de negócios para <span className="text-[#ffcc00]">decisões reais.</span>
+          </h2>
+          <p className="mt-5 text-lg text-white/75 leading-relaxed max-w-lg" data-testid="text-hero-description">
+            Sua equipe dirige uma empresa, disputa o mercado com as outras equipes da turma e aprende com o resultado de cada decisão.
+          </p>
         </div>
 
-        {/* Feature Cards */}
-        <div className="relative z-10 grid grid-cols-2 gap-4">
-          <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20" data-testid="card-feature-kpis">
-            <div className="h-9 w-9 rounded-lg bg-[#1447e6] flex items-center justify-center mb-2.5">
-              <TrendingUp className="h-5 w-5 text-white" />
-            </div>
-            <h3 className="text-white font-semibold mb-1">Análises em Tempo Real</h3>
-            <p className="text-white/70 text-sm">19 KPIs automáticos de performance</p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20" data-testid="card-feature-decisions">
-            <div className="h-9 w-9 rounded-lg bg-[#ffcc00] flex items-center justify-center mb-2.5">
-              <Target className="h-5 w-5 text-[#0a1830]" />
-            </div>
-            <h3 className="text-white font-semibold mb-1">Decisões Estratégicas</h3>
-            <p className="text-white/70 text-sm">4 Ps do Marketing + Ferramentas</p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20" data-testid="card-feature-insights">
-            <div className="h-9 w-9 rounded-lg bg-[#1aa15c] flex items-center justify-center mb-2.5">
-              <BarChart3 className="h-5 w-5 text-white" />
-            </div>
-            <h3 className="text-white font-semibold mb-1">Insights de Mercado</h3>
-            <p className="text-white/70 text-sm">12 setores brasileiros simulados</p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20" data-testid="card-feature-ai">
-            <div className="h-9 w-9 rounded-lg bg-[#ff8c1a] flex items-center justify-center mb-2.5">
-              <Lightbulb className="h-5 w-5 text-white" />
-            </div>
-            <h3 className="text-white font-semibold mb-1">Feedback Inteligente</h3>
-            <p className="text-white/70 text-sm">Análise educacional personalizada</p>
-          </div>
+        {/* Ciclo da rodada */}
+        <div className="relative z-10">
+          <p className="text-white/50 text-xs font-semibold tracking-[0.18em] uppercase mb-4">Como funciona cada rodada</p>
+          <ol className="grid grid-cols-4 gap-3">
+            {[
+              { n: "01", icon: Target, title: "Analisar", text: "SWOT, Porter, BCG, PESTEL e segmentação", color: "bg-[#1447e6]", id: "card-feature-kpis" },
+              { n: "02", icon: Lightbulb, title: "Decidir", text: "Produto, Preço, Praça e Promoção", color: "bg-[#ffcc00]", id: "card-feature-decisions" },
+              { n: "03", icon: Users, title: "Competir", text: "Mercado disputado com as outras equipes", color: "bg-[#1aa15c]", id: "card-feature-insights" },
+              { n: "04", icon: BarChart3, title: "Aprender", text: "Resultados, DRE e feedback comentado", color: "bg-[#ff8c1a]", id: "card-feature-ai" },
+            ].map(({ n, icon: Icon, title, text, color, id }) => (
+              <li key={n} className="relative bg-white/[0.06] backdrop-blur-sm rounded-xl border border-white/15 p-4" data-testid={id}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`h-9 w-9 rounded-lg ${color} flex items-center justify-center`}>
+                    <Icon className={`h-5 w-5 ${color === "bg-[#ffcc00]" ? "text-[#0a1830]" : "text-white"}`} />
+                  </div>
+                  <span className="font-accent text-sm font-bold text-white/35">{n}</span>
+                </div>
+                <h3 className="text-white font-semibold">{title}</h3>
+                <p className="text-white/65 text-xs leading-snug mt-1">{text}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
 
@@ -383,15 +384,15 @@ export default function Login() {
               <div className="inline-block bg-white rounded-2xl px-8 py-6 shadow-xl ring-1 ring-[#0a1830]/10 mb-3">
                 <img src={logoImage} alt="Simula+" className="h-20 w-auto mx-auto" data-testid="img-logo-main" />
               </div>
-              <p className="text-muted-foreground text-sm font-medium" data-testid="text-app-subtitle-main">Simulador de Marketing no Mercado</p>
+              <p className="text-muted-foreground text-sm font-medium" data-testid="text-app-subtitle-main">Simulador educacional de marketing</p>
             </div>
           </div>
 
           <Card className="border-2 shadow-lg">
             <CardHeader className="space-y-1 pb-4">
-              <CardTitle className="text-2xl font-accent text-center lg:text-left">Bem-vindo de volta!</CardTitle>
+              <CardTitle className="text-2xl font-accent text-center lg:text-left">Acesse o simulador</CardTitle>
               <CardDescription className="text-center lg:text-left">
-                Entre com sua conta ou crie uma nova para começar
+                Entre com sua conta ou faça seu cadastro para começar
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -548,27 +549,35 @@ export default function Login() {
             </CardContent>
           </Card>
 
-          {/* Mobile Features */}
-          <div className="lg:hidden mt-8 grid grid-cols-2 gap-3">
-            <div className="bg-card p-3 rounded-lg border text-center">
-              <TrendingUp className="h-6 w-6 text-primary mx-auto mb-1" />
-              <p className="text-xs font-medium">19 KPIs</p>
-            </div>
-            <div className="bg-card p-3 rounded-lg border text-center">
-              <Target className="h-6 w-6 text-primary mx-auto mb-1" />
-              <p className="text-xs font-medium">4 Ps Marketing</p>
-            </div>
-            <div className="bg-card p-3 rounded-lg border text-center">
-              <BarChart3 className="h-6 w-6 text-primary mx-auto mb-1" />
-              <p className="text-xs font-medium">12 Setores</p>
-            </div>
-            <div className="bg-card p-3 rounded-lg border text-center">
-              <Lightbulb className="h-6 w-6 text-primary mx-auto mb-1" />
-              <p className="text-xs font-medium">Feedback Inteligente</p>
-            </div>
-          </div>
+          {/* Ciclo da rodada no celular */}
+          <ol className="lg:hidden mt-8 grid grid-cols-2 gap-3">
+            {[
+              { icon: Target, label: "Analisar" },
+              { icon: Lightbulb, label: "Decidir" },
+              { icon: Users, label: "Competir" },
+              { icon: BarChart3, label: "Aprender" },
+            ].map(({ icon: Icon, label }, i) => (
+              <li key={label} className="bg-card p-3 rounded-lg border flex items-center gap-2">
+                <Icon className="h-5 w-5 text-primary shrink-0" />
+                <p className="text-xs font-medium"><span className="text-muted-foreground">{i + 1}.</span> {label}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
+      </div>
+
+      {/* Rodapé institucional */}
+      <footer className="bg-[#07122a] text-white/75 border-t border-white/10" data-testid="footer-login">
+        <div className="px-6 lg:px-14 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-center sm:text-left">
+          <p data-testid="text-footer-brand">
+            <span className="font-accent font-bold text-white">Simula<span className="text-[#ffcc00]">+</span></span> — Simulações de negócios para decisões reais.
+          </p>
+          <p data-testid="text-footer-author">
+            Criado por: <span className="font-semibold text-white">Professor Guandalini</span>
+          </p>
+        </div>
+      </footer>
 
       <Dialog open={mustChangePassword} onOpenChange={setMustChangePassword}>
         <DialogContent data-testid="dialog-change-password" className="sm:max-w-md">
