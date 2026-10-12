@@ -2477,18 +2477,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const isSubmitted = mixList.some(m => m.submittedAt !== null);
     const hasResults = result !== undefined;
 
-    const weights = { swot: 12, porter: 12, bcg: 12, pestel: 12, segmentation: 12, mix: 20, submit: 10, results: 10 };
-    let progress = 0;
-    if (hasSwot) progress += weights.swot;
-    if (hasPorter) progress += weights.porter;
-    if (hasBcg) progress += weights.bcg;
-    if (hasPestel) progress += weights.pestel;
-    if (hasSegmentation) progress += weights.segmentation;
-    if (hasMarketingMixDraft) progress += weights.mix;
-    if (isSubmitted) progress += weights.submit;
-    if (hasResults) progress += weights.results;
+    // Percurso obrigatório da rodada (out/2026 — services/teamJourney.ts):
+    // a ordem e o progresso do Roteiro seguem as etapas do menu.
+    const { computeJourney } = await import("./services/teamJourney");
+    const journey = await computeJourney(storage, team, currentRound, isSegmentationComplete);
+    const stepDone = (key: string) => journey.steps.find((s) => s.key === key)?.done ?? false;
+    const feedbackRequired = journey.steps.find((s) => s.key === "feedback")?.required ?? false;
 
-    type NextActionKey = "swot" | "porter" | "bcg" | "pestel" | "segmentation" | "mix" | "submit" | "results";
+    const progressItems = [
+      ...(feedbackRequired ? [stepDone("feedback")] : []),
+      stepDone("mercado"),
+      hasSwot, hasPorter, hasBcg, hasPestel, hasSegmentation,
+      stepDone("identidade"),
+      hasMarketingMixDraft,
+      isSubmitted,
+      hasResults,
+    ];
+    const progress = Math.round((progressItems.filter(Boolean).length / progressItems.length) * 100);
+
+    type NextActionKey = "feedback" | "mercado" | "swot" | "porter" | "bcg" | "pestel" | "segmentation" | "identidade" | "mix" | "submit" | "results";
     interface NextAction {
       key: NextActionKey;
       title: string;
@@ -2497,22 +2504,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     let nextAction: NextAction;
-    if (!hasSwot) {
-      nextAction = { key: "swot", title: "Análise SWOT", description: "Identifique forças, fraquezas, oportunidades e ameaças.", href: "/analises" };
+    if (feedbackRequired && !stepDone("feedback")) {
+      nextAction = { key: "feedback", title: "Feedback e Resultados", description: "Leia o que aconteceu na rodada anterior e confirme em \"Li e entendi\".", href: "/feedback" };
+    } else if (!stepDone("mercado")) {
+      nextAction = { key: "mercado", title: "Mercado do mês", description: "Leia o Simula+ News e a Análise de Mercado e confirme em \"Li e entendi\".", href: "/mercado" };
+    } else if (!hasSwot) {
+      nextAction = { key: "swot", title: "Análise SWOT", description: "Identifique forças, fraquezas, oportunidades e ameaças.", href: "/estrategia" };
     } else if (!hasPorter) {
-      nextAction = { key: "porter", title: "Forças de Porter", description: "Analise as 5 forças competitivas do mercado.", href: "/analises" };
+      nextAction = { key: "porter", title: "Forças de Porter", description: "Analise as 5 forças competitivas do mercado.", href: "/estrategia" };
     } else if (!hasBcg) {
-      nextAction = { key: "bcg", title: "Matriz BCG", description: "Classifique seus produtos no portfólio.", href: "/analises" };
+      nextAction = { key: "bcg", title: "Matriz BCG", description: "Classifique seus produtos no portfólio.", href: "/estrategia" };
     } else if (!hasPestel) {
-      nextAction = { key: "pestel", title: "Análise PESTEL", description: "Avalie fatores externos que impactam o negócio.", href: "/analises" };
+      nextAction = { key: "pestel", title: "Análise PESTEL", description: "Avalie fatores externos que impactam o negócio.", href: "/estrategia" };
     } else if (!hasSegmentation) {
-      nextAction = { key: "segmentation", title: "Segmentação de Mercado", description: "Defina os segmentos de clientes que sua empresa vai atender.", href: "/analises" };
+      nextAction = { key: "segmentation", title: "Segmentação de Mercado", description: "Defina os segmentos de clientes que sua empresa vai atender.", href: "/estrategia" };
+    } else if (!stepDone("identidade")) {
+      nextAction = { key: "identidade", title: "Identidade da Empresa", description: "Defina o nome e o slogan da empresa.", href: "/empresa" };
     } else if (!hasMarketingMixDraft) {
       nextAction = { key: "mix", title: "Decisões 4Ps", description: "Defina produto, preço, praça e promoção.", href: "/decisoes" };
     } else if (!isSubmitted) {
       nextAction = { key: "submit", title: "Submeter Rodada", description: "Envie suas decisões para processamento.", href: "/decisoes" };
     } else {
-      nextAction = { key: "results", title: "Ver Resultados", description: "Confira o desempenho da sua equipe.", href: "/" };
+      nextAction = { key: "results", title: "Ver Resultados", description: "Confira o desempenho da sua equipe.", href: "/analises" };
     }
 
     res.json({
@@ -2528,10 +2541,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       hasResults,
       progress,
       nextAction,
+      journey,
       // Prazo de fechamento da rodada (meia-noite de Brasília), usado pelo
       // front-end para exibir um contador visível de tempo restante.
       scheduledEndAt: currentRound.scheduledEndAt ?? null
     });
+  });
+
+  // Botão "Li e entendi" das etapas de leitura do percurso da rodada
+  // (services/teamJourney.ts). Qualquer membro da equipe pode confirmar;
+  // a confirmação vale para a equipe toda. Respeita a ordem das etapas.
+  app.post("/api/team/journey/ack", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "equipe") {
+      return res.status(403).json({ error: "Apenas alunos podem confirmar etapas" });
+    }
+    const team = await storage.getTeamByUser(req.session.userId);
+    if (!team) {
+      return res.status(404).json({ error: "Você não está em uma equipe" });
+    }
+    const step = req.body?.step;
+    if (step !== "feedback" && step !== "mercado") {
+      return res.status(400).json({ error: "Etapa inválida" });
+    }
+    const round = await storage.getCurrentRound(team.classId);
+    if (!round) {
+      return res.status(400).json({ error: "Nenhuma rodada ativa" });
+    }
+    const { computeJourney, saveAck } = await import("./services/teamJourney");
+    const before = await computeJourney(storage, team, round, isSegmentationComplete);
+    const target = before.steps.find((s) => s.key === step);
+    if (target?.locked) {
+      return res.status(400).json({ error: "Conclua a etapa anterior antes desta." });
+    }
+    await saveAck(team.id, round.id, step, user.id);
+    const journey = await computeJourney(storage, team, round, isSegmentationComplete);
+    res.json({ journey });
   });
 
   app.patch("/api/team/identity", async (req, res) => {
@@ -5990,6 +6038,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             details: `Você deve completar as seguintes análises antes de configurar qualquer produto: ${missingAnalyses.join(", ")}.`,
             missingAnalyses,
             nextStep: "Acesse 'Análises Estratégicas' no menu e complete todas as 5 ferramentas: SWOT, Porter, BCG, PESTEL e Segmentação de Mercado."
+          });
+        }
+
+        // Percurso obrigatório da rodada (services/teamJourney.ts): o envio
+        // final também exige as etapas de leitura e a identidade da empresa.
+        const { computeJourney } = await import("./services/teamJourney");
+        const journey = await computeJourney(storage, team, round, isSegmentationComplete);
+        const pendentes = journey.steps.filter((s) => s.key !== "mix" && s.key !== "ferramentas" && s.required && !s.done);
+        if (pendentes.length > 0) {
+          return res.status(400).json({
+            error: "⚠️ ETAPA OBRIGATÓRIA: conclua as etapas anteriores da rodada antes de enviar a decisão.",
+            details: `Falta concluir: ${pendentes.map((s) => s.label).join(", ")}.`,
           });
         }
       }

@@ -5,9 +5,10 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Circle, ArrowRight, AlertCircle, Users, ListChecks } from "lucide-react";
 import { Link } from "wouter";
 import { RoundCountdown } from "@/components/round-countdown";
+import type { Journey } from "@/components/round-journey";
 
 interface NextAction {
-  key: "swot" | "porter" | "bcg" | "pestel" | "segmentation" | "mix" | "submit" | "results";
+  key: "feedback" | "mercado" | "swot" | "porter" | "bcg" | "pestel" | "segmentation" | "identidade" | "mix" | "submit" | "results";
   title: string;
   description: string;
   href: string;
@@ -28,6 +29,7 @@ interface RoundStatus {
   nextAction: NextAction | null;
   noTeam?: boolean;
   scheduledEndAt?: string | null;
+  journey?: Journey | null;
 }
 
 interface ChecklistItem {
@@ -103,14 +105,17 @@ export function RoundChecklistCard() {
     return null;
   }
 
+  // Mesma ordem do percurso da rodada (menu numerado).
+  const step = (key: string) => data.journey?.steps.find((s) => s.key === key);
   const checklistItems: ChecklistItem[] = [
+    ...(step("feedback")?.required ? [{ key: "feedback", label: "Feedback e resultados da rodada anterior", completed: !!step("feedback")?.done }] : []),
+    { key: "mercado", label: "Simula+ News e Análise de Mercado", completed: !!step("mercado")?.done },
     { key: "swot", label: "Diagnóstico SWOT", completed: data.hasSwot },
     { key: "porter", label: "Forças competitivas (Porter)", completed: data.hasPorter },
     { key: "bcg", label: "Portfólio (BCG)", completed: data.hasBcg },
     { key: "pestel", label: "Ambiente externo (PESTEL)", completed: data.hasPestel },
-    // O servidor já calcula hasSegmentation e já o soma na porcentagem do
-    // roteiro, mas o item não aparecia na lista (só exibição).
     { key: "segmentation", label: "Segmentação de mercado", completed: !!data.hasSegmentation },
+    { key: "identidade", label: "Identidade da Empresa", completed: !!step("identidade")?.done },
     { key: "mix", label: "Decisões (4Ps)", completed: data.hasMarketingMixDraft },
     { key: "submit", label: "Submeter rodada", completed: data.isSubmitted },
     { key: "results", label: "Ver resultados", completed: data.hasResults },

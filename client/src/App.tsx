@@ -24,6 +24,7 @@ import FeedbackPage from "@/pages/feedback";
 import Manual from "@/pages/manual";
 import GuiaMidias from "@/pages/guia-midias";
 import Perfil from "@/pages/perfil";
+import { JourneyGate, JourneyAckBar } from "@/components/round-journey";
 import Login from "@/pages/login";
 import Professor from "@/pages/professor";
 import ProfessorAnalytics from "@/pages/professor-analytics";
@@ -147,16 +148,16 @@ function AuthenticatedApp() {
           <main className="flex-1 overflow-auto p-8">
             <Switch>
               <Route path="/" component={Dashboard} />
-              <Route path="/empresa" component={Empresa} />
+              <Route path="/empresa">{() => <JourneyGate path="/empresa"><Empresa /></JourneyGate>}</Route>
               <Route path="/campanhas" component={Campanhas} />
-              <Route path="/decisoes" component={Decisoes} />
-              <Route path="/mercado" component={Mercado} />
-              <Route path="/news" component={News} />
-              <Route path="/estrategia" component={Estrategia} />
-              <Route path="/analises" component={Analises} />
+              <Route path="/decisoes">{() => <JourneyGate path="/decisoes"><Decisoes /></JourneyGate>}</Route>
+              <Route path="/mercado">{() => <JourneyGate path="/mercado"><Mercado /><div className="mt-6"><JourneyAckBar step="mercado" /></div></JourneyGate>}</Route>
+              <Route path="/news">{() => <JourneyGate path="/news"><News /><div className="mt-6"><JourneyAckBar step="mercado" /></div></JourneyGate>}</Route>
+              <Route path="/estrategia">{() => <JourneyGate path="/estrategia"><Estrategia /></JourneyGate>}</Route>
+              <Route path="/analises">{() => <JourneyGate path="/analises"><Analises /><div className="mt-6"><JourneyAckBar step="feedback" /></div></JourneyGate>}</Route>
               <Route path="/insights" component={InsightsMercado} />
               <Route path="/orcamento" component={Orcamento} />
-              <Route path="/feedback" component={FeedbackPage} />
+              <Route path="/feedback">{() => <JourneyGate path="/feedback"><FeedbackPage /><div className="mt-6"><JourneyAckBar step="feedback" /></div></JourneyGate>}</Route>
               <Route path="/manual" component={Manual} />
               <Route path="/guia-midias" component={GuiaMidias} />
               <Route path="/perfil" component={Perfil} />
