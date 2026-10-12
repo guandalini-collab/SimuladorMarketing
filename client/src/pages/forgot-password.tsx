@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Mail, CheckCircle2, KeyRound, Eye, EyeOff, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import logoImage from "@assets/generated_images/Simula_logo_navy_dourado_final.png";
+import logoImage from "@assets/brand/simula-logo.svg";
 
 export default function ForgotPassword() {
   const { toast } = useToast();
@@ -113,7 +113,7 @@ export default function ForgotPassword() {
               <img 
               src={logoImage} 
               alt="Simula+" 
-              className="h-14 w-auto drop-shadow-md" 
+              className="h-12 w-auto" 
               data-testid="img-logo"
             />
             </div>

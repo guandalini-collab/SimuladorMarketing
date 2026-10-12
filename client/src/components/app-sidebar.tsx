@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Link, useLocation } from "wouter";
 import { Progress } from "@/components/ui/progress";
-import logoImage from "@assets/generated_images/Simula_logo_navy_dourado_final.png";
+import logoImage from "@assets/brand/simula-logo-compacta.svg";
 
 const menuItems = [
   {

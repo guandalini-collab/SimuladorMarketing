@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import logoImage from "@assets/generated_images/Simula_logo_navy_dourado_final.png";
+import logoImage from "@assets/brand/simula-logo-compacta.svg";
 import {
   ONBOARDING_SECTION_IDS,
   ONBOARDING_MIN_SECONDS_PER_SECTION,

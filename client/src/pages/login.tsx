@@ -15,7 +15,7 @@ import {
 import { Target, BarChart3, Users, GraduationCap, Lightbulb, AlertTriangle, Eye, EyeOff, Copy, CheckCircle2, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import logoImage from "@assets/generated_images/Simula_logo_navy_dourado_final.png";
+import logoImage from "@assets/brand/simula-logo.svg";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -381,10 +381,9 @@ export default function Login() {
           {/* Logo em destaque no painel branco */}
           <div className="flex justify-center mb-8">
             <div className="text-center">
-              <div className="inline-block bg-white rounded-2xl px-8 py-6 shadow-xl ring-1 ring-[#0a1830]/10 mb-3">
-                <img src={logoImage} alt="Simula+" className="h-20 w-auto mx-auto" data-testid="img-logo-main" />
+              <div className="inline-block bg-white rounded-2xl px-8 py-6 shadow-xl ring-1 ring-[#0a1830]/10">
+                <img src={logoImage} alt="Simula+" className="h-16 w-auto mx-auto" data-testid="img-logo-main" />
               </div>
-              <p className="text-muted-foreground text-sm font-medium" data-testid="text-app-subtitle-main">Simulador educacional de marketing</p>
             </div>
           </div>
 
