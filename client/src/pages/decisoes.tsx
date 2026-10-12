@@ -473,17 +473,24 @@ export default function Decisoes() {
     const newPromotion = adding
       ? [...promotionMix, promo]
       : promotionMix.filter((p) => p !== promo);
-    setPromotionMix(newPromotion);
     // Ao ativar uma mídia sem investimento definido, já começa com a compra
     // mínima (1 passo de quantidade), para não ficar abaixo do mínimo.
+    // Mix e investimento são atualizados numa única chamada: duas chamadas
+    // seguidas a updateCurrentDecisions partem do mesmo estado e a segunda
+    // desfaz a primeira.
     if (adding && !(promotionBudgets[promo] > 0)) {
       const midia = midias.find((m: any) => m.id === promo);
       const unitCost = Number(midia?.custoUnitarioMinimo) || 0;
       if (unitCost > 0) {
         const qty = mediaQuantityStep(unitCost);
-        setPromotionBudgets({ ...promotionBudgets, [promo]: Math.round(qty * unitCost * 100) / 100 });
+        updateCurrentDecisions({
+          promotionMix: newPromotion,
+          promotionBudgets: { ...promotionBudgets, [promo]: Math.round(qty * unitCost * 100) / 100 },
+        });
+        return;
       }
     }
+    setPromotionMix(newPromotion);
   };
 
   const handleSaveDraft = () => {
