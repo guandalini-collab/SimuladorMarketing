@@ -110,6 +110,11 @@ export async function processRoundCompletion(
 
     console.log(`[ROUND_COMPLETION] Processing results for ${teams.length} teams`);
 
+    // Boletim do mês (se existir) — adequação ao mercado, só no motor V1,
+    // que é o que roda em produção. Rodadas sem boletim: sem ajuste.
+    const { getBulletinByRound, computeMarketFit, precoMedioDaCategoria } = await import("./marketBulletin");
+    const bulletin = await getBulletinByRound(roundId);
+
     const useV2Engine = isSimEngineV2Enabled();
     console.log(`[ROUND_COMPLETION] Using simulation engine: ${useV2Engine ? "V2" : "V1 (legacy)"}`);
 
@@ -309,11 +314,19 @@ export async function processRoundCompletion(
               const budget = productBudget(productMix);
               totalProductBudget += budget;
 
+              let marketFitMultiplier = 1;
+              if (bulletin) {
+                const product = productMix.productId ? await storage.getProduct(productMix.productId) : undefined;
+                const fit = computeMarketFit(bulletin, productMix, precoMedioDaCategoria(classData.sector, product ?? null));
+                marketFitMultiplier = 1 + fit.percent / 100;
+              }
+
               const baseKPIs = calculateResults({
                 marketingMix: productMix,
                 marketEvents: activeEvents,
                 teamBudget: budget,
                 totalTeamsInRound: teams.length,
+                marketFitMultiplier,
               });
 
               const adjustedKPIs = applyStrategicImpacts(baseKPIs, analyses, productMix.priceValue, budget);

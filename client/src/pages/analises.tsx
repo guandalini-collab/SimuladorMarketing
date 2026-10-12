@@ -28,6 +28,7 @@ import { BcgMatrixChart } from "@/components/bcg-matrix-chart";
 import { AiFeedbackCard } from "@/components/ai-feedback-card";
 import { DeterministicFeedbackCard } from "@/components/deterministic-feedback-card";
 import { useQuery } from "@tanstack/react-query";
+import { MarketFitCard } from "@/components/market-bulletin";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
@@ -717,6 +718,11 @@ export default function Analises() {
           {/* Strategic Alignment Score - Highlighted Section */}
           {team && lastCompletedRound && (
             <AlignmentScoreCard teamId={team.id} roundId={lastCompletedRound.id} />
+          )}
+
+          {/* Adequação ao mercado do mês (boletim mensal) */}
+          {team && lastCompletedRound && (
+            <MarketFitCard teamId={team.id} roundId={lastCompletedRound.id} />
           )}
 
           {/* Multi-Product Results Section */}

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { Team, Class, MarketEvent } from "@shared/schema";
+import { MonthlyBulletinCard } from "@/components/market-bulletin";
 
 function capitalizeFirst(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -44,6 +45,10 @@ export default function Mercado() {
     enabled: !!currentClass?.sector,
   });
 
+  const { data: activeRoundStatus } = useQuery<{ round?: { id: string } | null }>({
+    queryKey: ["/api/rounds/active/current"],
+  });
+
   const { data: marketEvents = [] } = useQuery<MarketEvent[]>({
     queryKey: ["/api/events/class", currentClass?.id],
     enabled: !!currentClass?.id,
@@ -77,6 +82,10 @@ export default function Mercado() {
             O professor ainda não configurou o setor de mercado para esta turma. As informações de mercado estarão disponíveis após a configuração.
           </AlertDescription>
         </Alert>
+      )}
+
+      {currentClass?.id && (
+        <MonthlyBulletinCard classId={currentClass.id} activeRoundId={activeRoundStatus?.round?.id ?? null} />
       )}
 
       {currentClass?.sector && (

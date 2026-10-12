@@ -85,6 +85,10 @@ interface CalculationInputs {
     targetAudienceAge?: string;
     targetAudienceProfile?: string;
   };
+  // Adequação ao mercado do mês (services/marketBulletin.ts). Multiplica a
+  // receita junto com o impacto dos eventos. Ausente = 1 (sem ajuste), o que
+  // mantém o cálculo idêntico ao anterior.
+  marketFitMultiplier?: number;
 }
 
 export function calculateMarketingSpend(
@@ -236,7 +240,7 @@ export function calculateResults(inputs: CalculationInputs): ResultCoreMetrics {
   const placeScore = calculatePlaceScore(marketingMix, classData.businessType);
   const promotionScore = calculatePromotionScore(marketingMix);
   
-  const eventImpact = calculateEventImpact(marketEvents);
+  const eventImpact = calculateEventImpact(marketEvents) * (inputs.marketFitMultiplier ?? 1);
   
   const costs = calculateCosts(marketingMix, teamBudget, sectorData.averageMargin);
   const revenue = calculateRevenue(

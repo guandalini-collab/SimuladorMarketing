@@ -10,6 +10,7 @@ import { ensureRoundsUniqueIndex } from "./ensureRoundsUniqueIndex";
 import { ensureRoundsActiveUniqueIndex } from "./ensureRoundsActiveUniqueIndex";
 import { ensureMarketEventTypePt } from "./ensureMarketEventTypePt";
 import { ensureMarketSegmentationTable } from "./ensureMarketSegmentationTable";
+import { ensureMarketBulletinTable } from "./ensureMarketBulletinTable";
 import { ensureMarketEventSentiment } from "./ensureMarketEventSentiment";
 import { ensureOnboardingColumns } from "./ensureOnboardingColumns";
 import { ensureSuperAdminAccount } from "./ensureSuperAdminAccount";
@@ -70,6 +71,7 @@ app.use((req, res, next) => {
   await ensureRoundsActiveUniqueIndex();
   await ensureMarketEventTypePt();
   await ensureMarketSegmentationTable();
+  await ensureMarketBulletinTable();
   await ensureMarketEventSentiment();
   await ensureOnboardingColumns();
   await ensureSuperAdminAccount();

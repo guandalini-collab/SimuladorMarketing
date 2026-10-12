@@ -109,6 +109,25 @@ export async function runRoundOpenedAutomation(storage: IStorage, roundId: strin
   } catch (error) {
     console.error("[ROUND-AUTO] Erro ao gerar eventos na abertura:", error);
   }
+
+  // Boletim do mês (sempre, independentemente da chave de eventos): é ele
+  // que define a demanda e a sensibilidade a preço que pesam no resultado.
+  try {
+    const classData = await storage.getClass(round.classId);
+    const events = await storage.getMarketEventsByRound(round.id);
+    const { ensureBulletinForRound } = await import("./marketBulletin");
+    const bulletin = await ensureBulletinForRound({
+      classId: round.classId,
+      roundId: round.id,
+      roundNumber: round.roundNumber,
+      sectorId: classData?.sector,
+      businessType: classData?.businessType,
+      events,
+    });
+    if (bulletin) console.log(`[ROUND-AUTO] Boletim do mês: demanda ${bulletin.demand}, sensibilidade a preço ${bulletin.priceSensitivity}`);
+  } catch (error) {
+    console.error("[ROUND-AUTO] Erro ao gerar o boletim do mês:", error);
+  }
 }
 
 async function gerarFeedbackDaEquipe(storage: IStorage, teamId: string, roundId: string): Promise<"gerado" | "pulado"> {

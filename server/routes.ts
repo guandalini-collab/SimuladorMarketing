@@ -2897,6 +2897,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Boletins mensais de mercado da turma (services/marketBulletin.ts),
+  // com o número da rodada (mês) de cada um. Mesma regra de acesso da rota
+  // de eventos da turma.
+  app.get("/api/market-bulletins/class/:classId", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+    const classData = await storage.getClass(req.params.classId);
+    if (!classData) {
+      return res.status(404).json({ error: "Turma não encontrada" });
+    }
+    if (user.role === "equipe") {
+      const team = await storage.getTeamByUser(req.session.userId);
+      if (!team || team.classId !== req.params.classId) {
+        return res.status(403).json({ error: "Você não tem acesso a esta turma" });
+      }
+    } else if (user.role === "professor" && classData.professorId !== user.id) {
+      return res.status(403).json({ error: "Você não tem acesso a esta turma" });
+    }
+    const { getBulletinsByClass } = await import("./services/marketBulletin");
+    const bulletins = await getBulletinsByClass(req.params.classId);
+    const rounds = await storage.getRoundsByClass(req.params.classId);
+    res.json(
+      bulletins
+        .map((b) => ({ ...b, roundNumber: rounds.find((r) => r.id === b.roundId)?.roundNumber ?? null }))
+        .sort((a, b) => (a.roundNumber ?? 0) - (b.roundNumber ?? 0)),
+    );
+  });
+
+  // Adequação ao mercado do mês de uma equipe numa rodada: recalcula, pela
+  // mesma regra usada no encerramento, o ajuste de cada produto enviado.
+  app.get("/api/market-fit/:teamId/:roundId", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    const team = await storage.getTeam(req.params.teamId);
+    if (!user || !team) {
+      return res.status(404).json({ error: "Não encontrado" });
+    }
+    if (user.role === "equipe") {
+      const myTeam = await storage.getTeamByUser(req.session.userId);
+      if (!myTeam || myTeam.id !== team.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+    } else {
+      const classData = await storage.getClass(team.classId);
+      if (!classData || classData.professorId !== user.id) {
+        return res.status(403).json({ error: "Acesso negado" });
+      }
+    }
+    const { getBulletinByRound, computeMarketFit, precoMedioDaCategoria } = await import("./services/marketBulletin");
+    const bulletin = await getBulletinByRound(req.params.roundId);
+    if (!bulletin) {
+      return res.json({ bulletin: null, products: [] });
+    }
+    const classData = await storage.getClass(team.classId);
+    const mixes = (await storage.getMarketingMixesByTeamAndRound(team.id, req.params.roundId)).filter((m) => m.submittedAt !== null);
+    const products = [];
+    for (const mix of mixes) {
+      const product = mix.productId ? await storage.getProduct(mix.productId) : undefined;
+      const fit = computeMarketFit(bulletin, mix, precoMedioDaCategoria(classData?.sector, product ?? null));
+      products.push({ productId: mix.productId, productName: product?.name ?? "Produto", ...fit });
+    }
+    res.json({ bulletin, products });
+  });
+
   app.get("/api/events/class/:classId", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
