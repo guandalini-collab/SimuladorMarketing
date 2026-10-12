@@ -2920,9 +2920,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } else if (user.role === "professor" && classData.professorId !== user.id) {
       return res.status(403).json({ error: "Você não tem acesso a esta turma" });
     }
-    const { getBulletinsByClass } = await import("./services/marketBulletin");
-    const bulletins = await getBulletinsByClass(req.params.classId);
+    const { getBulletinsByClass, ensureBulletinForRound } = await import("./services/marketBulletin");
     const rounds = await storage.getRoundsByClass(req.params.classId);
+
+    // Rede de segurança: se a rodada ativa ainda não tem boletim (aberta
+    // antes desta função existir, ou a geração na abertura falhou), gera
+    // agora. ensureBulletinForRound não duplica (round_id é único).
+    const activeRound = rounds.find((r) => r.status === "active");
+    let bulletins = await getBulletinsByClass(req.params.classId);
+    if (activeRound && !bulletins.some((b) => b.roundId === activeRound.id)) {
+      const events = await storage.getMarketEventsByRound(activeRound.id);
+      await ensureBulletinForRound({
+        classId: classData.id,
+        roundId: activeRound.id,
+        roundNumber: activeRound.roundNumber,
+        sectorId: classData.sector,
+        businessType: classData.businessType,
+        events,
+      });
+      bulletins = await getBulletinsByClass(req.params.classId);
+    }
+
     res.json(
       bulletins
         .map((b) => ({ ...b, roundNumber: rounds.find((r) => r.id === b.roundId)?.roundNumber ?? null }))
