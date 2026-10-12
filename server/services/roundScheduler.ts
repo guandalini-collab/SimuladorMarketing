@@ -2,6 +2,7 @@ import type { IStorage } from "../storage";
 import { processRoundCompletion } from "./roundCompletion";
 import { autoGenerateMinimalAnalysesForAllTeams } from "./autoStrategicGeneration";
 import { carryForwardStrategyAnalyses } from "./strategyCarryForward";
+import { scheduleRoundOpenedAutomation } from "./roundAutomation";
 
 export class RoundScheduler {
   private storage: IStorage;
@@ -106,6 +107,10 @@ export class RoundScheduler {
               console.error(`[ROUND_SCHEDULER] Erro ao herdar análises estratégicas para rodada ${round.id}:`, error);
             }
           }
+
+          // Automação de IA na abertura (análises faltantes + eventos de
+          // mercado), em segundo plano — ver roundAutomation.ts.
+          scheduleRoundOpenedAutomation(this.storage, round.id);
         } catch (error: any) {
           if (error?.code === "23505") {
             console.warn(`[ROUND_SCHEDULER] Rodada ${round.id} (Round ${round.roundNumber}) não ativada: outra rodada da turma ${round.classId} foi ativada concorrentemente (conflito de índice único)`);

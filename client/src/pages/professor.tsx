@@ -1460,7 +1460,7 @@ function MarketEventsManager({ classId, rounds }: { classId: string; rounds: Rou
       toast({
         title: data.enabled ? "Geração automática ativada" : "Geração automática desativada",
         description: data.enabled
-          ? "Eventos de mercado serão gerados automaticamente ao final de cada rodada."
+          ? "A IA vai gerar eventos de mercado automaticamente na abertura de cada rodada."
           : "Nenhum evento será gerado automaticamente — só os criados manualmente ou via IA aqui.",
       });
     },
@@ -1496,7 +1496,7 @@ function MarketEventsManager({ classId, rounds }: { classId: string; rounds: Rou
       <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
         <div>
           <p className="text-sm font-medium">Geração automática de eventos</p>
-          <p className="text-xs text-muted-foreground">Quando ativada, o sistema gera eventos de mercado sozinho a cada rodada encerrada, além dos criados aqui.</p>
+          <p className="text-xs text-muted-foreground">Quando ativada, a IA gera de 2 a 4 eventos de mercado (quantidade sorteada) sempre que uma rodada é aberta, se ela ainda não tiver eventos. Você continua podendo criar, gerar ou desativar eventos aqui.</p>
         </div>
         <Switch
           checked={autoEventConfig?.enabled ?? false}

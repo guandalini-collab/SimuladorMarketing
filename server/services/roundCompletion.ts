@@ -393,6 +393,13 @@ export async function processRoundCompletion(
     // Status e endedAt já foram gravados atomicamente no claim, no início
     // desta função — nada a fazer aqui além de confirmar no log.
     console.log(`[ROUND_COMPLETION] Round ${roundId} completed successfully`);
+
+    // Feedback Inteligente (IA) de cada equipe, em segundo plano — não
+    // atrasa nem afeta o encerramento. Ver roundAutomation.ts.
+    import("./roundAutomation")
+      .then(({ scheduleRoundClosedAutomation }) => scheduleRoundClosedAutomation(storage, roundId))
+      .catch((error) => console.error("[ROUND-AUTO] Falha ao iniciar automação de encerramento:", error));
+
     return { success: true };
   } catch (error: any) {
     console.error(`[ROUND_COMPLETION] ERROR processing round ${roundId}:`, error);

@@ -1475,6 +1475,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
+    // Automação de IA na abertura (análises faltantes + eventos de mercado),
+    // em segundo plano — ver services/roundAutomation.ts.
+    import("./services/roundAutomation")
+      .then(({ scheduleRoundOpenedAutomation }) => scheduleRoundOpenedAutomation(storage, round.id))
+      .catch((error) => console.error("[ROUND-AUTO] Falha ao iniciar automação de abertura:", error));
+
     res.json(round);
   });
 
@@ -1572,6 +1578,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Não falha a criação da rodada - a equipe ainda pode preencher manualmente
       }
     }
+
+    // Automação de IA na abertura (análises faltantes + eventos de mercado),
+    // em segundo plano — ver services/roundAutomation.ts.
+    import("./services/roundAutomation")
+      .then(({ scheduleRoundOpenedAutomation }) => scheduleRoundOpenedAutomation(storage, round.id))
+      .catch((error) => console.error("[ROUND-AUTO] Falha ao iniciar automação de abertura:", error));
 
     res.json(round);
   });
