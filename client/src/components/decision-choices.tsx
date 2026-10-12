@@ -427,6 +427,7 @@ interface MediaTileProps {
   name: string;
   description?: string | null;
   minCost: number;
+  unit?: string | null;
   checked: boolean;
   onToggle: () => void;
   budget: number;
@@ -434,11 +435,50 @@ interface MediaTileProps {
   disabled?: boolean;
 }
 
-// Mídia do catálogo: liga/desliga + investimento. Mesmos campos de antes
-// (promotionMix / promotionBudgets) e mesma regra de valor mínimo, que já é
-// validada pelo servidor; aqui ela só fica visível com antecedência.
-export function MediaTile({ id, name, description, minCost, checked, onToggle, budget, onBudgetChange, disabled }: MediaTileProps) {
-  const belowMin = budget > 0 && budget < minCost;
+// Nome legível da unidade de compra do catálogo (campo "unidade").
+const UNIT_LABELS: Record<string, string> = {
+  CPM: "mil impressões",
+  CPC: "cliques",
+  CPV: "visualizações",
+};
+export function mediaUnitLabel(unit?: string | null) {
+  if (!unit) return "unidade";
+  return UNIT_LABELS[unit] ?? unit;
+}
+
+const UNIT_SINGULAR: Record<string, string> = {
+  CPM: "mil impressões",
+  CPC: "clique",
+  CPV: "visualização",
+};
+function mediaUnitSingular(unit?: string | null) {
+  if (!unit) return "unidade";
+  return UNIT_SINGULAR[unit] ?? unit;
+}
+
+// Passo do seletor de quantidade: mídias muito baratas por unidade (envio,
+// clique, mil impressões) andam de 10 em 10, 100 em 100 ou 1.000 em 1.000,
+// para que cada clique mude o investimento em algo perceptível.
+export function mediaQuantityStep(unitCost: number) {
+  if (!unitCost || unitCost >= 100) return 1;
+  return Math.pow(10, Math.ceil(Math.log10(100 / unitCost)));
+}
+
+// Mídia do catálogo: liga/desliga + quantidade comprada. O valor gravado
+// continua sendo o investimento em reais (promotionBudgets), agora calculado
+// como quantidade × custo por unidade, sem digitação de valores. A regra de
+// valor mínimo (1 unidade), validada pelo servidor, não mudou.
+export function MediaTile({ id, name, description, minCost, unit, checked, onToggle, budget, onBudgetChange, disabled }: MediaTileProps) {
+  const unitName = mediaUnitLabel(unit);
+  const step = mediaQuantityStep(minCost);
+  const quantity = minCost > 0 ? Math.floor(budget / minCost + 1e-6) : 0;
+  const exactMultiple = minCost > 0 && Math.abs(quantity * minCost - budget) < 0.01;
+  const setQuantity = (q: number) => {
+    const next = Math.max(0, Math.floor(Number.isFinite(q) ? q : 0));
+    onBudgetChange(Math.round(next * minCost * 100) / 100);
+  };
+  const [draft, setDraft] = useState<string | null>(null);
+
   return (
     <div
       className={cn(
@@ -459,7 +499,9 @@ export function MediaTile({ id, name, description, minCost, checked, onToggle, b
         <span className="min-w-0 flex-1">
           <span className="block font-semibold leading-snug">{name}</span>
           {description && <span className="mt-0.5 block text-xs text-muted-foreground">{description}</span>}
-          <span className="mt-1.5 block text-xs text-[#7a5300] dark:text-amber-400">Mínimo {moeda(minCost)}</span>
+          <span className="mt-1.5 block text-xs text-[#7a5300] dark:text-amber-400">
+            {moeda(minCost)} por {mediaUnitSingular(unit)}
+          </span>
         </span>
         <span className={cn("relative mt-0.5 h-6 w-10 shrink-0 rounded-full transition-colors", checked ? "bg-[#1447e6] dark:bg-blue-500" : "bg-slate-300 dark:bg-slate-600")} aria-hidden="true">
           <span className={cn("absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform duration-150", checked ? "translate-x-5" : "translate-x-1")} />
@@ -468,35 +510,60 @@ export function MediaTile({ id, name, description, minCost, checked, onToggle, b
       {checked && (
         <div className="space-y-2 border-t border-[#1447e6]/20 px-3 pb-3 pt-3">
           <div className="flex items-center gap-2">
-            <FormattedMoneyInput
-              id={`budget-${id}`}
-              value={budget || 0}
-              onChange={onBudgetChange}
-              disabled={disabled}
-              placeholder="0"
-              className="flex-1"
-              testId={`input-budget-${id}`}
-            />
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => onBudgetChange(minCost)}
-              className="shrink-0 rounded-md border px-2.5 py-2 text-xs font-medium hover:bg-muted disabled:opacity-60"
-              data-testid={`button-min-${id}`}
-            >
-              Usar mínimo
-            </button>
+            <div className="flex items-center overflow-hidden rounded-lg border bg-background">
+              <button
+                type="button"
+                disabled={disabled || quantity <= 0}
+                onClick={() => setQuantity(Math.max(0, quantity - step))}
+                className="flex h-9 w-9 items-center justify-center text-lg font-semibold hover:bg-muted disabled:opacity-40"
+                aria-label={`Diminuir ${step.toLocaleString("pt-BR")}`}
+                data-testid={`button-qty-minus-${id}`}
+              >
+                −
+              </button>
+              <input
+                type="text"
+                inputMode="numeric"
+                disabled={disabled}
+                value={draft ?? quantity.toLocaleString("pt-BR")}
+                onFocus={() => setDraft(String(quantity))}
+                onChange={(e) => setDraft(e.target.value.replace(/\D/g, ""))}
+                onBlur={() => { if (draft !== null) setQuantity(Number(draft || 0)); setDraft(null); }}
+                onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                className="h-9 w-20 border-x bg-transparent text-center text-sm font-semibold tabular-nums focus:outline-none disabled:opacity-60"
+                aria-label={`Quantidade de ${unitName}`}
+                data-testid={`input-qty-${id}`}
+              />
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => setQuantity(quantity + step)}
+                className="flex h-9 w-9 items-center justify-center text-lg font-semibold hover:bg-muted disabled:opacity-40"
+                aria-label={`Aumentar ${step.toLocaleString("pt-BR")}`}
+                data-testid={`button-qty-plus-${id}`}
+              >
+                +
+              </button>
+            </div>
+            <span className="min-w-0 text-xs text-muted-foreground">{unitName}</span>
           </div>
-          {belowMin ? (
+          {quantity <= 0 ? (
             <p className="flex items-center gap-1.5 text-xs font-medium text-destructive">
-              <AlertCircle className="h-3.5 w-3.5" /> Abaixo do mínimo de {moeda(minCost)}
-            </p>
-          ) : budget >= minCost && budget > 0 ? (
-            <p className="text-xs text-muted-foreground">
-              Quantidade estimada: {Math.floor(budget / (minCost || 1)).toLocaleString("pt-BR")} unidades
+              <AlertCircle className="h-3.5 w-3.5" /> Escolha pelo menos 1 ({moeda(minCost)})
             </p>
           ) : (
-            <p className="text-xs text-muted-foreground">Defina quanto investir nesta mídia.</p>
+            <div className="flex items-baseline justify-between gap-2 text-xs">
+              <span className="text-muted-foreground tabular-nums">
+                {quantity.toLocaleString("pt-BR")} × {moeda(minCost)}
+              </span>
+              <span className="text-sm font-semibold tabular-nums" data-testid={`input-budget-${id}`}>{moeda(budget)}</span>
+            </div>
+          )}
+          {quantity > 0 && !exactMultiple && (
+            <p className="text-xs text-muted-foreground">Valor salvo anteriormente. Use − ou + para recalcular pela quantidade.</p>
+          )}
+          {step > 1 && (
+            <p className="text-[11px] text-muted-foreground">Cada clique em − ou + altera a quantidade em {step.toLocaleString("pt-BR")}.</p>
           )}
         </div>
       )}

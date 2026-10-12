@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { RecommendationCard } from "@/components/recommendation-card";
 import { formatarNumeroBR } from "@/lib/formatters";
-import { ChoiceCards, ScaleSelector, ToggleTiles, PriceSlider, MediaTile, BudgetMeter, type ChoiceOption } from "@/components/decision-choices";
+import { ChoiceCards, ScaleSelector, ToggleTiles, PriceSlider, MediaTile, BudgetMeter, mediaQuantityStep, type ChoiceOption } from "@/components/decision-choices";
 import {
   Award, Tag, Lightbulb, ShoppingCart, Boxes, Warehouse, Network, Handshake,
   MapPin, Map as MapIcon, Flag, Globe,
@@ -469,10 +469,21 @@ export default function Decisoes() {
   };
 
   const handlePromotionToggle = (promo: string) => {
-    const newPromotion = promotionMix.includes(promo)
-      ? promotionMix.filter((p) => p !== promo)
-      : [...promotionMix, promo];
+    const adding = !promotionMix.includes(promo);
+    const newPromotion = adding
+      ? [...promotionMix, promo]
+      : promotionMix.filter((p) => p !== promo);
     setPromotionMix(newPromotion);
+    // Ao ativar uma mídia sem investimento definido, já começa com a compra
+    // mínima (1 passo de quantidade), para não ficar abaixo do mínimo.
+    if (adding && !(promotionBudgets[promo] > 0)) {
+      const midia = midias.find((m: any) => m.id === promo);
+      const unitCost = Number(midia?.custoUnitarioMinimo) || 0;
+      if (unitCost > 0) {
+        const qty = mediaQuantityStep(unitCost);
+        setPromotionBudgets({ ...promotionBudgets, [promo]: Math.round(qty * unitCost * 100) / 100 });
+      }
+    }
   };
 
   const handleSaveDraft = () => {
@@ -1102,6 +1113,7 @@ export default function Decisoes() {
                             name={midia.formato ? `${midia.nome} — ${midia.formato}` : midia.nome}
                             description={midia.descricao}
                             minCost={midia.custoUnitarioMinimo || 0}
+                            unit={midia.unidade}
                             checked={promotionMix.includes(midia.id)}
                             onToggle={() => handlePromotionToggle(midia.id)}
                             budget={promotionBudgets[midia.id] || 0}
