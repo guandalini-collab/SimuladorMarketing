@@ -68,6 +68,7 @@ async function gerarEventosDaRodada(storage: IStorage, roundId: string, classId:
     marketSize: classData.marketSize || undefined,
     competitionLevel: classData.competitionLevel || undefined,
     numberOfEvents: quantidade,
+    classId,
   });
 
   // Confere de novo logo antes de gravar: se o professor criou eventos

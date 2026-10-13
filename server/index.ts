@@ -13,6 +13,7 @@ import { ensureMarketSegmentationTable } from "./ensureMarketSegmentationTable";
 import { ensureMarketBulletinTable } from "./ensureMarketBulletinTable";
 import { ensureTeamRoundStepsTable } from "./ensureTeamRoundStepsTable";
 import { ensureAnnualReflectionsTable } from "./ensureAnnualReflectionsTable";
+import { ensureClassContextTable } from "./ensureClassContextTable";
 import { ensureMarketEventSentiment } from "./ensureMarketEventSentiment";
 import { ensureOnboardingColumns } from "./ensureOnboardingColumns";
 import { ensureSuperAdminAccount } from "./ensureSuperAdminAccount";
@@ -76,6 +77,7 @@ app.use((req, res, next) => {
   await ensureMarketBulletinTable();
   await ensureTeamRoundStepsTable();
   await ensureAnnualReflectionsTable();
+  await ensureClassContextTable();
   await ensureMarketEventSentiment();
   await ensureOnboardingColumns();
   await ensureSuperAdminAccount();

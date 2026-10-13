@@ -103,12 +103,15 @@ async function gerarTextoComIA(params: {
   businessType: string;
   roundNumber: number;
   events: MarketEvent[];
+  classId?: string;
 }): Promise<{ demand: Demanda; priceSensitivity: Sensibilidade; headline: string; summary: string; indicators: MarketBulletin["indicators"] } | null> {
   const listaEventos = params.events
     .filter((e) => e.active)
     .map((e) => `- ${e.title} (${e.type}, ${e.severity}, ${e.sentiment}): ${e.description}`)
     .join("\n") || "- Nenhum evento relevante neste mês.";
 
+  const { getConjunturaParaPrompt } = await import("./conjuntura");
+  const conjuntura = await getConjunturaParaPrompt(params.classId);
   const prompt = `Setor: ${params.sectorName}. Tipo de negócio: ${params.businessType}. Mês ${params.roundNumber} da simulação.
 Eventos de mercado deste mês:
 ${listaEventos}
@@ -126,7 +129,8 @@ Responda em JSON com exatamente estes campos:
     "intensidadeConcorrencia": "baixa" | "media" | "alta",
     "tendencias": ["2 a 3 tendências curtas do mês"]
   }
-}`;
+}
+Os eventos são o mês simulado; a conjuntura abaixo é o pano de fundo real do país e deve ser coerente com o boletim.${conjuntura}`;
 
   const completion = await getOpenAI().chat.completions.create({
     model: "gpt-4o-mini",
@@ -189,6 +193,7 @@ export async function ensureBulletinForRound(params: {
       businessType: params.businessType || "B2C",
       roundNumber: params.roundNumber,
       events: params.events,
+      classId: params.classId,
     });
   } catch (error) {
     console.error("[BOLETIM] IA indisponível, usando leitura pelos eventos:", error);

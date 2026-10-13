@@ -54,6 +54,8 @@ export interface EventGenerationParams {
   marketSize?: number;
   competitionLevel?: string;
   numberOfEvents?: number;
+  /** Turma: usada para incluir a Conjuntura Brasil no prompt (out/2026). */
+  classId?: string;
 }
 
 export async function generateMarketEvents(params: EventGenerationParams): Promise<GeneratedEvent[]> {
@@ -73,7 +75,9 @@ export async function generateMarketEvents(params: EventGenerationParams): Promi
 
   const category = sector.categories.find(c => c.id === productCategory || c.name === productCategory);
 
-  const prompt = buildPESTELPrompt(sector, category, businessType, marketSize, competitionLevel, numberOfEvents);
+  const { getConjunturaParaPrompt } = await import("./conjuntura");
+  const prompt = buildPESTELPrompt(sector, category, businessType, marketSize, competitionLevel, numberOfEvents)
+    + await getConjunturaParaPrompt(params.classId);
 
   try {
     const completion = await openai.chat.completions.create({

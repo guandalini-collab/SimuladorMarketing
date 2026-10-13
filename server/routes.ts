@@ -2623,6 +2623,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(out);
   });
 
+  // Conjuntura Brasil (services/conjuntura.ts): fatos econômicos e políticos
+  // atuais + indicadores oficiais do Banco Central. Leitura: professor da
+  // turma e alunos da turma. Edição: professor da turma.
+  async function podeVerTurma(userId: string, classId: string) {
+    const user = await storage.getUser(userId);
+    const classData = await storage.getClass(classId);
+    if (!user || !classData) return { ok: false as const, status: 404, user: null };
+    if (user.role === "equipe") {
+      const team = await storage.getTeamByUser(userId);
+      return team?.classId === classId ? { ok: true as const, user, classData } : { ok: false as const, status: 403, user };
+    }
+    const dono = classData.professorId === user.id || !!(user as any).isAdmin;
+    return dono ? { ok: true as const, user, classData } : { ok: false as const, status: 403, user };
+  }
+
+  async function respostaConjuntura(classId: string | null) {
+    const { getConjunturaDaTurma, getIndicadoresAtuais } = await import("./services/conjuntura");
+    const { lerMetaIndicadores } = await import("./services/economic");
+    const [conjuntura, indicadores] = await Promise.all([getConjunturaDaTurma(classId), getIndicadoresAtuais().catch(() => undefined)]);
+    return { ...conjuntura, indicadores: indicadores ? { ...indicadores, meta: lerMetaIndicadores(indicadores.source) } : null };
+  }
+
+  app.get("/api/conjuntura/minha", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: "Não autenticado" });
+    const team = await storage.getTeamByUser(req.session.userId);
+    res.json(await respostaConjuntura(team?.classId ?? null));
+  });
+
+  app.get("/api/conjuntura/class/:classId", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: "Não autenticado" });
+    const acesso = await podeVerTurma(req.session.userId, req.params.classId);
+    if (!acesso.ok) return res.status(acesso.status).json({ error: "Acesso negado" });
+    res.json(await respostaConjuntura(req.params.classId));
+  });
+
+  app.put("/api/conjuntura/class/:classId", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: "Não autenticado" });
+    const acesso = await podeVerTurma(req.session.userId, req.params.classId);
+    if (!acesso.ok || acesso.user?.role === "equipe") return res.status(403).json({ error: "Acesso negado" });
+    const texto = req.body?.texto;
+    if (texto !== null && typeof texto !== "string") return res.status(400).json({ error: "Texto inválido" });
+    const { salvarConjunturaDaTurma } = await import("./services/conjuntura");
+    await salvarConjunturaDaTurma(req.params.classId, texto, req.session.userId);
+    res.json(await respostaConjuntura(req.params.classId));
+  });
+
   // Botão "Li e entendi" das etapas de leitura do percurso da rodada
   // (services/teamJourney.ts). Qualquer membro da equipe pode confirmar;
   // a confirmação vale para a equipe toda. Respeita a ordem das etapas.
@@ -4908,7 +4954,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const analysis = economicService.analyzeEconomicCondition(economicData);
-      res.json({ ...economicData, analysis });
+      // A tela espera trend (up/down/stable) e condition (favorable/
+      // unfavorable/neutral); o serviço devolve outro vocabulário, e por isso
+      // esses campos apareciam vazios. "cenario" mantém o valor original.
+      const { lerMetaIndicadores } = await import("./services/economic");
+      const trend = economicData.exchangeRateTrend === "alta" ? "up" : economicData.exchangeRateTrend === "baixa" ? "down" : "stable";
+      const condition = ["crescimento", "expansao"].includes(analysis.condition) ? "favorable" : ["crise", "recessao"].includes(analysis.condition) ? "unfavorable" : "neutral";
+      res.json({ ...economicData, meta: lerMetaIndicadores(economicData.source), analysis: { ...analysis, cenario: analysis.condition, trend, condition } });
     } catch (error: any) {
       console.error("Erro ao buscar dados econômicos:", error);
       res.status(500).json({ error: "Erro ao buscar dados econômicos" });
@@ -5045,6 +5097,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         marketSize: classData.marketSize || undefined,
         competitionLevel: classData.competitionLevel || undefined,
         numberOfEvents: quantity,
+        classId,
       };
 
       const generatedEvents = await generateMarketEvents(params);

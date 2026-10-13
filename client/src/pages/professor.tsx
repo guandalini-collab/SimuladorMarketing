@@ -79,6 +79,7 @@ import {
 import { AlignmentTeamReport } from "@/components/alignment-team-report";
 import { DeterministicFeedbackCard } from "@/components/deterministic-feedback-card";
 import { TeamIdentityEditor } from "@/components/team-identity-editor";
+import { ConjunturaEditor } from "@/components/conjuntura";
 import {
   Accordion,
   AccordionContent,
@@ -3646,6 +3647,17 @@ export default function Professor() {
                   Equipes
                 </TabsTrigger>
                 <TabsTrigger
+                  value="alunos"
+                  className="gap-2 justify-start rounded-full border border-white/20 px-4 py-2.5 text-sm font-semibold text-white/75 hover:text-white data-[state=active]:border-transparent data-[state=active]:bg-white data-[state=active]:text-[#2f2a8f] data-[state=active]:shadow-md"
+                  data-testid="tab-alunos"
+                >
+                  <GraduationCap className="h-4 w-4" />
+                  Alunos
+                  {sortedEnrolledStudents.some((st: any) => !getStudentTeam(st.id)) && (
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">{sortedEnrolledStudents.filter((st: any) => !getStudentTeam(st.id)).length}</Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger
                   value="analisar"
                   className="gap-2 justify-start rounded-full border border-white/20 px-4 py-2.5 text-sm font-semibold text-white/75 hover:text-white data-[state=active]:border-transparent data-[state=active]:bg-white data-[state=active]:text-[#2f2a8f] data-[state=active]:shadow-md"
                   data-testid="tab-analisar"
@@ -3988,113 +4000,15 @@ export default function Professor() {
                     </div>
                   )}
 
-                  {/* Alunos Matriculados */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Alunos Matriculados</CardTitle>
-                      <CardDescription>
-                        {sortedEnrolledStudents.length} alunos na turma
-                        {(() => {
-                          const semEquipe = sortedEnrolledStudents.filter((s: any) => !getStudentTeam(s.id)).length;
-                          return semEquipe > 0 ? ` · ${semEquipe} sem equipe` : "";
-                        })()}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-2 mb-4">
-                        <Select value={selectedStudentToAdd} onValueChange={setSelectedStudentToAdd} disabled={unenrolledStudents.length === 0}>
-                          <SelectTrigger className="flex-1" data-testid="select-student-to-add">
-                            <SelectValue placeholder={unenrolledStudents.length === 0 ? "Todos matriculados" : "Selecione um aluno"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {unenrolledStudents.map((student: any) => (
-                              <SelectItem key={student.id} value={student.id}>{student.name} ({student.email})</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          onClick={() => { if (selectedStudentToAdd && selectedClass) addStudentToClassMutation.mutate({ classId: selectedClass, studentId: selectedStudentToAdd }); }}
-                          disabled={!selectedStudentToAdd || addStudentToClassMutation.isPending}
-                          data-testid="button-add-student"
-                        >
-                          <UserPlus className="h-4 w-4 mr-2" />
-                          Adicionar
-                        </Button>
-                      </div>
-
-                      {sortedEnrolledStudents.length > 0 && (
-                        <div className="border rounded-lg overflow-hidden">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Nome</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Equipe</TableHead>
-                                <TableHead className="text-right">Ações</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {sortedEnrolledStudents.map((student: any) => {
-                                const studentTeam = getStudentTeam(student.id);
-                                return (
-                                <TableRow key={student.id}>
-                                  <TableCell className="font-medium">{student.name}</TableCell>
-                                  <TableCell className="text-muted-foreground">{student.email}</TableCell>
-                                  <TableCell>
-                                    {studentTeam ? (
-                                      <Badge variant="outline" className="gap-1 bg-[#e6f7ee] text-[#0f7a44] border-transparent">
-                                        <Users className="h-3 w-3" />
-                                        {studentTeam.name}
-                                        {studentTeam.leaderId === student.id && (
-                                          <span className="ml-1 text-[10px] font-semibold">(líder)</span>
-                                        )}
-                                      </Badge>
-                                    ) : (
-                                      <Badge variant="outline" className="gap-1 bg-[#fff3d6] text-[#7a5300] border-transparent">
-                                        <AlertTriangle className="h-3 w-3" />
-                                        Sem equipe
-                                      </Badge>
-                                    )}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <div className="flex items-center justify-end gap-1">
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => setPasswordResetStudent({ studentId: student.id, studentName: student.name, studentEmail: student.email })}
-                                            data-testid={`button-reset-password-${student.id}`}
-                                          >
-                                            <Key className="h-4 w-4 text-primary" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>Redefinir Senha</TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => setStudentToRemove({ studentId: student.id, studentName: student.name })}
-                                            data-testid={`button-remove-student-${student.id}`}
-                                          >
-                                            <UserMinus className="h-4 w-4 text-destructive" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>Remover da Turma</TooltipContent>
-                                      </Tooltip>
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                  {/* Alunos Matriculados: movido para a aba "Alunos" (pedido do professor, out/2026). */}
+                  <button type="button" onClick={() => setActiveTab("alunos")} className="w-full rounded-lg border px-4 py-3 text-left text-sm hover:bg-muted/50" data-testid="link-ver-alunos">
+                    <span className="font-medium">Alunos matriculados:</span> {sortedEnrolledStudents.length}
+                    {(() => {
+                      const semEquipe = sortedEnrolledStudents.filter((s: any) => !getStudentTeam(s.id)).length;
+                      return semEquipe > 0 ? ` · ${semEquipe} sem equipe` : "";
+                    })()}
+                    <span className="ml-2 text-primary">Ver na aba Alunos →</span>
+                  </button>
 
                   {/* Orçamentos das Equipes */}
                   {teams.length > 0 && (
@@ -4210,6 +4124,128 @@ export default function Professor() {
                 </TabsContent>
 
                 {/* ======== ABA: CONFIGURAR ======== */}
+                {/* ======== ABA: ALUNOS (pedido do professor, out/2026) ======== */}
+                <TabsContent value="alunos" className="mt-6 space-y-6">
+                  <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold">Alunos</h2>
+                      <p className="text-sm text-muted-foreground">Alunos matriculados na turma e a equipe de cada um.</p>
+                    </div>
+                    <Button onClick={() => { setNewStudentData({ ...newStudentData, classId: selectedClass }); setIsCreateStudentDialogOpen(true); }} data-testid="button-create-student-alunos">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Cadastrar Aluno
+                    </Button>
+                  </div>
+                  {/* Alunos Matriculados */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Alunos Matriculados</CardTitle>
+                      <CardDescription>
+                        {sortedEnrolledStudents.length} alunos na turma
+                        {(() => {
+                          const semEquipe = sortedEnrolledStudents.filter((s: any) => !getStudentTeam(s.id)).length;
+                          return semEquipe > 0 ? ` · ${semEquipe} sem equipe` : "";
+                        })()}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center gap-2 mb-4">
+                        <Select value={selectedStudentToAdd} onValueChange={setSelectedStudentToAdd} disabled={unenrolledStudents.length === 0}>
+                          <SelectTrigger className="flex-1" data-testid="select-student-to-add">
+                            <SelectValue placeholder={unenrolledStudents.length === 0 ? "Todos matriculados" : "Selecione um aluno"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {unenrolledStudents.map((student: any) => (
+                              <SelectItem key={student.id} value={student.id}>{student.name} ({student.email})</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          onClick={() => { if (selectedStudentToAdd && selectedClass) addStudentToClassMutation.mutate({ classId: selectedClass, studentId: selectedStudentToAdd }); }}
+                          disabled={!selectedStudentToAdd || addStudentToClassMutation.isPending}
+                          data-testid="button-add-student"
+                        >
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          Adicionar
+                        </Button>
+                      </div>
+
+                      {sortedEnrolledStudents.length > 0 && (
+                        <div className="border rounded-lg overflow-hidden">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Nome</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Equipe</TableHead>
+                                <TableHead className="text-right">Ações</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {sortedEnrolledStudents.map((student: any) => {
+                                const studentTeam = getStudentTeam(student.id);
+                                return (
+                                <TableRow key={student.id}>
+                                  <TableCell className="font-medium">{student.name}</TableCell>
+                                  <TableCell className="text-muted-foreground">{student.email}</TableCell>
+                                  <TableCell>
+                                    {studentTeam ? (
+                                      <Badge variant="outline" className="gap-1 bg-[#e6f7ee] text-[#0f7a44] border-transparent">
+                                        <Users className="h-3 w-3" />
+                                        {studentTeam.name}
+                                        {studentTeam.leaderId === student.id && (
+                                          <span className="ml-1 text-[10px] font-semibold">(líder)</span>
+                                        )}
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="gap-1 bg-[#fff3d6] text-[#7a5300] border-transparent">
+                                        <AlertTriangle className="h-3 w-3" />
+                                        Sem equipe
+                                      </Badge>
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <div className="flex items-center justify-end gap-1">
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => setPasswordResetStudent({ studentId: student.id, studentName: student.name, studentEmail: student.email })}
+                                            data-testid={`button-reset-password-${student.id}`}
+                                          >
+                                            <Key className="h-4 w-4 text-primary" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Redefinir Senha</TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => setStudentToRemove({ studentId: student.id, studentName: student.name })}
+                                            data-testid={`button-remove-student-${student.id}`}
+                                          >
+                                            <UserMinus className="h-4 w-4 text-destructive" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Remover da Turma</TooltipContent>
+                                      </Tooltip>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                </TabsContent>
+
                 <TabsContent value="configurar" className="mt-6 space-y-6">
                   {/* Item 2 (problemas relatados pelo professor, 2026-09):
                       esta aba misturava ações do dia a dia (agendar rodada,
@@ -4240,6 +4276,9 @@ export default function Professor() {
                       </Button>
                     </CardContent>
                   </Card>
+
+                  {/* Conjuntura Brasil usada pela IA (out/2026) */}
+                  {selectedClass && <ConjunturaEditor classId={selectedClass} />}
 
                   {/* Seção: Relatório de Acessos */}
                   <Collapsible className="border rounded-lg">

@@ -305,6 +305,19 @@ export function ProfessorLayout({ children }: ProfessorLayoutProps) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            {/* Pedido do professor (out/2026): botão Sair visível, igual ao
+                da tela do aluno. O "Sair" do menu acima continua. */}
+            <Button
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              onClick={handleLogout}
+              data-testid="button-logout-header"
+              aria-label="Sair"
+              title="Sair"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
         

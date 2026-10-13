@@ -216,7 +216,8 @@ export async function generateStrategicAnalyses(params: StrategyGenerationParams
 
   const sector = classData.sector ? marketSectors.find(s => s.id === classData.sector) : undefined;
 
-  const prompt = buildStrategyPrompt(classData, teamData, roundNumber, sector);
+  const { getConjunturaParaPrompt } = await import("./conjuntura");
+  const prompt = buildStrategyPrompt(classData, teamData, roundNumber, sector) + await getConjunturaParaPrompt(classData.id);
 
   try {
     const completion = await openai.chat.completions.create({
@@ -605,7 +606,8 @@ export async function generateMinimalStrategicAnalyses(params: StrategyGeneratio
   const { classData, teamData, roundNumber } = params;
 
   const sector = classData.sector ? marketSectors.find(s => s.id === classData.sector) : undefined;
-  const prompt = buildMinimalStrategyPrompt(classData, teamData, roundNumber, sector);
+  const { getConjunturaParaPrompt } = await import("./conjuntura");
+  const prompt = buildMinimalStrategyPrompt(classData, teamData, roundNumber, sector) + await getConjunturaParaPrompt(classData.id);
 
   try {
     const completion = await openai.chat.completions.create({

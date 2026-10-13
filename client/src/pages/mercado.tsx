@@ -10,6 +10,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { Team, Class, MarketEvent } from "@shared/schema";
 import { MonthlyBulletinCard } from "@/components/market-bulletin";
+import { ConjunturaCard } from "@/components/conjuntura";
 
 function capitalizeFirst(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -170,7 +171,7 @@ export default function Mercado() {
           <TabsTrigger value="concorrencia" data-testid="tab-concorrencia" disabled={!currentClass?.sector}>
             Concorrência
           </TabsTrigger>
-          <TabsTrigger value="economia" data-testid="tab-economia">Economia</TabsTrigger>
+          <TabsTrigger value="economia" data-testid="tab-economia">Economia e Política</TabsTrigger>
         </TabsList>
 
         <TabsContent value="setor" className="space-y-6 mt-6">
@@ -504,6 +505,9 @@ export default function Mercado() {
         </TabsContent>
 
         <TabsContent value="economia" className="space-y-6 mt-6">
+          {/* Conjuntura Brasil (out/2026): indicadores oficiais do Banco
+              Central e fatos econômicos e políticos atuais. */}
+          <ConjunturaCard />
           {loadingEconomic ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">

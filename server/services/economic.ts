@@ -15,85 +15,114 @@ export class EconomicService {
   };
   private readonly CACHE_DURATION = 3600000; // 1 hora em ms
 
+  /**
+   * Indicadores oficiais (pedido do professor, out/2026): antes, só o câmbio
+   * era real; inflação, juros, PIB e confiança eram sorteados. Agora todos
+   * vêm do Sistema Gerenciador de Séries Temporais do Banco Central (SGS),
+   * API pública e sem chave. Se uma série falhar, usa o último valor salvo
+   * (ou um valor de referência), nunca um número aleatório.
+   *   432   Selic meta (% a.a.)              13522 IPCA acumulado 12 meses (%)
+   *   1     Dólar PTAX venda (R$)            7326  PIB, variação real no ano (%)
+   *   4393  Confiança do Consumidor (Fecomercio-SP; acima de 100 = otimismo)
+   *   24369 Taxa de desocupação (PNAD Contínua, %)
+   * As datas de referência e a desocupação vão em "source" (JSON), para não
+   * alterar a tabela economic_data.
+   */
+  private async serieBCB(codigo: number): Promise<{ valor: number; data: string } | null> {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 8000);
+      const r = await fetch(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.${codigo}/dados/ultimos/1?formato=json`, { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!r.ok) return null;
+      const arr = await r.json();
+      const ult = Array.isArray(arr) ? arr[arr.length - 1] : null;
+      const valor = ult ? Number(String(ult.valor).replace(",", ".")) : NaN;
+      return Number.isFinite(valor) ? { valor, data: String(ult.data) } : null;
+    } catch {
+      return null;
+    }
+  }
+
   async fetchLatestData(): Promise<InsertEconomicData> {
     const now = Date.now();
     if (this.cache.data && now - this.cache.timestamp < this.CACHE_DURATION) {
-      return {
-        date: this.cache.data.date,
-        exchangeRateUSD: this.cache.data.exchangeRateUSD,
-        exchangeRateTrend: this.cache.data.exchangeRateTrend,
-        inflationRate: this.cache.data.inflationRate,
-        interestRate: this.cache.data.interestRate,
-        gdpGrowth: this.cache.data.gdpGrowth,
-        consumerConfidence: this.cache.data.consumerConfidence,
-        source: this.cache.data.source,
-      };
+      const { id, createdAt, ...resto } = this.cache.data;
+      return resto as InsertEconomicData;
     }
 
-    try {
-      const response = await fetch(this.API_URL);
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
+    const [selic, ipca, ptax, pib, confianca, desocupacao] = await Promise.all([
+      this.serieBCB(432), this.serieBCB(13522), this.serieBCB(1),
+      this.serieBCB(7326), this.serieBCB(4393), this.serieBCB(24369),
+    ]);
 
-      const data: ExchangeRateResponse = await response.json();
-      const brlRate = data.rates.BRL;
-
-      const previousRate = this.cache.data?.exchangeRateUSD || brlRate;
-      const trend = this.calculateTrend(brlRate, previousRate);
-
-      const economicData: InsertEconomicData = {
-        date: new Date(data.time_last_update_utc),
-        exchangeRateUSD: brlRate,
-        exchangeRateTrend: trend,
-        inflationRate: this.simulateInflation(brlRate),
-        interestRate: this.simulateInterestRate(),
-        gdpGrowth: this.simulateGDPGrowth(),
-        consumerConfidence: this.simulateConsumerConfidence(trend),
-        source: "open.er-api.com",
-      };
-
-      const cacheDate = economicData.date || new Date();
-      this.cache = {
-        data: {
-          id: "",
-          date: cacheDate,
-          exchangeRateUSD: economicData.exchangeRateUSD,
-          exchangeRateTrend: economicData.exchangeRateTrend || null,
-          inflationRate: economicData.inflationRate || null,
-          interestRate: economicData.interestRate || null,
-          gdpGrowth: economicData.gdpGrowth || null,
-          consumerConfidence: economicData.consumerConfidence || null,
-          source: economicData.source || "",
-          createdAt: cacheDate,
-        },
-        timestamp: now,
-      };
-
-      return economicData;
-    } catch (error) {
-      console.error("Error fetching economic data:", error);
-      const fallbackData = this.getFallbackData();
-      
-      const fallbackCacheDate = fallbackData.date || new Date();
-      this.cache = {
-        data: {
-          id: "",
-          date: fallbackCacheDate,
-          exchangeRateUSD: fallbackData.exchangeRateUSD,
-          exchangeRateTrend: fallbackData.exchangeRateTrend || null,
-          inflationRate: fallbackData.inflationRate || null,
-          interestRate: fallbackData.interestRate || null,
-          gdpGrowth: fallbackData.gdpGrowth || null,
-          consumerConfidence: fallbackData.consumerConfidence || null,
-          source: fallbackData.source || "",
-          createdAt: fallbackCacheDate,
-        },
-        timestamp: now,
-      };
-      
-      return fallbackData;
+    let cambio = ptax?.valor ?? null;
+    let cambioFonte = ptax ? "BCB" : null;
+    if (cambio === null) {
+      try {
+        const response = await fetch(this.API_URL);
+        if (response.ok) {
+          const data: ExchangeRateResponse = await response.json();
+          cambio = data.rates.BRL;
+          cambioFonte = "open.er-api.com";
+        }
+      } catch { /* segue para o valor anterior */ }
     }
+
+    const anterior = this.cache.data;
+    const ref = this.getFallbackData();
+    const exchangeRateUSD = cambio ?? anterior?.exchangeRateUSD ?? ref.exchangeRateUSD;
+    const previousRate = anterior?.exchangeRateUSD || exchangeRateUSD;
+
+    const algumaSerie = selic || ipca || ptax || pib || confianca || desocupacao;
+    const meta = {
+      fonte: algumaSerie
+        ? "Banco Central do Brasil (SGS)"
+        : lerMetaIndicadores(anterior?.source)?.fonte ?? "Últimos valores conhecidos (Banco Central indisponível)",
+      referencias: {
+        // A série da Selic meta é diária e já vem preenchida até a próxima
+        // reunião do Copom; a data não ajuda o leitor, então vale "vigente".
+        selic: selic ? "vigente" : null,
+        ipca12m: ipca?.data ?? null,
+        cambio: ptax?.data ?? null,
+        pib: pib?.data ?? null,
+        confianca: confianca?.data ?? null,
+        desocupacao: desocupacao?.data ?? null,
+      },
+      cambioFonte,
+      desocupacao: desocupacao?.valor ?? (anterior ? lerMetaIndicadores(anterior.source)?.desocupacao ?? null : null),
+      confiancaEscala: "fecomercio-0-200",
+    };
+
+    const economicData: InsertEconomicData = {
+      date: new Date(),
+      exchangeRateUSD,
+      exchangeRateTrend: this.calculateTrend(exchangeRateUSD, previousRate),
+      inflationRate: ipca?.valor ?? anterior?.inflationRate ?? ref.inflationRate,
+      interestRate: selic?.valor ?? anterior?.interestRate ?? ref.interestRate,
+      gdpGrowth: pib?.valor ?? anterior?.gdpGrowth ?? ref.gdpGrowth,
+      consumerConfidence: confianca?.valor ?? anterior?.consumerConfidence ?? ref.consumerConfidence,
+      source: JSON.stringify(meta),
+    };
+
+    if (!algumaSerie) console.error("[ECONOMIA] Banco Central indisponível — mantidos os últimos valores conhecidos.");
+
+    this.cache = {
+      data: {
+        id: "",
+        date: economicData.date as Date,
+        exchangeRateUSD,
+        exchangeRateTrend: economicData.exchangeRateTrend || null,
+        inflationRate: economicData.inflationRate ?? null,
+        interestRate: economicData.interestRate ?? null,
+        gdpGrowth: economicData.gdpGrowth ?? null,
+        consumerConfidence: economicData.consumerConfidence ?? null,
+        source: economicData.source || "",
+        createdAt: economicData.date as Date,
+      },
+      timestamp: now,
+    };
+    return economicData;
   }
 
   private calculateTrend(current: number, previous: number): string {
@@ -103,37 +132,18 @@ export class EconomicService {
     return "estavel";
   }
 
-  private simulateInflation(exchangeRate: number): number {
-    const baseInflation = 4.5;
-    const exchangeImpact = (exchangeRate - 5) * 0.3;
-    return Math.max(0, Math.min(15, baseInflation + exchangeImpact + Math.random() * 2 - 1));
-  }
-
-  private simulateInterestRate(): number {
-    return 10.5 + Math.random() * 3 - 1.5;
-  }
-
-  private simulateGDPGrowth(): number {
-    return 1.5 + Math.random() * 2 - 1;
-  }
-
-  private simulateConsumerConfidence(trend: string): number {
-    let base = 50;
-    if (trend === "alta") base = 45;
-    if (trend === "baixa") base = 55;
-    return Math.max(0, Math.min(100, base + Math.random() * 10 - 5));
-  }
-
   private getFallbackData(): InsertEconomicData {
     return {
       date: new Date(),
-      exchangeRateUSD: 5.5,
+      // Últimos valores oficiais conferidos em 13/10/2026 (BCB/SGS), usados
+      // só se o Banco Central estiver fora do ar e não houver dado salvo.
+      exchangeRateUSD: 4.99,
       exchangeRateTrend: "estavel",
-      inflationRate: 4.5,
-      interestRate: 10.5,
-      gdpGrowth: 1.5,
-      consumerConfidence: 50,
-      source: "fallback",
+      inflationRate: 4.58,
+      interestRate: 13.75,
+      gdpGrowth: 2.29,
+      consumerConfidence: 120.84,
+      source: JSON.stringify({ fonte: "Valores de referência (BCB, 13/10/2026)", referencias: {}, desocupacao: 5.3, confiancaEscala: "fecomercio-0-200" }),
     };
   }
 
@@ -143,7 +153,10 @@ export class EconomicService {
   } {
     const inflationScore = data.inflationRate! > 8 ? -2 : data.inflationRate! > 6 ? -1 : 0;
     const gdpScore = data.gdpGrowth! > 3 ? 2 : data.gdpGrowth! > 1.5 ? 1 : data.gdpGrowth! > 0 ? 0 : -2;
-    const confidenceScore = data.consumerConfidence! > 60 ? 1 : data.consumerConfidence! < 40 ? -1 : 0;
+    // Fecomercio-SP vai de 0 a 200 (100 = neutro); registros antigos usavam 0-100.
+    const escala200 = lerMetaIndicadores(data.source)?.confiancaEscala === "fecomercio-0-200";
+    const conf = data.consumerConfidence ?? (escala200 ? 100 : 50);
+    const confidenceScore = escala200 ? (conf > 110 ? 1 : conf < 90 ? -1 : 0) : (conf > 60 ? 1 : conf < 40 ? -1 : 0);
 
     const totalScore = inflationScore + gdpScore + confidenceScore;
 
@@ -172,3 +185,37 @@ export class EconomicService {
 }
 
 export const economicService = new EconomicService();
+
+export interface MetaIndicadores {
+  fonte?: string;
+  referencias?: Record<string, string | null>;
+  cambioFonte?: string | null;
+  desocupacao?: number | null;
+  confiancaEscala?: string;
+}
+
+export function lerMetaIndicadores(source: string | null | undefined): MetaIndicadores | null {
+  if (!source || !source.trim().startsWith("{")) return null;
+  try { return JSON.parse(source); } catch { return null; }
+}
+
+const fmt = (v: number | null | undefined, casas = 2) =>
+  v === null || v === undefined ? "n/d" : v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
+
+/** Texto curto com os indicadores oficiais, para os prompts da IA. */
+export function indicadoresEmTexto(data: EconomicData | undefined | null): string {
+  if (!data) return "";
+  const meta = lerMetaIndicadores(data.source);
+  if (!meta) return "";
+  const r = meta.referencias || {};
+  const quando = (k: string) => (r[k] ? ` (${r[k] === "vigente" ? "vigente" : `ref. ${r[k]}`})` : "");
+  return [
+    `Indicadores oficiais (${meta.fonte || "Banco Central do Brasil"}):`,
+    `- Selic meta: ${fmt(data.interestRate)}% a.a.${quando("selic")}`,
+    `- IPCA acumulado em 12 meses: ${fmt(data.inflationRate)}%${quando("ipca12m")}`,
+    `- Dólar (PTAX): R$ ${fmt(data.exchangeRateUSD, 4)}${quando("cambio")}`,
+    `- PIB, variação real no último ano fechado: ${fmt(data.gdpGrowth)}%${quando("pib")}`,
+    meta.desocupacao != null ? `- Taxa de desocupação (PNAD Contínua): ${fmt(meta.desocupacao, 1)}%${quando("desocupacao")}` : "",
+    data.consumerConfidence != null ? `- Índice de Confiança do Consumidor (Fecomercio-SP, 100 = neutro): ${fmt(data.consumerConfidence, 1)}${quando("confianca")}` : "",
+  ].filter(Boolean).join("\n");
+}
