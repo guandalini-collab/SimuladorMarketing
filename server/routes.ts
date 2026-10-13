@@ -4825,13 +4825,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           participacaoEquipe: Number(meu.marketShare) || 0,
           participacaoMaiorConcorrente: outros.length > 0 ? Math.max(...outros) : null,
         };
-        const [porProduto, produtos] = await Promise.all([
+        const [porProduto, produtos, catalogo] = await Promise.all([
           storage.getProductResultsByTeamAndRound(team.id, anterior.id),
           storage.getTeamProductsByTeamAndRound(team.id, anterior.id),
+          storage.getProductsByClass(team.classId),
         ]);
+        // Nome: o que a equipe deu ao produto ou, na falta, o do catálogo da turma.
         receitas = porProduto.map((p) => ({
           productId: p.productId,
-          productName: produtos.find((tp) => tp.productId === p.productId)?.productName || "",
+          productName:
+            produtos.find((tp) => tp.productId === p.productId)?.productName ||
+            (catalogo.find((c: any) => c.id === p.productId) as any)?.name ||
+            "",
           revenue: Number(p.revenue) || 0,
         }));
         break;

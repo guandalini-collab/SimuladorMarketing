@@ -514,8 +514,19 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
     },
   });
 
-  const receitaDe = (p: any) =>
-    contexto?.receitas.find((r) => (p.productId && r.productId === p.productId) || (r.productName && r.productName.trim().toLowerCase() === String(p.productName).trim().toLowerCase()))?.revenue ?? null;
+  // Receita do produto no último mês: pelo id; senão, pelo nome (igual ou
+  // contido — ex.: "Smartphone Recondicionado" ↔ "Smartphone").
+  const receitaDe = (p: any) => {
+    const lista = contexto?.receitas ?? [];
+    const nome = String(p.productName || "").trim().toLowerCase();
+    const porId = lista.find((r) => p.productId && r.productId === p.productId);
+    if (porId) return porId.revenue;
+    const n = (r: { productName: string }) => r.productName.trim().toLowerCase();
+    const igual = lista.find((r) => r.productName && n(r) === nome);
+    if (igual) return igual.revenue;
+    const contido = lista.filter((r) => r.productName && nome && (nome.includes(n(r)) || n(r).includes(nome)));
+    return contido.length === 1 ? contido[0].revenue : null;
+  };
   const produtos = data.map((p: any) => ({ ...p, revenue: receitaDe(p) }));
   const nomesSugeridos = Array.from(new Set((contexto?.receitas ?? []).map((r) => r.productName).filter(Boolean)));
   const podeAdicionar = !!form.productName.trim() && crescimento !== null && relativa !== null && roundStatus === "active";
