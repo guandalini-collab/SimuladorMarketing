@@ -87,7 +87,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
-import { FormattedMoneyInput } from "@/components/formatted-input";
+import { FormattedMoneyInput, FormattedNumberInput } from "@/components/formatted-input";
 import { RoundCountdown } from "@/components/round-countdown";
 
 const eventFormSchema = insertMarketEventSchema.extend({
@@ -4577,6 +4577,61 @@ export default function Professor() {
                   </Select>
                 </div>
               </div>
+              {/* Dados reais do setor (pedido do professor, out/2026): estes três
+                  campos não tinham onde ser preenchidos e apareciam zerados para
+                  os alunos. O botão traz os números da tabela de setores, com fonte. */}
+              {(() => {
+                const setor = marketSectors.find((s: any) => s.id === marketConfigEdits.sector);
+                const fmtBi = (v: number) => `R$ ${(v / 1e9).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} bi`;
+                return (
+                  <div className="space-y-4 rounded-lg border p-4" data-testid="market-real-data">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="text-sm">
+                        <p className="font-medium">Dados reais do setor</p>
+                        {setor?.fonte ? (
+                          <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                            <li>Tamanho: {fmtBi(setor.marketSize)} — {setor.fonte.tamanho}{setor.fonte.estimativa ? " (estimativa)" : ""}</li>
+                            <li>Crescimento: {setor.growthRate.toLocaleString("pt-BR")}% ao ano — {setor.fonte.crescimento}</li>
+                            {setor.consumidoresPotenciais ? <li>Consumidores potenciais: {setor.consumidoresPotenciais.toLocaleString("pt-BR")} — {setor.fonteConsumidores}</li> : null}
+                          </ul>
+                        ) : (
+                          <p className="mt-1 text-xs text-muted-foreground">Escolha o setor para ver os dados de referência.</p>
+                        )}
+                      </div>
+                      {setor?.fonte && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setMarketConfigEdits({
+                            ...marketConfigEdits,
+                            marketSize: setor.marketSize,
+                            marketGrowthRate: setor.growthRate,
+                            targetConsumers: setor.consumidoresPotenciais ?? marketConfigEdits.targetConsumers,
+                          })}
+                          data-testid="button-fill-real-data"
+                        >
+                          Preencher com dados reais do setor
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Tamanho do Mercado (R$)</Label>
+                        <FormattedMoneyInput value={marketConfigEdits.marketSize || 0} onChange={(value) => setMarketConfigEdits({ ...marketConfigEdits, marketSize: value > 0 ? value : null })} testId="input-edit-market-size" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Crescimento (% ao ano)</Label>
+                        <Input type="number" step="0.1" value={marketConfigEdits.marketGrowthRate ?? ""} onChange={(e) => setMarketConfigEdits({ ...marketConfigEdits, marketGrowthRate: e.target.value === "" ? 0 : parseFloat(e.target.value) })} data-testid="input-edit-growth" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Consumidores Potenciais</Label>
+                        <FormattedNumberInput value={marketConfigEdits.targetConsumers || 0} onChange={(value) => setMarketConfigEdits({ ...marketConfigEdits, targetConsumers: value > 0 ? Math.round(value) : null })} testId="input-edit-target-consumers" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Orçamento Padrão (R$)</Label>

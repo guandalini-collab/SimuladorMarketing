@@ -103,7 +103,7 @@ function TextoConjuntura({ texto }: { texto: string }) {
 /** Tela do aluno (Análise de Mercado, aba Economia e Política). */
 export function ConjunturaCard() {
   const { data } = useQuery<Conjuntura>({ queryKey: ["/api/conjuntura/minha"] });
-  if (!data) return null;
+  if (!data || typeof data.texto !== "string") return null;
   return (
     <Card data-testid="card-conjuntura">
       <CardHeader>
@@ -145,7 +145,7 @@ export function ConjunturaEditor({ classId }: { classId: string }) {
     onError: (e: any) => toast({ title: "Não foi possível salvar", description: e.message, variant: "destructive" }),
   });
 
-  if (!data) return null;
+  if (!data || typeof data.texto !== "string") return null;
   const alterado = texto.trim() !== data.texto.trim();
 
   return (

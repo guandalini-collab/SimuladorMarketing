@@ -105,7 +105,7 @@ export default function Mercado() {
           />
           <KPICard
             title="Taxa de Crescimento"
-            value={`${marketSector?.growthRate || currentClass?.marketGrowthRate}%`}
+            value={`${(currentClass?.marketGrowthRate || marketSector?.growthRate || 0).toLocaleString('pt-BR')}%`}
             icon={TrendingUp}
             description="Anual projetado"
             color="green"
@@ -210,6 +210,15 @@ export default function Mercado() {
                       <p className="text-lg font-bold">{marketSector.averageMargin}%</p>
                     </div>
                   </div>
+                  {/* Fonte dos números reais do setor (out/2026) */}
+                  {marketSector.fonte && (
+                    <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground" data-testid="setor-fontes">
+                      <p className="mb-1 font-medium text-foreground">Fontes ({marketSector.fonte.ano}){marketSector.fonte.estimativa ? " — inclui estimativa" : ""}</p>
+                      <p>Tamanho: {marketSector.fonte.tamanho}.</p>
+                      <p>Crescimento: {marketSector.fonte.crescimento}.</p>
+                      {marketSector.fonteConsumidores && <p>Consumidores potenciais: {marketSector.fonteConsumidores}.</p>}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

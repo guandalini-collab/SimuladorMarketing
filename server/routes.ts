@@ -902,6 +902,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Dados reais do setor (out/2026): se o professor não informou, a turma
+      // já nasce com tamanho do mercado, crescimento e consumidores potenciais
+      // da tabela de setores (server/data/marketData.ts) — ajustáveis depois
+      // em Configurar > Configurações de Mercado.
+      const setorDaTurma = marketSectors.find((s) => s.id === (data as any).sector);
+      if (setorDaTurma) {
+        const d: any = data;
+        if (!d.marketSize) d.marketSize = setorDaTurma.marketSize;
+        if (!d.marketGrowthRate) d.marketGrowthRate = setorDaTurma.growthRate;
+        if (!d.targetConsumers && setorDaTurma.consumidoresPotenciais) d.targetConsumers = setorDaTurma.consumidoresPotenciais;
+      }
+
       const newClass = await storage.createClass(data);
       res.json(newClass);
     } catch (error) {

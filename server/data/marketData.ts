@@ -12,6 +12,19 @@ export interface MarketSector {
   description: string;
   marketSize: number;
   growthRate: number;
+  /**
+   * Fonte dos números reais (pedido do professor, out/2026). Atualização
+   * anual lembrada por tarefa agendada (15 de julho).
+   */
+  fonte?: {
+    tamanho: string;
+    crescimento: string;
+    ano: number;
+    estimativa?: boolean;
+  };
+  /** Consumidores potenciais estimados (calculado abaixo do array). */
+  consumidoresPotenciais?: number;
+  fonteConsumidores?: string;
   averageMargin: number;
   competitionLevel: "baixa" | "media" | "alta";
   businessTypes: string[];
@@ -33,8 +46,13 @@ export const marketSectors: MarketSector[] = [
     id: "eletronicos",
     name: "Eletrônicos e Tecnologia",
     description: "Produtos eletrônicos de consumo, computadores, smartphones e acessórios",
-    marketSize: 180000000000,
-    growthRate: 8.5,
+    marketSize: 227000000000,
+    growthRate: 11.0,
+    fonte: {
+      tamanho: "Abinee: faturamento da indústria elétrica e eletrônica em 2024",
+      crescimento: "Abinee: crescimento de 11% do faturamento em 2024",
+      ano: 2024,
+    },
     averageMargin: 25,
     competitionLevel: "alta",
     businessTypes: ["B2C", "B2B", "Híbrido"],
@@ -88,8 +106,13 @@ export const marketSectors: MarketSector[] = [
     id: "alimentos",
     name: "Alimentos e Bebidas",
     description: "Produtos alimentícios processados, bebidas e snacks",
-    marketSize: 720000000000,
-    growthRate: 5.2,
+    marketSize: 918000000000,
+    growthRate: 6.1,
+    fonte: {
+      tamanho: "ABIA: vendas da indústria de alimentos e bebidas ao mercado interno em 2024 (faturamento total, com exportações: R$ 1,277 tri)",
+      crescimento: "ABIA: crescimento real das vendas em 2024 (nominal: 9,98%)",
+      ano: 2024,
+    },
     averageMargin: 18,
     competitionLevel: "alta",
     businessTypes: ["B2C", "B2B", "Híbrido"],
@@ -143,8 +166,13 @@ export const marketSectors: MarketSector[] = [
     id: "moda",
     name: "Vestuário e Moda",
     description: "Roupas, calçados e acessórios de moda",
-    marketSize: 165000000000,
-    growthRate: 4.8,
+    marketSize: 215000000000,
+    growthRate: 7.0,
+    fonte: {
+      tamanho: "Abit: faturamento do setor têxtil e de confecção em 2024",
+      crescimento: "Abit: crescimento de cerca de 7% em 2024",
+      ano: 2024,
+    },
     averageMargin: 45,
     competitionLevel: "alta",
     businessTypes: ["B2C", "Híbrido"],
@@ -198,8 +226,14 @@ export const marketSectors: MarketSector[] = [
     id: "cosmeticos",
     name: "Cosméticos e Beleza",
     description: "Produtos de cuidados pessoais, maquiagem e perfumaria",
-    marketSize: 120000000000,
-    growthRate: 7.3,
+    marketSize: 200000000000,
+    growthRate: 7.0,
+    fonte: {
+      tamanho: "Abihpec/Euromonitor: vendas ao consumidor de US$ 37,4 bi em 2024 (cerca de R$ 200 bi)",
+      crescimento: "Euromonitor: projeção de 7% ao ano até 2027",
+      ano: 2024,
+      estimativa: true,
+    },
     averageMargin: 52,
     competitionLevel: "media",
     businessTypes: ["B2C", "B2B"],
@@ -253,8 +287,13 @@ export const marketSectors: MarketSector[] = [
     id: "moveis",
     name: "Móveis e Decoração",
     description: "Móveis residenciais, comerciais e artigos de decoração",
-    marketSize: 95000000000,
-    growthRate: 3.5,
+    marketSize: 91500000000,
+    growthRate: 12.1,
+    fonte: {
+      tamanho: "Abimóvel: faturamento da indústria moveleira em 2024",
+      crescimento: "Abimóvel: crescimento de 12,1% em 2024",
+      ano: 2024,
+    },
     averageMargin: 38,
     competitionLevel: "media",
     businessTypes: ["B2C", "B2B", "Híbrido"],
@@ -308,8 +347,13 @@ export const marketSectors: MarketSector[] = [
     id: "automotivo",
     name: "Automotivo",
     description: "Peças, acessórios e produtos para manutenção automotiva",
-    marketSize: 450000000000,
-    growthRate: 2.8,
+    marketSize: 43000000000,
+    growthRate: 3.3,
+    fonte: {
+      tamanho: "McKinsey, para Sindipeças/Abipeças: receita do mercado de reposição (autopeças) em 2024",
+      crescimento: "McKinsey: projeção de 3% a 3,5% ao ano até 2040 (R$ 79 bi)",
+      ano: 2024,
+    },
     averageMargin: 12,
     competitionLevel: "alta",
     businessTypes: ["B2C", "B2B"],
@@ -363,8 +407,14 @@ export const marketSectors: MarketSector[] = [
     id: "esportes",
     name: "Esportes e Fitness",
     description: "Artigos esportivos, equipamentos de treino e suplementação",
-    marketSize: 85000000000,
-    growthRate: 12.5,
+    marketSize: 183400000000,
+    growthRate: 8.0,
+    fonte: {
+      tamanho: "Sou do Esporte/EY: PIB do Esporte de R$ 183,4 bi em 2023 (1,69% do PIB); academias faturam cerca de R$ 17 bi (Fitness Brasil/EY)",
+      crescimento: "Abenutri: suplementos cresceram 8% em 2024 (referência aproximada para o setor)",
+      ano: 2023,
+      estimativa: true,
+    },
     averageMargin: 48,
     competitionLevel: "media",
     businessTypes: ["B2C", "B2B", "Híbrido"],
@@ -418,8 +468,13 @@ export const marketSectors: MarketSector[] = [
     id: "saude",
     name: "Saúde e Bem-estar",
     description: "Suplementos vitamínicos, nutracêuticos e produtos wellness",
-    marketSize: 210000000000,
-    growthRate: 6.8,
+    marketSize: 160700000000,
+    growthRate: 12.9,
+    fonte: {
+      tamanho: "CMED/Anvisa: faturamento do mercado farmacêutico em 2024",
+      crescimento: "CMED/Anvisa: crescimento nominal de 12,9% em 2024",
+      ano: 2024,
+    },
     averageMargin: 52,
     competitionLevel: "media",
     businessTypes: ["B2C", "B2B"],
@@ -473,8 +528,14 @@ export const marketSectors: MarketSector[] = [
     id: "educacao",
     name: "Educação e Cursos",
     description: "Cursos online profissionalizantes e capacitação digital",
-    marketSize: 78000000000,
-    growthRate: 9.2,
+    marketSize: 44700000000,
+    growthRate: 3.3,
+    fonte: {
+      tamanho: "Estimativa da graduação privada: cerca de 3,2 mi de matrículas presenciais × R$ 835 e 4,9 mi em EAD × R$ 214 por mês (Censo INEP 2024; Hoper/ABMES 2026)",
+      crescimento: "Censo INEP: matrículas privadas passaram de 5,8 mi (2014) para 8,1 mi (2024), cerca de 3,3% ao ano",
+      ano: 2024,
+      estimativa: true,
+    },
     averageMargin: 75,
     competitionLevel: "media",
     businessTypes: ["B2C", "B2B"],
@@ -528,8 +589,13 @@ export const marketSectors: MarketSector[] = [
     id: "pets",
     name: "Pet Care",
     description: "Produtos e serviços para animais de estimação",
-    marketSize: 52000000000,
-    growthRate: 13.5,
+    marketSize: 77000000000,
+    growthRate: 12.1,
+    fonte: {
+      tamanho: "Abinpet/Instituto Pet Brasil: faturamento previsto do mercado pet em 2024",
+      crescimento: "Abinpet/Instituto Pet Brasil: crescimento de 12,1% em 2024",
+      ano: 2024,
+    },
     averageMargin: 42,
     competitionLevel: "media",
     businessTypes: ["B2C", "B2B"],
@@ -583,8 +649,13 @@ export const marketSectors: MarketSector[] = [
     id: "construcao",
     name: "Construção e Materiais",
     description: "Materiais de construção, ferramentas e acabamentos",
-    marketSize: 310000000000,
-    growthRate: 4.2,
+    marketSize: 318600000000,
+    growthRate: 6.1,
+    fonte: {
+      tamanho: "Abramat/Ecconit: vendas de materiais de construção em 2024",
+      crescimento: "Abramat/Ecconit: crescimento nominal de 6,1% em 2024",
+      ano: 2024,
+    },
     averageMargin: 22,
     competitionLevel: "media",
     businessTypes: ["B2B", "B2C", "Híbrido"],
@@ -638,8 +709,14 @@ export const marketSectors: MarketSector[] = [
     id: "entretenimento",
     name: "Entretenimento e Mídia",
     description: "Streaming, eventos, jogos e conteúdo digital",
-    marketSize: 92000000000,
-    growthRate: 11.8,
+    marketSize: 278700000000,
+    growthRate: 6.7,
+    fonte: {
+      tamanho: "PwC: receita de US$ 51,7 bi do mercado de entretenimento e mídia em 2024 (cerca de R$ 279 bi)",
+      crescimento: "PwC: crescimento de 6,7% em 2024; projeção de 4,4% ao ano até 2029",
+      ano: 2024,
+      estimativa: true,
+    },
     averageMargin: 58,
     competitionLevel: "alta",
     businessTypes: ["B2C", "B2B"],
@@ -690,6 +767,41 @@ export const marketSectors: MarketSector[] = [
     ]
   }
 ];
+
+/**
+ * Consumidores potenciais (pedido do professor, out/2026). Quando há base
+ * conhecida, usa-se o público do setor; senão, a população do país (IBGE:
+ * 213,4 milhões em 1º/07/2025), e o professor pode refinar para um nicho.
+ * Para eletrônicos e móveis, a estimativa é o tamanho do mercado ÷ preço
+ * médio das categorias do setor no jogo.
+ */
+export const POPULACAO_BRASIL = 213_400_000;
+const BASE_CONSUMIDORES: Record<string, { valor: number; fonte: string }> = {
+  esportes: { valor: 15_000_000, fonte: "Alunos de academias em 2024 (Panorama Setorial Fitness Brasil/EY)" },
+  educacao: { valor: 8_100_000, fonte: "Matrículas na graduação privada em 2024 (Censo da Educação Superior/INEP)" },
+};
+export const FONTE_CONSUMIDORES: Record<string, string> = {};
+// (o texto da fonte também vai em setor.fonteConsumidores, para a tela)
+for (const setor of marketSectors) {
+  const base = BASE_CONSUMIDORES[setor.id];
+  if (base) {
+    setor.consumidoresPotenciais = base.valor;
+    FONTE_CONSUMIDORES[setor.id] = base.fonte;
+    setor.fonteConsumidores = base.fonte;
+    continue;
+  }
+  const precos = setor.categories.map((c) => c.averagePrice).filter((v) => v > 0);
+  const precoMedio = precos.length ? precos.reduce((x, y) => x + y, 0) / precos.length : 0;
+  const estimado = precoMedio > 0 ? Math.round(setor.marketSize / precoMedio) : POPULACAO_BRASIL;
+  if (estimado < POPULACAO_BRASIL) {
+    setor.consumidoresPotenciais = estimado;
+    FONTE_CONSUMIDORES[setor.id] = "Estimativa: tamanho do mercado ÷ preço médio das categorias do setor no jogo";
+  } else {
+    setor.consumidoresPotenciais = POPULACAO_BRASIL;
+    FONTE_CONSUMIDORES[setor.id] = "População do Brasil (IBGE, 1º/07/2025); refine se o produto atender a um nicho";
+  }
+  setor.fonteConsumidores = FONTE_CONSUMIDORES[setor.id];
+}
 
 export interface TargetAudience {
   socialClass: {

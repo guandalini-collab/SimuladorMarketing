@@ -65,8 +65,11 @@ Depois de criar a turma, selecione-a no seletor de turma (barra logo abaixo do t
 - **Número de Concorrentes** — quantas empresas concorrentes o mercado simulado tem
 - **Estrutura de Mercado** — Monopólio, Oligopólio, Concorrência Monopolística, Concorrência Perfeita ou Fragmentado (esse campo já se chamou "Concentração de Mercado" na interface; o nome foi corrigido, mas o valor salvo internamente continua com o nome antigo — isso não afeta seu uso)
 - **Força dos Concorrentes** — Fraca, Média, Forte ou Muito Forte
+- **Tamanho do Mercado (R$)**, **Crescimento (% ao ano)** e **Consumidores Potenciais** — no quadro **Dados reais do setor**, que mostra os números de referência do setor escolhido com a fonte e o ano (por exemplo, Abinee para Eletrônicos ou Abit para Moda). O botão **Preencher com dados reais do setor** copia esses números para os três campos; você pode ajustá-los depois. Quando o número é uma estimativa (por exemplo, a graduação privada em Educação), isso aparece escrito ao lado.
 
-![Diálogo Configurações de Mercado, com os sete parâmetros de mercado da turma.](02-config-mercado.jpg)
+Uma turma nova já nasce com esses três campos preenchidos pelos dados do setor escolhido na criação. Em turmas antigas, use o botão para preenchê-los. Os alunos veem os mesmos números, com as fontes, na tela Análise de Mercado.
+
+![Diálogo Configurações de Mercado (imagem anterior à inclusão do quadro Dados reais do setor).](02-config-mercado.jpg)
 
 Clique em **Salvar** ao terminar. Essas configurações valem para toda a turma (não são por rodada) e podem ser revisadas a qualquer momento, inclusive com a simulação já em andamento.
 
@@ -80,11 +83,11 @@ Há dois caminhos possíveis para matricular um aluno. Você pode combinar os do
 
 1. Peça para o aluno acessar `www.simulamarketing.com.br` e se cadastrar (nome, email institucional, senha), pela própria tela de login (opção de cadastro).
 2. Assim que o aluno se cadastra, a conta já existe no sistema — mesmo sem estar em nenhuma turma ainda.
-3. No Painel do Professor, selecione a turma, vá até a aba **Equipes** → card **Alunos Matriculados** → use o menu suspenso (que lista todos os alunos já cadastrados e ainda sem turma) para selecionar o aluno → clique em **Adicionar**.
+3. No Painel do Professor, selecione a turma, vá até a aba **Alunos** → card **Alunos Matriculados** → use o menu suspenso (que lista todos os alunos já cadastrados e ainda sem turma) para selecionar o aluno → clique em **Adicionar**.
 
 ### Caminho B — você cadastra o aluno diretamente, já com senha definida
 
-1. Na aba **Equipes** de qualquer turma, clique em **Cadastrar Aluno** (canto superior direito da lista de equipes).
+1. Na aba **Alunos** (ou na aba **Equipes**) de qualquer turma, clique em **Cadastrar Aluno**.
 2. Preencha **Nome Completo**, **Email** e **Senha Inicial** (os três são obrigatórios) — aqui você pode usar qualquer email, inclusive um não institucional, pois essa restrição vale só para o autocadastro do aluno, não para o cadastro feito por você.
 3. Em **Matricular na Turma**, selecione a turma desejada (ou deixe "Não matricular ainda", se quiser só criar a conta por enquanto).
 ![Diálogo Cadastrar Novo Aluno.](03-cadastrar-aluno.jpg)
@@ -97,7 +100,7 @@ Esse segundo caminho é o mais prático quando você já tem a lista de alunos d
 
 ## 5. As Equipes São Formadas Pelos Alunos, Não Por Você
 
-![Aba Equipes, com uma equipe já formada pelos alunos e o card "Alunos Matriculados".](04-equipes-tab.jpg)
+![Aba Equipes, com uma equipe já formada pelos alunos (imagem anterior à criação da aba Alunos).](04-equipes-tab.jpg)
 
 ![Antes de qualquer equipe existir, a aba Aula mostra "Turma sem equipes" e um atalho para os alunos criarem a primeira.](05-aula-sem-equipes.jpg)
 
@@ -105,11 +108,11 @@ Depois de matriculado em uma turma, o aluno passa a ver, na primeira tela do seu
 
 O que você, professor, pode fazer sobre as equipes, na aba **Equipes** de cada turma:
 
-![Aba Equipes completa: cadastro de aluno, cards de equipe, lista de matriculados e a tabela de orçamentos.](16-equipes-completo.jpg)
+![Aba Equipes completa (imagem anterior à criação da aba Alunos; a lista de matriculados agora fica nessa aba).](16-equipes-completo.jpg)
 
 1. **Cadastrar Aluno** — cria a conta do aluno diretamente (Caminho B da Seção 4), já com senha definida por você.
 2. **Card da equipe** — clique para expandir e ver detalhes; o ícone de adicionar membro (ao lado do card) matricula um aluno já cadastrado na turma dentro dessa equipe.
-3. **Adicionar** (na lista "Alunos Matriculados") — matricula, na turma, um aluno que já tem conta no sistema mas ainda não está nesta turma.
+3. **Adicionar** (na aba **Alunos**, card "Alunos Matriculados") — matricula, na turma, um aluno que já tem conta no sistema mas ainda não está nesta turma.
 4. **Orçamento (R$) da equipe** — campo editável, na tabela "Orçamentos das Equipes": permite ajustar manualmente o orçamento de uma equipe específica, sem alterar o Orçamento Padrão da turma (útil para corrigir um caso pontual, por exemplo).
 5. **Ícone de lixeira** — exclui a equipe (ação irreversível; os alunos que eram membros dela ficam sem equipe, mas continuam matriculados na turma).
 
@@ -119,7 +122,12 @@ O que você, professor, pode fazer sobre as equipes, na aba **Equipes** de cada 
 - **Remover um membro** de uma equipe.
 - **Ajustar o orçamento** de uma equipe específica, na tabela "Orçamentos das Equipes" (marcador 4 acima).
 - **Ver as decisões** já tomadas por uma equipe (produtos, mix de marketing, análises estratégicas).
-- Acompanhar, na mesma aba, quantos alunos estão matriculados e quantos ainda estão sem equipe (indicado no card "Alunos Matriculados").
+- **Corrigir a identidade da empresa** (ícone de prédio no card da equipe): para os alunos, nome e slogan ficam definitivos depois de salvos, e a logomarca depois do primeiro envio; só você pode alterá-los ou remover a logomarca.
+- Acompanhar quantos alunos estão matriculados e quantos ainda estão sem equipe: a aba Equipes mostra um resumo, e a aba **Alunos** traz a lista completa.
+
+### 5.1 A aba Alunos
+
+A aba **Alunos** (entre Equipes e Analisar) reúne os alunos matriculados na turma numa tabela com **Nome**, **E-mail**, **Equipe** (com a marca "líder" ou o aviso "Sem equipe") e **Ações** (redefinir senha e remover da turma). Quando há alunos sem equipe, a aba mostra um número ao lado do nome. É também nela que ficam o botão **Cadastrar Aluno** e o campo para matricular um aluno já cadastrado.
 
 Se, ao iniciar uma rodada, existir alguma equipe sem nenhum membro, o sistema avisa (sem bloquear) que essa equipe não vai conseguir enviar decisões na rodada — vale conferir isso antes de abrir cada rodada, especialmente a primeira.
 
@@ -136,7 +144,7 @@ Com a turma criada, o mercado configurado (Seção 3.1) e ao menos uma equipe fo
 1. Selecione a turma no seletor do topo.
 2. Na aba **Aula**, confira o painel **Gerenciamento de Rodadas**. Antes de haver qualquer rodada ativa, ele mostra um seletor de **"Produtos por equipe na próxima rodada"** — defina quantos produtos cada equipe vai poder cadastrar e decidir nesta rodada.
 3. Clique em **Iniciar Rodada**.
-4. Se houver algum ponto de atenção — equipe sem nenhum aluno, configuração de mercado incompleta, ou orçamento padrão em R$ 0 — o sistema mostra um aviso listando exatamente o que falta, mas **não bloqueia o início da rodada**: você pode prosseguir mesmo assim, se for uma decisão intencional (por exemplo, uma turma de teste). Se não houver nenhum ponto de atenção, a rodada é iniciada direto, sem esse aviso aparecer.
+4. Se houver algum ponto de atenção — equipe sem nenhum aluno, configuração de mercado incompleta (setor, tipo de comércio, nível de concorrência, estrutura de mercado, tamanho do mercado, consumidores potenciais, crescimento ou número de concorrentes) ou orçamento padrão em R$ 0 — o sistema mostra um aviso listando exatamente o que falta, mas **não bloqueia o início da rodada**: você pode prosseguir mesmo assim, se for uma decisão intencional (por exemplo, uma turma de teste). Se não houver nenhum ponto de atenção, a rodada é iniciada direto, sem esse aviso aparecer.
 
 ![Painel Gerenciamento de Rodadas, pronto para iniciar a primeira rodada.](06-iniciar-rodada.jpg)
 
@@ -163,16 +171,25 @@ Uma vez que a rodada é criada/iniciada, a quantidade de produtos por equipe fic
 
 ## 8. Durante uma Rodada Ativa
 
-Enquanto uma rodada está ativa, as equipes completam as ferramentas de diagnóstico estratégico e, em seguida, tomam as decisões de Mix de Marketing (ambas descritas com a base teórica no Apêndice A). Há uma regra de acesso que vale a pena explicar à turma logo no início, para evitar confusão:
+Cada rodada corresponde a **um mês** de operação, e um ano de jogo tem sempre 12 rodadas. Enquanto a rodada está ativa, cada equipe segue um **percurso obrigatório**, na ordem do menu do aluno; cada etapa só abre depois que a anterior foi concluída:
 
-- As quatro ferramentas **SWOT, 5 Forças de Porter, Matriz BCG e PESTEL são obrigatórias**: sem completar as quatro, a equipe não consegue nem abrir a tela de Decisões (Mix de Marketing).
-- A **Segmentação de Mercado não bloqueia** esse acesso — mas conta na pontuação de Alinhamento Estratégico da equipe (Seção 11.2). É comum um aluno perceber que "destravou" as decisões e deixar a Segmentação de lado, sem perceber que isso reduz sua nota de alinhamento; vale reforçar isso em sala.
+1. **Feedback e Resultados da rodada anterior** — leitura; a equipe confirma com o botão **Li e entendi**.
+2. **Simula+ News e Análise de Mercado** — leitura dos eventos do mês, do Boletim do mês e da Conjuntura Brasil; confirmação com **Li e entendi**.
+3. **Ferramentas Estratégicas** — SWOT, 5 Forças de Porter, Matriz BCG e PESTEL são obrigatórias. A **Segmentação de Mercado** não bloqueia o avanço, mas conta na pontuação de Alinhamento Estratégico (Seção 11.2); vale reforçar isso em sala.
+4. **Identidade da Empresa** — nome, slogan e logomarca, definitivos para os alunos depois de salvos (só o professor corrige; Seção 5).
+5. **Mix de Marketing** — as decisões da rodada; o envio final é recusado enquanto houver etapa pendente.
+
+Os itens do grupo **Consulta** (Fechamento anual, Insights de Mercado, Orçamento, Manual do Aluno, Guia de Mídias e Meu Perfil) ficam sempre livres.
+
+**O que o sistema faz sozinho.** Na **abertura** de cada rodada: gera, para as equipes que ainda não têm, uma versão mínima das análises estratégicas (a partir da Rodada 2); gera de 2 a 4 eventos de mercado com IA, se a geração automática estiver ligada e a rodada ainda não tiver eventos; e publica o **Boletim do mês** (demanda e sensibilidade a preço), que pesa no resultado pela adequação ao mercado (até 12% para mais ou para menos). No **encerramento**, gera o Feedback Inteligente para cada equipe com resultado.
+
+**Conjuntura real.** A IA usa, na PESTEL, nos eventos e no boletim, os **indicadores oficiais do Banco Central** (Selic, IPCA, dólar, PIB, desemprego e confiança do consumidor, atualizados automaticamente) e o texto **Conjuntura Brasil** (fatos econômicos e políticos atuais, com data e fonte; Seção 12). Os alunos veem o mesmo conteúdo na aba Economia e Política da Análise de Mercado.
 
 Durante a rodada, você tem três ferramentas à disposição na aba **Aula**, seção **Eventos de Mercado**:
 
 1. **Criar Manual** — você mesmo escreve um evento (tipo, severidade, título, descrição e impacto esperado) e aplica a uma rodada específica.
-2. **Gerar com IA** — você escolhe uma quantidade e a IA gera eventos contextualizados para a turma, com base no setor configurado e em dados econômicos reais (câmbio, inflação).
-3. **Geração automática** — um interruptor liga/desliga a criação automática de eventos toda vez que uma rodada é encerrada, além dos que você cria manualmente ou por IA. Fica desligado por padrão.
+2. **Gerar com IA** — você escolhe uma quantidade e a IA gera eventos contextualizados para a turma, com base no setor configurado, nos indicadores oficiais do Banco Central e na Conjuntura Brasil.
+3. **Geração automática** — um interruptor liga/desliga a criação automática de 2 a 4 eventos com IA na abertura de cada rodada (quando a rodada ainda não tem eventos), além dos que você cria manualmente ou por IA.
 
 Os dois primeiros botões (Criar Manual e Gerar com IA) só ficam habilitados quando já existe ao menos uma rodada ativa ou concluída na turma — ou seja, **você não consegue criar eventos de mercado antes de iniciar a primeira rodada**.
 
@@ -211,6 +228,14 @@ Você pode ajustar o número total de rodadas da turma a qualquer momento na aba
 Como alternativa ao controle manual, cada rodada pode ser **agendada**: no card da rodada, o botão **Agendar** permite definir uma data de início e uma data de término automáticos (sempre à meia-noite no horário de Brasília). Com isso definido, o sistema abre e encerra aquela rodada sozinho, sem que você precise clicar em Iniciar Rodada ou Encerrar Rodada manualmente — mas o alerta da Seção 9 sobre equipes sem decisões continua valendo: o encerramento automático também não verifica se todas as equipes enviaram algo.
 
 O fechamento é sempre à meia-noite **oficial de Brasília** (UTC-3), independente do fuso horário do dispositivo de cada aluno. Tanto no card da rodada (aba Aula) quanto no painel do aluno aparece um contador de tempo restante até esse fechamento, atualizado automaticamente.
+
+### 10.1 Fechamento anual
+
+A cada 12 rodadas (um ano de jogo) e ao fim do jogo, o sistema monta o **Fechamento anual** de cada equipe: receita e lucro acumulados, margem média, participação no fim do ano, comparação com a média da turma e com o ano anterior, gráficos e a tabela mês a mês. Em seguida vêm **perguntas reflexivas** montadas a partir dos números da própria equipe. Elas não dizem o que a equipe deveria ter feito; pedem que ela explique, com as próprias palavras, o que aconteceu e o que aprendeu.
+
+- A equipe pode salvar rascunho; depois de **enviada**, a reflexão não pode mais ser alterada.
+- No primeiro mês de um ano novo (Rodada 13, 25…), a etapa 1 do percurso só é concluída depois que a equipe envia a reflexão do ano que terminou.
+- Você acompanha tudo pelo botão **Fechamento anual**, ao lado de Analytics no topo do painel: uma tabela da turma por ano (receita, lucro, margem, participação e se a reflexão foi enviada) e, ao clicar numa equipe, os indicadores e as respostas dela.
 
 ## 11. Analisar Resultados
 
@@ -271,6 +296,7 @@ Essa penalidade afeta o score de alinhamento e, por consequência, os KPIs finan
 A aba **Configurar** reúne o que você mexe com pouca frequência, depois da configuração inicial da turma:
 
 1. **Abrir Configurações de Mercado** — já descrita na Seção 3.1.
+- **Conjuntura Brasil (economia e política)** — mostra os indicadores oficiais do Banco Central e o texto de conjuntura que a IA usa na PESTEL, nos eventos e no boletim. O texto padrão é atualizado pelo sistema (com data e fontes); se quiser, edite-o para a sua turma e clique em **Salvar para esta turma**, ou use **Voltar ao texto padrão**. Mantenha o texto factual, datado e neutro em temas políticos.
 - **Relatório de Acessos** — um painel expansível que mostra o histórico de acessos dos alunos à turma (quem acessou, quando), com exportação em CSV.
 - **Enviar Email para Equipes** — permite mandar uma mensagem por email para uma ou mais equipes da turma diretamente pelo sistema.
 2. **Excluir Turma** (dentro da **Zona de Perigo**) — exclusão definitiva da turma. Apaga permanentemente equipes, alunos matriculados nela, rodadas e todas as decisões. Não há como desfazer; use apenas quando tiver certeza absoluta.
@@ -297,7 +323,7 @@ Vale orientar a turma, logo na apresentação do sistema, a guardar esse código
 Para consulta rápida, depois de já ter lido o manual completo uma vez:
 
 1. Criar a turma (Nome da Turma é o único campo obrigatório).
-2. Completar a configuração de mercado em Configurar → Configuração de Mercado.
+2. Completar a configuração de mercado em Configurar → Configuração de Mercado (use **Preencher com dados reais do setor** para tamanho, crescimento e consumidores potenciais) e conferir a Conjuntura Brasil.
 3. Matricular os alunos (pedir que se cadastrem sozinhos com email institucional e depois adicioná-los à turma, ou cadastrá-los você mesmo já com turma definida).
 4. Aguardar os alunos formarem suas próprias equipes (você não cria equipes).
 5. Definir a quantidade de produtos por equipe e clicar em Iniciar Rodada.
@@ -306,6 +332,7 @@ Para consulta rápida, depois de já ter lido o manual completo uma vez:
 8. Analisar o ranking e o Relatório de Alinhamento na aba Analisar.
 9. Repetir os passos 5 a 8 para cada rodada seguinte.
 10. A partir da segunda rodada concluída, consultar o Sistema de Notas.
+11. A cada 12 rodadas, acompanhar o Fechamento anual e as reflexões das equipes (botão Fechamento anual).
 
 ## 16. Solução de Problemas Comuns
 
@@ -340,7 +367,7 @@ As cinco ferramentas ficam na tela **Estratégia**. Quatro delas são pré-requi
 |---|---|---|---|
 | **Análise SWOT** | Albert Humphrey (década de 1960); Kotler & Armstrong; Pride & Ferrell; Hoskisson, Hitt, Ireland & Harrison | Diagnóstico interno (Forças/Fraquezas) e externo (Oportunidades/Ameaças) | Ligar o autodiagnóstico da empresa a uma decisão concreta — no simulador, a coerência entre a SWOT declarada e o preço praticado é verificada automaticamente |
 | **5 Forças de Porter** | Michael Porter (1979; 1980; 2008) | Intensidade competitiva do setor (rivalidade, poder de barganha de clientes e fornecedores, ameaça de novos entrantes e de substitutos) | Traduzir a leitura do ambiente competitivo em decisões de preço e investimento promocional |
-| **Matriz BCG** | Bruce Henderson / Boston Consulting Group (1970) | Gestão de portfólio por crescimento de mercado × participação relativa (Estrela, Vaca Leiteira, Ponto de Interrogação, Abacaxi) | Diferenciar a lógica de investimento conforme a posição do produto no portfólio |
+| **Matriz BCG** | Bruce Henderson / Boston Consulting Group (1970) | Gestão de portfólio por crescimento de mercado (corte em 10% ao ano) × participação relativa (empresa ÷ maior concorrente, corte em 1,0×), no desenho original: escala logarítmica com a participação alta à esquerda e bolhas proporcionais à receita (Estrela, Vaca Leiteira, Ponto de Interrogação, Abacaxi) | Diferenciar a lógica de investimento conforme a posição do produto no portfólio; no simulador, o aluno parte das participações reais do último mês e o sistema calcula a posição |
 | **PESTEL** | Hoskisson, Hitt, Ireland & Harrison; Kotler & Armstrong; Piercy, Hooley & Nicoulaud | Macroambiente (Político, Econômico, Social, Tecnológico, Ambiental, Legal) | Conectar variáveis macroambientais amplas a decisões táticas de preço e canal |
 | **Segmentação — B2C** | Kotler & Keller (modelo STP: Segmentation, Targeting, Positioning); Wedel & Kamakura | Critérios demográfico, geográfico, psicográfico e comportamental | Ajustar preço e canal ao segmento-alvo declarado, evitando dissonância entre discurso e prática |
 | **Segmentação — B2B** | Hutt & Speh; Kotler & Armstrong | Variáveis firmográficas e centro de compras organizacional | Reconhecer que a lógica de segmentação organizacional difere estruturalmente da segmentação de consumidor final |
@@ -377,7 +404,24 @@ Os setores disponíveis para configurar uma turma (Seção 3) são:
 11. Construção e Materiais
 12. Entretenimento e Mídia
 
-Cada setor tem quatro categorias de produto associadas, além de parâmetros próprios de tamanho de mercado, crescimento e margem média — usados internamente pelo sistema para calibrar a simulação daquele setor.
+Cada setor tem quatro categorias de produto associadas e dados de referência de tamanho de mercado e crescimento, com fonte e ano (Seção 3.1). Os números vêm de entidades setoriais e órgãos oficiais (base 2024 na maioria dos setores) e são revisados uma vez por ano. Alguns são estimativas, e isso aparece indicado na tela:
+
+| Setor | Tamanho de referência | Crescimento | Fonte principal |
+|---|---|---|---|
+| Eletrônicos e Tecnologia | R$ 227 bi | 11% | Abinee (2024) |
+| Alimentos e Bebidas | R$ 918 bi (mercado interno) | 6,1% (real) | ABIA (2024) |
+| Vestuário e Moda | R$ 215 bi | 7% | Abit (2024) |
+| Cosméticos e Beleza | cerca de R$ 200 bi (estimativa) | 7% | Abihpec/Euromonitor (2024) |
+| Móveis e Decoração | R$ 91,5 bi | 12,1% | Abimóvel (2024) |
+| Automotivo (reposição de autopeças) | R$ 43 bi | 3,3% | McKinsey para Sindipeças/Abipeças (2024) |
+| Esportes e Fitness | R$ 183,4 bi (PIB do Esporte, estimativa) | 8% | Sou do Esporte/EY (2023); Abenutri (2024) |
+| Saúde e Bem-estar | R$ 160,7 bi (mercado farmacêutico) | 12,9% | CMED/Anvisa (2024) |
+| Educação e Cursos | R$ 44,7 bi (graduação privada, estimativa) | 3,3% | Censo INEP 2024; Hoper/ABMES |
+| Pet Care | R$ 77 bi | 12,1% | Abinpet/Instituto Pet Brasil (2024) |
+| Construção e Materiais | R$ 318,6 bi | 6,1% | Abramat/Ecconit (2024) |
+| Entretenimento e Mídia | cerca de R$ 279 bi (estimativa) | 6,7% | PwC (2024) |
+
+Atenção: em alguns setores, o dado disponível cobre um recorte diferente dos produtos do jogo. Em Saúde e Bem-estar, por exemplo, o número é do mercado farmacêutico, enquanto as categorias do jogo são suplementos; em Educação, o número é da graduação privada, enquanto as categorias são cursos livres. Ajuste os campos da turma se quiser um recorte mais próximo.
 
 ## Apêndice C — Referências Bibliográficas (ABNT)
 
