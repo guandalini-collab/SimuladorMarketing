@@ -4785,6 +4785,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Matriz BCG (modelo da Boston Consulting Group, out/2026): dados reais do
+  // jogo para o aluno preencher — crescimento do mercado da turma e, a partir
+  // do último mês com resultado, a participação da equipe, a do maior
+  // concorrente e a receita de cada produto (tamanho da bolha).
+  app.get("/api/strategy/:roundId/bcg-contexto", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const team = await storage.getTeamByUser(req.session.userId);
+    if (!team) {
+      return res.status(404).json({ error: "Equipe não encontrada" });
+    }
+    try {
+      const round = await storage.getRound(req.params.roundId);
+      if (!round || round.classId !== team.classId) {
+        return res.status(404).json({ error: "Rodada não encontrada" });
+      }
+      const classData = await storage.getClass(team.classId);
+      const sector = marketSectors.find((s) => s.id === classData?.sector);
+      const crescimentoTurma = classData?.marketGrowthRate;
+      const crescimentoMercado = typeof crescimentoTurma === "number" && crescimentoTurma !== 0 ? crescimentoTurma : sector?.growthRate ?? null;
+      const fonteCrescimento = typeof crescimentoTurma === "number" && crescimentoTurma !== 0 ? "Configuração de mercado da turma" : sector ? `Setor ${sector.name}` : null;
+
+      const rodadas = await storage.getRoundsByClass(team.classId);
+      const anteriores = rodadas
+        .filter((r) => r.roundNumber < round.roundNumber && r.status === "completed")
+        .sort((a, b) => b.roundNumber - a.roundNumber);
+
+      let referencia: { roundNumber: number; participacaoEquipe: number; participacaoMaiorConcorrente: number | null } | null = null;
+      let receitas: { productId: string; productName: string; revenue: number }[] = [];
+      for (const anterior of anteriores) {
+        const resultados = await storage.getResultsByRound(anterior.id);
+        const meu = resultados.find((r) => r.teamId === team.id);
+        if (!meu) continue;
+        const outros = resultados.filter((r) => r.teamId !== team.id).map((r) => Number(r.marketShare) || 0);
+        referencia = {
+          roundNumber: anterior.roundNumber,
+          participacaoEquipe: Number(meu.marketShare) || 0,
+          participacaoMaiorConcorrente: outros.length > 0 ? Math.max(...outros) : null,
+        };
+        const [porProduto, produtos] = await Promise.all([
+          storage.getProductResultsByTeamAndRound(team.id, anterior.id),
+          storage.getTeamProductsByTeamAndRound(team.id, anterior.id),
+        ]);
+        receitas = porProduto.map((p) => ({
+          productId: p.productId,
+          productName: produtos.find((tp) => tp.productId === p.productId)?.productName || "",
+          revenue: Number(p.revenue) || 0,
+        }));
+        break;
+      }
+
+      res.json({
+        crescimentoMercado,
+        fonteCrescimento,
+        referencia,
+        participacaoRelativa:
+          referencia && referencia.participacaoMaiorConcorrente
+            ? referencia.participacaoEquipe / referencia.participacaoMaiorConcorrente
+            : null,
+        receitas,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.post("/api/strategy/bcg", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });

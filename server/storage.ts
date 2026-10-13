@@ -1,3 +1,4 @@
+import { classificarBcg } from "@shared/bcg";
 import {
   type User,
   type InsertUser,
@@ -1445,6 +1446,7 @@ export class MemStorage implements IStorage {
   }
 
   async createBcgAnalysis(insertBcg: InsertBcg & { teamId: string }): Promise<BcgAnalysis> {
+    insertBcg = { ...insertBcg, quadrant: classificarBcg(Number(insertBcg.marketGrowth), Number(insertBcg.relativeMarketShare)) };
     const id = randomUUID();
     const bcg: BcgAnalysis = {
       id,

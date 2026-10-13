@@ -360,15 +360,15 @@ Gere análises estratégicas completas que orientem as decisões de marketing de
   "bcg": [
     {
       "productName": "Nome do produto principal",
-      "marketGrowth": 8.5,
+      "marketGrowth": 12.0,
       "relativeMarketShare": 1.2,
       "quadrant": "star",
       "notes": "Justificativa do posicionamento (2-3 frases)"
     },
     {
       "productName": "Nome de produto complementar (se aplicável)",
-      "marketGrowth": 3.0,
-      "relativeMarketShare": 0.8,
+      "marketGrowth": 4.0,
+      "relativeMarketShare": 1.5,
       "quadrant": "cash_cow",
       "notes": "Justificativa do posicionamento (2-3 frases)"
     }
@@ -472,6 +472,7 @@ Gere análises estratégicas completas que orientem as decisões de marketing de
 - Scores de Porter devem ser de 1-10
 - BCG: marketGrowth e relativeMarketShare são números decimais
 - BCG: quadrant pode ser "star", "cash_cow", "question_mark", ou "dog"
+- BCG (modelo da Boston Consulting Group): marketGrowth = crescimento do mercado em % ao ano (use a taxa de crescimento da turma/setor); relativeMarketShare = participação da empresa ÷ participação do maior concorrente (0,1 a 10; 1,0 = empatada com o maior concorrente). Regra obrigatória do quadrante: crescimento >= 10% e relativa >= 1,0 → "star"; crescimento < 10% e relativa >= 1,0 → "cash_cow"; crescimento >= 10% e relativa < 1,0 → "question_mark"; crescimento < 10% e relativa < 1,0 → "dog"
 - Segmentação: gere as DUAS seções ("b2c" e "b2b") mesmo que o Tipo de Negócio da turma seja só um deles — quem consome esta resposta decide qual seção usar de fato, então preencha as duas com conteúdo plausível e específico ao setor
 - Cada categoria deve ter 3-5 itens
 - Seja específico ao setor ${sectorName}
@@ -703,7 +704,7 @@ function buildMinimalStrategyPrompt(
   "bcg": [
     {
       "productName": "${teamData.productCategory || "Produto Principal"}",
-      "marketGrowth": 8.5,
+      "marketGrowth": 12.0,
       "relativeMarketShare": 1.2,
       "quadrant": "star",
       "notes": "1-2 frases justificando o posicionamento"
@@ -744,7 +745,7 @@ function buildMinimalStrategyPrompt(
 - Máximo 1-2 frases por item
 - Scores Porter: 1-10
 - BCG: apenas 1 produto
-- Quadrante BCG: "star", "cash_cow", "question_mark", ou "dog"
+- Quadrante BCG: "star", "cash_cow", "question_mark", ou "dog", obrigatoriamente pela regra do modelo da Boston Consulting Group: crescimento do mercado >= 10% e participação relativa (empresa ÷ maior concorrente) >= 1,0 → "star"; < 10% e >= 1,0 → "cash_cow"; >= 10% e < 1,0 → "question_mark"; < 10% e < 1,0 → "dog". Use como crescimento a taxa do mercado informada no contexto.
 - Segmentação: gere as DUAS seções ("b2c" e "b2b") mesmo que a empresa opere em só um dos mercados
 - Seja ESPECÍFICO ao ${sectorName}`;
 }

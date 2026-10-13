@@ -13,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import BcgMatrixChart from "@/components/BcgMatrixChart";
+import { CORES_BCG } from "@/components/bcg-matriz";
+import { classificarBcg, participacaoRelativa } from "@shared/bcg";
 
 export default function Estrategia() {
   const { toast } = useToast();
@@ -429,37 +431,77 @@ function PorterTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
   );
 }
 
+// Matriz BCG no modelo da Boston Consulting Group (pedido do professor,
+// out/2026). O aluno informa o crescimento do mercado e as participações (%)
+// da empresa e do maior concorrente; a participação relativa e o quadrante
+// são calculados pela regra única de shared/bcg.ts (a mesma do servidor).
+// Os dados reais do jogo (crescimento da turma, participações e receita do
+// último mês com resultado) vêm de /api/strategy/:roundId/bcg-contexto.
+interface BcgContexto {
+  crescimentoMercado: number | null;
+  fonteCrescimento: string | null;
+  referencia: { roundNumber: number; participacaoEquipe: number; participacaoMaiorConcorrente: number | null } | null;
+  participacaoRelativa: number | null;
+  receitas: { productId: string; productName: string; revenue: number }[];
+}
+
+const numBR = (v: number | null | undefined, casas = 1) =>
+  v === null || v === undefined || !Number.isFinite(v) ? "—" : v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
+
 function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; roundNumber: number; roundStatus: string; data: any[] }) {
   const { toast } = useToast();
   const hasData = data.length > 0;
-  const [products, setProducts] = useState(data);
-  const [newProduct, setNewProduct] = useState({
-    productName: "",
-    marketGrowth: 5,
-    // Inconsistência de auditoria (2026-09), item 1: era uma % de 0 a 100
-    // (escala usada só aqui), enquanto a IA (assistência automática nas
-    // Rodadas 1-3) grava esse mesmo campo na escala padrão da Matriz BCG —
-    // razão em torno de 1.0 (participação própria ÷ do maior concorrente),
-    // sem nenhuma conversão. Corrigido adotando a mesma escala padrão aqui,
-    // já que os dois tipos de registro convivem na mesma tabela/gráfico.
-    relativeMarketShare: 1,
-  });
+  const { data: contexto } = useQuery<BcgContexto>({ queryKey: [`/api/strategy/${roundId}/bcg-contexto`] });
+  const formVazio = { productName: "", crescimento: "", participacaoEmpresa: "", participacaoConcorrente: "" };
+  const [form, setForm] = useState(formVazio);
+  const [crescimentoPreenchido, setCrescimentoPreenchido] = useState(false);
 
   useEffect(() => {
-    setProducts(data);
-  }, [data]);
+    if (!crescimentoPreenchido && contexto?.crescimentoMercado != null) {
+      setForm((f) => ({ ...f, crescimento: String(contexto.crescimentoMercado) }));
+      setCrescimentoPreenchido(true);
+    }
+  }, [contexto, crescimentoPreenchido]);
+
+  const lerNumero = (s: string) => {
+    const v = Number(String(s).replace(",", "."));
+    return s.trim() === "" || !Number.isFinite(v) ? null : v;
+  };
+  const crescimento = lerNumero(form.crescimento);
+  const relativa = participacaoRelativa(lerNumero(form.participacaoEmpresa) ?? NaN, lerNumero(form.participacaoConcorrente) ?? NaN);
+  const quadrantePrevisto = crescimento !== null && relativa !== null ? classificarBcg(crescimento, relativa) : null;
+
+  const usarDadosDoJogo = () => {
+    const ref = contexto?.referencia;
+    if (!ref) return;
+    setForm((f) => ({
+      ...f,
+      participacaoEmpresa: String(Math.round(ref.participacaoEquipe * 100) / 100),
+      participacaoConcorrente: ref.participacaoMaiorConcorrente != null ? String(Math.round(ref.participacaoMaiorConcorrente * 100) / 100) : f.participacaoConcorrente,
+      crescimento: contexto?.crescimentoMercado != null ? String(contexto.crescimentoMercado) : f.crescimento,
+    }));
+  };
 
   const addMutation = useMutation({
     mutationFn: async () => {
-      const quadrant = getQuadrant(newProduct.marketGrowth, newProduct.relativeMarketShare);
-      const res = await apiRequest("POST", "/api/strategy/bcg", { roundId, ...newProduct, quadrant });
+      if (crescimento === null || relativa === null) throw new Error("Preencha o crescimento e as duas participações.");
+      const produto = contexto?.receitas.find((r) => r.productName && r.productName.trim().toLowerCase() === form.productName.trim().toLowerCase());
+      const res = await apiRequest("POST", "/api/strategy/bcg", {
+        roundId,
+        productName: form.productName.trim(),
+        productId: produto?.productId,
+        marketGrowth: crescimento,
+        relativeMarketShare: Math.round(relativa * 100) / 100,
+        quadrant: classificarBcg(crescimento, relativa),
+      });
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/strategy", roundId] });
       toast({ title: "Produto adicionado!", description: "Produto inserido na Matriz BCG." });
-      setNewProduct({ productName: "", marketGrowth: 5, relativeMarketShare: 1 });
+      setForm((f) => ({ ...formVazio, crescimento: f.crescimento }));
     },
+    onError: (e: any) => toast({ title: "Não foi possível adicionar", description: e.message, variant: "destructive" }),
   });
 
   const deleteMutation = useMutation({
@@ -472,20 +514,11 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
     },
   });
 
-  function getQuadrant(growth: number, share: number) {
-    // Limiar de crescimento (10%) alinhado com a linha de referência do
-    // gráfico (BcgMatrixChart usa y={10}) — antes a classificação usava 5%,
-    // fazendo produtos com crescimento entre 5% e 10% ficarem com um
-    // quadrante/cor que não correspondia à posição real no gráfico.
-    // Limiar de participação (1.0) alinhado com a escala padrão da Matriz
-    // BCG (razão em relação ao maior concorrente) — ver comentário na
-    // declaração de relativeMarketShare acima (inconsistência de auditoria,
-    // item 1, 2026-09).
-    if (growth >= 10 && share >= 1) return "Estrela";
-    if (growth < 10 && share >= 1) return "Vaca Leiteira";
-    if (growth >= 10 && share < 1) return "Ponto de Interrogação";
-    return "Abacaxi";
-  }
+  const receitaDe = (p: any) =>
+    contexto?.receitas.find((r) => (p.productId && r.productId === p.productId) || (r.productName && r.productName.trim().toLowerCase() === String(p.productName).trim().toLowerCase()))?.revenue ?? null;
+  const produtos = data.map((p: any) => ({ ...p, revenue: receitaDe(p) }));
+  const nomesSugeridos = Array.from(new Set((contexto?.receitas ?? []).map((r) => r.productName).filter(Boolean)));
+  const podeAdicionar = !!form.productName.trim() && crescimento !== null && relativa !== null && roundStatus === "active";
 
   return (
     <div className="space-y-4">
@@ -505,7 +538,7 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
                 {roundNumber === 1
                   ? "Esta é uma versão inicial fornecida como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
                   : hasData
-                    ? "Você já mapeou seus produtos antes, e eles continuam valendo automaticamente nesta rodada — não precisa reinserir nada. Reveja se ainda fazem sentido: edite, exclua ou adicione produtos se sua estratégia mudou. Atenção: se o quadrante não bater com o que você está realmente praticando no mix de marketing, isso reduz sua pontuação de alinhamento estratégico."
+                    ? "Você já mapeou seus produtos antes, e eles continuam valendo automaticamente nesta rodada — não precisa reinserir nada. Reveja se ainda fazem sentido com os números do último mês: exclua e adicione de novo os produtos cuja posição mudou. Atenção: se o quadrante não bater com o que você está realmente praticando no mix de marketing, isso reduz sua pontuação de alinhamento estratégico."
                     : "Adicione seus produtos à matriz — eles vão continuar valendo nas próximas rodadas até você decidir mudar algo."}
               </p>
             </div>
@@ -520,80 +553,117 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
             </div>
             <div>
               <CardTitle>Matriz BCG</CardTitle>
-              <CardDescription>Posicione seus produtos na matriz de crescimento-participação</CardDescription>
+              <CardDescription>Posicione cada produto pelo crescimento do mercado e pela participação relativa (modelo da Boston Consulting Group)</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-6">
+          <div className="rounded-lg border bg-muted/30 p-4 text-sm" data-testid="bcg-dados-jogo">
+            <p className="font-medium">Dados do jogo para a sua análise</p>
+            <ul className="mt-1 space-y-0.5 text-muted-foreground">
+              <li>
+                Crescimento do mercado: <strong className="text-foreground">{numBR(contexto?.crescimentoMercado)}% ao ano</strong>
+                {contexto?.fonteCrescimento ? ` (${contexto.fonteCrescimento})` : ""}
+              </li>
+              {contexto?.referencia ? (
+                <li>
+                  Mês {contexto.referencia.roundNumber}: participação da equipe <strong className="text-foreground">{numBR(contexto.referencia.participacaoEquipe)}%</strong>
+                  {contexto.referencia.participacaoMaiorConcorrente != null && (
+                    <> · maior concorrente <strong className="text-foreground">{numBR(contexto.referencia.participacaoMaiorConcorrente)}%</strong> · relativa <strong className="text-foreground">{numBR(contexto.participacaoRelativa, 2)}×</strong></>
+                  )}
+                </li>
+              ) : (
+                <li>As participações aparecem aqui depois do primeiro mês com resultado. Até lá, use as estimativas da equipe.</li>
+              )}
+            </ul>
+            {contexto?.referencia && roundStatus === "active" && (
+              <Button variant="outline" size="sm" className="mt-2" onClick={usarDadosDoJogo} data-testid="button-bcg-usar-dados">
+                Usar os números do mês {contexto.referencia.roundNumber}
+              </Button>
+            )}
+          </div>
+
           <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Nome do Produto</Label>
+                <Label>Nome do produto</Label>
                 <Input
-                  placeholder="Ex: Produto Premium"
-                  value={newProduct.productName}
-                  onChange={(e) => setNewProduct((prev) => ({ ...prev, productName: e.target.value }))}
+                  placeholder="Ex.: Produto Premium"
+                  list="bcg-produtos-sugeridos"
+                  value={form.productName}
+                  onChange={(e) => setForm((f) => ({ ...f, productName: e.target.value }))}
+                  data-testid="input-bcg-produto"
                 />
+                <datalist id="bcg-produtos-sugeridos">
+                  {nomesSugeridos.map((n) => <option key={n} value={n} />)}
+                </datalist>
               </div>
               <div className="space-y-2">
-                <Label>Crescimento do Mercado (%) - {newProduct.marketGrowth}%</Label>
-                <Slider
-                  value={[newProduct.marketGrowth]}
-                  onValueChange={([val]) => setNewProduct((prev) => ({ ...prev, marketGrowth: val }))}
-                  min={0}
-                  max={20}
-                  step={1}
-                />
+                <Label>Crescimento do mercado (% ao ano)</Label>
+                <Input type="number" step="0.1" placeholder="Ex.: 8,5" value={form.crescimento} onChange={(e) => setForm((f) => ({ ...f, crescimento: e.target.value }))} data-testid="input-bcg-crescimento" />
+                <p className="text-xs text-muted-foreground">Pode ser negativo, se o mercado estiver encolhendo. Corte do modelo: 10%.</p>
               </div>
               <div className="space-y-2">
-                <Label>Participação Relativa - {newProduct.relativeMarketShare.toFixed(1)}x (1.0 = mesma participação do líder)</Label>
-                <Slider
-                  value={[newProduct.relativeMarketShare]}
-                  onValueChange={([val]) => setNewProduct((prev) => ({ ...prev, relativeMarketShare: val }))}
-                  min={0}
-                  max={3}
-                  step={0.1}
-                />
+                <Label>Participação de mercado da sua empresa (%)</Label>
+                <Input type="number" step="0.1" min="0" placeholder="Ex.: 12" value={form.participacaoEmpresa} onChange={(e) => setForm((f) => ({ ...f, participacaoEmpresa: e.target.value }))} data-testid="input-bcg-part-empresa" />
+              </div>
+              <div className="space-y-2">
+                <Label>Participação do maior concorrente (%)</Label>
+                <Input type="number" step="0.1" min="0" placeholder="Ex.: 20" value={form.participacaoConcorrente} onChange={(e) => setForm((f) => ({ ...f, participacaoConcorrente: e.target.value }))} data-testid="input-bcg-part-concorrente" />
+                <p className="text-xs text-muted-foreground">Se a sua empresa é a líder, informe o segundo colocado.</p>
               </div>
             </div>
-            <Button onClick={() => addMutation.mutate()} disabled={!newProduct.productName || addMutation.isPending || roundStatus !== "active"}>
+
+            <div className="flex flex-wrap items-center gap-3 rounded-lg border p-3 text-sm" data-testid="bcg-previa">
+              <span>
+                Participação relativa: <strong>{relativa !== null ? `${numBR(relativa, 2)}×` : "—"}</strong>
+                <span className="text-muted-foreground"> (empresa ÷ maior concorrente; corte em 1,0×)</span>
+              </span>
+              {quadrantePrevisto && (
+                <Badge className="border-transparent text-white" style={{ backgroundColor: CORES_BCG[quadrantePrevisto] }}>
+                  {quadrantePrevisto}
+                </Badge>
+              )}
+            </div>
+
+            <Button onClick={() => addMutation.mutate()} disabled={!podeAdicionar || addMutation.isPending} data-testid="button-bcg-adicionar">
               <Plus className="h-4 w-4 mr-2" />
               Adicionar Produto
             </Button>
           </div>
 
-          {products.length > 0 && (
+          {produtos.length > 0 && (
             <div className="space-y-3">
-              <h3 className="font-semibold">Produtos Mapeados</h3>
+              <h3 className="font-semibold">Produtos mapeados</h3>
               <div className="grid gap-3 md:grid-cols-2">
-                {products.map((product: any) => (
-                  <div key={product.id} className="p-4 border rounded-lg space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
+                {produtos.map((product: any) => {
+                  const q = classificarBcg(Number(product.marketGrowth) || 0, Number(product.relativeMarketShare) || 0);
+                  return (
+                    <div key={product.id} className="p-4 border rounded-lg space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
                           <p className="font-medium">{product.productName}</p>
+                          <Badge className="mt-1 border-transparent text-white" style={{ backgroundColor: CORES_BCG[q] }}>{q}</Badge>
                         </div>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <Badge className="mt-1">{product.quadrant}</Badge>
-                        </div>
+                        <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(product.id)} disabled={roundStatus !== "active"}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(product.id)} disabled={roundStatus !== "active"}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="text-sm text-muted-foreground">
+                        <p>Crescimento do mercado: {numBR(Number(product.marketGrowth))}%</p>
+                        <p>Participação relativa: {numBR(Number(product.relativeMarketShare), 2)}×</p>
+                        {product.revenue ? <p>Receita no último mês: {Number(product.revenue).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}</p> : null}
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      <p>Crescimento: {product.marketGrowth}%</p>
-                      <p>Participação: {Number(product.relativeMarketShare).toFixed(2)}x</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {products.length > 0 && <BcgMatrixChart products={products} />}
+      {produtos.length > 0 && <BcgMatrixChart products={produtos} />}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { classificarBcg } from "@shared/bcg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { eq, and, desc, inArray, asc, sql } from "drizzle-orm";
@@ -1051,6 +1052,9 @@ export class PgStorage implements IStorage {
   }
 
   async createBcgAnalysis(bcg: InsertBcg & { teamId: string }): Promise<BcgAnalysis> {
+    // Quadrante sempre pela regra do modelo BCG (shared/bcg.ts), venha o
+    // registro do aluno, da IA ou da herança de rodada (out/2026).
+    bcg = { ...bcg, quadrant: classificarBcg(Number(bcg.marketGrowth), Number(bcg.relativeMarketShare)) };
     const result = await db.insert(bcgAnalysis).values(bcg).returning();
     return result[0];
   }
