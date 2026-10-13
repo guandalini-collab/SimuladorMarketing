@@ -21,6 +21,7 @@ export interface JourneyStep {
   required: boolean;
   done: boolean;
   locked: boolean;
+  note?: string;
 }
 
 export interface Journey {
@@ -123,7 +124,7 @@ export function JourneyAckBar({ step }: { step: "feedback" | "mercado" }) {
             <p className="text-muted-foreground">
               {s.done
                 ? "Concluída pela equipe."
-                : "Depois de ler com a equipe, confirme para liberar a próxima etapa."}
+                : s.note ?? "Depois de ler com a equipe, confirme para liberar a próxima etapa."}
             </p>
           </div>
         </div>
@@ -136,6 +137,13 @@ export function JourneyAckBar({ step }: { step: "feedback" | "mercado" }) {
               </Button>
             </Link>
           )
+        ) : s.note ? (
+          <Link href="/fechamento-anual">
+            <Button className="shrink-0" data-testid={`button-journey-annual-${step}`}>
+              Ir para o fechamento anual
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
         ) : (
           <Button className="shrink-0" onClick={() => ack.mutate()} disabled={ack.isPending || s.locked} data-testid={`button-journey-ack-${step}`}>
             <CheckCircle2 className="mr-2 h-4 w-4" />

@@ -2548,6 +2548,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Fechamento anual (services/annualReview.ts): relatório do ano, perguntas
+  // reflexivas e respostas da equipe. Acesso: membros da equipe e o
+  // professor da turma.
+  async function canAccessTeam(userId: string, teamId: string) {
+    const user = await storage.getUser(userId);
+    const team = await storage.getTeam(teamId);
+    if (!user || !team) return { ok: false as const, status: 404 };
+    if (user.role === "equipe") {
+      const mine = await storage.getTeamByUser(userId);
+      return mine?.id === team.id ? { ok: true as const, user, team } : { ok: false as const, status: 403 };
+    }
+    const classData = await storage.getClass(team.classId);
+    return classData?.professorId === user.id ? { ok: true as const, user, team } : { ok: false as const, status: 403 };
+  }
+
+  app.get("/api/annual-review/team/:teamId", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const access = await canAccessTeam(req.session.userId, req.params.teamId);
+    if (!access.ok) {
+      return res.status(access.status).json({ error: "Acesso negado" });
+    }
+    const { buildTeamReviews } = await import("./services/annualReview");
+    res.json(await buildTeamReviews(storage, access.team));
+  });
+
+  app.put("/api/annual-review/team/:teamId/:year", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const access = await canAccessTeam(req.session.userId, req.params.teamId);
+    if (!access.ok || access.user.role !== "equipe") {
+      return res.status(403).json({ error: "Só a equipe pode responder a própria reflexão" });
+    }
+    const year = Number(req.params.year);
+    const { buildTeamReviews, saveReflection } = await import("./services/annualReview");
+    const reviews = await buildTeamReviews(storage, access.team);
+    if (!reviews.some((r) => r.year === year)) {
+      return res.status(400).json({ error: "Este ano ainda não foi encerrado" });
+    }
+    const answers = req.body?.answers && typeof req.body.answers === "object" ? req.body.answers : {};
+    const submit = req.body?.submit === true;
+    if (submit) {
+      const review = reviews.find((r) => r.year === year)!;
+      const faltando = review.questions.filter((q) => !String(answers[q.id] ?? "").trim());
+      if (faltando.length > 0) {
+        return res.status(400).json({ error: "Responda todas as perguntas antes de enviar." });
+      }
+    }
+    const result = await saveReflection({ teamId: access.team.id, classId: access.team.classId, year, answers, submit, userId: access.user.id });
+    if (!result.ok) {
+      return res.status(400).json({ error: result.error });
+    }
+    res.json(await buildTeamReviews(storage, access.team));
+  });
+
+  app.get("/api/annual-review/class/:classId", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    const classData = await storage.getClass(req.params.classId);
+    if (!user || user.role !== "professor" || !classData || classData.professorId !== user.id) {
+      return res.status(403).json({ error: "Acesso negado" });
+    }
+    const { buildTeamReviews } = await import("./services/annualReview");
+    const teams = await storage.getTeamsByClass(req.params.classId);
+    const out = [];
+    for (const team of teams) {
+      out.push({ teamId: team.id, teamName: team.name, companyName: team.companyName, reviews: await buildTeamReviews(storage, team) });
+    }
+    res.json(out);
+  });
+
   // Botão "Li e entendi" das etapas de leitura do percurso da rodada
   // (services/teamJourney.ts). Qualquer membro da equipe pode confirmar;
   // a confirmação vale para a equipe toda. Respeita a ordem das etapas.
@@ -2577,9 +2652,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (target?.locked) {
       return res.status(400).json({ error: "Conclua a etapa anterior antes desta." });
     }
+    if (target?.note) {
+      return res.status(400).json({ error: target.note });
+    }
     await saveAck(team.id, round.id, step, user.id);
     const journey = await computeJourney(storage, team, round, isSegmentationComplete);
     res.json({ journey });
+  });
+
+  // Correção da identidade de uma equipe pelo professor da turma (a equipe
+  // não pode mais alterá-la depois de criada). clearLogo libera um novo
+  // envio de logomarca pela equipe.
+  app.patch("/api/professor/teams/:teamId/identity", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "professor") {
+      return res.status(403).json({ error: "Acesso negado" });
+    }
+    const team = await storage.getTeam(req.params.teamId);
+    if (!team) {
+      return res.status(404).json({ error: "Equipe não encontrada" });
+    }
+    const classData = await storage.getClass(team.classId);
+    if (!classData || classData.professorId !== user.id) {
+      return res.status(403).json({ error: "Você não tem permissão para alterar esta equipe" });
+    }
+    const companyName = typeof req.body?.companyName === "string" ? req.body.companyName.trim().slice(0, 100) : undefined;
+    const slogan = typeof req.body?.slogan === "string" ? req.body.slogan.trim().slice(0, 200) : undefined;
+    const updates: Record<string, any> = {};
+    if (companyName !== undefined) updates.companyName = companyName || null;
+    if (slogan !== undefined) updates.slogan = slogan || null;
+    if (req.body?.clearLogo === true) updates.logoUrl = null;
+    const updatedTeam = await storage.updateTeam(team.id, updates);
+    res.json(updatedTeam);
   });
 
   app.patch("/api/team/identity", async (req, res) => {
@@ -2600,6 +2707,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const { companyName, slogan } = req.body;
     if (!companyName || !slogan) {
       return res.status(400).json({ error: "Nome da empresa e slogan são obrigatórios" });
+    }
+
+    // Regra do professor (out/2026): depois de criada, a identidade da
+    // empresa não pode ser alterada pela equipe — só pelo professor
+    // (PATCH /api/professor/teams/:teamId/identity).
+    if (team.companyName?.trim() && team.slogan?.trim()) {
+      return res.status(403).json({ error: "A identidade da empresa já foi definida e não pode ser alterada. Em caso de erro, fale com o professor." });
     }
     
     const updatedTeam = await storage.updateTeam(team.id, {
@@ -2628,6 +2742,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const { logoUrl } = req.body;
     if (!logoUrl) {
       return res.status(400).json({ error: "URL do logo é obrigatória" });
+    }
+
+    if (team.logoUrl) {
+      return res.status(403).json({ error: "A logomarca já foi definida e não pode ser trocada. Em caso de erro, fale com o professor." });
     }
     
     const updatedTeam = await storage.updateTeam(team.id, {
@@ -2667,6 +2785,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (!req.file) {
           return res.status(400).json({ error: "Nenhum arquivo foi enviado" });
+        }
+
+        if (team.logoUrl) {
+          return res.status(403).json({ error: "A logomarca já foi definida e não pode ser trocada. Em caso de erro, fale com o professor." });
         }
 
         // Converte a imagem para base64 e guarda direto no banco (ver comentário

@@ -35,6 +35,8 @@ import Onboarding from "@/pages/onboarding";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
+import FechamentoAnual from "@/pages/fechamento-anual";
+import ProfessorFechamento from "@/pages/professor-fechamento";
 
 interface User {
   id: string;
@@ -95,6 +97,9 @@ function AuthenticatedApp() {
           <Route path="/professor" component={Professor} />
           <Route path="/professor/analytics/:classId">
             {(params) => <ProfessorAnalytics classId={params.classId} />}
+          </Route>
+          <Route path="/professor/fechamento/:classId">
+            {(params) => <ProfessorFechamento classId={params.classId} />}
           </Route>
           <Route path="/aprovacoes" component={Aprovacoes} />
           <Route path="/" component={Professor} />
@@ -161,6 +166,7 @@ function AuthenticatedApp() {
               <Route path="/manual" component={Manual} />
               <Route path="/guia-midias" component={GuiaMidias} />
               <Route path="/perfil" component={Perfil} />
+              <Route path="/fechamento-anual" component={FechamentoAnual} />
               <Route component={NotFound} />
             </Switch>
           </main>

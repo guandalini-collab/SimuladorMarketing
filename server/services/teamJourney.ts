@@ -27,6 +27,7 @@ export interface JourneyStep {
   required: boolean;
   done: boolean;
   locked: boolean;
+  note?: string;
 }
 
 export interface Journey {
@@ -85,10 +86,17 @@ export async function computeJourney(
     pestel.some(isPestelComplete) &&
     segmentationComplete(segs, classData?.businessType);
   const identidade = !!team.companyName?.trim() && !!team.slogan?.trim();
+
+  // No primeiro mês de um ano novo, a etapa 1 também exige a reflexão do
+  // fechamento do ano que terminou (services/annualReview.ts).
+  const { pendingReflectionYear } = await import("./annualReview");
+  const anoPendente = await pendingReflectionYear(storage, team, round);
   const enviado = mixes.some((m) => m.submittedAt !== null);
 
   const base: Omit<JourneyStep, "number" | "locked">[] = [
-    { key: "feedback", label: "Feedback e Resultados da rodada anterior", href: "/feedback", paths: ["/feedback", "/analises"], required: temResultadoAnterior, done: !temResultadoAnterior || acks.has("feedback") },
+    anoPendente
+      ? { key: "feedback", label: "Feedback e Resultados da rodada anterior", href: "/fechamento-anual", paths: ["/feedback", "/analises"], required: true, done: false, note: `Antes de seguir, a equipe precisa responder e enviar a reflexão do Fechamento do Ano ${anoPendente}.` }
+      : { key: "feedback", label: "Feedback e Resultados da rodada anterior", href: "/feedback", paths: ["/feedback", "/analises"], required: temResultadoAnterior, done: !temResultadoAnterior || acks.has("feedback") },
     { key: "mercado", label: "Simula+ News e Análise de Mercado", href: "/mercado", paths: ["/news", "/mercado"], required: true, done: acks.has("mercado") },
     { key: "ferramentas", label: "Ferramentas Estratégicas", href: "/estrategia", paths: ["/estrategia"], required: true, done: ferramentas },
     { key: "identidade", label: "Identidade da Empresa", href: "/empresa", paths: ["/empresa"], required: true, done: identidade },

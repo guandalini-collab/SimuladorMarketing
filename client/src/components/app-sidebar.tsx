@@ -13,6 +13,7 @@ import {
   Newspaper,
   Lock,
   CheckCircle2,
+  CalendarCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -45,6 +46,7 @@ const roundItems = [
 ];
 
 const consultItems = [
+  { title: "Fechamento anual", url: "/fechamento-anual", icon: CalendarCheck },
   { title: "Insights de Mercado", url: "/insights", icon: Sparkles },
   { title: "Orçamento", url: "/orcamento", icon: Wallet },
   { title: "Manual do Aluno", url: "/manual", icon: BookOpen },

@@ -62,7 +62,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Eye, Zap, AlertTriangle, Key } from "lucide-react";
+import { Eye, Zap, AlertTriangle, Key, CalendarCheck } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { insertMarketEventSchema } from "@shared/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -78,6 +78,7 @@ import {
 } from "@/components/ui/form";
 import { AlignmentTeamReport } from "@/components/alignment-team-report";
 import { DeterministicFeedbackCard } from "@/components/deterministic-feedback-card";
+import { TeamIdentityEditor } from "@/components/team-identity-editor";
 import {
   Accordion,
   AccordionContent,
@@ -728,6 +729,7 @@ function TeamCard({
             {isExpanded ? <ChevronUp className="h-5 w-5 flex-shrink-0" /> : <ChevronDown className="h-5 w-5 flex-shrink-0" />}
           </CollapsibleTrigger>
           <div className="flex items-center gap-1">
+            <TeamIdentityEditor team={team} />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -2764,6 +2766,18 @@ export default function Professor() {
       warnings.push("O orçamento padrão das equipes está em R$ 0 ou nunca foi definido.");
     }
 
+    // Pedido do professor (out/2026): lembrar de todos os quesitos de mercado
+    // que aparecem para os alunos na Análise de Mercado.
+    const faltando: string[] = [];
+    if (!currentClass.businessType) faltando.push("tipo de negócio (B2C/B2B)");
+    if (!currentClass.marketSize || currentClass.marketSize <= 0) faltando.push("tamanho do mercado");
+    if (!currentClass.targetConsumers || currentClass.targetConsumers <= 0) faltando.push("consumidores potenciais");
+    if (currentClass.marketGrowthRate === null || currentClass.marketGrowthRate === undefined) faltando.push("taxa de crescimento do mercado");
+    if (!currentClass.numberOfCompetitors || currentClass.numberOfCompetitors <= 0) faltando.push("número de concorrentes");
+    if (faltando.length > 0) {
+      warnings.push(`Configuração de mercado incompleta: ${faltando.join(", ")}. Esses dados aparecem zerados para os alunos na Análise de Mercado (aba "Configurar").`);
+    }
+
     return warnings;
   }, [currentClass, teams]);
 
@@ -3344,6 +3358,21 @@ export default function Professor() {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Analytics da Turma</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => setLocation(`/professor/fechamento/${selectedClass}`)}
+                      data-testid="button-quick-annual-review"
+                    >
+                      <CalendarCheck className="h-4 w-4" />
+                      <span className="hidden sm:inline">Fechamento anual</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Fechamento anual e reflexões das equipes</TooltipContent>
                 </Tooltip>
               </div>
             )}

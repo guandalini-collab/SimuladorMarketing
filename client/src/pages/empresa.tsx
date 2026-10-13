@@ -398,6 +398,12 @@ export default function Empresa() {
     );
   }
 
+  // Regra do professor (out/2026): depois de criada, a identidade não muda.
+  // Nome e slogan travam assim que os dois estão salvos; a logomarca trava
+  // depois do primeiro envio. Só o professor pode corrigir (área do professor).
+  const identityLocked = !!team?.companyName?.trim() && !!team?.slogan?.trim();
+  const logoLocked = !!team?.logoUrl;
+
   return (
     <div className="space-y-6">
       <div>
@@ -432,6 +438,7 @@ export default function Empresa() {
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 maxLength={100}
+                disabled={identityLocked}
               />
               <p className="text-xs text-muted-foreground">
                 {companyName.length}/100 caracteres
@@ -447,6 +454,7 @@ export default function Empresa() {
                 value={slogan}
                 onChange={(e) => setSlogan(e.target.value)}
                 maxLength={200}
+                disabled={identityLocked}
                 rows={3}
               />
               <p className="text-xs text-muted-foreground">
@@ -454,15 +462,26 @@ export default function Empresa() {
               </p>
             </div>
 
-            <Button
-              onClick={handleSaveIdentity}
-              disabled={updateIdentityMutation.isPending}
-              className="w-full"
-              data-testid="button-save-identity"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {updateIdentityMutation.isPending ? "Salvando..." : "Salvar Identidade"}
-            </Button>
+            {identityLocked ? (
+              <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground" data-testid="text-identity-locked">
+                Identidade definitiva: depois de criados, o nome e o slogan da empresa não podem mais ser alterados pela equipe. Em caso de erro, fale com o professor.
+              </p>
+            ) : (
+              <>
+                <p className="text-xs text-[#8a5a00] dark:text-amber-400">
+                  Atenção: depois de salvos, o nome e o slogan não poderão mais ser alterados pela equipe.
+                </p>
+                <Button
+                  onClick={handleSaveIdentity}
+                  disabled={updateIdentityMutation.isPending}
+                  className="w-full"
+                  data-testid="button-save-identity"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {updateIdentityMutation.isPending ? "Salvando..." : "Salvar Identidade"}
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -495,6 +514,12 @@ export default function Empresa() {
               </div>
             )}
 
+            {logoLocked ? (
+              <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground" data-testid="text-logo-locked">
+                Logomarca definitiva: depois de enviada, não pode mais ser trocada pela equipe. Em caso de erro, fale com o professor.
+              </p>
+            ) : (
+            <>
             <div className="space-y-4">
               <div className="flex gap-2 p-1 bg-muted rounded-lg">
                 <Button
@@ -570,6 +595,11 @@ export default function Empresa() {
               <Save className="h-4 w-4 mr-2" />
               {(updateLogoMutation.isPending || uploadLogoMutation.isPending) ? "Salvando..." : "Salvar Logo"}
             </Button>
+            <p className="text-xs text-[#8a5a00] dark:text-amber-400">
+              Atenção: depois de enviada, a logomarca não poderá mais ser trocada pela equipe.
+            </p>
+            </>
+            )}
           </CardContent>
         </Card>
       </div>
