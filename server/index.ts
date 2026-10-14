@@ -14,6 +14,7 @@ import { ensureMarketBulletinTable } from "./ensureMarketBulletinTable";
 import { ensureTeamRoundStepsTable } from "./ensureTeamRoundStepsTable";
 import { ensureAnnualReflectionsTable } from "./ensureAnnualReflectionsTable";
 import { ensureClassContextTable } from "./ensureClassContextTable";
+import { ensureClassMarketDefaults } from "./ensureClassMarketDefaults";
 import { ensureMarketEventSentiment } from "./ensureMarketEventSentiment";
 import { ensureOnboardingColumns } from "./ensureOnboardingColumns";
 import { ensureSuperAdminAccount } from "./ensureSuperAdminAccount";
@@ -78,6 +79,7 @@ app.use((req, res, next) => {
   await ensureTeamRoundStepsTable();
   await ensureAnnualReflectionsTable();
   await ensureClassContextTable();
+  await ensureClassMarketDefaults();
   await ensureMarketEventSentiment();
   await ensureOnboardingColumns();
   await ensureSuperAdminAccount();

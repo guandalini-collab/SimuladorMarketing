@@ -99,6 +99,15 @@ export async function runRoundOpenedAutomation(storage: IStorage, roundId: strin
   const round = await storage.getRound(roundId);
   if (!round || round.status !== "active") return;
 
+  // Dados reais do setor (out/2026): completa tamanho, crescimento e
+  // consumidores se a turma ainda estiver com esses campos vazios.
+  try {
+    const { preencherDadosDoSetor } = await import("../ensureClassMarketDefaults");
+    await preencherDadosDoSetor(round.classId);
+  } catch (error) {
+    console.error("[ROUND-AUTO] Erro ao aplicar dados reais do setor:", error);
+  }
+
   try {
     await completarAnalisesFaltantes(storage, round.id, round.roundNumber);
   } catch (error) {
