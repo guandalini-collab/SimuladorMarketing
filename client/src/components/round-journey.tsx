@@ -34,11 +34,16 @@ export interface Journey {
 const STATUS_KEY = ["/api/team/current-round-status"];
 
 export function useJourney(): { journey: Journey | null; isLoading: boolean } {
-  const { data, isLoading } = useQuery<{ journey?: Journey }>({
+  const { data, isFetched } = useQuery<{ journey?: Journey }>({
     queryKey: STATUS_KEY,
     retry: false,
   });
-  return { journey: data?.journey ?? null, isLoading };
+  // "Carregando" só até a primeira resposta. Correção (out/2026): sem rodada
+  // ativa a rota responde 404 e não há dado em cache; cada nova montagem
+  // (ex.: a barra "Li e entendi") refazia a consulta, o estado voltava a
+  // "carregando", o portão escondia a página e a barra saía — um ciclo que
+  // deixava Análise de Mercado, Simula+ News e Feedback em branco.
+  return { journey: data?.journey ?? null, isLoading: !isFetched };
 }
 
 export function stepForPath(journey: Journey | null, path: string): JourneyStep | undefined {

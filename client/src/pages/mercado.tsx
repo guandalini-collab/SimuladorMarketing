@@ -163,7 +163,7 @@ export default function Mercado() {
         </Card>
       )}
 
-      <Tabs defaultValue={currentClass?.sector ? "setor" : "economia"} className="w-full">
+      <Tabs key={currentClass?.sector ? "com-setor" : "sem-setor"} defaultValue={currentClass?.sector ? "setor" : "economia"} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="setor" data-testid="tab-setor" disabled={!currentClass?.sector}>
             Setor

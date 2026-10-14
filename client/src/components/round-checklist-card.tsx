@@ -39,7 +39,7 @@ interface ChecklistItem {
 }
 
 export function RoundChecklistCard() {
-  const { data, isLoading, isError, refetch } = useQuery<RoundStatus>({
+  const { data, isLoading, isError, error, refetch } = useQuery<RoundStatus>({
     queryKey: ["/api/team/current-round-status"],
     retry: false,
   });
@@ -69,6 +69,24 @@ export function RoundChecklistCard() {
           <div className="flex items-center gap-3 py-4 text-muted-foreground">
             <Users className="h-5 w-5" />
             <span>Você precisa estar em uma equipe para jogar.</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Sem rodada ativa (entre uma rodada e outra) a rota responde 404: não é
+  // erro, é só espera pela próxima rodada (out/2026).
+  if (isError && /rodada ativa/i.test(String((error as any)?.message ?? ""))) {
+    return (
+      <Card data-testid="card-round-checklist-no-round">
+        <CardHeader>
+          <CardTitle className="text-lg">Roteiro da Rodada</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3 py-4 text-muted-foreground">
+            <AlertCircle className="h-5 w-5" />
+            <span>Nenhuma rodada ativa no momento. Quando o professor abrir a próxima rodada, o roteiro aparece aqui.</span>
           </div>
         </CardContent>
       </Card>
