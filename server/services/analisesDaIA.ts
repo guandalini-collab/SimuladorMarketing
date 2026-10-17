@@ -379,10 +379,30 @@ export interface ResultadoAnalisesDaRodada {
  * o que ainda não existe nesta rodada (PESTEL/Porter da turma e SWOT de cada
  * equipe); a BCG é sempre recalculada (é barata e só usa números do jogo).
  */
-export async function prepararAnalisesDaRodada(
+// Uma preparação por rodada de cada vez: a abertura, a preparação e a
+// entrada de uma equipe nova podem disparar quase juntas; em paralelo, duas
+// execuções apagavam e recriavam a BCG ao mesmo tempo (linhas duplicadas) e
+// geravam a mesma SWOT duas vezes.
+const filaPorRodada = new Map<string, Promise<unknown>>();
+
+export function prepararAnalisesDaRodada(
   storage: IStorage,
   roundId: string,
   opcoes: { forcar?: boolean } = {},
+): Promise<ResultadoAnalisesDaRodada> {
+  const anterior = filaPorRodada.get(roundId) ?? Promise.resolve();
+  const atual = anterior.catch(() => undefined).then(() => executarPreparacao(storage, roundId, opcoes));
+  filaPorRodada.set(roundId, atual);
+  atual.finally(() => {
+    if (filaPorRodada.get(roundId) === atual) filaPorRodada.delete(roundId);
+  }).catch(() => undefined);
+  return atual;
+}
+
+async function executarPreparacao(
+  storage: IStorage,
+  roundId: string,
+  opcoes: { forcar?: boolean },
 ): Promise<ResultadoAnalisesDaRodada> {
   const round = await storage.getRound(roundId);
   if (!round) return { aplicado: false, motivo: "rodada não encontrada", pestelPorter: "falhou", equipes: [] };
