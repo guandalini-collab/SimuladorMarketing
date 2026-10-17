@@ -4,6 +4,7 @@ import type { DateRange } from "react-day-picker";
 import { CalendarDays, Flag } from "lucide-react";
 import type { Round } from "@shared/schema";
 import { DURACAO_AULA_MINUTOS, HORA_ABERTURA_PADRAO, MINUTOS_PREPARACAO_IA, dataBrasilia, horaBrasilia, rodadaDeAdaptacao, semanaSimulada } from "@shared/rodadaSemanal";
+import { feriadoEm, feriadosNacionais } from "@shared/calendarioBrasil";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,32 @@ export function proximoDomingo(): string {
   const d = paraDate(hojeBrasilia());
   d.setDate(d.getDate() + (((7 - d.getDay()) % 7) || 7));
   return paraIso(d);
+}
+
+/** Feriados nacionais do ano anterior ao seguinte (para destacar no calendário). */
+function diasDeFeriado(): Date[] {
+  const ano = Number(hojeBrasilia().slice(0, 4));
+  return [ano - 1, ano, ano + 1, ano + 2].flatMap((a) => feriadosNacionais(a)).map((f) => paraDate(f.data));
+}
+const DESTAQUE_FERIADO = { feriado: "text-[#c2410c] font-semibold underline decoration-dotted underline-offset-4" };
+
+/** Aviso (sem bloquear) quando algum dia escolhido é feriado nacional. */
+function AvisoFeriado({ dias }: { dias: (string | undefined)[] }) {
+  const achados = Array.from(new Set(dias.filter((d): d is string => !!d)))
+    .map((d) => ({ d, f: feriadoEm(d) }))
+    .filter((x) => x.f);
+  if (achados.length === 0) {
+    return <p className="text-[11px] text-muted-foreground"><span className="font-semibold text-[#c2410c] underline decoration-dotted">Dias sublinhados</span> são feriados nacionais.</p>;
+  }
+  return (
+    <div className="rounded-md border border-[#c2410c]/40 bg-[#fff4ed] p-2 text-xs text-[#9a3412] dark:bg-orange-950/30 dark:text-orange-300" data-testid="aviso-feriado">
+      {achados.map(({ d, f }) => (
+        <p key={d}>
+          <span className="font-semibold">{d.split("-").reverse().join("/")} é {f!.facultativo ? "ponto facultativo nacional" : "feriado nacional"}</span> ({f!.nome}). Confirme se haverá aula nesse dia.
+        </p>
+      ))}
+    </div>
+  );
 }
 
 /** Dias já ocupados por outras rodadas da turma (não concluídas). */
@@ -193,6 +220,7 @@ export function DialogoDatasRodada({
   const hojeIso = hojeBrasilia();
   const hoje = paraDate(hojeIso);
   const bloqueados = useMemo(() => [{ before: hoje }, ...diasOcupados(rodadas, round?.id)], [rodadas, round?.id, hojeIso]);
+  const feriados = useMemo(diasDeFeriado, [hojeIso]);
 
   let inicio: string | undefined;
   let fim: string | undefined;
@@ -234,15 +262,16 @@ export function DialogoDatasRodada({
         </DialogHeader>
         <div className="flex justify-center">
           {!aberta && adaptacao ? (
-            <Calendar mode="range" locale={ptBR} selected={faixa} onSelect={setFaixa} disabled={bloqueados} defaultMonth={faixa?.from ?? hoje} data-testid="calendario-rodada" />
+            <Calendar mode="range" locale={ptBR} selected={faixa} onSelect={setFaixa} disabled={bloqueados} modifiers={{ feriado: feriados }} modifiersClassNames={DESTAQUE_FERIADO} defaultMonth={faixa?.from ?? hoje} data-testid="calendario-rodada" />
           ) : (
-            <Calendar mode="single" locale={ptBR} selected={dia} onSelect={setDia} disabled={bloqueados} defaultMonth={dia ?? hoje} data-testid="calendario-rodada-dia" />
+            <Calendar mode="single" locale={ptBR} selected={dia} onSelect={setDia} disabled={bloqueados} modifiers={{ feriado: feriados }} modifiersClassNames={DESTAQUE_FERIADO} defaultMonth={dia ?? hoje} data-testid="calendario-rodada-dia" />
           )}
         </div>
         <div className="space-y-2">
           {!aberta && <CampoHora id="hora-abertura" rotulo="Horário de abertura" valor={horaInicio} onChange={mudarHoraInicio} />}
           <CampoHora id="hora-fechamento" rotulo="Horário de fechamento" valor={horaFim} onChange={mudarHoraFim} />
         </div>
+        <AvisoFeriado dias={[inicio, fim]} />
         <Resumo inicio={inicio} horaInicio={horaInicio} fim={fim} horaFim={horaFim} />
         {fimAntesDoInicio && <p className="text-xs text-destructive">O fechamento precisa ser depois da abertura.</p>}
         {fimNoPassado && <p className="text-xs text-destructive">Esse horário já passou. Escolha um horário futuro.</p>}
@@ -301,6 +330,7 @@ export function DialogoIniciarRodada({
   const hojeIso = hojeBrasilia();
   const hoje = paraDate(hojeIso);
   const bloqueados = [{ before: hoje }, ...diasOcupados(rodadas)];
+  const feriados = useMemo(diasDeFeriado, [hojeIso]);
   const fimIso = adaptacao ? (dia ? paraIso(dia) : undefined) : hojeIso;
   const noPassado = !!fimIso && horaOk(horaFim) && `${fimIso} ${horaFim}` <= `${hojeIso} ${agoraBrasilia()}`;
   const podeIniciar = !!fimIso && horaOk(horaFim) && !noPassado;
@@ -318,10 +348,11 @@ export function DialogoIniciarRodada({
         </DialogHeader>
         {adaptacao && (
           <div className="flex justify-center">
-            <Calendar mode="single" locale={ptBR} selected={dia} onSelect={setDia} disabled={bloqueados} defaultMonth={dia ?? hoje} data-testid="calendario-iniciar" />
+            <Calendar mode="single" locale={ptBR} selected={dia} onSelect={setDia} disabled={bloqueados} modifiers={{ feriado: feriados }} modifiersClassNames={DESTAQUE_FERIADO} defaultMonth={dia ?? hoje} data-testid="calendario-iniciar" />
           </div>
         )}
         <CampoHora id="hora-fechamento-inicio" rotulo="Horário de fechamento" valor={horaFim} onChange={setHoraFim} />
+        <AvisoFeriado dias={[hojeIso, fimIso]} />
         <Resumo inicio={hojeIso} fim={fimIso} horaFim={horaFim} abreJa />
         {noPassado && <p className="text-xs text-destructive">Esse horário já passou. Escolha um horário futuro.</p>}
         <DialogFooter>

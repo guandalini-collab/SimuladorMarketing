@@ -2150,7 +2150,9 @@ function GradesRanking({
   };
   
   const completedRounds = rounds.filter(r => r.status === "completed");
-  const gradableRounds = completedRounds.filter(r => r.roundNumber > 1);
+  // Pedido do professor (out/2026): a Rodada 1 (semana de adaptação) também
+  // entra na nota — antes era excluída como "rodada de aprendizado".
+  const gradableRounds = completedRounds;
   
   const { data: allResults = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/results"],
@@ -2165,7 +2167,7 @@ function GradesRanking({
       if (!teamIdSet.has(r.teamId)) return false;
       if (!gradableRoundIdSet.has(r.roundId)) return false;
       const round = rounds.find(rd => rd.id === r.roundId);
-      if (!round || round.roundNumber <= 1 || round.status !== "completed") return false;
+      if (!round || round.status !== "completed") return false;
       return true;
     });
   }, [allResults, teamIdSet, gradableRoundIdSet, rounds]);
@@ -2242,8 +2244,11 @@ function GradesRanking({
       validRounds++;
     });
     
-    return validRounds > 0 ? Math.round(totalScore / validRounds) : 0;
+    // Pedido do professor (out/2026): nota de 0 a 100 com uma casa decimal.
+    return validRounds > 0 ? Math.round((totalScore / validRounds) * 10) / 10 : 0;
   };
+
+  const formatarNota = (nota: number) => nota.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   
   const getGradeColor = (grade: number): string => {
     if (grade >= 90) return "text-[#1aa15c]";
@@ -2264,18 +2269,26 @@ function GradesRanking({
     
     return teams.map(team => {
       const teamResults = classGradableResults.filter(r => r.teamId === team.id);
-      
-      const grade = calculateGrade(teamResults, calculateBenchmarks);
-      
+      // Pedido do professor (out/2026): rodada sem decisão enviada vale 0 —
+      // é como faltar à atividade daquele dia — e entra na média. Antes, a
+      // rodada era simplesmente ignorada. Só não contam as rodadas encerradas
+      // antes de a equipe existir.
+      const equipeCriadaEm = team.createdAt ? new Date(team.createdAt).getTime() : 0;
       const roundGrades = gradableRounds.map(round => {
         const roundResult = classGradableResults.find(r => r.teamId === team.id && r.roundId === round.id);
+        const encerradaEm = round.endedAt ? new Date(round.endedAt).getTime() : Infinity;
+        const existia = equipeCriadaEm <= encerradaEm;
         return {
           roundNumber: round.roundNumber,
           roundId: round.id,
-          grade: roundResult ? calculateGrade([roundResult], calculateBenchmarks) : null
+          semEnvio: existia && !roundResult,
+          grade: roundResult ? calculateGrade([roundResult], calculateBenchmarks) : existia ? 0 : null
         };
       });
-      
+      const notasValidas = roundGrades.filter(rg => rg.grade !== null).map(rg => rg.grade as number);
+      const grade = notasValidas.length > 0
+        ? Math.round((notasValidas.reduce((a, b) => a + b, 0) / notasValidas.length) * 10) / 10
+        : 0;
       const memberNames = getTeamMemberNames(team);
       
       return {
@@ -2294,7 +2307,7 @@ function GradesRanking({
   const exportToExcel = () => {
     const headers = ["Posição", "Equipe", "Empresa", "Alunos", ...gradableRounds.map(r => `Rodada ${r.roundNumber}`), "Nota Final"];
     const rows = teamGrades.map((team, index) => {
-      const roundColumns = team.roundGrades.map(rg => rg.grade !== null ? rg.grade.toString() : "-");
+      const roundColumns = team.roundGrades.map(rg => rg.grade !== null ? formatarNota(rg.grade) : "-");
       const memberNamesStr = team.memberNames.join("; ");
       return [
         (index + 1).toString(),
@@ -2302,11 +2315,12 @@ function GradesRanking({
         team.companyName || "-",
         `"${memberNamesStr}"`,
         ...roundColumns,
-        team.finalGrade.toString()
+        formatarNota(team.finalGrade)
       ];
     });
     
-    const csvContent = [headers, ...rows].map(row => row.join(",")).join("\n");
+    // ";" como separador: as notas usam vírgula decimal (padrão do Excel em português).
+    const csvContent = [headers, ...rows].map(row => row.join(";")).join("\n");
     const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -2332,10 +2346,7 @@ function GradesRanking({
         <Award className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
         <p className="text-muted-foreground font-medium">Nenhuma rodada avaliável ainda</p>
         <p className="text-sm text-muted-foreground mt-1">
-          As notas serão calculadas a partir da Rodada 2.
-        </p>
-        <p className="text-xs text-muted-foreground mt-2">
-          A Rodada 1 é considerada de aprendizado e não impacta a nota.
+          As notas aparecem quando a primeira rodada for encerrada.
         </p>
       </div>
     );
@@ -2375,7 +2386,7 @@ function GradesRanking({
                     <li>• Alinhamento Estratégico: 10%</li>
                   </ul>
                   <p className="text-xs mt-2 text-muted-foreground">
-                    * Rodada 1 não é considerada (aprendizado)
+                    * Todas as rodadas encerradas contam, inclusive a Rodada 1. Rodada sem decisão enviada vale 0.
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -2436,8 +2447,9 @@ function GradesRanking({
                       {team.roundGrades.map(rg => (
                         <TableCell key={rg.roundId} className="text-center">
                           {rg.grade !== null ? (
-                            <span className={`font-medium ${getGradeColor(rg.grade)}`}>
-                              {rg.grade}
+                            <span className={`font-medium ${getGradeColor(rg.grade)}`} title={rg.semEnvio ? "Sem decisão enviada nesta rodada: vale 0" : undefined}>
+                              {formatarNota(rg.grade)}
+                              {rg.semEnvio && <span className="block text-[10px] font-normal text-muted-foreground">sem envio</span>}
                             </span>
                           ) : (
                             <span className="text-muted-foreground">-</span>
@@ -2446,7 +2458,7 @@ function GradesRanking({
                       ))}
                       <TableCell className="text-center">
                         <span className={`text-xl font-bold ${getGradeColor(team.finalGrade)}`}>
-                          {team.finalGrade}
+                          {formatarNota(team.finalGrade)}
                         </span>
                       </TableCell>
                       <TableCell className="text-center">
@@ -4471,7 +4483,7 @@ export default function Professor() {
                   )}
 
                   {/* Sistema de Notas */}
-                  {rounds.filter(r => r.status === "completed" && r.roundNumber > 1).length > 0 && (
+                  {rounds.filter(r => r.status === "completed").length > 0 && (
                     <>
                       <div className="pt-4 border-t">
                         <h3 className="text-base font-medium flex items-center gap-2 mb-4">

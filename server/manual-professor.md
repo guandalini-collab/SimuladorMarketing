@@ -219,10 +219,9 @@ Depois de encerrada, uma rodada não pode ser reaberta pela mesma tela com um cl
 
 ## 10. Rodadas Seguintes e Agendamento
 
-Repita o ciclo: abra a próxima rodada (Seção 7), acompanhe eventos e submissões (Seção 8), encerre conferindo as equipes pendentes (Seção 9). Duas diferenças em relação à Rodada 1 valem menção:
+Repita o ciclo: abra a próxima rodada (Seção 7), acompanhe eventos e submissões (Seção 8), encerre conferindo as equipes pendentes (Seção 9). Uma diferença em relação à Rodada 1 vale menção:
 
 - A partir da Rodada 2, as análises estratégicas (SWOT, Porter, BCG, PESTEL, Segmentação) da rodada anterior são **copiadas automaticamente** para a nova rodada como ponto de partida da equipe, que pode então ajustá-las — não é gerado conteúdo novo por IA nesse momento, apenas um carregamento do que já existia.
-- O **Sistema de Notas** (Seção 11.3) nunca considera a Rodada 1 no cálculo — ela é tratada como rodada de aprendizado, sem nota.
 
 Você pode ajustar o número total de rodadas da turma a qualquer momento na aba **Aula**, no campo **Total de Rodadas** (não pode ser menor que a rodada atual). Também é possível remover a última rodada da lista, mas só se ela ainda estiver bloqueada (não iniciada) e sem nenhum dado associado — o botão **Remover Última** fica desabilitado automaticamente quando isso não é possível, e explica o motivo ao passar o mouse.
 
@@ -247,7 +246,8 @@ A **semana simulada** é a semana de segunda a domingo que contém o dia de aber
 
 Com as datas salvas, o sistema abre e encerra a rodada sozinho, sem que você precise clicar em Iniciar Rodada ou Encerrar Rodada. O alerta da Seção 9 continua valendo: o encerramento automático não verifica se todas as equipes enviaram algo.
 
-- **Férias e recessos:** não há geração automática de semanas. Você escolhe as datas rodada a rodada e pode pular as semanas sem aula ou adiantar uma rodada.
+- **Férias, recessos e feriados:** não há geração automática de semanas. Você escolhe as datas rodada a rodada e pode pular as semanas sem aula ou adiantar uma rodada. Semana sem rodada não entra na nota. Para um **sábado letivo de reposição**, basta marcar a rodada no sábado, com o horário da aula.
+- **Feriados nacionais no calendário:** aparecem sublinhados em laranja. Se você escolher um deles, o diálogo avisa (por exemplo, "02/11/2026 é feriado nacional (Finados)"), mas não bloqueia. Entram os feriados nacionais fixos, a Sexta-feira Santa e os pontos facultativos nacionais de Carnaval e Corpus Christi. Feriados estaduais, municipais e recessos da instituição o sistema não conhece: nesses dias, simplesmente não marque rodada.
 - **Semanas ocupadas:** no calendário, os dias que já pertencem a outra rodada da turma aparecem desabilitados, e o sistema recusa datas que se sobreponham.
 - **Rodada em andamento:** o botão passa a se chamar **Alterar fechamento** e permite mudar o dia e o **horário** do fechamento, por exemplo para 22h45 se a aula atrasar. O horário precisa ser futuro.
 - **Remover datas:** numa rodada que ainda não abriu, o botão **Remover datas** apaga o agendamento.
@@ -293,7 +293,7 @@ O score de alinhamento combina dois blocos: 70% mede a coerência entre as cinco
 
 ### 11.3 Sistema de Notas
 
-A partir da segunda rodada concluída, aparece a seção **Sistema de Notas**, com uma nota combinada por equipe, calculada por uma fórmula fixa com os seguintes pesos:
+Assim que a primeira rodada é encerrada, aparece a seção **Sistema de Notas**, com uma nota de **0 a 100, com uma casa decimal**, por equipe (todos os membros da equipe recebem a mesma nota). Ela é recalculada sozinha a cada rodada encerrada, com uma fórmula fixa e os seguintes pesos:
 
 | Métrica | Peso |
 |---|---|
@@ -304,9 +304,14 @@ A partir da segunda rodada concluída, aparece a seção **Sistema de Notas**, c
 | Margem | 15% |
 | Alinhamento Estratégico | 10% |
 
-Cada métrica é normalizada (0 a 100) comparando o desempenho da equipe com o das demais equipes da mesma turma naquela rodada, antes de aplicar os pesos — ou seja, é uma nota relativa à turma, não uma escala absoluta. **A Rodada 1 nunca entra nesse cálculo**, propositalmente, por ser considerada rodada de aprendizado.
+Cada métrica é normalizada (0 a 100) comparando o resultado da equipe com os resultados de todas as equipes da turma nas rodadas encerradas, antes de aplicar os pesos — ou seja, é uma nota relativa à turma, não uma escala absoluta.
 
-A tabela de notas pode ser exportada em CSV diretamente pela tela, para uso em planilha externa ou lançamento em outro sistema de avaliação.
+- **Todas as rodadas encerradas contam**, inclusive a Rodada 1 (semana de adaptação).
+- **Rodada sem decisão enviada vale 0** e entra na média, como uma falta à atividade daquele dia. Na tabela, essa célula aparece como "0,0 · sem envio". Só não contam as rodadas encerradas antes de a equipe ser formada.
+- A **Nota Final** é a média das notas de cada rodada.
+- O número total de rodadas da turma não interfere na nota: você pode aumentar o "Total de Rodadas" a qualquer momento.
+
+A tabela de notas pode ser exportada em **CSV** pela tela, com ponto e vírgula como separador e vírgula decimal (abre direto no Excel em português), para lançamento em outro sistema de avaliação.
 
 ### 11.4 Penalidade por cópia de IA
 
@@ -362,7 +367,7 @@ Para consulta rápida, depois de já ter lido o manual completo uma vez:
 7. Conferir se todas as equipes enviaram decisões antes de clicar em Encerrar Rodada.
 8. Analisar o ranking e o Relatório de Alinhamento na aba Analisar.
 9. Repetir os passos 5 a 8 para cada rodada seguinte.
-10. A partir da segunda rodada concluída, consultar o Sistema de Notas.
+10. A partir da primeira rodada concluída, consultar o Sistema de Notas (rodada sem envio vale 0).
 11. A cada 12 rodadas, acompanhar o Fechamento anual e as reflexões das equipes (botão Fechamento anual).
 
 ## 16. Solução de Problemas Comuns
