@@ -1454,6 +1454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: "active",
             productCount,
             ...(fechamento ? { scheduledEndAt: fechamento } : {}),
+            ...(typeof req.body?.isPractice === "boolean" ? { isPractice: req.body.isPractice } : {}),
           }))!
         : await storage.createRound({
             classId: req.params.classId,
@@ -1461,6 +1462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: "active",
             productCount,
             ...(fechamento ? { scheduledEndAt: fechamento } : {}),
+            isPractice: req.body?.isPractice === true,
           });
     } catch (error: any) {
       // Grupo D (auditoria de 2026-09): a checagem "já existe rodada ativa?"
@@ -2055,6 +2057,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // anterior é desmarcada. Quando a rodada marcada é concluída, a turma não
   // abre mais rodadas (rotas de início e agendador checam
   // anoLetivoEncerrado).
+  // Rodada de teste (out/2026): "Iniciar o jogo". Apaga tudo o que as
+  // rodadas de teste geraram (decisões, resultados, eventos, análises,
+  // boletins, feedbacks etc. — qualquer tabela com coluna round_id), apaga
+  // as próprias rodadas de teste, renumera as rodadas futuras ainda
+  // bloqueadas, zera a rodada atual da turma e devolve a verba inicial às
+  // equipes. Alunos, equipes e configuração de mercado ficam intactos.
+  // Recusa se houver rodada aberta ou se alguma rodada que não é de teste
+  // já tiver sido aberta (o jogo de verdade já começou).
+  app.post("/api/classes/:classId/iniciar-jogo", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "professor") {
+      return res.status(403).json({ error: "Acesso negado" });
+    }
+    try {
+      const classData = await storage.getClass(req.params.classId);
+      if (!classData || classData.professorId !== user.id) {
+        return res.status(403).json({ error: "Você não tem permissão para alterar esta turma" });
+      }
+      const rodadas = await storage.getRoundsByClass(req.params.classId);
+      if (rodadas.some((r) => r.status === "active")) {
+        return res.status(400).json({ error: "Há uma rodada aberta. Encerre-a antes de iniciar o jogo." });
+      }
+      const realJaAberta = rodadas.find((r) => !r.isPractice && r.status !== "locked");
+      if (realJaAberta) {
+        return res.status(400).json({ error: `A Rodada ${realJaAberta.roundNumber} (que não é de teste) já foi aberta: o jogo já começou.` });
+      }
+      const teste = rodadas.filter((r) => r.isPractice);
+      if (teste.length === 0) {
+        return res.status(400).json({ error: "Esta turma não tem rodada de teste para apagar." });
+      }
+      const { iniciarJogoDaTurma } = await import("./iniciarJogo");
+      const resumo = await iniciarJogoDaTurma(req.params.classId, teste.map((r) => r.id));
+      res.json(resumo);
+    } catch (error: any) {
+      console.error("Erro ao iniciar o jogo:", error);
+      res.status(500).json({ error: "Erro ao iniciar o jogo" });
+    }
+  });
+
   app.post("/api/rounds/:roundId/last-round", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
@@ -2112,6 +2156,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { scheduledStartAt, scheduledEndAt, clear } = req.body;
+      // Rodada de teste (out/2026): só pode ser marcada/desmarcada antes de abrir.
+      const isPractice = typeof req.body?.isPractice === "boolean" && round.status === "locked" ? req.body.isPractice : undefined;
 
       // "clear: true" remove o agendamento por completo (usado pelo botão
       // "Remover Agendamento"). Sem essa flag, o app sempre enviava as duas
@@ -2190,6 +2236,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updates: any = {};
       if (startDate) updates.scheduledStartAt = startDate;
       if (endDate) updates.scheduledEndAt = endDate;
+      if (isPractice !== undefined) updates.isPractice = isPractice;
 
       const updated = await storage.updateRound(req.params.roundId, updates);
       res.json(updated);
@@ -2674,7 +2721,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       journey,
       // Prazo de fechamento da rodada (meia-noite de Brasília), usado pelo
       // front-end para exibir um contador visível de tempo restante.
-      scheduledEndAt: currentRound.scheduledEndAt ?? null
+      scheduledEndAt: currentRound.scheduledEndAt ?? null,
+      // Rodada de teste (out/2026): o painel do aluno mostra um aviso fixo.
+      isPractice: currentRound.isPractice === true
     });
   });
 

@@ -16,7 +16,11 @@ export async function ensureRoundsWeeklyColumns(): Promise<void> {
       ALTER TABLE rounds
       ADD COLUMN IF NOT EXISTS is_last_round boolean NOT NULL DEFAULT false
     `);
-    console.log(`[BOOT] Coluna "is_last_round" em "rounds" ok.`);
+    await pool.query(`
+      ALTER TABLE rounds
+      ADD COLUMN IF NOT EXISTS is_practice boolean NOT NULL DEFAULT false
+    `);
+    console.log(`[BOOT] Colunas "is_last_round" e "is_practice" em "rounds" ok.`);
   } catch (e) {
     console.log(`[BOOT] Falha ao garantir a coluna "is_last_round" em "rounds": ${e}`);
   }

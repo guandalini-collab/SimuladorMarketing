@@ -89,7 +89,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { FormattedMoneyInput, FormattedNumberInput } from "@/components/formatted-input";
 import { RoundCountdown } from "@/components/round-countdown";
-import { DialogoDatasRodada, DialogoIniciarRodada, SemanaDaRodada, SeloUltimaRodada } from "@/components/rodada-datas";
+import { DialogoDatasRodada, DialogoIniciarRodada, SemanaDaRodada, SeloRodadaTeste, SeloUltimaRodada } from "@/components/rodada-datas";
 import { anoLetivoEncerrado } from "@shared/rodadaSemanal";
 
 const eventFormSchema = insertMarketEventSchema.extend({
@@ -1921,6 +1921,25 @@ function RoundsTimeline({
   const [editMaxRounds, setEditMaxRounds] = useState(currentClass.maxRounds);
   const anoEncerrado = anoLetivoEncerrado(rounds);
 
+  // Rodada de teste (out/2026): "Iniciar o jogo" aparece enquanto houver
+  // rodada de teste e nenhuma rodada de verdade tiver sido aberta.
+  const { toast } = useToast();
+  const [confirmarInicioJogo, setConfirmarInicioJogo] = useState(false);
+  const temRodadaTeste = rounds.some((r) => r.isPractice);
+  const jogoJaComecou = rounds.some((r) => !r.isPractice && r.status !== "locked");
+  const podeIniciarJogo = temRodadaTeste && !jogoJaComecou;
+  const iniciarJogoMutation = useMutation({
+    mutationFn: async () => (await apiRequest("POST", `/api/classes/${currentClass.id}/iniciar-jogo`)).json(),
+    onSuccess: (r: { rodadasApagadas: number; equipesRestauradas: number }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rounds", currentClass.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/classes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+      setConfirmarInicioJogo(false);
+      toast({ title: "Jogo iniciado!", description: `${r.rodadasApagadas} rodada(s) de teste apagada(s) e verba inicial devolvida a ${r.equipesRestauradas} equipe(s). A próxima rodada é a Rodada 1.` });
+    },
+    onError: (error: any) => toast({ title: "Não foi possível iniciar o jogo", description: error.message, variant: "destructive" }),
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -1946,6 +1965,41 @@ function RoundsTimeline({
           <Badge variant="outline">Rodadas concluídas</Badge>
         )}
       </div>
+
+      {podeIniciarJogo && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#1447e6]/40 bg-[#eef2ff] p-4 dark:bg-blue-900/20" data-testid="painel-iniciar-jogo">
+          <div className="text-sm">
+            <p className="font-semibold">Rodada de teste em uso</p>
+            <p className="text-muted-foreground">Quando a turma estiver pronta, clique em "Iniciar o jogo": tudo o que a rodada de teste gerou é apagado, as equipes recebem de volta a verba inicial e a próxima rodada passa a ser a Rodada 1.</p>
+          </div>
+          <Button onClick={() => setConfirmarInicioJogo(true)} disabled={!!activeRound || iniciarJogoMutation.isPending} data-testid="button-iniciar-jogo">
+            <Play className="h-4 w-4 mr-2" />
+            Iniciar o jogo
+          </Button>
+          {activeRound && <p className="w-full text-xs text-muted-foreground">Encerre a rodada aberta antes de iniciar o jogo.</p>}
+        </div>
+      )}
+
+      <AlertDialog open={confirmarInicioJogo} onOpenChange={setConfirmarInicioJogo}>
+        <AlertDialogContent data-testid="dialog-iniciar-jogo">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Iniciar o jogo?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>Isto <strong>apaga definitivamente</strong> tudo o que as rodadas de teste geraram: decisões, resultados, eventos, boletins, análises e feedbacks, além das próprias rodadas de teste.</p>
+                <p>Ficam como estão: alunos, equipes, produtos, configuração de mercado e as rodadas futuras já criadas (renumeradas a partir da Rodada 1). Cada equipe recebe de volta a verba inicial.</p>
+                <p>Não é possível desfazer.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-iniciar-jogo">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); iniciarJogoMutation.mutate(); }} disabled={iniciarJogoMutation.isPending} data-testid="button-confirm-iniciar-jogo">
+              {iniciarJogoMutation.isPending ? "Iniciando..." : "Apagar teste e iniciar o jogo"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Configurar número total de rodadas */}
       <div className="flex flex-wrap items-center gap-3 p-4 bg-[#eef2ff] dark:bg-blue-900/20 rounded-lg border border-[#1447e6]/30 dark:border-blue-800">
@@ -2051,6 +2105,7 @@ function RoundsTimeline({
                 <div className="flex items-center gap-2">
                   {getStatusIcon(round.status)}
                   <span className="font-semibold">Rodada {round.roundNumber}</span>
+                  {round.isPractice && <SeloRodadaTeste />}
                   {round.isLastRound && <SeloUltimaRodada />}
                 </div>
                 <div className="flex items-center gap-1">
@@ -2098,7 +2153,7 @@ function RoundsTimeline({
                 </Button>
               )}
 
-              {(round.status !== "completed" || round.isLastRound) && (
+              {!round.isPractice && (round.status !== "completed" || round.isLastRound) && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -2149,7 +2204,8 @@ function GradesRanking({
     }).filter(Boolean);
   };
   
-  const completedRounds = rounds.filter(r => r.status === "completed");
+  // Rodadas de teste (out/2026) nunca entram na nota.
+  const completedRounds = rounds.filter(r => r.status === "completed" && !r.isPractice);
   // Pedido do professor (out/2026): a Rodada 1 (semana de adaptação) também
   // entra na nota — antes era excluída como "rodada de aprendizado".
   const gradableRounds = completedRounds;
@@ -2965,11 +3021,12 @@ export default function Professor() {
   });
 
   const startRoundMutation = useMutation({
-    mutationFn: async ({ classId, fim }: { classId: string; fim: string }) => {
+    mutationFn: async ({ classId, fim, isPractice }: { classId: string; fim: string; isPractice?: boolean }) => {
       const res = await apiRequest("POST", `/api/rounds/${classId}/start`, {
         productCount: nextRoundProductCount,
         // Rodadas semanais (out/2026): dia e horário de fechamento escolhidos no diálogo.
         scheduledEndAt: fim,
+        isPractice: isPractice === true,
       });
       return res.json();
     },
@@ -2999,7 +3056,7 @@ export default function Professor() {
   }, [selectedClass, previousRoundProductCount]);
 
   const scheduleRoundMutation = useMutation({
-    mutationFn: async (data: { roundId: string; inicio?: string; fim?: string; clear?: boolean }) => {
+    mutationFn: async (data: { roundId: string; inicio?: string; fim?: string; clear?: boolean; isPractice?: boolean }) => {
       // Rodadas semanais (out/2026): o diálogo envia o dia e o horário de
       // abertura e de fechamento escolhidos pelo professor, como instantes
       // ISO com fuso de Brasília (shared/rodadaSemanal.ts).
@@ -3007,6 +3064,7 @@ export default function Professor() {
         scheduledStartAt: data.inicio ?? null,
         scheduledEndAt: data.fim ?? null,
         clear: data.clear ?? false,
+        ...(typeof data.isPractice === "boolean" ? { isPractice: data.isPractice } : {}),
       });
       return res.json();
     },
@@ -4483,7 +4541,7 @@ export default function Professor() {
                   )}
 
                   {/* Sistema de Notas */}
-                  {rounds.filter(r => r.status === "completed").length > 0 && (
+                  {rounds.filter(r => r.status === "completed" && !r.isPractice).length > 0 && (
                     <>
                       <div className="pt-4 border-t">
                         <h3 className="text-base font-medium flex items-center gap-2 mb-4">
@@ -4780,7 +4838,7 @@ export default function Professor() {
         round={rounds.find((r) => r.id === roundBeingScheduled) ?? null}
         rodadas={rounds}
         pending={scheduleRoundMutation.isPending}
-        onSalvar={({ inicio, fim }) => { if (roundBeingScheduled) scheduleRoundMutation.mutate({ roundId: roundBeingScheduled, inicio, fim }); }}
+        onSalvar={({ inicio, fim, isPractice }) => { if (roundBeingScheduled) scheduleRoundMutation.mutate({ roundId: roundBeingScheduled, inicio, fim, isPractice }); }}
         onRemover={() => { if (roundBeingScheduled) scheduleRoundMutation.mutate({ roundId: roundBeingScheduled, clear: true }); }}
       />
 
@@ -4790,7 +4848,7 @@ export default function Professor() {
         numeroRodada={(currentClass?.currentRound ?? 0) + 1}
         rodadas={rounds}
         pending={startRoundMutation.isPending}
-        onConfirmar={(fim) => { if (selectedClass) startRoundMutation.mutate({ classId: selectedClass, fim }); }}
+        onConfirmar={(fim, isPractice) => { if (selectedClass) startRoundMutation.mutate({ classId: selectedClass, fim, isPractice }); }}
       />
 
       {/* Dialog para cadastrar novo aluno */}

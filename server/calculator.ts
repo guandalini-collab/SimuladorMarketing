@@ -89,6 +89,17 @@ interface CalculationInputs {
   // receita junto com o impacto dos eventos. Ausente = 1 (sem ajuste), o que
   // mantém o cálculo idêntico ao anterior.
   marketFitMultiplier?: number;
+  /**
+   * Preço médio real da categoria do produto no setor da turma
+   * (server/data/marketData.ts). Correção de out/2026: as faixas de preço
+   * deste cálculo foram escritas para um produto de referência de R$ 75
+   * (ex.: "competitivo" entre R$ 50 e R$ 100). Com o preço de referência do
+   * setor, o preço da equipe é convertido para essa escala antes de pontuar
+   * — um celular a R$ 2.500 em um setor cuja média é R$ 2.500 passa a ser
+   * tratado como "na média", e não como 33 vezes acima dela. Sem referência
+   * (chamadas antigas), o comportamento é exatamente o anterior.
+   */
+  referencePrice?: number | null;
 }
 
 export function calculateMarketingSpend(
@@ -236,7 +247,8 @@ export function calculateResults(inputs: CalculationInputs): ResultCoreMetrics {
   } = inputs;
   
   const productScore = calculateProductScore(marketingMix);
-  const priceScore = calculatePriceScore(marketingMix, classData.businessType);
+  const precoNaEscala = precoNaEscalaDeReferencia(marketingMix.priceValue, inputs.referencePrice);
+  const priceScore = calculatePriceScore({ ...marketingMix, priceValue: precoNaEscala }, classData.businessType);
   const placeScore = calculatePlaceScore(marketingMix, classData.businessType);
   const promotionScore = calculatePromotionScore(marketingMix);
   
@@ -294,7 +306,7 @@ export function calculateResults(inputs: CalculationInputs): ResultCoreMetrics {
   const tempoMedioConversao = calculateAverageConversionTime(
     productScore,
     priceScore,
-    marketingMix.priceValue,
+    precoNaEscala,
     classData.competitionLevel
   );
   const receitaBruta = revenue;
@@ -443,6 +455,15 @@ function calculateProductScore(mix: MarketingMix): number {
   else if (mix.productFeatures === "completo") score += 30;
   
   return Math.min(score, 100);
+}
+
+/** Escala de referência das faixas de preço do motor V1 (produto médio = R$ 75). */
+const PRECO_REFERENCIA_MOTOR = 75;
+
+/** Converte o preço real para a escala do motor, pelo preço médio do setor. */
+export function precoNaEscalaDeReferencia(preco: number, referencia?: number | null): number {
+  if (!referencia || referencia <= 0 || !Number.isFinite(referencia)) return preco;
+  return (preco / referencia) * PRECO_REFERENCIA_MOTOR;
 }
 
 function calculatePriceScore(mix: MarketingMix, businessType?: string): number {

@@ -254,6 +254,15 @@ Com as datas salvas, o sistema abre e encerra a rodada sozinho, sem que você pr
 
 Tanto no card da rodada (aba Aula) quanto no painel do aluno aparece um contador de tempo restante até o fechamento, atualizado automaticamente.
 
+### Rodada de teste e o botão "Iniciar o jogo"
+
+Antes da Rodada 1, você pode abrir uma **rodada de teste** para a turma conhecer o simulador, por exemplo na primeira semana de aula.
+
+1. Crie a rodada com **Adicionar**, clique em **Definir datas** e marque a opção **Rodada de teste**. A mesma opção existe no diálogo de **Iniciar Rodada**. O card mostra o selo **Rodada de teste**, e os alunos veem o aviso de que ela não vale nota nem resultado.
+2. A rodada de teste funciona como uma rodada normal (decisões, resultados, eventos), mas **nunca entra no Sistema de Notas**.
+3. Quando a turma estiver pronta, encerre a rodada de teste e clique em **Iniciar o jogo**, no painel que aparece na aba **Aula**. O sistema pede confirmação e então **apaga definitivamente** tudo o que as rodadas de teste geraram (decisões, resultados, eventos, boletins, análises, feedbacks e as próprias rodadas), **devolve a verba inicial** a cada equipe e renumera as rodadas futuras já criadas a partir da Rodada 1. Alunos, equipes, produtos e configuração de mercado ficam intactos.
+4. O botão só aparece enquanto nenhuma rodada que não seja de teste tiver sido aberta.
+
 ### Última rodada do ano letivo
 
 No card de cada rodada há o botão **Marcar como última rodada**. Só uma rodada por turma pode ter essa marca; ao marcar outra, a anterior é desmarcada. A rodada marcada exibe o selo **Última rodada**.

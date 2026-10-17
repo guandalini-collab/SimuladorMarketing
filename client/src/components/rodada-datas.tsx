@@ -9,6 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // Rodadas semanais (pedido do professor, out/2026 — regras em
@@ -124,6 +125,27 @@ export function SemanaDaRodada({ round }: { round: Round }) {
   );
 }
 
+export function SeloRodadaTeste() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-[#eef2ff] px-2 py-0.5 text-[11px] font-semibold text-[#1447e6]" data-testid="selo-rodada-teste">
+      Rodada de teste
+    </span>
+  );
+}
+
+/** Opção "Rodada de teste" dos diálogos de datas e de início. */
+function CampoRodadaTeste({ marcado, onChange }: { marcado: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex cursor-pointer items-start gap-2 rounded-md border p-2 text-sm" data-testid="campo-rodada-teste">
+      <Checkbox checked={marcado} onCheckedChange={(v) => onChange(v === true)} className="mt-0.5" data-testid="checkbox-rodada-teste" />
+      <span>
+        <span className="font-medium">Rodada de teste</span>
+        <span className="block text-xs text-muted-foreground">Para os alunos conhecerem o simulador. Não vale nota; depois, o botão "Iniciar o jogo" apaga tudo o que ela gerou.</span>
+      </span>
+    </label>
+  );
+}
+
 export function SeloUltimaRodada() {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-[#fff6e0] px-2 py-0.5 text-[11px] font-semibold text-[#8a5a00]" data-testid="selo-ultima-rodada">
@@ -183,7 +205,7 @@ export function DialogoDatasRodada({
   rodadas: Round[];
   pending: boolean;
   /** Instantes ISO (com fuso de Brasília) escolhidos pelo professor. */
-  onSalvar: (datas: { inicio?: string; fim: string }) => void;
+  onSalvar: (datas: { inicio?: string; fim: string; isPractice?: boolean }) => void;
   onRemover: () => void;
 }) {
   const aberta = round?.status === "active";
@@ -193,6 +215,7 @@ export function DialogoDatasRodada({
   const [horaInicio, setHoraInicio] = useState(HORA_ABERTURA_PADRAO);
   const [horaFim, setHoraFim] = useState("22:50");
   const [fimEditado, setFimEditado] = useState(false);
+  const [teste, setTeste] = useState(false);
 
   useEffect(() => {
     if (!open || !round) return;
@@ -204,6 +227,7 @@ export function DialogoDatasRodada({
     setHoraInicio(hIni);
     setHoraFim(round.scheduledEndAt ? horaBrasilia(round.scheduledEndAt) : adaptacao ? "23:59" : somarMinutos(hIni, DURACAO_AULA_MINUTOS));
     setFimEditado(!!round.scheduledEndAt);
+    setTeste(round.isPractice === true);
   }, [open, round?.id]);
 
   // Rodadas 2+: enquanto o professor não mexer no fechamento, ele acompanha
@@ -243,7 +267,7 @@ export function DialogoDatasRodada({
 
   const salvar = () => {
     if (!fim || !podeSalvar) return;
-    onSalvar({ inicio: aberta || !inicio ? undefined : iso(inicio, horaInicio), fim: iso(fim, horaFim) });
+    onSalvar({ inicio: aberta || !inicio ? undefined : iso(inicio, horaInicio), fim: iso(fim, horaFim), isPractice: aberta ? undefined : teste });
   };
 
   const titulo = aberta ? `Fechamento da Rodada ${round?.roundNumber}` : `Datas da Rodada ${round?.roundNumber ?? ""}`;
@@ -270,6 +294,7 @@ export function DialogoDatasRodada({
         <div className="space-y-2">
           {!aberta && <CampoHora id="hora-abertura" rotulo="Horário de abertura" valor={horaInicio} onChange={mudarHoraInicio} />}
           <CampoHora id="hora-fechamento" rotulo="Horário de fechamento" valor={horaFim} onChange={mudarHoraFim} />
+          {!aberta && <CampoRodadaTeste marcado={teste} onChange={setTeste} />}
         </div>
         <AvisoFeriado dias={[inicio, fim]} />
         <Resumo inicio={inicio} horaInicio={horaInicio} fim={fim} horaFim={horaFim} />
@@ -317,13 +342,15 @@ export function DialogoIniciarRodada({
   rodadas: Round[];
   pending: boolean;
   /** Instante ISO do fechamento (fuso de Brasília). */
-  onConfirmar: (fim: string) => void;
+  onConfirmar: (fim: string, isPractice: boolean) => void;
 }) {
   const adaptacao = rodadaDeAdaptacao(numeroRodada);
   const [dia, setDia] = useState<Date | undefined>();
   const [horaFim, setHoraFim] = useState("23:59");
+  const [teste, setTeste] = useState(false);
   useEffect(() => {
     if (!open) return;
+    setTeste(false);
     setDia(paraDate(adaptacao ? proximoDomingo() : hojeBrasilia()));
     setHoraFim(adaptacao ? "23:59" : somarMinutos(agoraBrasilia(), DURACAO_AULA_MINUTOS));
   }, [open, adaptacao]);
@@ -352,6 +379,7 @@ export function DialogoIniciarRodada({
           </div>
         )}
         <CampoHora id="hora-fechamento-inicio" rotulo="Horário de fechamento" valor={horaFim} onChange={setHoraFim} />
+        <CampoRodadaTeste marcado={teste} onChange={setTeste} />
         <AvisoFeriado dias={[hojeIso, fimIso]} />
         <Resumo inicio={hojeIso} fim={fimIso} horaFim={horaFim} abreJa />
         {noPassado && <p className="text-xs text-destructive">Esse horário já passou. Escolha um horário futuro.</p>}
@@ -359,7 +387,7 @@ export function DialogoIniciarRodada({
           <Button variant="outline" onClick={() => onOpenChange(false)} data-testid="button-cancel-start-round">
             Cancelar
           </Button>
-          <Button onClick={() => fimIso && podeIniciar && onConfirmar(iso(fimIso, horaFim))} disabled={!podeIniciar || pending} data-testid="button-confirm-start-round">
+          <Button onClick={() => fimIso && podeIniciar && onConfirmar(iso(fimIso, horaFim), teste)} disabled={!podeIniciar || pending} data-testid="button-confirm-start-round">
             {pending ? "Iniciando..." : "Iniciar rodada"}
           </Button>
         </DialogFooter>

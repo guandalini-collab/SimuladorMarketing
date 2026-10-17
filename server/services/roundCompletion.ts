@@ -4,6 +4,7 @@ import { calculateResults, calculateMarketingSpend, applyStrategicImpacts, apply
 import { computeRoundOutcome, type SimulationInputs } from "../simulation/marketEngine";
 import { consolidateKpis, type ResultCoreMetrics } from "../utils/consolidateKpis";
 import { getEnv } from "../config";
+import { marketSectors } from "../data/marketData";
 
 function isSimEngineV2Enabled(): boolean {
   try {
@@ -315,8 +316,13 @@ export async function processRoundCompletion(
               totalProductBudget += budget;
 
               let marketFitMultiplier = 1;
+              const product = productMix.productId ? await storage.getProduct(productMix.productId) : undefined;
+              // Correção de out/2026: preço médio real da categoria no setor,
+              // usado como referência de preço (antes era R$ 75 fixo).
+              const precoReferencia = precoMedioDaCategoria(classData.sector, product ?? null)
+                ?? marketSectors.find((s) => s.id === classData.sector)?.categories?.[0]?.averagePrice
+                ?? null;
               if (bulletin) {
-                const product = productMix.productId ? await storage.getProduct(productMix.productId) : undefined;
                 const fit = computeMarketFit(bulletin, productMix, precoMedioDaCategoria(classData.sector, product ?? null));
                 marketFitMultiplier = 1 + fit.percent / 100;
               }
@@ -327,6 +333,7 @@ export async function processRoundCompletion(
                 teamBudget: budget,
                 totalTeamsInRound: teams.length,
                 marketFitMultiplier,
+                referencePrice: precoReferencia,
               });
 
               const adjustedKPIs = applyStrategicImpacts(baseKPIs, analyses, productMix.priceValue, budget);

@@ -97,6 +97,9 @@ export const rounds = pgTable("rounds", {
   // encerra o ano letivo. Quando ela é concluída, nenhuma rodada nova é
   // aberta na turma. Coluna criada no boot por ensureRoundsWeeklyColumns.ts.
   isLastRound: boolean("is_last_round").notNull().default(false),
+  // Rodada de teste (out/2026): serve para os alunos conhecerem o simulador;
+  // não entra na nota. O botão "Iniciar o jogo" apaga tudo o que ela gerou.
+  isPractice: boolean("is_practice").notNull().default(false),
 }, (table) => ({
   // Grupo D (auditoria de 2026-09): POST /api/rounds/:classId/start (e sua
   // rota irmã não usada pelo front-end, POST /api/classes/:classId/rounds)

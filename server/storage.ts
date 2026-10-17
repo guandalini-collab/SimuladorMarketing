@@ -781,6 +781,7 @@ export class MemStorage implements IStorage {
       aiAssistanceLevel: insertRound.aiAssistanceLevel ?? 1,
       productCount: insertRound.productCount ?? 1,
       isLastRound: insertRound.isLastRound ?? false,
+      isPractice: insertRound.isPractice ?? false,
     };
     this.rounds.set(id, round);
     return round;

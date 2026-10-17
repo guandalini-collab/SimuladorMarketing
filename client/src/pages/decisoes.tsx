@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { AvisoRodadaTeste } from "@/components/aviso-rodada-teste";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Save, Package, DollarSign, Store, Megaphone, Lock, AlertTriangle, Send, AlertCircle, CheckCircle2, XCircle, Users, Activity } from "lucide-react";
@@ -294,7 +295,7 @@ export default function Decisoes() {
   // salvar/enviar. Em vez de duplicar a validação aqui, reaproveita o
   // status calculado pelo próprio servidor no endpoint do "Roteiro da
   // Rodada" (mesma função usada no bloqueio). Só exibição: nenhuma regra muda.
-  const { data: roundChecklist } = useQuery<{ hasSegmentation?: boolean }>({
+  const { data: roundChecklist } = useQuery<{ hasSegmentation?: boolean; isPractice?: boolean }>({
     queryKey: ["/api/team/current-round-status"],
     enabled: !!activeRoundId,
   });
@@ -628,6 +629,8 @@ export default function Decisoes() {
 
   return (
     <div className="space-y-8">
+      {roundChecklist?.isPractice && <AvisoRodadaTeste className="mt-0" />}
+
       {/* Hero Section */}
       <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-[#0a1830] via-[#0d2348] to-[#0a1830] p-8">
         <div className="absolute inset-0 opacity-5">

@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Circle, ArrowRight, AlertCircle, Users, ListChecks } from "lucide-react";
 import { Link } from "wouter";
 import { RoundCountdown } from "@/components/round-countdown";
+import { AvisoRodadaTeste } from "@/components/aviso-rodada-teste";
 import type { Journey } from "@/components/round-journey";
 
 interface NextAction {
@@ -30,6 +31,7 @@ interface RoundStatus {
   noTeam?: boolean;
   scheduledEndAt?: string | null;
   journey?: Journey | null;
+  isPractice?: boolean;
 }
 
 interface ChecklistItem {
@@ -147,7 +149,7 @@ export function RoundChecklistCard() {
             <ListChecks className="h-5 w-5 text-white" />
           </div>
           <CardTitle className="text-lg flex-1 flex items-center justify-between">
-            <span>Roteiro da Rodada {data.roundNumber}</span>
+            <span>{data.isPractice ? "Roteiro da Rodada de teste" : `Roteiro da Rodada ${data.roundNumber}`}</span>
             <span className="text-sm font-normal text-muted-foreground">
               {data.progress}% concluído
             </span>
@@ -159,6 +161,7 @@ export function RoundChecklistCard() {
         {data.scheduledEndAt && (
           <RoundCountdown endDate={data.scheduledEndAt} className="mt-1" />
         )}
+        {data.isPractice && <AvisoRodadaTeste />}
       </CardHeader>
       <CardContent className="space-y-4">
         <Progress value={data.progress} className="h-2 [&>div]:bg-[#1447e6]" data-testid="progress-round" />
