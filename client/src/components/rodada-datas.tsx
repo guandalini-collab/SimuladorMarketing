@@ -16,9 +16,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 // shared/rodadaSemanal.ts). Horário de Brasília. O professor escolhe no
 // calendário o(s) dia(s) e informa o horário de abertura (o horário da aula
 // pode mudar) e o de fechamento:
-// - Rodada 1 (semana de adaptação): dia de abertura e dia de fechamento;
+// - Rodada de teste (vários dias, desde out/2026): dia de abertura e dia de fechamento;
 //   fechamento sugerido às 23h59;
-// - Rodadas 2+: só o dia da aula; fechamento sugerido 2 horas depois da
+// - Rodadas que valem nota (inclusive a Rodada 1): só o dia da aula; fechamento sugerido 2 horas depois da
 //   abertura (duração da aula), editável;
 // - rodada já aberta: novo dia e horário de fechamento.
 // A IA prepara o conteúdo 30 minutos antes da abertura. A semana simulada é
@@ -59,7 +59,7 @@ function horaDeAberturaSugerida(rodadas: Round[], ignorarId?: string | null): st
   return ref ? horaBrasilia(ref) : HORA_ABERTURA_PADRAO;
 }
 
-/** Próximo domingo depois de hoje (sugestão de fechamento da Rodada 1). */
+/** Próximo domingo depois de hoje (sugestão de fechamento da rodada de teste). */
 export function proximoDomingo(): string {
   const d = paraDate(hojeBrasilia());
   d.setDate(d.getDate() + (((7 - d.getDay()) % 7) || 7));
@@ -185,7 +185,7 @@ function CampoHora({ id, rotulo, valor, onChange }: { id: string; rotulo: string
 }
 
 /**
- * Diálogo "Datas da rodada". Rodada 1 bloqueada: dia de abertura e dia de
+ * Diálogo "Datas da rodada". Rodada de teste bloqueada: dia de abertura e dia de
  * fechamento (dois cliques) + horários. Demais rodadas bloqueadas: dia da
  * aula + horários (fechamento sugerido 2h depois). Rodada aberta: novo dia e
  * horário de fechamento.
@@ -209,13 +209,15 @@ export function DialogoDatasRodada({
   onRemover: () => void;
 }) {
   const aberta = round?.status === "active";
-  const adaptacao = rodadaDeAdaptacao(round?.roundNumber ?? 1);
   const [faixa, setFaixa] = useState<DateRange | undefined>();
   const [dia, setDia] = useState<Date | undefined>();
   const [horaInicio, setHoraInicio] = useState(HORA_ABERTURA_PADRAO);
   const [horaFim, setHoraFim] = useState("22:50");
   const [fimEditado, setFimEditado] = useState(false);
   const [teste, setTeste] = useState(false);
+  // Out/2026 (regra unificada): só a rodada de teste pode durar vários dias;
+  // todas as rodadas que valem nota, inclusive a Rodada 1, duram a aula.
+  const adaptacao = rodadaDeAdaptacao(round?.roundNumber ?? 1, aberta ? round?.isPractice : teste);
 
   useEffect(() => {
     if (!open || !round) return;
@@ -225,7 +227,7 @@ export function DialogoDatasRodada({
     setFaixa(ini ? { from: ini, to: fim } : undefined);
     setDia(round.status === "active" ? fim : ini);
     setHoraInicio(hIni);
-    setHoraFim(round.scheduledEndAt ? horaBrasilia(round.scheduledEndAt) : adaptacao ? "23:59" : somarMinutos(hIni, DURACAO_AULA_MINUTOS));
+    setHoraFim(round.scheduledEndAt ? horaBrasilia(round.scheduledEndAt) : round.isPractice ? "23:59" : somarMinutos(hIni, DURACAO_AULA_MINUTOS));
     setFimEditado(!!round.scheduledEndAt);
     setTeste(round.isPractice === true);
   }, [open, round?.id]);
@@ -274,7 +276,7 @@ export function DialogoDatasRodada({
   const descricao = aberta
     ? "Escolha o dia e o horário do novo fechamento (por exemplo, se a aula atrasou). Horário de Brasília."
     : adaptacao
-      ? "Rodada 1 — semana de adaptação. Clique no dia de abertura e depois no dia de fechamento, e confira os horários (Brasília)."
+      ? "Rodada de teste — pode durar vários dias. Clique no dia de abertura e depois no dia de fechamento, e confira os horários (Brasília)."
       : "Clique no dia da aula e informe o horário de abertura. O fechamento é sugerido 2 horas depois e pode ser alterado (horário de Brasília).";
 
   return (
@@ -324,7 +326,7 @@ export function DialogoDatasRodada({
 }
 
 /**
- * Diálogo "Iniciar rodada agora". Rodada 1: dia e horário de fechamento
+ * Diálogo "Iniciar rodada agora". Rodada de teste: dia e horário de fechamento
  * (sugere o próximo domingo, 23h59). Demais: horário de fechamento de hoje
  * (sugere 2 horas a partir de agora).
  */
@@ -344,13 +346,17 @@ export function DialogoIniciarRodada({
   /** Instante ISO do fechamento (fuso de Brasília). */
   onConfirmar: (fim: string, isPractice: boolean) => void;
 }) {
-  const adaptacao = rodadaDeAdaptacao(numeroRodada);
   const [dia, setDia] = useState<Date | undefined>();
   const [horaFim, setHoraFim] = useState("23:59");
   const [teste, setTeste] = useState(false);
+  // Out/2026 (regra unificada): só a rodada de teste pode durar vários dias.
+  const adaptacao = rodadaDeAdaptacao(numeroRodada, teste);
   useEffect(() => {
     if (!open) return;
     setTeste(false);
+  }, [open]);
+  useEffect(() => {
+    if (!open) return;
     setDia(paraDate(adaptacao ? proximoDomingo() : hojeBrasilia()));
     setHoraFim(adaptacao ? "23:59" : somarMinutos(agoraBrasilia(), DURACAO_AULA_MINUTOS));
   }, [open, adaptacao]);
@@ -369,7 +375,7 @@ export function DialogoIniciarRodada({
           <DialogTitle>Iniciar a Rodada {numeroRodada} agora</DialogTitle>
           <DialogDescription>
             {adaptacao
-              ? "A rodada abre neste momento. Escolha o dia e o horário de fechamento da semana de adaptação (horário de Brasília)."
+              ? "A rodada de teste abre neste momento. Escolha o dia e o horário de fechamento (horário de Brasília)."
               : "A rodada abre neste momento e fecha hoje no horário abaixo — sugerido 2 horas a partir de agora (horário de Brasília)."}
           </DialogDescription>
         </DialogHeader>

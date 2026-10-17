@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Clock, AlertTriangle } from "lucide-react";
 
 interface RoundCountdownProps {
-  /** Data/hora de fechamento da rodada (ISO string ou Date). Horário definido pelo professor (padrão: 23h59 na Rodada 1; 2h após a abertura nas demais)
+  /** Data/hora de fechamento da rodada (ISO string ou Date). Horário definido pelo professor (padrão: 2h após a abertura; 23h59 na rodada de teste)
    *  de Brasília, independente do fuso horário de quem está vendo a tela — a
    *  conta é feita em tempo absoluto (Date - Date), então funciona certo em
    *  qualquer fuso do navegador. */

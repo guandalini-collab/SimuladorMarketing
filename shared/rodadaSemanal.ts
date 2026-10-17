@@ -4,11 +4,11 @@
 // professor, sempre no horário de Brasília (UTC-3 o ano todo, sem horário de
 // verão desde 2019). O professor define o dia e o HORÁRIO de abertura (o
 // horário da aula pode mudar) e o de fechamento:
-// - Rodada 1 (semana de adaptação): abre no dia/horário escolhido
-//   (normalmente segunda) e, por padrão, fecha às 23h59min59s do último dia
-//   (normalmente domingo) — os alunos leem os manuais e enviam a 1ª decisão;
-// - Rodadas 2 em diante: por padrão, fecham 2 horas depois da abertura (a
-//   duração da aula), mas o professor pode mudar o horário de fechamento.
+// - rodada de teste: pode durar vários dias; por padrão, fecha às 23h59min59s
+//   do último dia escolhido (até out/2026, era a Rodada 1 que tinha essa regra);
+// - todas as rodadas que valem nota, inclusive a Rodada 1: por padrão, fecham
+//   2 horas depois da abertura (a duração da aula), mas o professor pode
+//   mudar o horário de fechamento.
 // A IA prepara eventos, boletim e análises sempre 30 minutos antes da
 // abertura. A semana simulada é a semana (segunda a domingo) que contém o
 // dia de abertura. Uma rodada pode ser marcada como a última do ano letivo;
@@ -23,8 +23,13 @@ const OFFSET_BRASILIA = "-03:00";
 
 const RE_DATA = /^\d{4}-\d{2}-\d{2}$/;
 
-/** A Rodada 1 é a semana de adaptação (vários dias); as demais duram a aula. */
-export const rodadaDeAdaptacao = (roundNumber: number) => roundNumber <= 1;
+/**
+ * Rodada de vários dias. Out/2026 (regra unificada): todas as rodadas que
+ * valem nota, inclusive a Rodada 1, duram a aula; só a rodada de TESTE pode
+ * ficar aberta vários dias (fechamento padrão às 23h59min59s). O número da
+ * rodada continua no parâmetro por compatibilidade, mas não decide mais nada.
+ */
+export const rodadaDeAdaptacao = (_roundNumber: number, isPractice?: boolean | null) => isPractice === true;
 
 /** Data (AAAA-MM-DD) de um instante, no calendário de Brasília. */
 export function dataBrasilia(instante: string | Date): string {
@@ -59,9 +64,9 @@ export function aberturaDaRodada(valor: string | Date): Date | null {
   return valor ? valido(new Date(valor)) : null;
 }
 
-/** Fechamento padrão: Rodada 1 → 23h59min59s do dia; demais → abertura + 2h. */
-export function fechamentoPadrao(abertura: Date, roundNumber: number, diaFim?: string): Date {
-  if (rodadaDeAdaptacao(roundNumber)) {
+/** Fechamento padrão: rodada de teste → 23h59min59s do dia; demais → abertura + 2h. */
+export function fechamentoPadrao(abertura: Date, roundNumber: number, diaFim?: string, isPractice?: boolean | null): Date {
+  if (rodadaDeAdaptacao(roundNumber, isPractice)) {
     return instanteBrasilia(diaFim ?? dataBrasilia(abertura), HORA_FECHAMENTO_ADAPTACAO);
   }
   return new Date(abertura.getTime() + DURACAO_AULA_MINUTOS * 60_000);
@@ -69,14 +74,14 @@ export function fechamentoPadrao(abertura: Date, roundNumber: number, diaFim?: s
 
 /**
  * Fechamento: instante ISO exato (horário escolhido pelo professor) ou só o
- * dia — nesse caso, aplica o padrão (Rodada 1: 23h59min59s; demais: 2h
- * depois da abertura, ou 2h depois das 20h50 desse dia sem abertura).
+ * dia — nesse caso, aplica o padrão (rodada de teste: 23h59min59s; demais:
+ * 2h depois da abertura, ou 2h depois das 20h50 desse dia sem abertura).
  */
-export function fechamentoDaRodada(valor: string | Date, roundNumber: number, abertura?: Date | null): Date | null {
+export function fechamentoDaRodada(valor: string | Date, roundNumber: number, abertura?: Date | null, isPractice?: boolean | null): Date | null {
   if (!ehSoData(valor)) return valor ? valido(new Date(valor)) : null;
   const dia = valor as string;
-  if (rodadaDeAdaptacao(roundNumber)) return instanteBrasilia(dia, HORA_FECHAMENTO_ADAPTACAO);
-  return fechamentoPadrao(abertura ?? instanteBrasilia(dia, HORA_ABERTURA_PADRAO), roundNumber);
+  if (rodadaDeAdaptacao(roundNumber, isPractice)) return instanteBrasilia(dia, HORA_FECHAMENTO_ADAPTACAO);
+  return fechamentoPadrao(abertura ?? instanteBrasilia(dia, HORA_ABERTURA_PADRAO), roundNumber, undefined, isPractice);
 }
 
 /** Momento em que a IA prepara a rodada (30 min antes da abertura). */

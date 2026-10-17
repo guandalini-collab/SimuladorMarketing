@@ -144,7 +144,7 @@ Com a turma criada, o mercado configurado (Seção 3.1) e ao menos uma equipe fo
 1. Selecione a turma no seletor do topo.
 2. Na aba **Aula**, confira o painel **Gerenciamento de Rodadas**. Antes de haver qualquer rodada ativa, ele mostra um seletor de **"Produtos por equipe na próxima rodada"** — defina quantos produtos cada equipe vai poder cadastrar e decidir nesta rodada.
 3. Clique em **Iniciar Rodada**.
-4. A rodada abre na hora e o sistema pede o **fechamento** (horário de Brasília). Na **Rodada 1** (semana de adaptação), você escolhe o dia e o horário; a sugestão é o próximo domingo às 23h59. Da **Rodada 2** em diante, você informa só o horário de fechamento de hoje; a sugestão é 2 horas a partir de agora. Confirme em **Iniciar rodada**.
+4. A rodada abre na hora e o sistema pede o **fechamento** (horário de Brasília). Em todas as rodadas que valem nota, inclusive a **Rodada 1**, você informa só o horário de fechamento de hoje; a sugestão é 2 horas a partir de agora. Se marcar **Rodada de teste**, escolhe também o dia de fechamento (sugestão: próximo domingo às 23h59). Confirme em **Iniciar rodada**.
 5. Se houver algum ponto de atenção — equipe sem nenhum aluno, configuração de mercado incompleta (setor, tipo de comércio, nível de concorrência, estrutura de mercado, tamanho do mercado, consumidores potenciais, crescimento ou número de concorrentes) ou orçamento padrão em R$ 0 — o sistema mostra um aviso listando exatamente o que falta, mas **não bloqueia o início da rodada**: você pode prosseguir mesmo assim, se for uma decisão intencional (por exemplo, uma turma de teste). Se não houver nenhum ponto de atenção, o aviso não aparece e você vai direto ao calendário do passo 4.
 
 ![Painel Gerenciamento de Rodadas, pronto para iniciar a primeira rodada.](06-iniciar-rodada.jpg)
@@ -237,16 +237,16 @@ Para definir as datas, crie as rodadas com o botão **Adicionar** (Seção 7.1) 
 
 | Rodada | No calendário você escolhe | Horário de abertura | Horário de fechamento |
 |---|---|---|---|
-| **Rodada 1** (semana de adaptação) | o dia de abertura e o dia de fechamento (normalmente segunda e domingo) | o da aula (você informa) | sugerido 23h59 do dia de fechamento |
-| **Rodadas 2 em diante** | só o dia da aula | o da aula (você informa) | sugerido **2 horas depois da abertura**, editável |
+| **Rodada de teste** | o dia de abertura e o dia de fechamento (pode durar vários dias) | você informa | sugerido 23h59 do dia de fechamento |
+| **Todas as rodadas que valem nota, inclusive a Rodada 1** | só o dia da aula | o da aula (você informa) | sugerido **2 horas depois da abertura**, editável |
 
 - **Horário da aula variável:** o horário de abertura vem preenchido com o da rodada anterior (ou 20h50, se for a primeira) e pode ser mudado a cada rodada. Exemplo: abertura às 19h → fechamento sugerido às 21h.
 - **Fechamento editável:** se a aula tiver outra duração, mude o horário de fechamento. Exemplo: abertura às 20h50, fechamento às 22h30. Depois que você altera o fechamento, ele não acompanha mais a abertura.
-- **Rodada 1:** os alunos têm a semana inteira para ler os manuais, conhecer o sistema e enviar a primeira decisão, que já gera resultado. Nas demais, a decisão é tomada durante a aula.
+- **Regra única (out/2026):** desde a Rodada 1, a decisão é tomada durante a aula. A semana para conhecer o sistema, ler os manuais e treinar é a **rodada de teste**, que não vale nota.
 
 A **semana simulada** é a semana de segunda a domingo que contém o dia de abertura: uma aula em 26/10/2026 simula a semana de 26/10 a 01/11/2026.
 
-**Preparação 30 minutos antes:** a IA gera os eventos de mercado, o boletim e (na Rodada 1) as análises iniciais sempre 30 minutos antes do horário de abertura — às 18h30 para uma abertura às 19h. O diálogo mostra esse horário. Assim, na abertura os alunos encontram tudo pronto.
+**Preparação 30 minutos antes:** a IA gera os eventos de mercado, o boletim e as análises da rodada sempre 30 minutos antes do horário de abertura — às 18h30 para uma abertura às 19h. O diálogo mostra esse horário. Assim, na abertura os alunos encontram tudo pronto.
 
 Com as datas salvas, o sistema abre e encerra a rodada sozinho, sem que você precise clicar em Iniciar Rodada ou Encerrar Rodada. O alerta da Seção 9 continua valendo: o encerramento automático não verifica se todas as equipes enviaram algo.
 
@@ -353,7 +353,7 @@ Assim que a primeira rodada é encerrada, aparece a seção **Sistema de Notas**
 
 Cada métrica é normalizada (0 a 100) comparando o resultado da equipe com os resultados de todas as equipes da turma nas rodadas encerradas, antes de aplicar os pesos — ou seja, é uma nota relativa à turma, não uma escala absoluta.
 
-- **Todas as rodadas encerradas contam**, inclusive a Rodada 1 (semana de adaptação).
+- **Todas as rodadas encerradas contam**, inclusive a Rodada 1. A rodada de teste não conta.
 - **Rodada sem decisão enviada vale 0** e entra na média, como uma falta à atividade daquele dia. Na tabela, essa célula aparece como "0,0 · sem envio". Só não contam as rodadas encerradas antes de a equipe ser formada.
 - A **Nota Final** é a média das notas de cada rodada.
 - O número total de rodadas da turma não interfere na nota: você pode aumentar o "Total de Rodadas" a qualquer momento.
@@ -409,7 +409,7 @@ Para consulta rápida, depois de já ter lido o manual completo uma vez:
 2. Completar a configuração de mercado em Configurar → Configuração de Mercado (use **Preencher com dados reais do setor** para tamanho, crescimento e consumidores potenciais) e conferir a Conjuntura Brasil.
 3. Matricular os alunos (pedir que se cadastrem sozinhos com email institucional e depois adicioná-los à turma, ou cadastrá-los você mesmo já com turma definida).
 4. Aguardar os alunos formarem suas próprias equipes (você não cria equipes).
-5. Definir as datas e horários de cada rodada no calendário (Rodada 1: da primeira aula até domingo 23h59; demais: dia da aula, abertura no horário da aula e fechamento sugerido 2 horas depois) ou definir a quantidade de produtos e clicar em Iniciar Rodada. Marcar a última rodada do ano letivo.
+5. Definir as datas e horários de cada rodada no calendário (rodada de teste: vários dias, até 23h59 do último; rodadas que valem nota, inclusive a Rodada 1: dia da aula, abertura no horário da aula e fechamento sugerido 2 horas depois) ou definir a quantidade de produtos e clicar em Iniciar Rodada. Marcar a última rodada do ano letivo.
 6. Acompanhar submissões e, se quiser, criar ou gerar eventos de mercado.
 7. Conferir se todas as equipes enviaram decisões antes de clicar em Encerrar Rodada.
 8. Analisar o ranking e o Relatório de Alinhamento na aba Analisar.

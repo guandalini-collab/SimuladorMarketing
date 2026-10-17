@@ -1428,7 +1428,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // agora). Sem "scheduledEndAt" no corpo (chamadas antigas), segue como antes.
     let fechamento: Date | null = null;
     if (req.body?.scheduledEndAt) {
-      fechamento = fechamentoDaRodada(req.body.scheduledEndAt, nextRoundNumber, new Date());
+      fechamento = fechamentoDaRodada(req.body.scheduledEndAt, nextRoundNumber, new Date(), req.body?.isPractice === true);
       if (!fechamento) {
         return res.status(400).json({ error: "Data de fechamento inválida" });
       }
@@ -2201,10 +2201,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ?? (round.status === "active" && round.startedAt ? new Date(round.startedAt) : null)
         ?? (round.scheduledStartAt ? new Date(round.scheduledStartAt) : null);
       if (scheduledEndAt) {
-        endDate = fechamentoDaRodada(scheduledEndAt, round.roundNumber, aberturaBase);
+        endDate = fechamentoDaRodada(scheduledEndAt, round.roundNumber, aberturaBase, isPractice ?? round.isPractice);
         if (!endDate) return res.status(400).json({ error: "Data de fechamento inválida" });
-      } else if (startDate && !rodadaDeAdaptacao(round.roundNumber)) {
-        endDate = fechamentoPadrao(startDate, round.roundNumber);
+      } else if (startDate && !rodadaDeAdaptacao(round.roundNumber, isPractice ?? round.isPractice)) {
+        endDate = fechamentoPadrao(startDate, round.roundNumber, undefined, isPractice ?? round.isPractice);
       }
 
       const inicioEfetivo = startDate

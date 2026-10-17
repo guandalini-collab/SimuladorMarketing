@@ -89,8 +89,8 @@ const SECTIONS: SectionContent[] = [
     color: "#1aa15c",
     body: [
       "Antes de decidir o Mix de Marketing, sua equipe conta com 5 ferramentas clássicas de análise estratégica: SWOT (forças, fraquezas, oportunidades e ameaças), 5 Forças de Porter (competitividade do setor), Matriz BCG (portfólio de produtos), PESTEL (fatores macroambientais) e Segmentação de Mercado (quem é o seu público-alvo).",
-      "Na Rodada 1, sua equipe já encontra uma versão inicial dessas análises preenchida, como ponto de partida — mas o valor real está em você revisar, editar e personalizar com a visão da sua equipe, não só aceitar o que veio pronto.",
-      "Cada ferramenta é preenchida uma vez e continua valendo nas rodadas seguintes (você edita quando quiser). O sistema mede o alinhamento entre o que você registrou nessas análises e o que sua equipe realmente pratica no Mix de Marketing — quanto mais coerente, melhor sua pontuação de alinhamento estratégico. Se a análise não bate com a prática, isso é penalizado.",
+      "A cada rodada, o Simula+ entrega prontas a SWOT da sua empresa, as 5 Forças de Porter, a Matriz BCG e a PESTEL, com base no mercado real e nos resultados do jogo. Elas são somente leitura: cabe à equipe interpretá-las.",
+      "A Segmentação de Mercado é feita pela equipe: depois de salva, continua valendo nas rodadas seguintes e pode ser editada. O sistema avalia a coerência entre as decisões do Mix de Marketing, o diagnóstico da rodada e a segmentação da equipe; o efeito aparece nos resultados.",
     ],
   },
   {
