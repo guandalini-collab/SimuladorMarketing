@@ -1263,6 +1263,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         targetAudienceAge: null,
         targetAudienceProfile: null,
       });
+      // Out/2026: equipe criada com a rodada já aberta recebe a verba do
+      // motor competitivo e as análises prontas (em segundo plano).
+      import("./services/roundAutomation")
+        .then(({ integrarEquipeNovaNaRodada }) => integrarEquipeNovaNaRodada(storage, team.id, team.classId))
+        .catch(() => {});
       res.json(team);
     } catch (error) {
       res.status(400).json({ error: "Dados inválidos" });
@@ -2385,6 +2390,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         targetAudienceAge: null,
         targetAudienceProfile: null,
       });
+      // Out/2026: equipe criada com a rodada já aberta recebe a verba do
+      // motor competitivo e as análises prontas (em segundo plano).
+      import("./services/roundAutomation")
+        .then(({ integrarEquipeNovaNaRodada }) => integrarEquipeNovaNaRodada(storage, team.id, team.classId))
+        .catch(() => {});
       res.json(team);
     } catch (error) {
       res.status(400).json({ error: "Erro ao criar equipe" });

@@ -298,3 +298,31 @@ export function scheduleRoundClosedAutomation(storage: IStorage, roundId: string
     console.error("[ROUND-AUTO] Falha na automação de encerramento:", error),
   );
 }
+
+/**
+ * Equipe criada depois da abertura da rodada (out/2026, motor competitivo):
+ * recebe a verba do motor (e não o orçamento padrão da turma) e as análises
+ * prontas da rodada. Antes da 1ª rodada concluída, recalcula a verba inicial
+ * de todas as equipes (ela depende do número de empresas no mercado); depois,
+ * só a da equipe nova. Roda em segundo plano; falhas só vão para o log.
+ */
+export function integrarEquipeNovaNaRodada(storage: IStorage, teamId: string, classId: string): void {
+  void (async () => {
+    const round = await storage.getCurrentRound(classId);
+    if (!round || round.status !== "active") return;
+    const { rodadaNoMotorCompetitivo, temEstadoDeMercado, verbaInicialDaTurma } = await import("./roundCompletionCompetitive");
+    if (!(await rodadaNoMotorCompetitivo(storage, round))) return;
+    if (await temEstadoDeMercado(classId)) {
+      const classData = await storage.getClass(classId);
+      const teams = await storage.getTeamsByClass(classId);
+      if (classData) {
+        const verba = verbaInicialDaTurma(classData, teams.length, round.productCount ?? 1);
+        if (verba > 0) await storage.updateTeam(teamId, { budget: verba });
+      }
+    } else {
+      await aplicarVerbaInicialSeNecessario(storage, round.id);
+    }
+    const { prepararAnalisesDaRodada } = await import("./analisesDaIA");
+    await prepararAnalisesDaRodada(storage, round.id);
+  })().catch((error) => console.error("[ROUND-AUTO] Falha ao integrar equipe nova na rodada:", error));
+}
