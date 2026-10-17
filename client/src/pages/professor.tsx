@@ -2608,6 +2608,7 @@ function FeedbackAccordionSection({ teams, roundId }: { teams: any[]; roundId: s
                   <DeterministicFeedbackCard
                     teamId={team.id}
                     roundId={roundId}
+                    mostrarRecomendacoes
                   />
                 )}
               </AccordionContent>

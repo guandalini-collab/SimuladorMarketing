@@ -9,6 +9,8 @@ interface DeterministicFeedbackCardProps {
   teamId: string;
   roundId: string;
   compact?: boolean;
+  /** Out/2026: as recomendações de ação só aparecem para o professor. */
+  mostrarRecomendacoes?: boolean;
 }
 
 interface Recommendation {
@@ -44,7 +46,7 @@ const areaColors = {
   Promoção: "bg-[#ff8c1a]/10 text-[#ff8c1a] dark:text-orange-400",
 };
 
-export function DeterministicFeedbackCard({ teamId, roundId, compact = false }: DeterministicFeedbackCardProps) {
+export function DeterministicFeedbackCard({ teamId, roundId, compact = false, mostrarRecomendacoes = false }: DeterministicFeedbackCardProps) {
   const { data: feedback, isLoading, error } = useQuery<DeterministicFeedback | null>({
     queryKey: ["/api/deterministic-feedback", teamId, roundId],
     enabled: !!teamId && !!roundId,
@@ -106,7 +108,7 @@ export function DeterministicFeedbackCard({ teamId, roundId, compact = false }: 
             <MessageSquare className="h-5 w-5 text-[#1447e6] mt-0.5 flex-shrink-0" />
             <div className="space-y-2">
               <p className="text-sm font-medium">{feedback.summary}</p>
-              {feedback.recommendations.length > 0 && (
+              {mostrarRecomendacoes && feedback.recommendations.length > 0 && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Lightbulb className="h-3 w-3" />
                   <span>{feedback.recommendations.length} recomendações disponíveis</span>
@@ -171,7 +173,7 @@ export function DeterministicFeedbackCard({ teamId, roundId, compact = false }: 
           </div>
         </div>
 
-        {feedback.recommendations.length > 0 && (
+        {mostrarRecomendacoes && feedback.recommendations.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Lightbulb className="h-5 w-5 text-[#ff8c1a]" />

@@ -447,6 +447,7 @@ export default function InsightsMercado() {
         </Card>
       </div>
 
+      {insights.recommendations?.length > 0 && (
       <Card data-testid="card-recommendations" className="border-primary/20">
         <CardHeader className="bg-muted/30">
           <div className="flex items-center justify-between">
@@ -538,6 +539,7 @@ export default function InsightsMercado() {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

@@ -188,6 +188,8 @@ Os itens do grupo **Consulta** (Fechamento anual, Insights de Mercado, Orçament
 
 **Tela de decisões dos alunos.** O preço de cada produto **começa em branco** em toda rodada e é obrigatório: sem ele, o envio é recusado. A tela não traz mais os cartões de “Orientações Estratégicas” gerados pela IA nem textos de recomendação; mostra apenas dados de mercado com fonte (preço médio de referência da categoria, margens do setor e investimento típico em marketing). A equipe decide e descobre as consequências nos resultados.
 
+**Sem dicas aos alunos.** O sistema não diz aos alunos o que fazer. O Feedback Inteligente é só diagnóstico (o que aconteceu, por quê e a literatura relacionada), sem sugestões de ação; o cartão de Recomendações Estratégicas saiu da tela Insights de Mercado; e a linha "Análise de Tendência" dos eventos descreve os efeitos sobre o mercado, sem recomendar decisões. As recomendações por P do feedback determinístico continuam visíveis só para você, na aba Analisar.
+
 Durante a rodada, você tem três ferramentas à disposição na aba **Aula**, seção **Eventos de Mercado**:
 
 1. **Criar Manual** — você mesmo escreve um evento (tipo, severidade, título, descrição e impacto esperado) e aplica a uma rodada específica.

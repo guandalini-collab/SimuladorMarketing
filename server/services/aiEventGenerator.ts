@@ -194,7 +194,7 @@ ${sector.opportunities.map((o, i) => `${i + 1}. ${o}`).join('\n')}
      2. "[Lead]: " seguido de UMA ÚNICA FRASE objetiva contendo o quê, quem, quando e o impacto geral do evento
      3. "[Coluna Macroeconômica]: " seguido de um bloco analítico e frio com os dados numéricos reais do setor/mercado brasileiro (números, percentuais, indicadores) necessários para a tomada de decisão do aluno
      Total: 300-500 caracteres.
-   - impact: "[Análise de Tendência]: " seguido de um parágrafo fundamentado — de forma implícita ou explícita — em teorias reais de mercado (ex: movimentos nas Forças de Porter ou na categoria PESTEL correspondente ao evento), forçando o aluno a interpretar o cenário sob a ótica acadêmica correta para tomar sua decisão de Mix de Marketing. 150-300 caracteres.
+   - impact: "[Análise de Tendência]: " seguido de um parágrafo fundamentado — de forma implícita ou explícita — em teorias reais de mercado (ex: movimentos nas Forças de Porter ou na categoria PESTEL correspondente ao evento), descrevendo os efeitos prováveis sobre o mercado, a demanda e a concorrência. É proibido dizer o que a empresa deve fazer ou recomendar decisões de preço, produto, praça ou promoção: a interpretação e a decisão são do aluno. 150-300 caracteres.
    - Tom estritamente jornalístico, profissional, informativo e frio em todos os campos — livre de bajulações, cortesias ou linguagem motivacional.
    - severity: "baixo", "medio" ou "alto"
    - sentiment: "positivo", "negativo" ou "neutro" — decida pelo CONTEÚDO real do evento, não pela categoria. Um evento "regulatory" pode ser positivo (ex.: redução de impostos) ou negativo (ex.: aumento de impostos); um evento "competitive" pode ser positivo para a equipe (ex.: concorrente fecha as portas) ou negativo (ex.: novo concorrente forte entra no mercado). Use "neutro" só quando o evento tiver efeito genuinamente misto ou desprezível.
@@ -202,7 +202,7 @@ ${sector.opportunities.map((o, i) => `${i + 1}. ${o}`).join('\n')}
 
 4. Eventos devem ser variados em severidade (distribua entre baixo, médio e alto) e em sentiment (não gere só eventos negativos nem só positivos)
 5. Use dados e tendências REAIS do mercado brasileiro de ${currentYear} — é proibido inventar instituições, indicadores ou dados fictícios apresentados como reais
-6. Seja específico e prático - os eventos devem influenciar decisões de preço, produto, praça e promoção
+6. Seja específico e prático: os eventos devem ter efeito real sobre o mercado do setor, sem recomendar decisões à empresa (o aluno interpreta e decide)
 7. Nunca mencione, sugira ou admita ser uma inteligência artificial, modelo de linguagem, ChatGPT ou software externo. Você é a redação do Simula+ News, parte nativa do ecossistema do simulador.
 
 **Formato de Resposta (JSON):**

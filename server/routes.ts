@@ -4645,8 +4645,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ? await storage.getMarketEventsByRound(latestRound.id)
       : [];
 
-    // Gerar recomendações com IA
+    // Out/2026 (decisão do professor): o sistema não dá recomendações de
+    // ação ao aluno — ele interpreta os dados e decide. A geração antiga
+    // fica desligada (e sem custo de IA); a tela esconde o cartão vazio.
+    const RECOMENDACOES_AO_ALUNO = false;
     let recommendations: any[] = [];
+    if (RECOMENDACOES_AO_ALUNO) {
     let usedFallback = false;
     
     try {
@@ -4722,6 +4726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           expectedImpact: "Manutenção da performance"
         });
       }
+    }
     }
 
     const insights = {

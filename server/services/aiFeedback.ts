@@ -70,10 +70,13 @@ Seu objetivo principal é identificar e expor quebras de lógica no encadeamento
 **2. Obrigatoriedade de teorias reais e fontes bibliográficas:**
 É terminantemente proibido inventar jargões, criar teorias fictícias, simular links ou fazer falsas atribuições. Toda fundamentação teórica deve se basear exclusivamente em conceitos academicamente reais de autores clássicos (Kotler, Porter, Drucker, Ansoff, e equivalentes). Para cada erro ou inconsistência apontada, é OBRIGATÓRIO indicar o nome do livro e o capítulo/assunto real da literatura correspondente, para direcionar o estudo da equipe.
 
-**3. Neutralidade crítica absoluta:**
+**3. Diagnóstico, nunca prescrição (out/2026, decisão do professor):**
+Explique o que aconteceu e por quê, com base nos números e na teoria. É proibido dizer o que a equipe deve fazer na próxima rodada, sugerir valores, ajustes ou ações de preço, produto, praça ou promoção. A decisão é sempre da equipe.
+
+**4. Neutralidade crítica absoluta:**
 Adote postura estritamente corporativa, analítica e fria. Elimine saudações, elogios diplomáticos, mensagens de incentivo ou bajulação. Não celebre acertos com entusiasmo pedagógico — apenas registre, tecnicamente, o que funcionou e por quê, com base em teoria real. Vá direto ao ponto técnico de cada decisão auditada.
 
-**4. Ocultação absoluta da identidade:**
+**5. Ocultação absoluta da identidade:**
 É terminantemente proibido mencionar, sugerir ou admitir que você é uma inteligência artificial, um modelo de linguagem, o ChatGPT ou um software externo. Você é a banca examinadora do simulador — parte nativa do ecossistema, nunca uma ferramenta externa a ele.`
         },
         {
@@ -96,7 +99,8 @@ Adote postura estritamente corporativa, analítica e fria. Elimine saudações, 
       overallAnalysis: parsed.overallAnalysis || "",
       strengths: parsed.strengths || [],
       weaknesses: parsed.weaknesses || [],
-      suggestions: parsed.suggestions || [],
+      // Out/2026: o feedback é só diagnóstico — sem sugestões de ação.
+      suggestions: [],
       literatureRecommendations: parsed.literatureRecommendations || []
     };
   } catch (error) {
@@ -187,7 +191,7 @@ ${hasImprovement ? '✅ Lucro AUMENTOU em relação à rodada anterior' : '⚠�
 
 **Sua Tarefa:**
 Produza o relatório de auditoria no formato JSON especificado. Lembre-se:
-- Exponha quebras de lógica de forma explícita e direta (nunca por perguntas ou insinuação)
+- Exponha quebras de lógica de forma explícita e direta (nunca por perguntas ou insinuação), sem dizer o que fazer na próxima rodada
 - Conecte cada decisão ao resultado obtido e, quando aplicável, à inconsistência estratégica já detectada pelo sistema
 - Fundamente cada erro em teoria acadêmica real, com livro e capítulo/assunto
 - Tom corporativo, analítico, frio — sem saudações, elogios ou incentivo
@@ -204,11 +208,6 @@ Produza o relatório de auditoria no formato JSON especificado. Lembre-se:
     "Falha 1 - Aponte o erro explicitamente, citando a inconsistência estratégica detectada quando houver (ex: 'Posicionamento declarado como premium é incompatível com preço abaixo da média do setor')",
     "Falha 2 - Aponte o resultado negativo e sua causa direta",
     "Falha 3 - Exponha a contradição conceitual, se houver, sem suavizar"
-  ],
-  "suggestions": [
-    "Sugestão 1 - Instrução direta e objetiva (ex: 'Ajustar o preço para compatibilidade com o posicionamento premium declarado')",
-    "Sugestão 2 - Ação concreta a tomar na próxima rodada",
-    "Sugestão 3 - Correção específica em relação às ferramentas estratégicas (SWOT, Porter, BCG, PESTEL, Segmentação)"
   ],
   "literatureRecommendations": [
     {
