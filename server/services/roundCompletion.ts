@@ -117,9 +117,19 @@ export async function processRoundCompletion(
     const bulletin = await getBulletinByRound(roundId);
 
     const useV2Engine = isSimEngineV2Enabled();
-    console.log(`[ROUND_COMPLETION] Using simulation engine: ${useV2Engine ? "V2" : "V1 (legacy)"}`);
 
-    for (const team of teams) {
+
+    // Motor de mercado competitivo (v3, out/2026): todas as equipes e os
+    // concorrentes simulados disputam o mesmo mercado — ver
+    // roundCompletionCompetitive.ts. Rodadas de teste seguem no motor V1.
+    const { rodadaNoMotorCompetitivo, processarMercadoCompetitivo } = await import("./roundCompletionCompetitive");
+    const competitivo = await rodadaNoMotorCompetitivo(storage, round);
+    console.log(`[ROUND_COMPLETION] Using simulation engine: ${competitivo ? "v3 (mercado competitivo)" : useV2Engine ? "V2" : "V1 (legacy)"}`);
+    if (competitivo) {
+      await processarMercadoCompetitivo(storage, round, classData, teams, activeEvents, bulletin);
+    }
+
+    for (const team of competitivo ? [] : teams) {
       const existingResult = await storage.getResult(team.id, roundId);
       if (!existingResult) {
         // Bug corrigido aqui (Item 2 da auditoria): antes buscava um único

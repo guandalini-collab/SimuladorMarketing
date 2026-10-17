@@ -531,7 +531,7 @@ function calculatePromotionScore(mix: MarketingMix): number {
   return Math.min(score, 100);
 }
 
-function calculateEventImpact(events: MarketEvent[]): number {
+export function calculateEventImpact(events: MarketEvent[]): number {
   if (events.length === 0) return 1.0;
 
   let totalImpact = 0;

@@ -578,14 +578,22 @@ interface BudgetMeterProps {
   productName?: string;
   mediaCount: number;
   showAllProducts: boolean;
+  /** Motor competitivo (out/2026): custo de distribuição, que também sai da verba. */
+  productDistribution?: number;
+  allProductsDistribution?: number;
 }
 
 // Painel de investimento em promoção. É apenas informativo: o orçamento não
 // é um teto no envio (o servidor só valida o mínimo de cada mídia), então
 // nada aqui bloqueia ou altera a decisão.
-export function BudgetMeter({ productTotal, allProductsTotal, available, productName, mediaCount, showAllProducts }: BudgetMeterProps) {
-  const share = available > 0 ? (allProductsTotal / available) * 100 : 0;
-  const over = available > 0 && allProductsTotal > available;
+// Out/2026: no motor competitivo a verba cobre comunicação + distribuição, e o
+// servidor bloqueia o envio final acima da verba; por isso o total passa a
+// somar a distribuição quando ela é informada.
+export function BudgetMeter({ productTotal, allProductsTotal, available, productName, mediaCount, showAllProducts, productDistribution, allProductsDistribution }: BudgetMeterProps) {
+  const comDistribuicao = productDistribution !== undefined;
+  const totalPlanejado = allProductsTotal + (allProductsDistribution ?? 0);
+  const share = available > 0 ? (totalPlanejado / available) * 100 : 0;
+  const over = available > 0 && totalPlanejado > available;
   return (
     <div className="space-y-5">
       <div className="flex items-start gap-3">
@@ -598,14 +606,22 @@ export function BudgetMeter({ productTotal, allProductsTotal, available, product
             {moeda(productTotal)}
           </p>
           <p className="text-sm text-muted-foreground">{mediaCount} {mediaCount === 1 ? "mídia selecionada" : "mídias selecionadas"}</p>
+          {comDistribuicao && (
+            <p className="mt-1 text-sm text-muted-foreground" data-testid="text-distribution-cost">
+              Distribuição (cobertura e canais): <span className="tabular-nums">{moeda(productDistribution ?? 0)}</span>
+            </p>
+          )}
         </div>
       </div>
 
       <div className="space-y-2">
         <div className="flex items-baseline justify-between gap-2 text-sm">
-          <span className="font-medium">{showAllProducts ? "Todos os produtos" : "Uso do orçamento"}</span>
+          <span className="font-medium">
+            {showAllProducts ? "Todos os produtos" : "Uso do orçamento"}
+            {comDistribuicao ? " (comunicação + distribuição)" : ""}
+          </span>
           <span className="tabular-nums text-muted-foreground">
-            {moeda(allProductsTotal)} de {moeda(available)}
+            {moeda(totalPlanejado)} de {moeda(available)}
           </span>
         </div>
         <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700" role="img" aria-label={`${share.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% do orçamento disponível`}>
@@ -616,8 +632,10 @@ export function BudgetMeter({ productTotal, allProductsTotal, available, product
         </div>
         <p className={cn("text-sm", over ? "font-medium text-[#8a4a00] dark:text-orange-300" : "text-muted-foreground")}>
           {over
-            ? `O total planejado está ${moeda(allProductsTotal - available)} acima do orçamento disponível.`
-            : `${share.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% do orçamento disponível. O que não for investido continua disponível nas próximas rodadas.`}
+            ? `O total planejado está ${moeda(totalPlanejado - available)} acima do orçamento disponível.${comDistribuicao ? " Acima da verba, o envio final não é aceito." : ""}`
+            : comDistribuicao
+              ? `${share.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% da verba da rodada. A verba da próxima rodada é definida pela receita desta.`
+              : `${share.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% do orçamento disponível. O que não for investido continua disponível nas próximas rodadas.`}
         </p>
       </div>
     </div>

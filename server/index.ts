@@ -19,6 +19,7 @@ import { ensureMarketEventSentiment } from "./ensureMarketEventSentiment";
 import { ensureOnboardingColumns } from "./ensureOnboardingColumns";
 import { ensureRoundsWeeklyColumns } from "./ensureRoundsWeeklyColumns";
 import { ensureProductCatalog } from "./ensureProductCatalog";
+import { ensureMarketStateTable } from "./ensureMarketStateTable";
 import { ensureSuperAdminAccount } from "./ensureSuperAdminAccount";
 import { ensureAdminTemporaryPassword } from "./ensureAdminTemporaryPassword";
 
@@ -84,6 +85,7 @@ app.use((req, res, next) => {
   await ensureClassContextTable();
   await ensureClassMarketDefaults();
   await ensureProductCatalog();
+  await ensureMarketStateTable();
   await ensureMarketEventSentiment();
   await ensureOnboardingColumns();
   await ensureSuperAdminAccount();

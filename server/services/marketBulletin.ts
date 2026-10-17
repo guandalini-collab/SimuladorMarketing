@@ -277,6 +277,21 @@ export function computeMarketFit(bulletin: MarketBulletin, mix: MarketingMix, pr
 
 // Preço médio da categoria do produto (mesma regra da tela de decisões:
 // categoria do setor com id igual ao slug do produto ou com o mesmo nome).
+/** Categoria do setor correspondente a um produto da turma (slug "<categoria>-<setor>" ou nome, sem acento). */
+export function categoriaDoProduto(sectorId: string | null | undefined, product: { slug?: string | null; name?: string | null } | null | undefined) {
+  const sector = marketSectors.find((s) => s.id === sectorId);
+  if (!sector || !product) return null;
+  const semAcento = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return (
+    sector.categories.find(
+      (c) =>
+        c.id === product.slug ||
+        `${c.id}-${sector.id}` === product.slug ||
+        (c.name && product.name && semAcento(c.name) === semAcento(String(product.name))),
+    ) ?? null
+  );
+}
+
 export function precoMedioDaCategoria(sectorId: string | null | undefined, product: { slug?: string | null; name?: string | null } | null | undefined): number | null {
   const sector = marketSectors.find((s) => s.id === sectorId);
   if (!sector || !product) return null;

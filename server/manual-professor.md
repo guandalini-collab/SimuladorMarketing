@@ -44,7 +44,7 @@ Uma observação importante sobre os alunos, que evita um mal-entendido comum: *
    2. **Número de Rodadas** — quantas rodadas a simulação terá ao todo. Valor padrão: 10 (pode variar de 1 a 20). Você pode alterar esse número depois, a qualquer momento, na aba "Aula" da turma.
    3. **Setor de Mercado** — o setor econômico simulado (ver lista completa no Apêndice B). Pode ser deixado em branco e definido depois.
    4. **Tipo de Comércio** — B2C, B2B ou Híbrido. Pode ser deixado em branco e definido depois.
-   5. **Orçamento Padrão (R$)** — orçamento inicial de cada equipe a cada rodada. Valor padrão: R$ 100.000,00.
+   5. **Orçamento Padrão (R$)** — orçamento inicial de cada equipe. Valor padrão: R$ 100.000,00. Vale para a rodada de teste e para turmas que já estavam em andamento no motor anterior; a partir da Rodada 1, o motor de mercado competitivo calcula a verba pelo setor (Seção 10.2).
    6. **Nível de Concorrência** — Baixa, Média ou Alta. Pode ser deixado em branco e definido depois.
    7. **Criar Turma** — botão que confirma a criação. Fica habilitado assim que o campo 1 (Nome da Turma) está preenchido; os demais campos podem ficar em branco.
 3. Clique em **Criar Turma** (campo 7 na imagem acima).
@@ -276,6 +276,21 @@ A cada 12 rodadas (um ano de jogo) e ao fim do jogo, o sistema monta o **Fechame
 - A equipe pode salvar rascunho; depois de **enviada**, a reflexão não pode mais ser alterada.
 - No primeiro mês de um ano novo (Rodada 13, 25…), a etapa 1 do percurso só é concluída depois que a equipe envia a reflexão do ano que terminou.
 - Você acompanha tudo pelo botão **Fechamento anual**, ao lado de Analytics no topo do painel: uma tabela da turma por ano (receita, lucro, margem, participação e se a reflexão foi enviada) e, ao clicar numa equipe, os indicadores e as respostas dela.
+
+### 10.2 Motor de mercado competitivo (a partir da Rodada 1)
+
+A partir da Rodada 1, as equipes da turma disputam **o mesmo mercado**, ao mesmo tempo, com concorrentes simulados já estabelecidos. A receita de cada equipe nasce das vendas que ela conquista, e não mais do orçamento investido. As fórmulas completas, com a distinção entre dados reais e parâmetros do modelo, estão no **Apêndice “Como o mercado é calculado”** do Manual do Aluno; aqui ficam os pontos que dizem respeito à condução da turma.
+
+- **Praça:** Rio Grande do Sul. O mercado semanal de cada categoria é o tamanho anual do setor (campo **Tamanho do Mercado** da turma ou, se vazio, o dado real do setor) × 5,26% (participação do RS na população, IBGE 2025) ÷ 52 ÷ número de categorias do setor.
+- **Participação de mercado:** modelo de atratividade (Cooper e Nakanishi, 1988). Pesam o preço em relação ao valor percebido do produto, a lembrança de marca construída pela comunicação, a distribuição, a fidelidade e o alinhamento estratégico. As fatias de equipes e concorrentes somam 100%.
+- **Concorrentes simulados:** quatro perfis fictícios (Alfa, líder premium; Beta, popular de volume; Gama, intermediário; Delta, regional), que reagem a cortes de preço e a aumentos de comunicação das equipes. O campo **Número de Concorrentes** da turma define quantos entram (de 1 a 12; acima de 4, os perfis se repetem com numeração).
+- **Verba de marketing:** método da porcentagem sobre as vendas (Kotler e Keller). Na Rodada 1, percentual de marketing do setor × receita de referência × número de produtos; nas seguintes, o mesmo percentual × receita obtida na rodada anterior, com piso de 30% da verba inicial. A verba não acumula. Comunicação **e distribuição** saem dela, e o envio final acima da verba não é aceito. O campo **Orçamento Padrão** deixa de ser usado nas rodadas valendo.
+- **Custos:** custo dos produtos pela margem bruta real do setor; despesas administrativas calibradas para que uma empresa “média” obtenha a margem líquida real do setor (Damodaran, 2026; Apêndice B.2); tributos sobre vendas de 12% e IR/CSLL de 34% sobre lucro positivo.
+- **Campos sem efeito no novo motor:** Nível de Concorrência, Estrutura de Mercado e Força dos Concorrentes continuam visíveis na configuração, mas não entram no cálculo das rodadas valendo.
+
+:::alerta Turmas já em andamento
+Para não mudar as regras no meio do jogo, uma turma que já tem resultados de rodadas valendo calculados pelo motor anterior continua nele até o fim. O motor competitivo vale para turmas que começam do zero. A rodada de teste sempre usa o motor anterior e não conta para essa regra, porque é apagada em **Iniciar o jogo**.
+:::
 
 ## 11. Analisar Resultados
 
@@ -566,13 +581,21 @@ CABRAL, Luís M. B. **Introduction to Industrial Organization**. Cambridge: MIT 
 
 CHIAVENATO, Idalberto; SAPIRO, Arão. **Planejamento Estratégico: Fundamentos e Aplicações**. Rio de Janeiro: Elsevier, 2003.
 
+BELL, David E.; KEENEY, Ralph L.; LITTLE, John D. C. A market share theorem. **Journal of Marketing Research**, v. 12, n. 2, p. 136-141, 1975.
+
+BROADBENT, Simon. One way TV advertisements work. **Journal of the Market Research Society**, v. 21, n. 3, p. 139-166, 1979.
+
 CHRISTENSEN, Clayton M. **The Innovator's Dilemma: When New Technologies Cause Great Firms to Fail**. Boston: Harvard Business School Press, 1997.
+
+COOPER, Lee G.; NAKANISHI, Masao. **Market-Share Analysis: Evaluating Competitive Marketing Effectiveness**. Boston: Kluwer Academic Publishers, 1988.
 
 DAMODARAN, Aswath. **Investment Valuation: Tools and Techniques for Determining the Value of Any Asset**. 3. ed. Hoboken: Wiley Finance, 2012.
 
 DRÈZE, Xavier; HUSSHERR, François-Xavier. Internet advertising: Is anybody watching? **Journal of Interactive Marketing**, 2003.
 
 DRUCKER, Peter F. **The Essential Drucker: The Best of Sixty Years of Peter Drucker's Essential Writings on Management**. New York: HarperBusiness, 2001.
+
+FARRIS, Paul W.; BENDLE, Neil T.; PFEIFER, Phillip E.; REIBSTEIN, David J. **Marketing Metrics: The Definitive Guide to Measuring Marketing Performance**. 2. ed. Upper Saddle River: Pearson Education, 2010.
 
 GITMAN, Lawrence J. **Princípios de Administração Financeira**. 12. ed. São Paulo: Pearson Prentice Hall, 2010.
 

@@ -98,6 +98,11 @@ async function gerarEventosDaRodada(storage: IStorage, roundId: string, classId:
 export async function runRoundOpenedAutomation(storage: IStorage, roundId: string): Promise<void> {
   const round = await storage.getRound(roundId);
   if (!round || round.status !== "active") return;
+  try {
+    await aplicarVerbaInicialSeNecessario(storage, round.id);
+  } catch (error) {
+    console.error("[ROUND-AUTO] Erro ao aplicar a verba inicial:", error);
+  }
   await gerarConteudoDaRodada(storage, round, { completarAnalises: true });
 }
 
@@ -121,6 +126,11 @@ export async function runRoundPreparation(storage: IStorage, roundId: string): P
       console.error("[ROUND-AUTO] Erro ao preparar análises:", error);
     }
   }
+  try {
+    await aplicarVerbaInicialSeNecessario(storage, round.id);
+  } catch (error) {
+    console.error("[ROUND-AUTO] Erro ao aplicar a verba inicial:", error);
+  }
   await gerarConteudoDaRodada(storage, round, { completarAnalises: false });
 }
 
@@ -128,6 +138,30 @@ export function scheduleRoundPreparation(storage: IStorage, roundId: string): vo
   void runRoundPreparation(storage, roundId).catch((error) =>
     console.error("[ROUND-AUTO] Falha na preparação da rodada:", error),
   );
+}
+
+/**
+ * Motor competitivo (out/2026): na primeira rodada que usa o motor novo, a
+ * verba de cada equipe passa a ser a verba inicial do setor (porcentagem
+ * sobre as vendas × receita de referência × produtos da rodada). Nas
+ * rodadas seguintes, a verba já vem do resultado anterior (gravada no
+ * encerramento), então nada muda aqui.
+ */
+export async function aplicarVerbaInicialSeNecessario(storage: IStorage, roundId: string): Promise<void> {
+  const round = await storage.getRound(roundId);
+  if (!round) return;
+  const { rodadaNoMotorCompetitivo, temEstadoDeMercado, verbaInicialDaTurma } = await import("./roundCompletionCompetitive");
+  if (await temEstadoDeMercado(round.classId)) return;
+  if (!(await rodadaNoMotorCompetitivo(storage, round))) return;
+  const classData = await storage.getClass(round.classId);
+  if (!classData) return;
+  const teams = await storage.getTeamsByClass(round.classId);
+  const verba = verbaInicialDaTurma(classData, teams.length, round.productCount ?? 1);
+  if (verba <= 0) return;
+  for (const team of teams) {
+    if (team.budget !== verba) await storage.updateTeam(team.id, { budget: verba });
+  }
+  console.log(`[ROUND-AUTO] Verba inicial do motor competitivo aplicada: R$ ${verba} por equipe (${teams.length} equipe(s))`);
 }
 
 async function gerarConteudoDaRodada(

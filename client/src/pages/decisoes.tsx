@@ -153,6 +153,11 @@ export default function Decisoes() {
     enabled: !!team?.classId,
   });
 
+  const { data: custosDecisao } = useQuery<{ ativo: boolean; receitaReferencia: number; custoCobertura: Record<string, number>; custoPorCanal: number }>({
+    queryKey: ["/api/team/custos-da-decisao"],
+    enabled: !!team?.id && decisionsAllowed,
+  });
+
   const { data: midias = [] } = useQuery<any[]>({
     queryKey: ["/api/midias"],
   });
@@ -595,6 +600,21 @@ export default function Decisoes() {
     const budgets = (product.id === selectedProductId ? promotionBudgets : productDecisions[product.id]?.promotionBudgets) || {};
     return sum + Object.values(budgets).reduce((s: number, v) => s + (Number(v) || 0), 0);
   }, 0);
+
+  // Out/2026 (motor competitivo): a verba cobre comunicação + distribuição.
+  // Custo de distribuição = receita de referência × (cobertura + canais).
+  const distribuicaoDoProduto = (channels: string[] | undefined, coverage: string | undefined) => {
+    if (!custosDecisao?.ativo) return 0;
+    const cobertura = custosDecisao.custoCobertura[coverage || "regional"] ?? custosDecisao.custoCobertura.regional ?? 0;
+    return custosDecisao.receitaReferencia * (cobertura + custosDecisao.custoPorCanal * Math.max(1, channels?.length ?? 0));
+  };
+  const allProductsDistributionTotal = products.reduce((sum: number, product: any) => {
+    const d = product.id === selectedProductId
+      ? { distributionChannels, distributionCoverage }
+      : productDecisions[product.id] ?? { distributionChannels: ["varejo"], distributionCoverage: "regional" };
+    return sum + distribuicaoDoProduto(d.distributionChannels, d.distributionCoverage);
+  }, 0);
+  const productDistributionTotal = distribuicaoDoProduto(distributionChannels, distributionCoverage);
 
   const midiaNames: Record<string, string> = Object.fromEntries(
     midias.map((m: any) => [m.id, m.formato ? `${m.nome} — ${m.formato}` : m.nome]),
@@ -1152,6 +1172,8 @@ export default function Decisoes() {
                     productName={products.length > 1 ? selectedProduct?.name : undefined}
                     mediaCount={promotionMix.length}
                     showAllProducts={products.length > 1}
+                    productDistribution={custosDecisao?.ativo ? productDistributionTotal : undefined}
+                    allProductsDistribution={custosDecisao?.ativo ? allProductsDistributionTotal : undefined}
                   />
                   {promotionMix.length > 0 && (
                     <ul className="mt-4 space-y-1.5 border-t pt-4 text-sm">

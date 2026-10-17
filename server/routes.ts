@@ -17,6 +17,7 @@ import { randomUUID } from "crypto";
 import { getAlignmentScoreLevel } from "@shared/alignmentUtils";
 import { getProductCountBudgetMultiplier } from "@shared/budgetUtils";
 import { aberturaDaRodada, fechamentoDaRodada, fechamentoPadrao, formatarSemanaDaRodada, anoLetivoEncerrado, rodadaDeAdaptacao } from "@shared/rodadaSemanal";
+import { custoEstimadoDaDecisao, parametrosDeCustoDaEquipe } from "./services/roundCompletionCompetitive";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -2589,6 +2590,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(team);
   });
 
+  // Out/2026 (motor competitivo): parâmetros para a tela de decisões mostrar
+  // o custo de distribuição junto com a comunicação. Somente leitura.
+  app.get("/api/team/custos-da-decisao", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const team = await storage.getTeamByUser(req.session.userId);
+    if (!team) {
+      return res.status(404).json({ error: "Você não está em uma equipe" });
+    }
+    try {
+      res.json(await parametrosDeCustoDaEquipe(storage, team));
+    } catch (error) {
+      console.error("Erro ao calcular parâmetros de custo:", error);
+      res.json({ ativo: false, receitaReferencia: 0, custoCobertura: {}, custoPorCanal: 0 });
+    }
+  });
+
   app.get("/api/team/current-round-status", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
@@ -3584,10 +3603,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const classData = await storage.getClass(team.classId);
       const sector = classData?.sector ? marketSectors.find(s => s.id === classData.sector) : undefined;
       
-      const estimatedCost = calculateMarketingSpend(
+      const estimatedCost = await custoEstimadoDaDecisao(storage, team, data as any, classData ?? undefined, () => calculateMarketingSpend(
         data as any,
         sector?.averageMargin
-      );
+      ));
       
       let result;
       if (existing) {
@@ -3650,10 +3669,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const classData = await storage.getClass(team.classId);
       const sector = classData?.sector ? marketSectors.find(s => s.id === classData.sector) : undefined;
       
-      const estimatedCost = calculateMarketingSpend(
+      const estimatedCost = await custoEstimadoDaDecisao(storage, team, existing as any, classData ?? undefined, () => calculateMarketingSpend(
         existing as any,
         sector?.averageMargin
-      );
+      ));
       
       // Validação de orçamento na submissão final
       if (estimatedCost > team.budget) {
@@ -3828,10 +3847,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const classData = await storage.getClass(team.classId);
       const sector = classData?.sector ? marketSectors.find(s => s.id === classData.sector) : undefined;
       
-      const estimatedCost = calculateMarketingSpend(
+      const estimatedCost = await custoEstimadoDaDecisao(storage, team, data as any, classData ?? undefined, () => calculateMarketingSpend(
         data as any,
         sector?.averageMargin
-      );
+      ));
       
       const existing = await storage.getMarketingMix(team.id, activeRound.id);
       
@@ -6024,7 +6043,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         let generatedFeedback;
         
-        if (result.simulationBreakdown || result.competitorResponse || result.eventImpacts) {
+        // Motor competitivo (v3): o detalhamento tem outro formato; usa o feedback
+        // baseado nos indicadores do resultado até o Relatório Gerencial.
+        if (!String(result.engineVersion ?? "").startsWith("v3") && (result.simulationBreakdown || result.competitorResponse || result.eventImpacts)) {
           generatedFeedback = generateRoundFeedback({
             previousResult: previousResult || null,
             currentResult: result,
@@ -6132,7 +6153,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let generatedFeedback;
 
-      if (result.simulationBreakdown || result.competitorResponse || result.eventImpacts) {
+      // Motor competitivo (v3): o detalhamento tem outro formato; usa o feedback
+        // baseado nos indicadores do resultado até o Relatório Gerencial.
+        if (!String(result.engineVersion ?? "").startsWith("v3") && (result.simulationBreakdown || result.competitorResponse || result.eventImpacts)) {
         generatedFeedback = generateRoundFeedback({
           previousResult: previousResult || null,
           currentResult: result,
@@ -6522,10 +6545,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const classData = await storage.getClass(team.classId);
       const sector = classData?.sector ? marketSectors.find(s => s.id === classData.sector) : undefined;
 
-      const estimatedCost = calculateMarketingSpend(
+      const estimatedCost = await custoEstimadoDaDecisao(storage, team, data as any, classData ?? undefined, () => calculateMarketingSpend(
         data as any,
         sector?.averageMargin
-      );
+      ));
 
       // Validação de orçamento: soma o custo estimado deste produto ao custo já
       // planejado para os demais produtos da equipe nesta rodada (rascunhos e
