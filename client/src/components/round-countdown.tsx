@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Clock, AlertTriangle } from "lucide-react";
 
 interface RoundCountdownProps {
-  /** Data/hora de fechamento da rodada (ISO string ou Date). Sempre meia-noite
+  /** Data/hora de fechamento da rodada (ISO string ou Date). Horário definido pelo professor (padrão: 23h59 na Rodada 1; 2h após a abertura nas demais)
    *  de Brasília, independente do fuso horário de quem está vendo a tela — a
    *  conta é feita em tempo absoluto (Date - Date), então funciona certo em
    *  qualquer fuso do navegador. */
@@ -30,7 +30,7 @@ function formatRemaining(ms: number): string {
 
 /**
  * Contador visível de tempo restante até o fechamento da rodada.
- * A rodada sempre fecha à meia-noite oficial de Brasília — este componente
+ * O fechamento segue o horário oficial de Brasília (rodadas semanais, out/2026: horário definido pelo professor) — este componente
  * apenas exibe quanto falta, sem depender do relógio local do usuário para
  * a regra de negócio (o fechamento em si é controlado pelo servidor).
  */

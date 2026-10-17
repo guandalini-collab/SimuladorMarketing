@@ -93,6 +93,10 @@ export const rounds = pgTable("rounds", {
   // anterior reduz o orçamento das equipes em 10% por produto adicional
   // (e restaura proporcionalmente se for reduzida) — ver rota de início de rodada.
   productCount: integer("product_count").notNull().default(1),
+  // Rodadas semanais (pedido do professor, out/2026): marca a rodada que
+  // encerra o ano letivo. Quando ela é concluída, nenhuma rodada nova é
+  // aberta na turma. Coluna criada no boot por ensureRoundsWeeklyColumns.ts.
+  isLastRound: boolean("is_last_round").notNull().default(false),
 }, (table) => ({
   // Grupo D (auditoria de 2026-09): POST /api/rounds/:classId/start (e sua
   // rota irmã não usada pelo front-end, POST /api/classes/:classId/rounds)

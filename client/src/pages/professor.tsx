@@ -62,7 +62,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Eye, Zap, AlertTriangle, Key, CalendarCheck } from "lucide-react";
+import { Eye, Zap, AlertTriangle, Key, CalendarCheck, CalendarDays, Flag } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { insertMarketEventSchema } from "@shared/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -89,6 +89,8 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { FormattedMoneyInput, FormattedNumberInput } from "@/components/formatted-input";
 import { RoundCountdown } from "@/components/round-countdown";
+import { DialogoDatasRodada, DialogoIniciarRodada, SemanaDaRodada, SeloUltimaRodada } from "@/components/rodada-datas";
+import { anoLetivoEncerrado } from "@shared/rodadaSemanal";
 
 const eventFormSchema = insertMarketEventSchema.extend({
   type: z.string().min(1, "Tipo é obrigatório"),
@@ -1848,6 +1850,8 @@ function RoundsTimeline({
   onAddRound,
   onRemoveRound,
   onUpdateMaxRounds,
+  onToggleLastRound,
+  lastRoundPending,
   startRoundPending,
   endRoundPending,
   addRoundPending,
@@ -1863,6 +1867,8 @@ function RoundsTimeline({
   onAddRound: () => void;
   onRemoveRound: (roundNumber: number) => void;
   onUpdateMaxRounds: (maxRounds: number) => void;
+  onToggleLastRound: (round: Round) => void;
+  lastRoundPending: boolean;
   startRoundPending: boolean;
   endRoundPending: boolean;
   addRoundPending: boolean;
@@ -1913,6 +1919,7 @@ function RoundsTimeline({
   const canRemoveRound = isLastRoundEligible && dependenciesQuery.data?.hasDependencies === false;
 
   const [editMaxRounds, setEditMaxRounds] = useState(currentClass.maxRounds);
+  const anoEncerrado = anoLetivoEncerrado(rounds);
 
   return (
     <div className="space-y-4">
@@ -1923,7 +1930,9 @@ function RoundsTimeline({
             {currentClass.currentRound} de {rounds.length} rodadas criadas
           </p>
         </div>
-        {!activeRound && currentClass.currentRound < currentClass.maxRounds ? (
+        {anoEncerrado && !activeRound ? (
+          <Badge variant="outline" data-testid="badge-ano-letivo-encerrado">Ano letivo encerrado</Badge>
+        ) : !activeRound && currentClass.currentRound < currentClass.maxRounds ? (
           <Button onClick={onStartRound} disabled={startRoundPending} data-testid="button-start-round">
             <Play className="h-4 w-4 mr-2" />
             Iniciar Próxima Rodada
@@ -2042,6 +2051,7 @@ function RoundsTimeline({
                 <div className="flex items-center gap-2">
                   {getStatusIcon(round.status)}
                   <span className="font-semibold">Rodada {round.roundNumber}</span>
+                  {round.isLastRound && <SeloUltimaRodada />}
                 </div>
                 <div className="flex items-center gap-1">
                   <Badge variant={round.status === "active" ? "default" : round.status === "completed" ? "secondary" : "outline"}>
@@ -2067,28 +2077,13 @@ function RoundsTimeline({
                 </div>
               </div>
               
-              {(round.scheduledStartAt || round.scheduledEndAt) && (
-                <div className="text-xs text-muted-foreground space-y-1 mb-2">
-                  {round.scheduledStartAt && (
-                    <p className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Início: {new Date(round.scheduledStartAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} (00:00, Brasília)
-                    </p>
-                  )}
-                  {round.scheduledEndAt && (
-                    <p className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Término: {new Date(round.scheduledEndAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} (00:00, Brasília)
-                    </p>
-                  )}
-                </div>
-              )}
+              <SemanaDaRodada round={round} />
 
               {round.status === "active" && round.scheduledEndAt && (
                 <RoundCountdown endDate={round.scheduledEndAt} className="mb-2" />
               )}
 
-              {round.status === "locked" && (
+              {(round.status === "locked" || round.status === "active") && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -2096,8 +2091,24 @@ function RoundsTimeline({
                   onClick={() => onScheduleRound(round)}
                   data-testid={`button-schedule-round-${round.id}`}
                 >
-                  <Clock className="h-3 w-3 mr-1" />
-                  {round.scheduledStartAt || round.scheduledEndAt ? "Editar" : "Agendar"}
+                  <CalendarDays className="h-3 w-3 mr-1" />
+                  {round.status === "active"
+                    ? "Alterar fechamento"
+                    : round.scheduledStartAt || round.scheduledEndAt ? "Alterar datas" : "Definir datas"}
+                </Button>
+              )}
+
+              {(round.status !== "completed" || round.isLastRound) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`w-full mt-1 ${round.isLastRound ? "text-[#8a5a00]" : "text-muted-foreground"}`}
+                  onClick={() => onToggleLastRound(round)}
+                  disabled={lastRoundPending}
+                  data-testid={`button-last-round-${round.roundNumber}`}
+                >
+                  <Flag className="h-3 w-3 mr-1" />
+                  {round.isLastRound ? "Desmarcar última rodada" : "Marcar como última rodada"}
                 </Button>
               )}
             </div>
@@ -2572,7 +2583,6 @@ export default function Professor() {
   const [newStudentData, setNewStudentData] = useState({ name: "", email: "", password: "", classId: "" as string | null });
   const [teamToReset, setTeamToReset] = useState<{teamId: string; teamName: string; roundId: string; roundNumber: number; roundStatus: string} | null>(null);
   const [roundBeingScheduled, setRoundBeingScheduled] = useState<string | null>(null);
-  const [scheduleData, setScheduleData] = useState<{scheduledStartAt: string; scheduledEndAt: string}>({ scheduledStartAt: "", scheduledEndAt: "" });
   const [searchTerm, setSearchTerm] = useState("");
   const [viewDecisionsTeam, setViewDecisionsTeam] = useState<{teamId: string; teamName: string; classId: string} | null>(null);
   const [newClass, setNewClass] = useState({ 
@@ -2683,7 +2693,7 @@ export default function Professor() {
       };
     }
     
-    if (!activeRound && rounds.length === 0) {
+    if (!activeRound && currentClass.currentRound === 0) {
       return { 
         status: "ready_to_start", 
         label: "Pronta para iniciar", 
@@ -2691,7 +2701,18 @@ export default function Professor() {
       };
     }
     
-    if (!activeRound && rounds.length > 0 && rounds.length < currentClass.maxRounds) {
+    // Rodadas semanais (out/2026): a rodada marcada como última foi concluída.
+    if (!activeRound && anoLetivoEncerrado(rounds)) {
+      return {
+        status: "finished",
+        label: "Ano letivo encerrado",
+        action: { label: "Ver Resultados Finais", tab: "analisar" }
+      };
+    }
+
+    // Usa currentRound (rodadas já abertas), não rounds.length: com rodadas
+    // semanais o professor cria e agenda as rodadas futuras com antecedência.
+    if (!activeRound && currentClass.currentRound > 0 && currentClass.currentRound < currentClass.maxRounds) {
       const hasCompletedRounds = rounds.some(r => r.status === "completed");
       if (hasCompletedRounds && lastCompletedRound) {
         return { 
@@ -2726,7 +2747,7 @@ export default function Professor() {
       };
     }
     
-    if (rounds.length >= currentClass.maxRounds) {
+    if (currentClass.currentRound >= currentClass.maxRounds) {
       return { 
         status: "finished", 
         label: "Simulação concluída", 
@@ -2783,13 +2804,16 @@ export default function Professor() {
   }, [currentClass, teams]);
 
   const [showPreRoundWarnings, setShowPreRoundWarnings] = useState(false);
+  // Rodadas semanais (out/2026): iniciar "na hora" sempre pede o dia de
+  // fechamento, para a rodada ter a sua semana definida.
+  const [showStartRoundDialog, setShowStartRoundDialog] = useState(false);
 
   const handleStartRoundClick = () => {
     if (!selectedClass) return;
     if (preRoundWarnings.length > 0) {
       setShowPreRoundWarnings(true);
     } else {
-      startRoundMutation.mutate(selectedClass);
+      setShowStartRoundDialog(true);
     }
   };
 
@@ -2929,13 +2953,16 @@ export default function Professor() {
   });
 
   const startRoundMutation = useMutation({
-    mutationFn: async (classId: string) => {
+    mutationFn: async ({ classId, fim }: { classId: string; fim: string }) => {
       const res = await apiRequest("POST", `/api/rounds/${classId}/start`, {
         productCount: nextRoundProductCount,
+        // Rodadas semanais (out/2026): dia e horário de fechamento escolhidos no diálogo.
+        scheduledEndAt: fim,
       });
       return res.json();
     },
     onSuccess: () => {
+      setShowStartRoundDialog(false);
       queryClient.invalidateQueries({ queryKey: ["/api/rounds", selectedClass] });
       queryClient.invalidateQueries({ queryKey: ["/api/classes"] });
       toast({ title: "Rodada iniciada!", description: "Os alunos já podem tomar decisões." });
@@ -2960,33 +2987,42 @@ export default function Professor() {
   }, [selectedClass, previousRoundProductCount]);
 
   const scheduleRoundMutation = useMutation({
-    mutationFn: async (data: { roundId: string; scheduledStartAt?: string; scheduledEndAt?: string; clear?: boolean }) => {
-      // Item 4 (problemas relatados pelo professor, 2026-09): os campos do
-      // diálogo agora só pedem a DATA (sem hora) — abertura/encerramento são
-      // sempre à meia-noite, horário de Brasília, como o professor pediu.
-      // "-03:00" fixo porque o Brasil não observa mais horário de verão
-      // desde 2019 (Brasília = UTC-3 o ano todo); o "Z" explícito evita que
-      // "YYYY-MM-DDT00:00" seja interpretado no fuso horário do servidor
-      // (Railway roda em UTC) em vez de Brasília — sem isso, meia-noite em
-      // Brasília virava 21h do dia anterior.
-      const toMidnightBrasilia = (dateOnly?: string) =>
-        dateOnly ? `${dateOnly}T00:00:00-03:00` : null;
+    mutationFn: async (data: { roundId: string; inicio?: string; fim?: string; clear?: boolean }) => {
+      // Rodadas semanais (out/2026): o diálogo envia o dia e o horário de
+      // abertura e de fechamento escolhidos pelo professor, como instantes
+      // ISO com fuso de Brasília (shared/rodadaSemanal.ts).
       const res = await apiRequest("POST", `/api/rounds/${data.roundId}/schedule`, {
-        scheduledStartAt: toMidnightBrasilia(data.scheduledStartAt),
-        scheduledEndAt: toMidnightBrasilia(data.scheduledEndAt),
+        scheduledStartAt: data.inicio ?? null,
+        scheduledEndAt: data.fim ?? null,
         clear: data.clear ?? false,
       });
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rounds", selectedClass] });
-      toast({ title: "Agendamento salvo!" });
+      toast({ title: "Datas da rodada salvas!" });
       setIsScheduleDialogOpen(false);
       setRoundBeingScheduled(null);
-      setScheduleData({ scheduledStartAt: "", scheduledEndAt: "" });
     },
     onError: (error: any) => {
       toast({ title: "Erro ao agendar", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const lastRoundMutation = useMutation({
+    mutationFn: async ({ roundId, isLastRound }: { roundId: string; isLastRound: boolean }) => {
+      const res = await apiRequest("POST", `/api/rounds/${roundId}/last-round`, { isLastRound });
+      return res.json();
+    },
+    onSuccess: (round: Round) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rounds", selectedClass] });
+      toast({
+        title: round.isLastRound ? `Rodada ${round.roundNumber} marcada como a última` : "Marca de última rodada removida",
+        description: round.isLastRound ? "Quando ela for encerrada, o ano letivo da turma termina e nenhuma rodada nova é aberta." : undefined,
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
     },
   });
 
@@ -3188,15 +3224,6 @@ export default function Professor() {
 
   const handleScheduleRound = (round: Round) => {
     setRoundBeingScheduled(round.id);
-    // Mostra a data já em horário de Brasília, não no fuso do navegador —
-    // evita reabrir o diálogo de edição com a data errada (véspera/dia
-    // seguinte) caso o professor acesse de outro fuso horário.
-    const formatDateBrasilia = (date: string | Date) =>
-      new Date(date).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-    setScheduleData({
-      scheduledStartAt: round.scheduledStartAt ? formatDateBrasilia(round.scheduledStartAt) : "",
-      scheduledEndAt: round.scheduledEndAt ? formatDateBrasilia(round.scheduledEndAt) : "",
-    });
     setIsScheduleDialogOpen(true);
   };
 
@@ -3311,7 +3338,7 @@ export default function Professor() {
             {/* Ações Rápidas */}
             {currentClass && (
               <div className="flex items-center gap-2">
-                {!activeRound && rounds.length < currentClass.maxRounds && (
+                {!activeRound && currentClass.currentRound < currentClass.maxRounds && !anoLetivoEncerrado(rounds) && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -3800,6 +3827,8 @@ export default function Professor() {
                       onAddRound={() => addRoundMutation.mutate(selectedClass)}
                       onRemoveRound={(roundNumber) => removeRoundMutation.mutate({ classId: selectedClass, roundNumber })}
                       onUpdateMaxRounds={(maxRounds) => updateMaxRoundsMutation.mutate({ classId: selectedClass, maxRounds })}
+                      onToggleLastRound={(round) => lastRoundMutation.mutate({ roundId: round.id, isLastRound: !round.isLastRound })}
+                      lastRoundPending={lastRoundMutation.isPending}
                       startRoundPending={startRoundMutation.isPending}
                       endRoundPending={endRoundMutation.isPending}
                       addRoundPending={addRoundMutation.isPending}
@@ -4732,52 +4761,25 @@ export default function Professor() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog para agendar rodada */}
-      <Dialog open={isScheduleDialogOpen} onOpenChange={(open) => { setIsScheduleDialogOpen(open); if (!open) { setRoundBeingScheduled(null); setScheduleData({ scheduledStartAt: "", scheduledEndAt: "" }); } }}>
-        <DialogContent data-testid="dialog-schedule-round">
-          <DialogHeader>
-            <DialogTitle>Agendar Rodada</DialogTitle>
-            <DialogDescription>
-              Defina as datas para ativação e encerramento automático. A rodada sempre abre e
-              encerra à meia-noite, horário de Brasília — não é preciso informar hora.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Data de Início (meia-noite, horário de Brasília)</Label>
-              <Input type="date" value={scheduleData.scheduledStartAt} onChange={(e) => setScheduleData({ ...scheduleData, scheduledStartAt: e.target.value })} data-testid="input-scheduled-start" />
-            </div>
-            <div className="space-y-2">
-              <Label>Data de Término (meia-noite, horário de Brasília)</Label>
-              <Input type="date" value={scheduleData.scheduledEndAt} onChange={(e) => setScheduleData({ ...scheduleData, scheduledEndAt: e.target.value })} data-testid="input-scheduled-end" />
-            </div>
-          </div>
-          <DialogFooter className="flex justify-between">
-            <div>
-              {(scheduleData.scheduledStartAt || scheduleData.scheduledEndAt) && (
-                <Button
-                  variant="destructive"
-                  onClick={() => { if (roundBeingScheduled) scheduleRoundMutation.mutate({ roundId: roundBeingScheduled, clear: true }); }}
-                  disabled={!roundBeingScheduled || scheduleRoundMutation.isPending}
-                  data-testid="button-remove-schedule"
-                >
-                  Remover Agendamento
-                </Button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setIsScheduleDialogOpen(false)} data-testid="button-cancel-schedule">Cancelar</Button>
-              <Button
-                onClick={() => { if (roundBeingScheduled) scheduleRoundMutation.mutate({ roundId: roundBeingScheduled, scheduledStartAt: scheduleData.scheduledStartAt || undefined, scheduledEndAt: scheduleData.scheduledEndAt || undefined }); }}
-                disabled={!roundBeingScheduled || scheduleRoundMutation.isPending}
-                data-testid="button-submit-schedule"
-              >
-                {scheduleRoundMutation.isPending ? "Salvando..." : "Salvar"}
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Rodadas semanais (out/2026): datas da rodada no calendário */}
+      <DialogoDatasRodada
+        open={isScheduleDialogOpen}
+        onOpenChange={(open) => { setIsScheduleDialogOpen(open); if (!open) setRoundBeingScheduled(null); }}
+        round={rounds.find((r) => r.id === roundBeingScheduled) ?? null}
+        rodadas={rounds}
+        pending={scheduleRoundMutation.isPending}
+        onSalvar={({ inicio, fim }) => { if (roundBeingScheduled) scheduleRoundMutation.mutate({ roundId: roundBeingScheduled, inicio, fim }); }}
+        onRemover={() => { if (roundBeingScheduled) scheduleRoundMutation.mutate({ roundId: roundBeingScheduled, clear: true }); }}
+      />
+
+      <DialogoIniciarRodada
+        open={showStartRoundDialog}
+        onOpenChange={setShowStartRoundDialog}
+        numeroRodada={(currentClass?.currentRound ?? 0) + 1}
+        rodadas={rounds}
+        pending={startRoundMutation.isPending}
+        onConfirmar={(fim) => { if (selectedClass) startRoundMutation.mutate({ classId: selectedClass, fim }); }}
+      />
 
       {/* Dialog para cadastrar novo aluno */}
       <Dialog open={isCreateStudentDialogOpen} onOpenChange={setIsCreateStudentDialogOpen}>
@@ -4855,7 +4857,7 @@ export default function Professor() {
             <AlertDialogAction
               onClick={() => {
                 setShowPreRoundWarnings(false);
-                if (selectedClass) startRoundMutation.mutate(selectedClass);
+                setShowStartRoundDialog(true);
               }}
               data-testid="button-confirm-start-round-anyway"
             >

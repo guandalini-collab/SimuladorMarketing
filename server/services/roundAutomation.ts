@@ -98,7 +98,43 @@ async function gerarEventosDaRodada(storage: IStorage, roundId: string, classId:
 export async function runRoundOpenedAutomation(storage: IStorage, roundId: string): Promise<void> {
   const round = await storage.getRound(roundId);
   if (!round || round.status !== "active") return;
+  await gerarConteudoDaRodada(storage, round, { completarAnalises: true });
+}
 
+/**
+ * Rodadas semanais (out/2026): 30 minutos antes da abertura agendada
+ * (20h20), a IA já prepara o conteúdo da rodada ainda bloqueada — eventos
+ * de mercado, boletim e, na Rodada 1, as análises iniciais — para que às
+ * 20h50 os alunos encontrem tudo pronto. Na abertura, a automação normal
+ * roda de novo, mas cada passo pula o que já existe.
+ */
+export async function runRoundPreparation(storage: IStorage, roundId: string): Promise<void> {
+  const round = await storage.getRound(roundId);
+  if (!round || round.status !== "locked") return;
+  console.log(`[ROUND-AUTO] Preparando a Rodada ${round.roundNumber} (${round.id}) antes da abertura`);
+  if (round.roundNumber === 1) {
+    try {
+      const { autoGenerateMinimalAnalysesForAllTeams } = await import("./autoStrategicGeneration");
+      const result = await autoGenerateMinimalAnalysesForAllTeams(storage, round.id);
+      console.log(`[ROUND-AUTO] Análises preparadas: ${result.successCount}/${result.totalTeams} equipes`);
+    } catch (error) {
+      console.error("[ROUND-AUTO] Erro ao preparar análises:", error);
+    }
+  }
+  await gerarConteudoDaRodada(storage, round, { completarAnalises: false });
+}
+
+export function scheduleRoundPreparation(storage: IStorage, roundId: string): void {
+  void runRoundPreparation(storage, roundId).catch((error) =>
+    console.error("[ROUND-AUTO] Falha na preparação da rodada:", error),
+  );
+}
+
+async function gerarConteudoDaRodada(
+  storage: IStorage,
+  round: { id: string; classId: string; roundNumber: number },
+  opcoes: { completarAnalises: boolean },
+): Promise<void> {
   // Dados reais do setor (out/2026): completa tamanho, crescimento e
   // consumidores se a turma ainda estiver com esses campos vazios.
   try {
@@ -109,7 +145,7 @@ export async function runRoundOpenedAutomation(storage: IStorage, roundId: strin
   }
 
   try {
-    await completarAnalisesFaltantes(storage, round.id, round.roundNumber);
+    if (opcoes.completarAnalises) await completarAnalisesFaltantes(storage, round.id, round.roundNumber);
   } catch (error) {
     console.error("[ROUND-AUTO] Erro ao completar análises na abertura:", error);
   }

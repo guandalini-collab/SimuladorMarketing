@@ -817,8 +817,8 @@ function addStepByStepSection(doc: PDFKit.PDFDocument) {
 
   doc.moveDown();
   addWarningBox(doc,
-    'A rodada sempre fecha à meia-noite oficial de Brasília (UTC-3), independente do fuso horário ou do relógio do seu dispositivo. Um contador de tempo restante até o fechamento aparece no card "Roteiro da Rodada", na tela inicial.',
-    'A rodada fecha à meia-noite de Brasília'
+    'Cada rodada é uma semana real do calendário, no horário oficial de Brasília (UTC-3). A Rodada 1 (semana de adaptação) fica aberta vários dias, normalmente de segunda a domingo; as demais ficam abertas durante a aula, nos horários definidos pelo professor. Vale o horário de Brasília, independente do fuso horário ou do relógio do seu dispositivo. Um contador de tempo restante até o fechamento aparece no card "Roteiro da Rodada", na tela inicial.',
+    'A rodada fecha no horário definido pelo professor (Brasília)'
   );
 
   addNumberedStep(doc, '1', 'Clique em "Enviar Decisão da Equipe"');
@@ -909,7 +909,7 @@ function addFAQSection(doc: PDFKit.PDFDocument) {
 
   addFAQ(doc, 
     'O que acontece se eu não enviar as decisões no prazo?',
-    'Se a rodada encerrar sem que sua equipe tenha submetido as decisões, vocês receberão pontuação zero naquela rodada. É fundamental respeitar os prazos estabelecidos pelo professor. A rodada sempre fecha à meia-noite oficial de Brasília, independente do seu fuso horário — acompanhe o tempo restante no card "Roteiro da Rodada", na tela inicial. Recomendamos finalizar com pelo menos 1 dia de antecedência.'
+    'Se a rodada encerrar sem que sua equipe tenha submetido as decisões, vocês receberão pontuação zero naquela rodada. É fundamental respeitar os prazos estabelecidos pelo professor. A partir da Rodada 2, a decisão é tomada durante a aula: a rodada abre e fecha nos horários da aula definidos pelo professor (horário oficial de Brasília), independente do seu fuso horário — acompanhe o tempo restante no card "Roteiro da Rodada", na tela inicial. Não deixe o envio para os últimos minutos.'
   );
 
   addFAQ(doc, 

@@ -144,7 +144,8 @@ Com a turma criada, o mercado configurado (Seção 3.1) e ao menos uma equipe fo
 1. Selecione a turma no seletor do topo.
 2. Na aba **Aula**, confira o painel **Gerenciamento de Rodadas**. Antes de haver qualquer rodada ativa, ele mostra um seletor de **"Produtos por equipe na próxima rodada"** — defina quantos produtos cada equipe vai poder cadastrar e decidir nesta rodada.
 3. Clique em **Iniciar Rodada**.
-4. Se houver algum ponto de atenção — equipe sem nenhum aluno, configuração de mercado incompleta (setor, tipo de comércio, nível de concorrência, estrutura de mercado, tamanho do mercado, consumidores potenciais, crescimento ou número de concorrentes) ou orçamento padrão em R$ 0 — o sistema mostra um aviso listando exatamente o que falta, mas **não bloqueia o início da rodada**: você pode prosseguir mesmo assim, se for uma decisão intencional (por exemplo, uma turma de teste). Se não houver nenhum ponto de atenção, a rodada é iniciada direto, sem esse aviso aparecer.
+4. A rodada abre na hora e o sistema pede o **fechamento** (horário de Brasília). Na **Rodada 1** (semana de adaptação), você escolhe o dia e o horário; a sugestão é o próximo domingo às 23h59. Da **Rodada 2** em diante, você informa só o horário de fechamento de hoje; a sugestão é 2 horas a partir de agora. Confirme em **Iniciar rodada**.
+5. Se houver algum ponto de atenção — equipe sem nenhum aluno, configuração de mercado incompleta (setor, tipo de comércio, nível de concorrência, estrutura de mercado, tamanho do mercado, consumidores potenciais, crescimento ou número de concorrentes) ou orçamento padrão em R$ 0 — o sistema mostra um aviso listando exatamente o que falta, mas **não bloqueia o início da rodada**: você pode prosseguir mesmo assim, se for uma decisão intencional (por exemplo, uma turma de teste). Se não houver nenhum ponto de atenção, o aviso não aparece e você vai direto ao calendário do passo 4.
 
 ![Painel Gerenciamento de Rodadas, pronto para iniciar a primeira rodada.](06-iniciar-rodada.jpg)
 
@@ -164,7 +165,7 @@ No mesmo painel de **Gerenciamento de Rodadas**, existe um botão **Adicionar** 
 :::alerta Atenção — quantidade de produtos fica travada
 Uma rodada criada pelo botão **Adicionar** (marcador 3) sempre nasce configurada para **1 produto por equipe**, independentemente do que estiver selecionado no seletor "Produtos por equipe na próxima rodada" (marcador 1) — esse seletor só vale para o botão **Iniciar Rodada**, não para o **Adicionar**.
 
-Se você usa rodadas agendadas (Seção 10) e a rodada foi criada pelo botão "Adicionar", ela vai abrir automaticamente com 1 produto por equipe, a menos que você reconfigure isso manualmente antes da abertura.
+Se você usa rodadas agendadas (Seção 10) e a rodada foi criada pelo botão "Adicionar", ela vai abrir automaticamente com 1 produto por equipe. Se, em vez de esperar o agendamento, você abrir essa mesma rodada pelo botão **Iniciar Rodada**, vale o seletor de produtos.
 
 Uma vez que a rodada é criada/iniciada, a quantidade de produtos por equipe fica travada: não existe nenhuma forma de alterá-la depois — só é possível definir a configuração para a próxima rodada. Escolher esse número corretamente, no momento certo, é uma decisão do professor: na dúvida, prefira sempre iniciar as rodadas manualmente pelo botão **Iniciar Rodada**, que respeita o seletor de quantidade de produtos, e confira o valor antes de clicar.
 :::
@@ -225,9 +226,39 @@ Repita o ciclo: abra a próxima rodada (Seção 7), acompanhe eventos e submiss�
 
 Você pode ajustar o número total de rodadas da turma a qualquer momento na aba **Aula**, no campo **Total de Rodadas** (não pode ser menor que a rodada atual). Também é possível remover a última rodada da lista, mas só se ela ainda estiver bloqueada (não iniciada) e sem nenhum dado associado — o botão **Remover Última** fica desabilitado automaticamente quando isso não é possível, e explica o motivo ao passar o mouse.
 
-Como alternativa ao controle manual, cada rodada pode ser **agendada**: no card da rodada, o botão **Agendar** permite definir uma data de início e uma data de término automáticos (sempre à meia-noite no horário de Brasília). Com isso definido, o sistema abre e encerra aquela rodada sozinho, sem que você precise clicar em Iniciar Rodada ou Encerrar Rodada manualmente — mas o alerta da Seção 9 sobre equipes sem decisões continua valendo: o encerramento automático também não verifica se todas as equipes enviaram algo.
+### Rodadas semanais: datas de abertura e fechamento
 
-O fechamento é sempre à meia-noite **oficial de Brasília** (UTC-3), independente do fuso horário do dispositivo de cada aluno. Tanto no card da rodada (aba Aula) quanto no painel do aluno aparece um contador de tempo restante até esse fechamento, atualizado automaticamente.
+Cada rodada corresponde a **uma semana real do calendário**: uma aula em 21/12 simula a semana do Natal, por exemplo.
+
+Para definir as datas, crie as rodadas com o botão **Adicionar** (Seção 7.1) e, no card de cada rodada, clique em **Definir datas**. Abre um calendário e dois campos de horário, sempre no **horário oficial de Brasília** (UTC-3), qualquer que seja o fuso do dispositivo de cada aluno:
+
+| Rodada | No calendário você escolhe | Horário de abertura | Horário de fechamento |
+|---|---|---|---|
+| **Rodada 1** (semana de adaptação) | o dia de abertura e o dia de fechamento (normalmente segunda e domingo) | o da aula (você informa) | sugerido 23h59 do dia de fechamento |
+| **Rodadas 2 em diante** | só o dia da aula | o da aula (você informa) | sugerido **2 horas depois da abertura**, editável |
+
+- **Horário da aula variável:** o horário de abertura vem preenchido com o da rodada anterior (ou 20h50, se for a primeira) e pode ser mudado a cada rodada. Exemplo: abertura às 19h → fechamento sugerido às 21h.
+- **Fechamento editável:** se a aula tiver outra duração, mude o horário de fechamento. Exemplo: abertura às 20h50, fechamento às 22h30. Depois que você altera o fechamento, ele não acompanha mais a abertura.
+- **Rodada 1:** os alunos têm a semana inteira para ler os manuais, conhecer o sistema e enviar a primeira decisão, que já gera resultado. Nas demais, a decisão é tomada durante a aula.
+
+A **semana simulada** é a semana de segunda a domingo que contém o dia de abertura: uma aula em 26/10/2026 simula a semana de 26/10 a 01/11/2026.
+
+**Preparação 30 minutos antes:** a IA gera os eventos de mercado, o boletim e (na Rodada 1) as análises iniciais sempre 30 minutos antes do horário de abertura — às 18h30 para uma abertura às 19h. O diálogo mostra esse horário. Assim, na abertura os alunos encontram tudo pronto.
+
+Com as datas salvas, o sistema abre e encerra a rodada sozinho, sem que você precise clicar em Iniciar Rodada ou Encerrar Rodada. O alerta da Seção 9 continua valendo: o encerramento automático não verifica se todas as equipes enviaram algo.
+
+- **Férias e recessos:** não há geração automática de semanas. Você escolhe as datas rodada a rodada e pode pular as semanas sem aula ou adiantar uma rodada.
+- **Semanas ocupadas:** no calendário, os dias que já pertencem a outra rodada da turma aparecem desabilitados, e o sistema recusa datas que se sobreponham.
+- **Rodada em andamento:** o botão passa a se chamar **Alterar fechamento** e permite mudar o dia e o **horário** do fechamento, por exemplo para 22h45 se a aula atrasar. O horário precisa ser futuro.
+- **Remover datas:** numa rodada que ainda não abriu, o botão **Remover datas** apaga o agendamento.
+
+Tanto no card da rodada (aba Aula) quanto no painel do aluno aparece um contador de tempo restante até o fechamento, atualizado automaticamente.
+
+### Última rodada do ano letivo
+
+No card de cada rodada há o botão **Marcar como última rodada**. Só uma rodada por turma pode ter essa marca; ao marcar outra, a anterior é desmarcada. A rodada marcada exibe o selo **Última rodada**.
+
+Quando a rodada marcada é encerrada, o **ano letivo da turma termina**: nenhuma rodada nova é aberta, nem manualmente nem por agendamento, e o painel mostra **Ano letivo encerrado**. Se precisar continuar, clique em **Desmarcar última rodada**.
 
 ### 10.1 Fechamento anual
 
@@ -326,7 +357,7 @@ Para consulta rápida, depois de já ter lido o manual completo uma vez:
 2. Completar a configuração de mercado em Configurar → Configuração de Mercado (use **Preencher com dados reais do setor** para tamanho, crescimento e consumidores potenciais) e conferir a Conjuntura Brasil.
 3. Matricular os alunos (pedir que se cadastrem sozinhos com email institucional e depois adicioná-los à turma, ou cadastrá-los você mesmo já com turma definida).
 4. Aguardar os alunos formarem suas próprias equipes (você não cria equipes).
-5. Definir a quantidade de produtos por equipe e clicar em Iniciar Rodada.
+5. Definir as datas e horários de cada rodada no calendário (Rodada 1: da primeira aula até domingo 23h59; demais: dia da aula, abertura no horário da aula e fechamento sugerido 2 horas depois) ou definir a quantidade de produtos e clicar em Iniciar Rodada. Marcar a última rodada do ano letivo.
 6. Acompanhar submissões e, se quiser, criar ou gerar eventos de mercado.
 7. Conferir se todas as equipes enviaram decisões antes de clicar em Encerrar Rodada.
 8. Analisar o ranking e o Relatório de Alinhamento na aba Analisar.
@@ -341,7 +372,7 @@ Para consulta rápida, depois de já ter lido o manual completo uma vez:
 - **A responsabilidade pelo envio é do líder da equipe**: o sistema só permite que o líder submeta as decisões de Mix de Marketing — os demais membros podem preencher e salvar rascunhos, mas não enviar. Se uma equipe está com decisões pendentes, é o líder quem precisa entrar e clicar em enviar; vale reforçar isso com a turma logo no início.
 - **Recomendação de prazo**: cerca de **3 horas antes do horário previsto para encerrar a rodada** (manualmente ou por agendamento, Seção 10), verifique na aba Aula quais equipes ainda não enviaram e avise **todos os membros** dessas equipes — não só o líder, já que qualquer um pode preencher o rascunho, mesmo que só o líder consiga enviar. A forma mais direta é pelo recurso **Enviar Email para Equipes** (Seção 12): selecione a(s) equipe(s) pendente(s) e envie a mensagem — o sistema manda o email para o endereço cadastrado de cada membro da equipe automaticamente, não é preciso digitar os emails um a um. Isso dá tempo hábil para a equipe corrigir antes do fechamento, já que o sistema não bloqueia nem avisa automaticamente sobre equipes pendentes.
 
-**Uma rodada pré-adicionada abriu com só 1 produto por equipe, mesmo eu tendo configurado mais** — é o comportamento do botão "Adicionar" descrito na Seção 7.1. Ajuste manualmente antes da abertura, ou prefira sempre o botão "Iniciar Rodada".
+**Uma rodada pré-adicionada abriu com só 1 produto por equipe, mesmo eu tendo configurado mais** — é o comportamento das rodadas criadas pelo botão "Adicionar" e abertas pelo agendamento (Seção 7.1). Para usar outra quantidade, abra essa rodada pelo botão "Iniciar Rodada", que respeita o seletor de produtos.
 
 **Um aluno diz que se cadastrou mas não consegue fazer nada** — confira se ele já foi matriculado em uma turma (Seção 4). Cadastro sozinho não inclui matrícula automática.
 

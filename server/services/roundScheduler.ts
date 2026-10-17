@@ -2,11 +2,16 @@ import type { IStorage } from "../storage";
 import { processRoundCompletion } from "./roundCompletion";
 import { autoGenerateMinimalAnalysesForAllTeams } from "./autoStrategicGeneration";
 import { carryForwardStrategyAnalyses } from "./strategyCarryForward";
-import { scheduleRoundOpenedAutomation } from "./roundAutomation";
+import { scheduleRoundOpenedAutomation, scheduleRoundPreparation } from "./roundAutomation";
+import { anoLetivoEncerrado, preparacaoDaRodada } from "@shared/rodadaSemanal";
 
 export class RoundScheduler {
   private storage: IStorage;
   private isProcessing: boolean = false;
+  // Rodadas já preparadas pela IA neste processo (evita disparar de novo a
+  // cada minuto). Após um reinício a preparação pode rodar outra vez, sem
+  // problema: cada passo pula o que já existe.
+  private preparadas = new Set<string>();
 
   constructor(storage: IStorage) {
     this.storage = storage;
@@ -22,12 +27,33 @@ export class RoundScheduler {
     try {
       const now = new Date();
       
+      await this.processScheduledPreparations(now);
       await this.processScheduledStarts(now);
       await this.processScheduledEnds(now);
     } catch (error) {
       console.error("[ROUND_SCHEDULER] Erro ao processar rodadas agendadas:", error);
     } finally {
       this.isProcessing = false;
+    }
+  }
+
+  // Rodadas semanais (out/2026): 30 minutos antes da abertura agendada
+  // (20h20 para abertura às 20h50), dispara a preparação do conteúdo em
+  // segundo plano — sem esperar a IA, para não atrasar a abertura.
+  private async processScheduledPreparations(now: Date): Promise<void> {
+    try {
+      const allRounds = await this.storage.getAllRounds();
+      for (const round of allRounds) {
+        if (round.status !== "locked" || !round.scheduledStartAt || this.preparadas.has(round.id)) continue;
+        const abertura = new Date(round.scheduledStartAt);
+        if (now < preparacaoDaRodada(abertura) || now >= abertura) continue;
+        const rodadasDaTurma = allRounds.filter((r) => r.classId === round.classId);
+        if (anoLetivoEncerrado(rodadasDaTurma)) continue;
+        this.preparadas.add(round.id);
+        scheduleRoundPreparation(this.storage, round.id);
+      }
+    } catch (error) {
+      console.error("[ROUND_SCHEDULER] Erro ao preparar rodadas agendadas:", error);
     }
   }
 
@@ -66,6 +92,14 @@ export class RoundScheduler {
           const currentActive = await this.storage.getCurrentRound(round.classId);
           if (currentActive && currentActive.id !== round.id) {
             console.warn(`[ROUND_SCHEDULER] Rodada ${round.id} (Round ${round.roundNumber}) não ativada: turma ${round.classId} já tem a rodada ${currentActive.id} ativa`);
+            continue;
+          }
+
+          // Rodadas semanais (out/2026): depois que a rodada marcada como
+          // última é concluída, o ano letivo da turma está encerrado.
+          const rodadasDaTurma = allRounds.filter((r) => r.classId === round.classId);
+          if (anoLetivoEncerrado(rodadasDaTurma)) {
+            console.warn(`[ROUND_SCHEDULER] Rodada ${round.id} (Round ${round.roundNumber}) não ativada: o ano letivo da turma ${round.classId} já foi encerrado`);
             continue;
           }
 

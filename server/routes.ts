@@ -16,6 +16,7 @@ import { sendTeamEmail } from "./email-service";
 import { randomUUID } from "crypto";
 import { getAlignmentScoreLevel } from "@shared/alignmentUtils";
 import { getProductCountBudgetMultiplier } from "@shared/budgetUtils";
+import { aberturaDaRodada, fechamentoDaRodada, fechamentoPadrao, formatarSemanaDaRodada, anoLetivoEncerrado, rodadaDeAdaptacao } from "@shared/rodadaSemanal";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -1414,20 +1415,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Número máximo de rodadas atingido" });
     }
 
+    const rodadasDaTurma = await storage.getRoundsByClass(req.params.classId);
+    if (anoLetivoEncerrado(rodadasDaTurma)) {
+      return res.status(400).json({ error: "O ano letivo desta turma já foi encerrado (a última rodada foi concluída). Para continuar, desmarque a última rodada." });
+    }
+
+    // Rodadas semanais (out/2026): ao iniciar na hora, a rodada já nasce
+    // com o fechamento escolhido pelo professor no diálogo (Rodada 1: dia e
+    // horário, padrão 23h59; demais: horário, padrão 2 horas depois de
+    // agora). Sem "scheduledEndAt" no corpo (chamadas antigas), segue como antes.
+    let fechamento: Date | null = null;
+    if (req.body?.scheduledEndAt) {
+      fechamento = fechamentoDaRodada(req.body.scheduledEndAt, nextRoundNumber, new Date());
+      if (!fechamento) {
+        return res.status(400).json({ error: "Data de fechamento inválida" });
+      }
+      if (fechamento <= new Date()) {
+        return res.status(400).json({ error: "O fechamento precisa ser num horário futuro" });
+      }
+    }
+
     const { productCount, previousProductCount } = await resolveRoundProductCount(
       req.params.classId,
       classData.sector ?? null,
       req.body?.productCount
     );
 
+    // Se o professor já tinha criado (ou agendado) esta rodada com
+    // "Adicionar", ela existe como "locked": antes, criar outra com o mesmo
+    // número batia no índice único e o painel mostrava "Já existe uma rodada
+    // ativa". Agora a rodada existente é aberta no lugar.
+    const rodadaBloqueada = rodadasDaTurma.find((r) => r.roundNumber === nextRoundNumber && r.status === "locked");
+
     let round;
     try {
-      round = await storage.createRound({
-        classId: req.params.classId,
-        roundNumber: nextRoundNumber,
-        status: "active",
-        productCount,
-      });
+      round = rodadaBloqueada
+        ? (await storage.updateRound(rodadaBloqueada.id, {
+            status: "active",
+            productCount,
+            ...(fechamento ? { scheduledEndAt: fechamento } : {}),
+          }))!
+        : await storage.createRound({
+            classId: req.params.classId,
+            roundNumber: nextRoundNumber,
+            status: "active",
+            productCount,
+            ...(fechamento ? { scheduledEndAt: fechamento } : {}),
+          });
     } catch (error: any) {
       // Grupo D (auditoria de 2026-09): a checagem "já existe rodada ativa?"
       // acima e este createRound não são atômicos — duas chamadas
@@ -2016,6 +2050,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rodadas semanais (out/2026): o professor marca qual rodada é a última do
+  // ano letivo. Só uma rodada por turma pode ter a marca; ao marcar uma, a
+  // anterior é desmarcada. Quando a rodada marcada é concluída, a turma não
+  // abre mais rodadas (rotas de início e agendador checam
+  // anoLetivoEncerrado).
+  app.post("/api/rounds/:roundId/last-round", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "professor") {
+      return res.status(403).json({ error: "Acesso negado" });
+    }
+    try {
+      const round = await storage.getRound(req.params.roundId);
+      if (!round) {
+        return res.status(404).json({ error: "Rodada não encontrada" });
+      }
+      const classForRound = await storage.getClass(round.classId);
+      if (!classForRound || classForRound.professorId !== user.id) {
+        return res.status(403).json({ error: "Você não tem permissão para alterar esta rodada" });
+      }
+      const marcar = req.body?.isLastRound === true;
+      const rodadas = await storage.getRoundsByClass(round.classId);
+      if (marcar) {
+        const posteriorAberta = rodadas.find((r) => r.roundNumber > round.roundNumber && r.status !== "locked");
+        if (posteriorAberta) {
+          return res.status(400).json({ error: `A Rodada ${posteriorAberta.roundNumber} já foi aberta; marque ela (ou uma seguinte) como a última` });
+        }
+        for (const r of rodadas) {
+          if (r.id !== round.id && r.isLastRound) await storage.updateRound(r.id, { isLastRound: false });
+        }
+      }
+      const updated = await storage.updateRound(round.id, { isLastRound: marcar });
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Erro ao marcar última rodada:", error);
+      res.status(500).json({ error: "Erro ao marcar a última rodada" });
+    }
+  });
+
   app.post("/api/rounds/:roundId/schedule", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
@@ -2043,6 +2118,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // datas como null nesse caso e caía direto na validação abaixo, que
       // rejeitava com 400 — tornando o botão permanentemente inoperante.
       if (clear === true) {
+        if (round.status !== "locked") {
+          return res.status(400).json({ error: "Só é possível remover o agendamento de uma rodada que ainda não foi aberta" });
+        }
         const updated = await storage.updateRound(req.params.roundId, {
           scheduledStartAt: null,
           scheduledEndAt: null,
@@ -2050,23 +2128,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(updated);
       }
 
+      if (round.status === "completed") {
+        return res.status(400).json({ error: "Esta rodada já foi concluída" });
+      }
+
       if (!scheduledStartAt && !scheduledEndAt) {
         return res.status(400).json({ error: "Pelo menos uma data de agendamento deve ser fornecida" });
       }
 
-      const startDate = scheduledStartAt ? new Date(scheduledStartAt) : null;
-      const endDate = scheduledEndAt ? new Date(scheduledEndAt) : null;
+      // Rodadas semanais (out/2026, shared/rodadaSemanal.ts): o painel envia
+      // o dia e o HORÁRIO de abertura e de fechamento escolhidos pelo
+      // professor (instantes ISO com fuso de Brasília). Se vier só o dia
+      // (AAAA-MM-DD, versão antiga do painel), aplica o padrão: abertura às
+      // 20h50; fechamento às 23h59min59s na Rodada 1 e 2 horas depois da
+      // abertura nas demais. Numa rodada já aberta, só o fechamento muda.
+      let startDate: Date | null = null;
+      let endDate: Date | null = null;
 
-      if (startDate && endDate && startDate >= endDate) {
-        return res.status(400).json({ error: "A data de início deve ser anterior à data de encerramento" });
+      if (round.status === "locked" && scheduledStartAt) {
+        startDate = aberturaDaRodada(scheduledStartAt);
+        if (!startDate) return res.status(400).json({ error: "Data de abertura inválida" });
+      }
+      const aberturaBase = startDate
+        ?? (round.status === "active" && round.startedAt ? new Date(round.startedAt) : null)
+        ?? (round.scheduledStartAt ? new Date(round.scheduledStartAt) : null);
+      if (scheduledEndAt) {
+        endDate = fechamentoDaRodada(scheduledEndAt, round.roundNumber, aberturaBase);
+        if (!endDate) return res.status(400).json({ error: "Data de fechamento inválida" });
+      } else if (startDate && !rodadaDeAdaptacao(round.roundNumber)) {
+        endDate = fechamentoPadrao(startDate, round.roundNumber);
       }
 
-      if (startDate && isNaN(startDate.getTime())) {
-        return res.status(400).json({ error: "Data de início inválida" });
+      const inicioEfetivo = startDate
+        ?? (round.status === "active" && round.startedAt ? new Date(round.startedAt) : null)
+        ?? (round.scheduledStartAt ? new Date(round.scheduledStartAt) : null);
+      const fimEfetivo = endDate ?? (round.scheduledEndAt ? new Date(round.scheduledEndAt) : null);
+
+      if (inicioEfetivo && fimEfetivo && inicioEfetivo >= fimEfetivo) {
+        return res.status(400).json({ error: "O fechamento deve ser posterior à abertura" });
+      }
+      if (round.status === "active" && endDate && endDate <= new Date()) {
+        return res.status(400).json({ error: "O novo fechamento já passou — escolha um horário futuro" });
       }
 
-      if (endDate && isNaN(endDate.getTime())) {
-        return res.status(400).json({ error: "Data de encerramento inválida" });
+      // Duas rodadas da mesma turma não podem ocupar a mesma semana: o
+      // agendador só abre uma rodada por vez, e a segunda ficaria parada.
+      if (inicioEfetivo && fimEfetivo) {
+        const outras = (await storage.getRoundsByClass(round.classId)).filter((r) => r.id !== round.id && r.status !== "completed");
+        const conflito = outras.find((r) => {
+          const ini = r.status === "active" && r.startedAt ? new Date(r.startedAt) : r.scheduledStartAt ? new Date(r.scheduledStartAt) : null;
+          const fim = r.scheduledEndAt ? new Date(r.scheduledEndAt) : null;
+          return ini && fim && ini < fimEfetivo && inicioEfetivo < fim;
+        });
+        if (conflito) {
+          return res.status(400).json({
+            error: `Essas datas se sobrepõem às da Rodada ${conflito.roundNumber} (${formatarSemanaDaRodada(conflito.scheduledStartAt ?? conflito.startedAt!, conflito.scheduledEndAt!)})`,
+          });
+        }
       }
 
       const updates: any = {};

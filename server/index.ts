@@ -17,6 +17,7 @@ import { ensureClassContextTable } from "./ensureClassContextTable";
 import { ensureClassMarketDefaults } from "./ensureClassMarketDefaults";
 import { ensureMarketEventSentiment } from "./ensureMarketEventSentiment";
 import { ensureOnboardingColumns } from "./ensureOnboardingColumns";
+import { ensureRoundsWeeklyColumns } from "./ensureRoundsWeeklyColumns";
 import { ensureSuperAdminAccount } from "./ensureSuperAdminAccount";
 import { ensureAdminTemporaryPassword } from "./ensureAdminTemporaryPassword";
 
@@ -73,6 +74,7 @@ app.use((req, res, next) => {
   await ensureGrupoBUniqueIndexes();
   await ensureRoundsUniqueIndex();
   await ensureRoundsActiveUniqueIndex();
+  await ensureRoundsWeeklyColumns();
   await ensureMarketEventTypePt();
   await ensureMarketSegmentationTable();
   await ensureMarketBulletinTable();
