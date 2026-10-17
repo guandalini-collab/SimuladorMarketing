@@ -23,6 +23,15 @@ export async function autoGenerateMinimalAnalysesForAllTeams(
       throw new Error("Turma não encontrada");
     }
 
+    // Out/2026: nas turmas do motor competitivo, as análises chegam prontas
+    // (services/analisesDaIA.ts, chamado pela automação da rodada) e a
+    // Segmentação é feita só pelos alunos — esta geração mínima não se aplica.
+    const { turmaComAnalisesDaIA } = await import("./analisesDaIA");
+    if (await turmaComAnalisesDaIA(storage, round.classId)) {
+      console.log(`[AUTO-GEN] Turma com análises prontas da rodada — geração mínima não se aplica`);
+      return { success: true, results: [], totalTeams: 0, successCount: 0 };
+    }
+
     const teams = await storage.getTeamsByClass(round.classId);
     if (teams.length === 0) {
       console.log(`[AUTO-GEN] Nenhuma equipe encontrada para rodada ${roundId}`);

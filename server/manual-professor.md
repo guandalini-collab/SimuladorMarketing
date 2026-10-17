@@ -182,7 +182,7 @@ Cada rodada corresponde a **um mês** de operação, e um ano de jogo tem sempre
 
 Os itens do grupo **Consulta** (Fechamento anual, Insights de Mercado, Orçamento, Manual do Aluno, Guia de Mídias e Meu Perfil) ficam sempre livres.
 
-**O que o sistema faz sozinho.** Na **abertura** de cada rodada: gera, para as equipes que ainda não têm, uma versão mínima das análises estratégicas (a partir da Rodada 2); gera de 2 a 4 eventos de mercado com IA, se a geração automática estiver ligada e a rodada ainda não tiver eventos; e publica o **Boletim do mês** (demanda e sensibilidade a preço), que pesa no resultado pela adequação ao mercado (até 12% para mais ou para menos). No **encerramento**, gera o Feedback Inteligente para cada equipe com resultado.
+**O que o sistema faz sozinho.** Na **preparação** (30 minutos antes da abertura) e na **abertura** de cada rodada: entrega as **análises estratégicas prontas** da rodada (Seção 10.3); gera de 2 a 4 eventos de mercado com IA, se a geração automática estiver ligada e a rodada ainda não tiver eventos; e publica o **Boletim do mês** (demanda e sensibilidade a preço), que pesa no resultado pela adequação ao mercado (até 12% para mais ou para menos). No **encerramento**, gera o Feedback Inteligente para cada equipe com resultado.
 
 **Conjuntura real.** A IA usa, na PESTEL, nos eventos e no boletim, os **indicadores oficiais do Banco Central** (Selic, IPCA, dólar, PIB, desemprego e confiança do consumidor, atualizados automaticamente) e o texto **Conjuntura Brasil** (fatos econômicos e políticos atuais, com data e fonte; Seção 12). Os alunos veem o mesmo conteúdo na aba Economia e Política da Análise de Mercado.
 
@@ -223,7 +223,7 @@ Depois de encerrada, uma rodada não pode ser reaberta pela mesma tela com um cl
 
 Repita o ciclo: abra a próxima rodada (Seção 7), acompanhe eventos e submissões (Seção 8), encerre conferindo as equipes pendentes (Seção 9). Uma diferença em relação à Rodada 1 vale menção:
 
-- A partir da Rodada 2, as análises estratégicas (SWOT, Porter, BCG, PESTEL, Segmentação) da rodada anterior são **copiadas automaticamente** para a nova rodada como ponto de partida da equipe, que pode então ajustá-las — não é gerado conteúdo novo por IA nesse momento, apenas um carregamento do que já existia.
+- A partir da Rodada 2, a **Segmentação de Mercado** de cada equipe é copiada automaticamente da rodada anterior e pode ser editada. SWOT, 5 Forças, BCG e PESTEL são refeitas pelo sistema a cada rodada, com os resultados da rodada anterior (Seção 10.3). Em turmas que já estavam em andamento no motor anterior, as cinco análises continuam como antes: copiadas da rodada anterior e editáveis pela equipe.
 
 Você pode ajustar o número total de rodadas da turma a qualquer momento na aba **Aula**, no campo **Total de Rodadas** (não pode ser menor que a rodada atual). Também é possível remover a última rodada da lista, mas só se ela ainda estiver bloqueada (não iniciada) e sem nenhum dado associado — o botão **Remover Última** fica desabilitado automaticamente quando isso não é possível, e explica o motivo ao passar o mouse.
 
@@ -294,6 +294,25 @@ A partir da Rodada 1, as equipes da turma disputam **o mesmo mercado**, ao mesmo
 Para não mudar as regras no meio do jogo, uma turma que já tem resultados de rodadas valendo calculados pelo motor anterior continua nele até o fim. O motor competitivo vale para turmas que começam do zero. A rodada de teste sempre usa o motor anterior e não conta para essa regra, porque é apagada em **Iniciar o jogo**.
 :::
 
+### 10.3 Análises estratégicas prontas a cada rodada
+
+Nas turmas do motor competitivo, SWOT, 5 Forças de Porter, Matriz BCG e PESTEL são **entregues prontas** a cada rodada, na preparação (30 minutos antes da abertura) ou, se a rodada for aberta manualmente, logo após a abertura. Os alunos só as leem; a **Segmentação de Mercado** continua sendo feita pela equipe e é a única análise exigida para o envio da decisão.
+
+| Análise | Como é feita |
+|---|---|
+| **PESTEL** | Pela IA, uma para a turma, com os indicadores oficiais do Banco Central, a Conjuntura Brasil, os dados reais do setor, os eventos e o boletim da semana |
+| **5 Forças de Porter** | Pela IA, uma para a turma, com os dados reais do setor e a estrutura do mercado do jogo (número de empresas e participações da rodada anterior) |
+| **SWOT** | Pela IA, uma por equipe: forças e fraquezas a partir dos números da equipe (resultado, participação, preço, lembrança de marca, satisfação); oportunidades e ameaças a partir da PESTEL e de Porter |
+| **Matriz BCG** | Calculada, sem IA: participação relativa de cada produto na rodada anterior (equipe ÷ maior concorrente) e crescimento real do setor (fonte setorial). Na Rodada 1, a participação relativa é zero |
+
+As instruções dadas à IA proíbem recomendar decisões e inventar números: os textos são diagnóstico, com os dados fornecidos pelo sistema. As análises ficam gravadas por rodada; reabrir a tela não gera conteúdo novo.
+
+O botão **Gerar Análises**, no cartão **Análises Estratégicas Automáticas** da aba **Aula**, refaz as quatro análises da rodada ativa (útil se a IA estiver indisponível na preparação). Se mesmo assim alguma análise não puder ser gerada, a tela do aluno mostra "em preparação", o envio da decisão não é bloqueado e o alinhamento estratégico daquela equipe fica neutro na rodada.
+
+:::alerta Rodada de teste e Segmentação
+A rodada de teste também recebe as análises prontas. A Segmentação feita nela é apagada em **Iniciar o jogo**; na Rodada 1, cada equipe registra a sua de novo.
+:::
+
 ## 11. Analisar Resultados
 
 ![Aba Analisar antes de qualquer rodada ser encerrada.](08-analisar-vazio.jpg)
@@ -315,7 +334,7 @@ Logo abaixo do ranking, o Relatório de Alinhamento mostra **todas as equipes da
 
 Cada linha traz os principais problemas identificados naquela equipe (por exemplo, ferramentas estratégicas incompletas ou inconsistência entre o diagnóstico e as decisões de preço). É o primeiro lugar a olhar depois de encerrar uma rodada — comece pelas equipes em Crítico e Sem dados.
 
-O score de alinhamento combina dois blocos: 70% mede a coerência entre as cinco ferramentas de diagnóstico e as decisões de Mix de Marketing realmente tomadas; 30% mede a completude das cinco ferramentas. Os detalhes teóricos desse mecanismo estão no Apêndice A.3.
+O score de alinhamento combina dois blocos: 70% mede a coerência entre as cinco ferramentas de diagnóstico e as decisões de Mix de Marketing realmente tomadas; 30% mede a completude das cinco ferramentas. Nas turmas com análises prontas, quatro delas são entregues pelo sistema, e o score passa a medir a coerência entre as decisões da equipe, o diagnóstico da rodada e a Segmentação feita pela equipe. Se alguma análise da rodada não puder ser gerada (falha da IA), a equipe fica sem score de alinhamento naquela rodada: o motor usa efeito neutro, e o peso do alinhamento na nota é redistribuído. Os detalhes teóricos desse mecanismo estão no Apêndice A.3.
 
 ### 11.3 Sistema de Notas
 
@@ -339,15 +358,15 @@ Cada métrica é normalizada (0 a 100) comparando o resultado da equipe com os r
 
 A tabela de notas pode ser exportada em **CSV** pela tela, com ponto e vírgula como separador e vírgula decimal (abre direto no Excel em português), para lançamento em outro sistema de avaliação.
 
-### 11.4 Penalidade por cópia de IA
+### 11.4 Relatório de semelhança
 
-Para incentivar que o aluno realmente personalize as análises geradas por IA (Seção 8), análises copiadas quase sem alteração recebem penalidade automática no score de alinhamento, por faixa de similaridade:
+A penalidade automática por conteúdo da IA foi **desativada** (out/2026), em todas as turmas. Em seu lugar, a aba **Analisar** traz o **Relatório de semelhança**, que só você vê e que não altera nota nem resultado. Para a rodada escolhida, ele mostra, por equipe:
 
-- 0% a 29% de similaridade: sem penalidade
-- 30% a 69%: penalidade moderada (−10 pontos)
-- 70% a 100%: penalidade severa (−30 pontos)
+- **Semelhança com outra equipe:** percentual de palavras da Segmentação de Mercado que coincidem com as da equipe mais parecida da turma (coeficiente de Dice sobre as palavras significativas).
+- **Igual à rodada anterior:** a mesma medida, comparando a Segmentação da equipe com a dela própria na rodada anterior.
+- **Texto sugerido pelo sistema sem edição:** em turmas no fluxo anterior, a parte de cada ferramenta que permaneceu igual à sugestão do sistema.
 
-Essa penalidade afeta o score de alinhamento e, por consequência, os KPIs financeiros e a nota da equipe.
+Valores a partir de 70% aparecem em vermelho e merecem leitura atenta; de 40% a 69%, em laranja. São indícios, não prova de cópia, e o relatório **não identifica textos produzidos com ferramentas externas de IA**.
 
 ## 12. A Aba Configurar
 
@@ -447,7 +466,7 @@ As cinco ferramentas ficam na tela **Estratégia**. Quatro delas são pré-requi
 
 ### A.3 O elo entre teoria e prática: o Alinhamento Estratégico
 
-A pontuação de Alinhamento Estratégico (Seção 11.2) não é uma ferramenta isolada: é o mecanismo que conecta as cinco ferramentas de diagnóstico (A.1) às decisões de Mix de Marketing (A.2). Cada uma das cinco ferramentas contribui igualmente para o bloco de coerência (70% da pontuação); a completude das cinco ferramentas soma os 30% restantes. Pedagogicamente, é neste ponto que o simulador testa se o aluno integrou diagnóstico e execução — não apenas se preencheu cada instrumento isoladamente. Vale destacar isso para a turma: uma SWOT bem escrita que não se reflete no preço praticado é penalizada, exatamente como aconteceria numa análise real malconduzida.
+A pontuação de Alinhamento Estratégico (Seção 11.2) não é uma ferramenta isolada: é o mecanismo que conecta as cinco ferramentas de diagnóstico (A.1) às decisões de Mix de Marketing (A.2). Cada uma das cinco ferramentas contribui igualmente para o bloco de coerência (70% da pontuação); a completude das cinco ferramentas soma os 30% restantes. Pedagogicamente, é neste ponto que o simulador testa se o aluno integrou diagnóstico e execução — não apenas se preencheu cada instrumento isoladamente. Nas turmas com análises prontas, o teste passa a ser se a equipe lê o diagnóstico entregue e decide de forma coerente com ele e com a própria segmentação.
 
 ## Apêndice B — Setores de Mercado Disponíveis
 

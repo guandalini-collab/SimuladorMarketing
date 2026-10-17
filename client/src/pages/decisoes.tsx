@@ -297,7 +297,11 @@ export default function Decisoes() {
   });
   const isSegmentationComplete = !!roundChecklist?.hasSegmentation;
 
-  const allToolsComplete = isSwotComplete && isPorterComplete && isBcgComplete && isPestelComplete && isSegmentationComplete;
+  // Out/2026: com análises prontas da rodada, a equipe só responde pela Segmentação.
+  const analisesProntas = !!strategicTools?.analisesDaIA;
+  const allToolsComplete = analisesProntas
+    ? isSegmentationComplete
+    : isSwotComplete && isPorterComplete && isBcgComplete && isPestelComplete && isSegmentationComplete;
 
   // Apenas o líder pode salvar/enviar (o servidor responde 403 aos demais).
   // Antes, o membro não-líder só descobria isso pelo erro ao clicar em salvar.
@@ -509,8 +513,10 @@ export default function Decisoes() {
     // Validar ferramentas estratégicas
     if (!allToolsComplete) {
       toast({
-        title: "Ferramentas estratégicas incompletas",
-        description: "Complete todas as ferramentas estratégicas (SWOT, Porter, BCG, PESTEL e Segmentação de Mercado) antes de submeter suas decisões.",
+        title: analisesProntas ? "Segmentação de Mercado incompleta" : "Ferramentas estratégicas incompletas",
+        description: analisesProntas
+          ? "Complete a Segmentação de Mercado antes de enviar a decisão."
+          : "Complete todas as ferramentas estratégicas (SWOT, Porter, BCG, PESTEL e Segmentação de Mercado) antes de submeter suas decisões.",
         variant: "destructive",
       });
       return;
@@ -1189,12 +1195,14 @@ export default function Decisoes() {
               Ferramentas Estratégicas Obrigatórias
             </CardTitle>
             <CardDescription>
-              Você deve preencher todas as ferramentas estratégicas antes de enviar sua decisão final.
-              Acesse a aba "Estratégia" para completar cada análise.
+              {analisesProntas
+                ? "SWOT, 5 Forças, BCG e PESTEL são entregues prontas a cada rodada. Para enviar a decisão, a Segmentação de Mercado da equipe precisa estar completa."
+                : <>Você deve preencher todas as ferramentas estratégicas antes de enviar sua decisão final. Acesse a aba "Estratégia" para completar cada análise.</>}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {!analisesProntas && (<>
               <div className={`flex items-center gap-2 p-3 rounded-lg ${isSwotComplete ? 'bg-[#e6f7ee] dark:bg-green-950' : 'bg-[#fde8e6] dark:bg-red-950'}`} data-testid={`status-swot-${isSwotComplete ? 'complete' : 'incomplete'}`}>
                 {isSwotComplete ? (
                   <CheckCircle2 className="h-5 w-5 text-[#0f7a44]" />
@@ -1250,6 +1258,7 @@ export default function Decisoes() {
                   </p>
                 </div>
               </div>
+              </>)}
 
               <div className={`flex items-center gap-2 p-3 rounded-lg ${isSegmentationComplete ? 'bg-[#e6f7ee] dark:bg-green-950' : 'bg-[#fde8e6] dark:bg-red-950'}`} data-testid={`status-segmentation-${isSegmentationComplete ? 'complete' : 'incomplete'}`}>
                 {isSegmentationComplete ? (
@@ -1270,8 +1279,9 @@ export default function Decisoes() {
               <Alert className="mt-4" variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Complete todas as ferramentas estratégicas antes de enviar sua decisão.
-                  As ferramentas faltantes estão marcadas em vermelho acima.
+                  {analisesProntas
+                    ? "Complete a Segmentação de Mercado antes de enviar sua decisão."
+                    : "Complete todas as ferramentas estratégicas antes de enviar sua decisão. As ferramentas faltantes estão marcadas em vermelho acima."}
                 </AlertDescription>
               </Alert>
             )}

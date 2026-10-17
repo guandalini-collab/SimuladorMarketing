@@ -79,12 +79,17 @@ export async function computeJourney(
     if (await storage.getResult(team.id, r.id)) { temResultadoAnterior = true; break; }
   }
 
-  const ferramentas =
-    swot.some(isSwotComplete) &&
-    porter.some(isPorterComplete) &&
-    bcg.some(isBcgComplete) &&
-    pestel.some(isPestelComplete) &&
-    segmentationComplete(segs, classData?.businessType);
+  // Out/2026: nas turmas com análises prontas da rodada (SWOT, Porter, BCG
+  // e PESTEL feitas pelo sistema), a equipe só responde pela Segmentação.
+  const { turmaComAnalisesDaIA } = await import("./analisesDaIA");
+  const analisesProntas = await turmaComAnalisesDaIA(storage, team.classId);
+  const ferramentas = analisesProntas
+    ? segmentationComplete(segs, classData?.businessType)
+    : swot.some(isSwotComplete) &&
+      porter.some(isPorterComplete) &&
+      bcg.some(isBcgComplete) &&
+      pestel.some(isPestelComplete) &&
+      segmentationComplete(segs, classData?.businessType);
   const identidade = !!team.companyName?.trim() && !!team.slogan?.trim();
 
   // No primeiro mês de um ano novo, a etapa 1 também exige a reflexão do

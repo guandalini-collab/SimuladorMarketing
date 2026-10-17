@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import BcgMatrixChart from "@/components/BcgMatrixChart";
 import { CORES_BCG } from "@/components/bcg-matriz";
 import { classificarBcg, participacaoRelativa } from "@shared/bcg";
+import { SwotSomenteLeitura, PorterSomenteLeitura, BcgSomenteLeitura, PestelSomenteLeitura } from "@/components/analises-prontas";
 
 export default function Estrategia() {
   const { toast } = useToast();
@@ -52,6 +53,7 @@ export default function Estrategia() {
     bcg?: any[];
     pestel?: any;
     segmentation?: { b2c?: any; b2b?: any };
+    analisesDaIA?: boolean;
   }>({
     queryKey: ["/api/strategy", currentRound?.id],
     enabled: !!currentRound,
@@ -148,20 +150,30 @@ export default function Estrategia() {
           </TabsTrigger>
         </TabsList>
 
+        {/* Out/2026: nas turmas com análises prontas da rodada, SWOT, Porter,
+            BCG e PESTEL são somente leitura; a Segmentação segue com a equipe. */}
         <TabsContent value="swot">
-          <SwotTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.swot} />
+          {strategy?.analisesDaIA
+            ? <SwotSomenteLeitura data={strategy?.swot} />
+            : <SwotTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.swot} />}
         </TabsContent>
 
         <TabsContent value="porter">
-          <PorterTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.porter} />
+          {strategy?.analisesDaIA
+            ? <PorterSomenteLeitura data={strategy?.porter} />
+            : <PorterTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.porter} />}
         </TabsContent>
 
         <TabsContent value="bcg">
-          <BcgTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.bcg || []} />
+          {strategy?.analisesDaIA
+            ? <BcgSomenteLeitura data={strategy?.bcg || []} />
+            : <BcgTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.bcg || []} />}
         </TabsContent>
 
         <TabsContent value="pestel">
-          <PestelTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.pestel} />
+          {strategy?.analisesDaIA
+            ? <PestelSomenteLeitura data={strategy?.pestel} />
+            : <PestelTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.pestel} />}
         </TabsContent>
 
         <TabsContent value="segmentacao">
@@ -172,6 +184,7 @@ export default function Estrategia() {
             businessType={businessType}
             b2cData={strategy?.segmentation?.b2c}
             b2bData={strategy?.segmentation?.b2b}
+            analisesProntas={!!strategy?.analisesDaIA}
           />
         </TabsContent>
       </Tabs>
@@ -855,6 +868,7 @@ function SegmentacaoTab({
   businessType,
   b2cData,
   b2bData,
+  analisesProntas = false,
 }: {
   roundId: string;
   roundNumber: number;
@@ -862,6 +876,7 @@ function SegmentacaoTab({
   businessType: string;
   b2cData?: any;
   b2bData?: any;
+  analisesProntas?: boolean;
 }) {
   const requiredTypes: Array<"b2c" | "b2b"> = businessType === "hibrido" ? ["b2c", "b2b"] : businessType === "b2b" ? ["b2b"] : ["b2c"];
 
@@ -878,6 +893,7 @@ function SegmentacaoTab({
           roundNumber={roundNumber}
           roundStatus={roundStatus}
           data={b2cData}
+          analisesProntas={analisesProntas}
         />
       )}
       {requiredTypes.includes("b2b") && (
@@ -891,6 +907,7 @@ function SegmentacaoTab({
           roundNumber={roundNumber}
           roundStatus={roundStatus}
           data={b2bData}
+          analisesProntas={analisesProntas}
         />
       )}
     </div>
@@ -907,6 +924,7 @@ function SegmentationSection({
   roundNumber,
   roundStatus,
   data,
+  analisesProntas = false,
 }: {
   segmentType: "b2c" | "b2b";
   title: string;
@@ -917,6 +935,7 @@ function SegmentationSection({
   roundNumber: number;
   roundStatus: string;
   data?: any;
+  analisesProntas?: boolean;
 }) {
   const { toast } = useToast();
   const hasData = Boolean(data);
@@ -977,6 +996,19 @@ function SegmentationSection({
           <Sparkles className="h-4 w-4" />
           <AlertDescription>
             <div className="space-y-1">
+              {analisesProntas ? (
+                <>
+                  <p className="font-medium">
+                    {hasData ? "📋 Segmentação da equipe" : "📝 Segmentação a cargo da equipe"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {hasData
+                      ? "Esta é a segmentação registrada pela equipe. Ela continua valendo nas próximas rodadas e pode ser editada enquanto a rodada estiver aberta."
+                      : "A segmentação de mercado é feita pela equipe. Depois de salva, ela continua valendo nas próximas rodadas e pode ser editada enquanto a rodada estiver aberta."}
+                  </p>
+                </>
+              ) : (
+                <>
               <p className="font-medium">
                 {roundNumber === 1
                   ? "✨ Rodada 1: Análise inicial já disponível"
@@ -991,6 +1023,8 @@ function SegmentationSection({
                     ? "Você já preencheu essa análise antes, e ela continua valendo automaticamente nesta rodada — não precisa reescrever nada. Reveja se ainda faz sentido: edite, exclua ou adicione itens se sua estratégia mudou. Atenção: se a segmentação não bater com o que você está realmente praticando no mix de marketing (preço, canais), isso reduz sua pontuação de alinhamento estratégico."
                     : "Preencha sua análise estratégica e clique em 'Salvar' — ela vai continuar valendo nas próximas rodadas até você decidir mudar algo."}
               </p>
+                </>
+              )}
             </div>
           </AlertDescription>
         </Alert>

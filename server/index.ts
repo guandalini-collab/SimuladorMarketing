@@ -20,6 +20,7 @@ import { ensureOnboardingColumns } from "./ensureOnboardingColumns";
 import { ensureRoundsWeeklyColumns } from "./ensureRoundsWeeklyColumns";
 import { ensureProductCatalog } from "./ensureProductCatalog";
 import { ensureMarketStateTable } from "./ensureMarketStateTable";
+import { ensureAnalisesTurmaTable } from "./ensureAnalisesTurmaTable";
 import { ensureSuperAdminAccount } from "./ensureSuperAdminAccount";
 import { ensureAdminTemporaryPassword } from "./ensureAdminTemporaryPassword";
 
@@ -86,6 +87,7 @@ app.use((req, res, next) => {
   await ensureClassMarketDefaults();
   await ensureProductCatalog();
   await ensureMarketStateTable();
+  await ensureAnalisesTurmaTable();
   await ensureMarketEventSentiment();
   await ensureOnboardingColumns();
   await ensureSuperAdminAccount();

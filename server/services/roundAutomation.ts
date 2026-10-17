@@ -208,6 +208,17 @@ async function gerarConteudoDaRodada(
   } catch (error) {
     console.error("[ROUND-AUTO] Erro ao gerar o boletim do mês:", error);
   }
+
+  // Análises prontas da rodada (out/2026; só turmas do motor competitivo):
+  // por último, para que PESTEL, Porter e SWOT já considerem os eventos e o
+  // boletim da semana. Idempotente — a abertura reaproveita o que a
+  // preparação gerou.
+  try {
+    const { prepararAnalisesDaRodada } = await import("./analisesDaIA");
+    await prepararAnalisesDaRodada(storage, round.id);
+  } catch (error) {
+    console.error("[ROUND-AUTO] Erro ao preparar as análises da rodada:", error);
+  }
 }
 
 async function gerarFeedbackDaEquipe(storage: IStorage, teamId: string, roundId: string): Promise<"gerado" | "pulado"> {

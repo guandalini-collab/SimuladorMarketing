@@ -51,7 +51,17 @@ export interface AlignmentParams {
 // de 0.25 cada, somando 1.0 — mantém a mesma soma total agora com 5×0.2).
 const TOOL_WEIGHT = 0.2;
 
+// Out/2026 (decisão do professor): a penalidade automática por conteúdo da
+// IA foi substituída por um relatório de semelhança visível só ao professor
+// (rota /api/classes/:classId/relatorio-semelhanca). Esta função passa a
+// devolver sempre "sem penalidade"; o cálculo antigo fica abaixo, desligado,
+// para referência.
+const PENALIDADE_IA_ATIVA = false;
+
 function calculateAiContentPenalty(aiPercentage: number | undefined, toolName: string): { penalty: number; description: string | null } {
+  if (!PENALIDADE_IA_ATIVA) {
+    return { penalty: 0, description: null };
+  }
   if (aiPercentage === undefined || aiPercentage === 0) {
     return { penalty: 0, description: null };
   }

@@ -77,6 +77,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { AlignmentTeamReport } from "@/components/alignment-team-report";
+import { RelatorioSemelhanca } from "@/components/relatorio-semelhanca";
 import { DeterministicFeedbackCard } from "@/components/deterministic-feedback-card";
 import { TeamIdentityEditor } from "@/components/team-identity-editor";
 import { ConjunturaEditor } from "@/components/conjuntura";
@@ -4001,7 +4002,7 @@ export default function Professor() {
                               <Badge variant="secondary">IA</Badge>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              Gere análises SWOT, Porter, BCG e PESTEL automaticamente via IA para todas as equipes.
+                              Gera (ou refaz) as análises SWOT, Porter, BCG e PESTEL da rodada ativa para todas as equipes. Nas turmas do motor competitivo, elas já são preparadas sozinhas antes da abertura.
                             </p>
                           </div>
                           <Button
@@ -4522,6 +4523,9 @@ export default function Professor() {
                   {teams.length > 0 && (
                     <AlignmentTeamReport classId={selectedClass} lastCompletedRound={lastCompletedRound || null} />
                   )}
+
+                  {/* Relatório de semelhança (out/2026): só o professor vê */}
+                  {teams.length > 0 && <RelatorioSemelhanca classId={selectedClass} rounds={rounds} />}
 
                   {/* Feedback Automático por Equipe */}
                   {teams.length > 0 && lastCompletedRound && (

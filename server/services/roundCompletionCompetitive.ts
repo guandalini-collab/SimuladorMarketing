@@ -82,7 +82,7 @@ export interface EstadoMercado {
   }[];
 }
 
-async function estadoAnterior(classId: string, roundNumber: number): Promise<EstadoMercado | null> {
+export async function estadoAnterior(classId: string, roundNumber: number): Promise<EstadoMercado | null> {
   const r = await pool.query(
     `SELECT estado FROM market_states WHERE class_id = $1 AND round_number < $2 ORDER BY round_number DESC LIMIT 1`,
     [classId, roundNumber],
@@ -292,9 +292,13 @@ export async function processarMercadoCompetitivo(
   const multSensibilidade = MULT_SENSIBILIDADE[bulletin?.priceSensitivity ?? "normal"] ?? 1;
 
   // 1) Decisões enviadas de cada equipe, agrupadas por categoria
-  interface ItemEquipe { team: Team; mix: MarketingMix; categoriaId: string; alinhamento: ReturnType<typeof calculateStrategicAlignment> }
+  interface ItemEquipe { team: Team; mix: MarketingMix; categoriaId: string; alinhamento: ReturnType<typeof calculateStrategicAlignment>; alinhamentoNeutro?: boolean }
   const porCategoria = new Map<string, ItemEquipe[]>();
   const enviaram = new Set<string>();
+  // Out/2026: com análises prontas da rodada, se alguma delas faltar (falha
+  // na geração), o alinhamento fica neutro — a equipe não responde por isso.
+  const { turmaComAnalisesDaIA } = await import("./analisesDaIA");
+  const analisesProntas = await turmaComAnalisesDaIA(storage, round.classId);
   for (const team of teams) {
     if (await storage.getResult(team.id, round.id)) continue; // idempotência
     const mixes = (await storage.getMarketingMixesByTeamAndRound(team.id, round.id)).filter((m) => m.submittedAt !== null);
@@ -308,10 +312,11 @@ export async function processarMercadoCompetitivo(
     for (const mix of mixes) {
       const produto = mix.productId ? await storage.getProduct(mix.productId) : undefined;
       const categoria = categoriaDoProduto(classData.sector, produto ?? null) ?? setor.categories[0];
+      const bcgDoProduto = bcg.find((b) => b.productId && b.productId === mix.productId) ?? bcg[0];
       const alinhamento = calculateStrategicAlignment({
         swot: swot ?? null,
         porter: porter ?? null,
-        bcg: bcg[0] ?? null,
+        bcg: bcgDoProduto ?? null,
         pestel: pestel ?? null,
         segmentation,
         businessType: classData.businessType,
@@ -319,11 +324,12 @@ export async function processarMercadoCompetitivo(
         aiAssistanceLevel: round.aiAssistanceLevel ?? 1,
         swotAiPercentage: swot?.aiGeneratedPercentage ?? undefined,
         porterAiPercentage: porter?.aiGeneratedPercentage ?? undefined,
-        bcgAiPercentage: bcg[0]?.aiGeneratedPercentage ?? undefined,
+        bcgAiPercentage: bcgDoProduto?.aiGeneratedPercentage ?? undefined,
         pestelAiPercentage: pestel?.aiGeneratedPercentage ?? undefined,
       });
+      const alinhamentoNeutro = analisesProntas && (!swot || !porter || !pestel || !bcgDoProduto);
       const lista = porCategoria.get(categoria.id) ?? [];
-      lista.push({ team, mix, categoriaId: categoria.id, alinhamento });
+      lista.push({ team, mix, categoriaId: categoria.id, alinhamento, alinhamentoNeutro });
       porCategoria.set(categoria.id, lista);
     }
   }
@@ -341,7 +347,7 @@ export async function processarMercadoCompetitivo(
   }
 
   // 2) Mercado de cada categoria em que há ofertas de equipes
-  const kpisPorEquipe = new Map<string, { kpis: ResultCoreMetrics; mix: MarketingMix; alinhamento: ItemEquipe["alinhamento"] }[]>();
+  const kpisPorEquipe = new Map<string, { kpis: ResultCoreMetrics; mix: MarketingMix; alinhamento: ItemEquipe["alinhamento"]; alinhamentoNeutro?: boolean }[]>();
   for (const [categoriaId, itens] of Array.from(porCategoria.entries())) {
     const categoria = setor.categories.find((c) => c.id === categoriaId)!;
     const ctx: ContextoCategoria = {
@@ -392,7 +398,7 @@ export async function processarMercadoCompetitivo(
     // não alterar a estrutura do núcleo puro.
     const ajustadas = ofertas.map((o, idx) => {
       if (o.tipo !== "equipe") return o;
-      const mod = itens[idx].alinhamento.kpiModifiers.revenueModifier ?? 0;
+      const mod = itens[idx].alinhamentoNeutro ? 0 : itens[idx].alinhamento.kpiModifiers.revenueModifier ?? 0;
       return { ...o, decisao: { ...o.decisao }, fatorAlinhamento: Math.max(0.5, 1 + mod) };
     });
     const resultado = calcularCategoriaComAlinhamento(ctx, ajustadas);
@@ -406,7 +412,7 @@ export async function processarMercadoCompetitivo(
         novoEstado.equipes[o.equipeId].produtos[categoriaId] = { lembranca: o.lembranca, fidelidade: o.fidelidade };
         const item = itens.find((i) => `${i.team.id}:${i.mix.id}` === o.id)!;
         const lista = kpisPorEquipe.get(o.equipeId) ?? [];
-        lista.push({ kpis: kpisDaOferta(o, resultado), mix: item.mix, alinhamento: item.alinhamento });
+        lista.push({ kpis: kpisDaOferta(o, resultado), mix: item.mix, alinhamento: item.alinhamento, alinhamentoNeutro: item.alinhamentoNeutro });
         kpisPorEquipe.set(o.equipeId, lista);
       }
     }
@@ -452,8 +458,10 @@ export async function processarMercadoCompetitivo(
         budgetBefore: team.budget,
         profitImpact: item.kpis.profit,
         budgetAfter: team.budget,
-        alignmentScore: item.alinhamento.overallScore,
-        alignmentIssues: item.alinhamento.penalties.map((p) => p.description),
+        // Análise da rodada indisponível (falha na geração): sem nota de
+        // alinhamento — o peso dela é redistribuído na nota da rodada.
+        alignmentScore: item.alinhamentoNeutro ? null : item.alinhamento.overallScore,
+        alignmentIssues: item.alinhamentoNeutro ? [] : item.alinhamento.penalties.map((p) => p.description),
       } as any);
     }
     const consolidado = consolidateKpis(lista.map((l) => l.kpis));
@@ -469,8 +477,8 @@ export async function processarMercadoCompetitivo(
       budgetBefore: team.budget,
       profitImpact: Math.round(consolidado.profit * 100) / 100,
       budgetAfter,
-      alignmentScore: melhor.alinhamento.overallScore,
-      alignmentIssues: melhor.alinhamento.penalties.map((p) => p.description),
+      alignmentScore: melhor.alinhamentoNeutro ? null : melhor.alinhamento.overallScore,
+      alignmentIssues: melhor.alinhamentoNeutro ? [] : melhor.alinhamento.penalties.map((p) => p.description),
       simulationBreakdown: {
         motor: VERSAO_MOTOR,
         praca: "Rio Grande do Sul",

@@ -15,6 +15,7 @@ import { emailService } from "./services/email";
 import { sendTeamEmail } from "./email-service";
 import { randomUUID } from "crypto";
 import { getAlignmentScoreLevel } from "@shared/alignmentUtils";
+import { semelhancaTextual } from "@shared/semelhanca";
 import { getProductCountBudgetMultiplier } from "@shared/budgetUtils";
 import { aberturaDaRodada, fechamentoDaRodada, fechamentoPadrao, formatarSemanaDaRodada, anoLetivoEncerrado, rodadaDeAdaptacao } from "@shared/rodadaSemanal";
 import { custoEstimadoDaDecisao, parametrosDeCustoDaEquipe } from "./services/roundCompletionCompetitive";
@@ -4377,6 +4378,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return calculateStringSimilarity(origStr, editStr);
   }
 
+  // Out/2026: relatório de semelhança — só o professor vê, sem efeito na
+  // nota nem no resultado (substitui a penalidade automática por conteúdo
+  // da IA). Para cada equipe: semelhança da Segmentação com a das outras
+  // equipes na mesma rodada, com a da própria equipe na rodada anterior e,
+  // nas ferramentas que a equipe escreve, a parte não editada de um texto
+  // sugerido pelo sistema (quando houver).
+  app.get("/api/classes/:classId/relatorio-semelhanca", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "professor") {
+      return res.status(403).json({ error: "Acesso negado - apenas professores" });
+    }
+    const classData = await storage.getClass(req.params.classId);
+    if (!classData) return res.status(404).json({ error: "Turma não encontrada" });
+    if (classData.professorId !== user.id) return res.status(403).json({ error: "Acesso negado - não é sua turma" });
+    const roundId = typeof req.query.roundId === "string" ? req.query.roundId : undefined;
+    const round = roundId ? await storage.getRound(roundId) : undefined;
+    if (!round || round.classId !== classData.id) return res.status(400).json({ error: "Informe uma rodada da turma" });
+
+    try {
+      const { turmaComAnalisesDaIA, MARCA_ANALISES_IA } = await import("./services/analisesDaIA");
+      const analisesProntas = await turmaComAnalisesDaIA(storage, classData.id);
+      const teams = await storage.getTeamsByClass(classData.id);
+      const rodadas = await storage.getRoundsByClass(classData.id);
+      const anterior = rodadas
+        .filter((r) => r.roundNumber < round.roundNumber && r.isPractice === round.isPractice)
+        .sort((a, b) => b.roundNumber - a.roundNumber)[0];
+
+      const textoSeg = (lista: any[]) =>
+        lista
+          .map((s) => [s.demographic, s.geographic, s.psychographic, s.behavioral, s.firmographic, s.buyingCenter].flat().filter(Boolean).join(" "))
+          .join(" ")
+          .trim();
+
+      const segs = new Map<string, string>();
+      for (const t of teams) segs.set(t.id, textoSeg(await storage.getMarketSegmentationsByTeamAndRound(t.id, round.id)));
+
+      const linhas = [];
+      for (const t of teams) {
+        const meu = segs.get(t.id) ?? "";
+        let maior = { valor: 0, equipe: null as string | null };
+        for (const outra of teams) {
+          if (outra.id === t.id) continue;
+          const v = semelhancaTextual(meu, segs.get(outra.id) ?? "");
+          if (v > maior.valor) maior = { valor: v, equipe: outra.companyName || outra.name };
+        }
+        const textoAnterior = anterior ? textoSeg(await storage.getMarketSegmentationsByTeamAndRound(t.id, anterior.id)) : "";
+        const ferramentas: { ferramenta: string; percentualSugestaoNaoEditada: number }[] = [];
+        const segLista = await storage.getMarketSegmentationsByTeamAndRound(t.id, round.id);
+        const comSugestao = segLista.filter((s) => s.originalAIContent && (s.originalAIContent as any)?.marca !== MARCA_ANALISES_IA);
+        if (comSugestao.length) {
+          ferramentas.push({ ferramenta: "Segmentação", percentualSugestaoNaoEditada: Math.round(comSugestao.reduce((a, s) => a + (s.aiGeneratedPercentage || 0), 0) / comSugestao.length) });
+        }
+        if (!analisesProntas) {
+          const [sw, po, pe, bc] = await Promise.all([
+            storage.getSwotAnalysis(t.id, round.id),
+            storage.getPorterAnalysis(t.id, round.id),
+            storage.getPestelAnalysis(t.id, round.id),
+            storage.getBcgAnalyses(t.id, round.id),
+          ]);
+          if (sw?.originalAIContent) ferramentas.push({ ferramenta: "SWOT", percentualSugestaoNaoEditada: Math.round(sw.aiGeneratedPercentage || 0) });
+          if (po?.originalAIContent) ferramentas.push({ ferramenta: "Porter", percentualSugestaoNaoEditada: Math.round(po.aiGeneratedPercentage || 0) });
+          if (pe?.originalAIContent) ferramentas.push({ ferramenta: "PESTEL", percentualSugestaoNaoEditada: Math.round(pe.aiGeneratedPercentage || 0) });
+          if (bc[0]?.originalAIContent) ferramentas.push({ ferramenta: "BCG", percentualSugestaoNaoEditada: Math.round(bc[0].aiGeneratedPercentage || 0) });
+        }
+        linhas.push({
+          teamId: t.id,
+          equipe: t.companyName || t.name,
+          segmentacaoPreenchida: meu.length > 0,
+          maiorSemelhancaOutraEquipe: maior.valor,
+          equipeMaisSemelhante: maior.equipe,
+          semelhancaRodadaAnterior: anterior && meu && textoAnterior ? semelhancaTextual(meu, textoAnterior) : null,
+          ferramentas,
+        });
+      }
+      res.json({ roundId: round.id, roundNumber: round.roundNumber, analisesProntas, linhas });
+    } catch (error: any) {
+      console.error("Erro no relatório de semelhança:", error);
+      res.status(500).json({ error: "Erro ao montar o relatório de semelhança" });
+    }
+  });
+
   app.post("/api/strategic-tools/track-edits", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
@@ -4396,6 +4481,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const userTeam = await storage.getTeamByUser(req.session.userId);
     if (!userTeam || userTeam.id !== teamId) {
       return res.status(403).json({ error: "Acesso negado" });
+    }
+
+    // Out/2026: análises entregues prontas não registram edição da equipe.
+    if (["swot", "porter", "bcg", "pestel"].includes(toolType)) {
+      const { turmaComAnalisesDaIA } = await import("./services/analisesDaIA");
+      if (await turmaComAnalisesDaIA(storage, team.classId)) {
+        return res.json({ success: true, ignored: true });
+      }
     }
 
     let updateData: any = {
@@ -4865,7 +4958,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       b2b: segmentationList.find(s => s.segmentType === "b2b"),
     };
 
-    res.json({ swot, porter, bcg: bcgList, pestel, segmentation });
+    // Out/2026: indica à tela que SWOT, Porter, BCG e PESTEL são entregues
+    // prontas (somente leitura). Campo novo; os demais seguem iguais.
+    const { turmaComAnalisesDaIA } = await import("./services/analisesDaIA");
+    const analisesDaIA = await turmaComAnalisesDaIA(storage, team.classId);
+
+    res.json({ swot, porter, bcg: bcgList, pestel, segmentation, analisesDaIA });
   });
 
   app.get("/api/admin/results", async (req, res) => {
@@ -4904,7 +5002,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       b2b: segmentationList.find(s => s.segmentType === "b2b"),
     };
 
-    res.json({ swot, porter, bcg: bcgList, pestel, segmentation });
+    // Out/2026: indica à tela que SWOT, Porter, BCG e PESTEL são entregues
+    // prontas (somente leitura). Campo novo; os demais seguem iguais.
+    const { turmaComAnalisesDaIA } = await import("./services/analisesDaIA");
+    const analisesDaIA = await turmaComAnalisesDaIA(storage, team.classId);
+
+    res.json({ swot, porter, bcg: bcgList, pestel, segmentation, analisesDaIA });
   });
 
   app.post("/api/strategy/swot", async (req, res) => {
@@ -4915,6 +5018,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const team = await storage.getTeamByUser(req.session.userId);
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
+    }
+
+    // Out/2026: com análises prontas da rodada, SWOT, Porter, BCG e PESTEL são somente leitura.
+    {
+      const { turmaComAnalisesDaIA } = await import("./services/analisesDaIA");
+      if (await turmaComAnalisesDaIA(storage, team.classId)) {
+        return res.status(403).json({ error: "Esta análise é entregue pronta a cada rodada e não pode ser alterada pela equipe." });
+      }
     }
 
     try {
@@ -4956,6 +5067,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const team = await storage.getTeamByUser(req.session.userId);
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
+    }
+
+    // Out/2026: com análises prontas da rodada, SWOT, Porter, BCG e PESTEL são somente leitura.
+    {
+      const { turmaComAnalisesDaIA } = await import("./services/analisesDaIA");
+      if (await turmaComAnalisesDaIA(storage, team.classId)) {
+        return res.status(403).json({ error: "Esta análise é entregue pronta a cada rodada e não pode ser alterada pela equipe." });
+      }
     }
 
     try {
@@ -5071,6 +5190,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
 
+    // Out/2026: com análises prontas da rodada, SWOT, Porter, BCG e PESTEL são somente leitura.
+    {
+      const { turmaComAnalisesDaIA } = await import("./services/analisesDaIA");
+      if (await turmaComAnalisesDaIA(storage, team.classId)) {
+        return res.status(403).json({ error: "Esta análise é entregue pronta a cada rodada e não pode ser alterada pela equipe." });
+      }
+    }
+
     try {
       const data = insertBcgSchema.parse(req.body);
 
@@ -5101,6 +5228,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const team = await storage.getTeamByUser(req.session.userId);
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
+    }
+
+    // Out/2026: com análises prontas da rodada, SWOT, Porter, BCG e PESTEL são somente leitura.
+    {
+      const { turmaComAnalisesDaIA } = await import("./services/analisesDaIA");
+      if (await turmaComAnalisesDaIA(storage, team.classId)) {
+        return res.status(403).json({ error: "Esta análise é entregue pronta a cada rodada e não pode ser alterada pela equipe." });
+      }
     }
 
     const bcg = await storage.getBcgAnalysisById(req.params.id);
@@ -5135,6 +5270,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const team = await storage.getTeamByUser(req.session.userId);
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
+    }
+
+    // Out/2026: com análises prontas da rodada, SWOT, Porter, BCG e PESTEL são somente leitura.
+    {
+      const { turmaComAnalisesDaIA } = await import("./services/analisesDaIA");
+      if (await turmaComAnalisesDaIA(storage, team.classId)) {
+        return res.status(403).json({ error: "Esta análise é entregue pronta a cada rodada e não pode ser alterada pela equipe." });
+      }
     }
 
     try {
@@ -5457,6 +5600,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const teams = await storage.getTeamsByClass(round.classId);
       if (teams.length === 0) {
         return res.status(400).json({ error: "Não há equipes nesta turma" });
+      }
+
+      // Out/2026: turmas com análises prontas da rodada — o botão refaz as
+      // análises da rodada (PESTEL/Porter da turma, SWOT de cada equipe e
+      // BCG calculada), em vez de gerar rascunhos editáveis.
+      {
+        const { turmaComAnalisesDaIA, prepararAnalisesDaRodada } = await import("./services/analisesDaIA");
+        if (await turmaComAnalisesDaIA(storage, round.classId)) {
+          const r = await prepararAnalisesDaRodada(storage, round.id, { forcar: true });
+          return res.json({
+            success: r.pestelPorter !== "falhou",
+            results: r.equipes.map((e) => ({ teamId: e.teamId, teamName: e.nome, success: e.swot !== "falhou" && r.pestelPorter !== "falhou" })),
+          });
+        }
       }
 
       const { generateStrategicAnalyses, translateBcgQuadrantToPt } = await import("./services/aiStrategy");
@@ -6480,11 +6637,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           storage.getClass(team.classId),
         ]);
 
+        // Out/2026: com análises prontas da rodada, a equipe só responde pela Segmentação.
+        const { turmaComAnalisesDaIA } = await import("./services/analisesDaIA");
+        const analisesProntas = await turmaComAnalisesDaIA(storage, team.classId);
         const missingAnalyses = [];
-        if (!swot) missingAnalyses.push("Análise SWOT");
-        if (!porter) missingAnalyses.push("5 Forças de Porter");
-        if (!bcgList || bcgList.length === 0) missingAnalyses.push("Matriz BCG");
-        if (!pestel) missingAnalyses.push("Análise PESTEL");
+        if (!analisesProntas && !swot) missingAnalyses.push("Análise SWOT");
+        if (!analisesProntas && !porter) missingAnalyses.push("5 Forças de Porter");
+        if (!analisesProntas && (!bcgList || bcgList.length === 0)) missingAnalyses.push("Matriz BCG");
+        if (!analisesProntas && !pestel) missingAnalyses.push("Análise PESTEL");
         if (!isSegmentationComplete(segmentationList, classDataForGate?.businessType)) missingAnalyses.push("Segmentação de Mercado");
 
         if (missingAnalyses.length > 0) {
