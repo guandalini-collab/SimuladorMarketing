@@ -26,6 +26,19 @@ export interface MarketSector {
   consumidoresPotenciais?: number;
   fonteConsumidores?: string;
   averageMargin: number;
+  /**
+   * Dados reais (out/2026) para o motor competitivo — mantidos ao lado de
+   * averageMargin (que segue em uso nas telas e recomendações atuais) para
+   * não alterar nada antes de o motor novo entrar.
+   * margemBruta: (receita − custo dos produtos) ÷ receita, em %.
+   * margemLiquida: lucro líquido ÷ receita, em %.
+   */
+  margemBruta?: number;
+  margemLiquida?: number;
+  fonteMargem?: string;
+  /** Verba de marketing como % da receita (método da porcentagem sobre vendas). */
+  verbaMarketingPct?: number;
+  fonteVerbaMarketing?: string;
   competitionLevel: "baixa" | "media" | "alta";
   businessTypes: string[];
   categories: {
@@ -34,6 +47,12 @@ export interface MarketSector {
     description: string;
     averagePrice: number;
     demandLevel: "baixa" | "media" | "alta";
+    /** Unidade de venda à qual o preço se refere (out/2026). */
+    unidade?: string;
+    /** Fonte e data do preço médio (pedido do professor: "nada inventado"). */
+    fontePreco?: string;
+    /** Confiança da fonte: alta (institucional), media (levantamento amplo), baixa (poucas ofertas). */
+    confiancaPreco?: "alta" | "media" | "baixa";
   }[];
   products?: Product[];
   trends: string[];
@@ -54,6 +73,11 @@ export const marketSectors: MarketSector[] = [
       ano: 2024,
     },
     averageMargin: 25,
+    margemBruta: 18.6,
+    margemLiquida: 1.7,
+    fonteMargem: "Damodaran (NYU Stern), Margins by Sector – Emerging Markets, jan. 2026, categoria Electronics (Consumer & Office)",
+    verbaMarketingPct: 9.5,
+    fonteVerbaMarketing: "Gartner CMO Spend Survey 2025 (América do Norte e Europa), manufatura",
     competitionLevel: "alta",
     businessTypes: ["B2C", "B2B", "Híbrido"],
     categories: [
@@ -61,29 +85,41 @@ export const marketSectors: MarketSector[] = [
         id: "smartphone",
         name: "Smartphone",
         description: "Telefone celular inteligente de última geração",
-        averagePrice: 2500,
-        demandLevel: "alta"
+        averagePrice: 2557,
+        demandLevel: "alta",
+        unidade: "unidade",
+        fontePreco: "IDC Brasil, ticket médio de smartphones, 1º trim. 2025",
+        confiancaPreco: "alta"
       },
       {
         id: "tablet",
         name: "Tablet",
         description: "Dispositivo portátil com tela sensível ao toque",
-        averagePrice: 1800,
-        demandLevel: "media"
+        averagePrice: 1573,
+        demandLevel: "media",
+        unidade: "unidade",
+        fontePreco: "IDC Brasil, ticket médio de tablets, 3º trim. 2023",
+        confiancaPreco: "media"
       },
       {
         id: "notebook",
         name: "Notebook",
         description: "Computador portátil para trabalho e entretenimento",
-        averagePrice: 4000,
-        demandLevel: "alta"
+        averagePrice: 3430,
+        demandLevel: "alta",
+        unidade: "unidade",
+        fontePreco: "IDC Brazil PCs Tracker, preço médio de notebooks, 4º trim. 2022",
+        confiancaPreco: "media"
       },
       {
         id: "smartwatch",
         name: "Smartwatch",
         description: "Relógio inteligente com funcionalidades conectadas",
-        averagePrice: 1200,
-        demandLevel: "media"
+        averagePrice: 1564,
+        demandLevel: "media",
+        unidade: "unidade",
+        fontePreco: "IDC Brasil, ticket médio de smartwatches básicos, 2º trim. 2023",
+        confiancaPreco: "media"
       }
     ],
     trends: [
@@ -114,6 +150,11 @@ export const marketSectors: MarketSector[] = [
       ano: 2024,
     },
     averageMargin: 18,
+    margemBruta: 23.5,
+    margemLiquida: 5.1,
+    fonteMargem: "Damodaran (NYU Stern), Margins by Sector – Emerging Markets, jan. 2026, categoria Food Processing",
+    verbaMarketingPct: 9.7,
+    fonteVerbaMarketing: "Gartner CMO Spend Survey 2025 (América do Norte e Europa), bens de consumo",
     competitionLevel: "alta",
     businessTypes: ["B2C", "B2B", "Híbrido"],
     categories: [
@@ -121,29 +162,41 @@ export const marketSectors: MarketSector[] = [
         id: "refrigerante",
         name: "Refrigerante",
         description: "Bebida gaseificada sabor cola, guaraná ou laranja",
-        averagePrice: 6,
-        demandLevel: "alta"
+        averagePrice: 14.9,
+        demandLevel: "alta",
+        unidade: "garrafa 2 L",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 17 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "suco-natural",
         name: "Suco Natural",
         description: "Suco de frutas 100% natural sem conservantes",
-        averagePrice: 8,
-        demandLevel: "alta"
+        averagePrice: 30.22,
+        demandLevel: "alta",
+        unidade: "1 L (integral)",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 4 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "baixa"
       },
       {
         id: "snack-saudavel",
         name: "Snack Saudável",
         description: "Barra de cereais, nuts, frutas desidratadas",
-        averagePrice: 10,
-        demandLevel: "media"
+        averagePrice: 16.99,
+        demandLevel: "media",
+        unidade: "unidade (barra)",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 15 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "chocolate",
         name: "Chocolate",
         description: "Barra de chocolate ao leite, meio amargo ou branco",
-        averagePrice: 12,
-        demandLevel: "alta"
+        averagePrice: 11.83,
+        demandLevel: "alta",
+        unidade: "barra 90 g",
+        fontePreco: "Procon-SP, chocolate em barra R$ 131,49/kg, mar. 2026",
+        confiancaPreco: "alta"
       }
     ],
     trends: [
@@ -174,6 +227,11 @@ export const marketSectors: MarketSector[] = [
       ano: 2024,
     },
     averageMargin: 45,
+    margemBruta: 22.0,
+    margemLiquida: 4.2,
+    fonteMargem: "Damodaran (NYU Stern), Margins by Sector – Emerging Markets, jan. 2026, categoria Apparel",
+    verbaMarketingPct: 7.7,
+    fonteVerbaMarketing: "Gartner CMO Spend Survey 2025 (América do Norte e Europa), média geral",
     competitionLevel: "alta",
     businessTypes: ["B2C", "Híbrido"],
     categories: [
@@ -181,29 +239,41 @@ export const marketSectors: MarketSector[] = [
         id: "tenis-esportivo",
         name: "Tênis Esportivo",
         description: "Calçado esportivo para corrida e atividades físicas",
-        averagePrice: 350,
-        demandLevel: "alta"
+        averagePrice: 98.9,
+        demandLevel: "alta",
+        unidade: "par",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 11 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "jaqueta",
         name: "Jaqueta",
         description: "Jaqueta casual ou esportiva para uso diário",
-        averagePrice: 280,
-        demandLevel: "media"
+        averagePrice: 192.95,
+        demandLevel: "media",
+        unidade: "unidade",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 18 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "mochila",
         name: "Mochila",
         description: "Mochila urbana ou esportiva para trabalho e lazer",
-        averagePrice: 180,
-        demandLevel: "alta"
+        averagePrice: 238.25,
+        demandLevel: "alta",
+        unidade: "unidade",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 16 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "relogio-pulso",
         name: "Relógio de Pulso",
         description: "Relógio analógico ou digital de moda",
-        averagePrice: 250,
-        demandLevel: "media"
+        averagePrice: 389.9,
+        demandLevel: "media",
+        unidade: "unidade (analógico)",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 23 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       }
     ],
     trends: [
@@ -235,6 +305,11 @@ export const marketSectors: MarketSector[] = [
       estimativa: true,
     },
     averageMargin: 52,
+    margemBruta: 47.5,
+    margemLiquida: 5.5,
+    fonteMargem: "Damodaran (NYU Stern), Margins by Sector – Emerging Markets, jan. 2026, categoria Household Products",
+    verbaMarketingPct: 9.7,
+    fonteVerbaMarketing: "Gartner CMO Spend Survey 2025 (América do Norte e Europa), bens de consumo",
     competitionLevel: "media",
     businessTypes: ["B2C", "B2B"],
     categories: [
@@ -242,29 +317,41 @@ export const marketSectors: MarketSector[] = [
         id: "perfume",
         name: "Perfume",
         description: "Fragrância masculina ou feminina de alta qualidade",
-        averagePrice: 180,
-        demandLevel: "alta"
+        averagePrice: 123.41,
+        demandLevel: "alta",
+        unidade: "frasco 100 ml",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 24 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "creme-facial",
         name: "Creme Facial",
         description: "Hidratante ou anti-idade para o rosto",
-        averagePrice: 85,
-        demandLevel: "alta"
+        averagePrice: 53.9,
+        demandLevel: "alta",
+        unidade: "unidade",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 29 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "shampoo",
         name: "Shampoo",
         description: "Shampoo para diferentes tipos de cabelo",
-        averagePrice: 45,
-        demandLevel: "alta"
+        averagePrice: 32.99,
+        demandLevel: "alta",
+        unidade: "frasco",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 25 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "batom",
         name: "Batom",
         description: "Batom matte, cremoso ou líquido",
-        averagePrice: 55,
-        demandLevel: "media"
+        averagePrice: 30.08,
+        demandLevel: "media",
+        unidade: "unidade",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 24 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       }
     ],
     trends: [
@@ -295,6 +382,11 @@ export const marketSectors: MarketSector[] = [
       ano: 2024,
     },
     averageMargin: 38,
+    margemBruta: 27.9,
+    margemLiquida: 8.2,
+    fonteMargem: "Damodaran (NYU Stern), Margins by Sector – Emerging Markets, jan. 2026, categoria Furn/Home Furnishings",
+    verbaMarketingPct: 9.5,
+    fonteVerbaMarketing: "Gartner CMO Spend Survey 2025 (América do Norte e Europa), manufatura",
     competitionLevel: "media",
     businessTypes: ["B2C", "B2B", "Híbrido"],
     categories: [
@@ -302,29 +394,41 @@ export const marketSectors: MarketSector[] = [
         id: "sofa",
         name: "Sofá",
         description: "Sofá de 2, 3 ou 5 lugares para sala de estar",
-        averagePrice: 2500,
-        demandLevel: "alta"
+        averagePrice: 1437.34,
+        demandLevel: "alta",
+        unidade: "unidade (3 lugares)",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 20 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "mesa-jantar",
         name: "Mesa de Jantar",
         description: "Mesa para 4, 6 ou 8 pessoas em madeira ou vidro",
-        averagePrice: 1800,
-        demandLevel: "media"
+        averagePrice: 828.73,
+        demandLevel: "media",
+        unidade: "unidade (4 lugares)",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 25 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "luminaria",
         name: "Luminária",
         description: "Luminária de piso, mesa ou teto decorativa",
-        averagePrice: 350,
-        demandLevel: "media"
+        averagePrice: 75.91,
+        demandLevel: "media",
+        unidade: "unidade (de mesa)",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 29 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "estante",
         name: "Estante",
         description: "Estante para livros ou TV em diversos estilos",
-        averagePrice: 1200,
-        demandLevel: "media"
+        averagePrice: 343.77,
+        demandLevel: "media",
+        unidade: "unidade",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 30 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       }
     ],
     trends: [
@@ -355,6 +459,11 @@ export const marketSectors: MarketSector[] = [
       ano: 2024,
     },
     averageMargin: 12,
+    margemBruta: 18.8,
+    margemLiquida: 4.5,
+    fonteMargem: "Damodaran (NYU Stern), Margins by Sector – Emerging Markets, jan. 2026, categoria Auto Parts",
+    verbaMarketingPct: 9.5,
+    fonteVerbaMarketing: "Gartner CMO Spend Survey 2025 (América do Norte e Europa), manufatura",
     competitionLevel: "alta",
     businessTypes: ["B2C", "B2B"],
     categories: [
@@ -362,29 +471,41 @@ export const marketSectors: MarketSector[] = [
         id: "oleo-motor",
         name: "Óleo de Motor",
         description: "Óleo lubrificante sintético ou mineral para motores",
-        averagePrice: 85,
-        demandLevel: "alta"
+        averagePrice: 52.08,
+        demandLevel: "alta",
+        unidade: "1 L (sintético 5W30)",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 20 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "filtro-ar",
         name: "Filtro de Ar",
         description: "Filtro de ar do motor original ou genérico",
-        averagePrice: 65,
-        demandLevel: "alta"
+        averagePrice: 22.84,
+        demandLevel: "alta",
+        unidade: "unidade",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 4 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "baixa"
       },
       {
         id: "pastilha-freio",
         name: "Pastilha de Freio",
         description: "Jogo de pastilhas de freio dianteiras ou traseiras",
-        averagePrice: 120,
-        demandLevel: "alta"
+        averagePrice: 116.41,
+        demandLevel: "alta",
+        unidade: "jogo (dianteira)",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 26 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "amortecedor",
         name: "Amortecedor",
         description: "Amortecedor dianteiro ou traseiro",
-        averagePrice: 350,
-        demandLevel: "media"
+        averagePrice: 400.5,
+        demandLevel: "media",
+        unidade: "unidade (dianteiro)",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 14 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       }
     ],
     trends: [
@@ -416,6 +537,11 @@ export const marketSectors: MarketSector[] = [
       estimativa: true,
     },
     averageMargin: 48,
+    margemBruta: 31.8,
+    margemLiquida: 3.9,
+    fonteMargem: "Damodaran (NYU Stern), Margins by Sector – Emerging Markets, jan. 2026, categoria Recreation",
+    verbaMarketingPct: 7.7,
+    fonteVerbaMarketing: "Gartner CMO Spend Survey 2025 (América do Norte e Europa), média geral",
     competitionLevel: "media",
     businessTypes: ["B2C", "B2B", "Híbrido"],
     categories: [
@@ -423,29 +549,41 @@ export const marketSectors: MarketSector[] = [
         id: "tenis-corrida",
         name: "Tênis de Corrida",
         description: "Tênis específico para corrida e treinos",
-        averagePrice: 380,
-        demandLevel: "alta"
+        averagePrice: 341.24,
+        demandLevel: "alta",
+        unidade: "par",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 20 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "bicicleta",
         name: "Bicicleta",
         description: "Bicicleta mountain bike ou speed para treinos",
-        averagePrice: 2500,
-        demandLevel: "media"
+        averagePrice: 1145.37,
+        demandLevel: "media",
+        unidade: "unidade (aro 29)",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 16 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
-        id: "suplemento-proteico",
-        name: "Suplemento Proteico",
-        description: "Whey protein, BCAA ou creatina",
-        averagePrice: 120,
-        demandLevel: "alta"
+        id: "bola-futebol",
+        name: "Bola de Futebol",
+        description: "Bola de futebol de campo, tamanho oficial",
+        averagePrice: 132.4,
+        demandLevel: "alta",
+        unidade: "unidade",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 18 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "smartband",
         name: "Smartband",
         description: "Pulseira inteligente para monitoramento fitness",
-        averagePrice: 280,
-        demandLevel: "alta"
+        averagePrice: 354.02,
+        demandLevel: "alta",
+        unidade: "unidade",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 15 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       }
     ],
     trends: [
@@ -476,6 +614,11 @@ export const marketSectors: MarketSector[] = [
       ano: 2024,
     },
     averageMargin: 52,
+    margemBruta: 45.6,
+    margemLiquida: 10.0,
+    fonteMargem: "Damodaran (NYU Stern), Margins by Sector – Emerging Markets, jan. 2026, categoria Healthcare Products",
+    verbaMarketingPct: 9.0,
+    fonteVerbaMarketing: "Gartner CMO Spend Survey 2025 (América do Norte e Europa), farmacêutico",
     competitionLevel: "media",
     businessTypes: ["B2C", "B2B"],
     categories: [
@@ -483,29 +626,41 @@ export const marketSectors: MarketSector[] = [
         id: "vitamina-c",
         name: "Vitamina C",
         description: "Suplemento de vitamina C em cápsulas ou efervescente",
-        averagePrice: 45,
-        demandLevel: "alta"
+        averagePrice: 44.26,
+        demandLevel: "alta",
+        unidade: "frasco",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 18 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "whey-protein",
         name: "Whey Protein",
         description: "Proteína isolada do soro do leite para ganho muscular",
-        averagePrice: 120,
-        demandLevel: "alta"
+        averagePrice: 177.9,
+        demandLevel: "alta",
+        unidade: "pote 900 g",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 24 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "omega-3",
         name: "Ômega 3",
         description: "Suplemento de óleo de peixe para saúde cardiovascular",
-        averagePrice: 65,
-        demandLevel: "alta"
+        averagePrice: 75.91,
+        demandLevel: "alta",
+        unidade: "frasco",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 21 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "probiotico",
         name: "Probiótico",
         description: "Suplemento probiótico para saúde intestinal",
-        averagePrice: 85,
-        demandLevel: "media"
+        averagePrice: 72.89,
+        demandLevel: "media",
+        unidade: "frasco",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 11 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       }
     ],
     trends: [
@@ -527,7 +682,7 @@ export const marketSectors: MarketSector[] = [
   {
     id: "educacao",
     name: "Educação e Cursos",
-    description: "Cursos online profissionalizantes e capacitação digital",
+    description: "Ensino privado: cursos técnicos, graduação (presencial e EAD) e pós-graduação",
     marketSize: 44700000000,
     growthRate: 3.3,
     fonte: {
@@ -537,36 +692,53 @@ export const marketSectors: MarketSector[] = [
       estimativa: true,
     },
     averageMargin: 75,
+    margemBruta: 51.1,
+    margemLiquida: 13.4,
+    fonteMargem: "Damodaran (NYU Stern), Margins by Sector – Emerging Markets, jan. 2026, categoria Education",
+    verbaMarketingPct: 7.7,
+    fonteVerbaMarketing: "Gartner CMO Spend Survey 2025 (América do Norte e Europa), média geral",
     competitionLevel: "media",
     businessTypes: ["B2C", "B2B"],
     categories: [
       {
-        id: "marketing-digital",
-        name: "Marketing Digital",
-        description: "Curso completo de marketing digital e mídias sociais",
-        averagePrice: 497,
-        demandLevel: "alta"
+        id: "curso-tecnico",
+        name: "Curso Técnico",
+        description: "Curso técnico de nível médio (CNCT/MEC), mensalidade",
+        averagePrice: 109.0,
+        demandLevel: "alta",
+        unidade: "mensalidade",
+        fontePreco: "Senac SP, parcela fixa dos cursos técnicos, turmas de 2026 (Guia da Carreira: média EAD de R$ 99,05)",
+        confiancaPreco: "media"
       },
       {
-        id: "data-science",
-        name: "Data Science",
-        description: "Curso de ciência de dados e análise estatística",
-        averagePrice: 697,
-        demandLevel: "alta"
+        id: "graduacao-ead",
+        name: "Graduação EAD",
+        description: "Curso superior a distância (bacharelado, licenciatura ou tecnólogo), mensalidade",
+        averagePrice: 214.0,
+        demandLevel: "alta",
+        unidade: "mensalidade",
+        fontePreco: "Pesquisa Hoper de Mensalidades 2026 / ABMES, mediana nacional EAD",
+        confiancaPreco: "alta"
       },
       {
-        id: "ux-ui-design",
-        name: "UX/UI Design",
-        description: "Curso de design de experiência e interface do usuário",
-        averagePrice: 597,
-        demandLevel: "media"
+        id: "graduacao-presencial",
+        name: "Graduação Presencial",
+        description: "Curso superior presencial (bacharelado, licenciatura ou tecnólogo), mensalidade",
+        averagePrice: 835.0,
+        demandLevel: "media",
+        unidade: "mensalidade",
+        fontePreco: "Pesquisa Hoper de Mensalidades 2026 / ABMES, mediana nacional presencial",
+        confiancaPreco: "alta"
       },
       {
-        id: "desenvolvimento-web",
-        name: "Desenvolvimento Web",
-        description: "Curso fullstack de desenvolvimento web",
-        averagePrice: 797,
-        demandLevel: "alta"
+        id: "pos-graduacao",
+        name: "Pós-graduação (Especialização/MBA)",
+        description: "Pós-graduação lato sensu, especialização ou MBA, mensalidade",
+        averagePrice: 550.0,
+        demandLevel: "alta",
+        unidade: "mensalidade",
+        fontePreco: "Editais 2025 de Unifran, Braz Cubas e Rio Branco (mediana de 42 cursos presenciais)",
+        confiancaPreco: "media"
       }
     ],
     trends: [
@@ -597,6 +769,11 @@ export const marketSectors: MarketSector[] = [
       ano: 2024,
     },
     averageMargin: 42,
+    margemBruta: 32.1,
+    margemLiquida: 3.5,
+    fonteMargem: "Damodaran (NYU Stern), Margins by Sector – Emerging Markets, jan. 2026, categoria Retail (Special Lines), aproximação: a base não tem categoria pet",
+    verbaMarketingPct: 7.7,
+    fonteVerbaMarketing: "Gartner CMO Spend Survey 2025 (América do Norte e Europa), média geral",
     competitionLevel: "media",
     businessTypes: ["B2C", "B2B"],
     categories: [
@@ -604,29 +781,41 @@ export const marketSectors: MarketSector[] = [
         id: "racao-premium",
         name: "Ração Premium",
         description: "Ração super premium para cães e gatos",
-        averagePrice: 180,
-        demandLevel: "alta"
+        averagePrice: 175.89,
+        demandLevel: "alta",
+        unidade: "saco 15 kg",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 21 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "petisco",
         name: "Petisco",
         description: "Snacks e petiscos naturais para pets",
-        averagePrice: 25,
-        demandLevel: "alta"
+        averagePrice: 29.0,
+        demandLevel: "alta",
+        unidade: "pacote 500 g",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 27 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "brinquedo-pet",
         name: "Brinquedo",
         description: "Brinquedos interativos e educativos",
-        averagePrice: 45,
-        demandLevel: "media"
+        averagePrice: 21.76,
+        demandLevel: "media",
+        unidade: "unidade (mordedor)",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 25 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "caminha",
         name: "Caminha",
         description: "Cama confortável para cães e gatos",
-        averagePrice: 120,
-        demandLevel: "media"
+        averagePrice: 67.85,
+        demandLevel: "media",
+        unidade: "unidade",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 23 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       }
     ],
     trends: [
@@ -657,6 +846,11 @@ export const marketSectors: MarketSector[] = [
       ano: 2024,
     },
     averageMargin: 22,
+    margemBruta: 23.9,
+    margemLiquida: 3.8,
+    fonteMargem: "Damodaran (NYU Stern), Margins by Sector – Emerging Markets, jan. 2026, categoria Building Materials",
+    verbaMarketingPct: 1.0,
+    fonteVerbaMarketing: "The CMO Survey (Duke), primavera 2024 (EUA), mineração/construção",
     competitionLevel: "media",
     businessTypes: ["B2B", "B2C", "Híbrido"],
     categories: [
@@ -664,29 +858,41 @@ export const marketSectors: MarketSector[] = [
         id: "cimento",
         name: "Cimento",
         description: "Saco de cimento 50kg para construção",
-        averagePrice: 35,
-        demandLevel: "alta"
+        averagePrice: 47.37,
+        demandLevel: "alta",
+        unidade: "saco 50 kg",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 5 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "tinta-latex",
         name: "Tinta Látex",
         description: "Tinta látex acrílica para paredes internas e externas",
-        averagePrice: 180,
-        demandLevel: "alta"
+        averagePrice: 337.25,
+        demandLevel: "alta",
+        unidade: "lata 18 L",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 27 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       },
       {
         id: "porcelanato",
         name: "Porcelanato",
         description: "Piso porcelanato 60x60cm",
-        averagePrice: 65,
-        demandLevel: "media"
+        averagePrice: 77.51,
+        demandLevel: "media",
+        unidade: "caixa (60×60)",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 2 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "baixa"
       },
       {
         id: "torneira",
         name: "Torneira",
         description: "Torneira de bancada ou parede",
-        averagePrice: 120,
-        demandLevel: "media"
+        averagePrice: 218.8,
+        demandLevel: "media",
+        unidade: "unidade (cozinha)",
+        fontePreco: "Levantamento de preços em lojas online (mediana de 22 ofertas, comparador Buscapé), 17/10/2026",
+        confiancaPreco: "media"
       }
     ],
     trends: [
@@ -718,6 +924,11 @@ export const marketSectors: MarketSector[] = [
       estimativa: true,
     },
     averageMargin: 58,
+    margemBruta: 58.5,
+    margemLiquida: 12.1,
+    fonteMargem: "Damodaran (NYU Stern), Margins by Sector – Emerging Markets, jan. 2026, categoria Entertainment",
+    verbaMarketingPct: 7.7,
+    fonteVerbaMarketing: "Gartner CMO Spend Survey 2025 (América do Norte e Europa), média geral",
     competitionLevel: "alta",
     businessTypes: ["B2C", "B2B"],
     categories: [
@@ -725,29 +936,41 @@ export const marketSectors: MarketSector[] = [
         id: "streaming-video",
         name: "Streaming de Vídeo",
         description: "Assinatura mensal de plataforma de vídeo sob demanda",
-        averagePrice: 35,
-        demandLevel: "alta"
+        averagePrice: 44.9,
+        demandLevel: "alta",
+        unidade: "assinatura mensal",
+        fontePreco: "Netflix Padrão R$ 44,90 (mediana dos planos padrão de Netflix, Prime Video, Disney+, Max e Globoplay), Oficina da Net, ago. 2026",
+        confiancaPreco: "alta"
       },
       {
         id: "streaming-musica",
         name: "Streaming de Música",
         description: "Assinatura mensal de serviço de música online",
-        averagePrice: 22,
-        demandLevel: "alta"
+        averagePrice: 23.9,
+        demandLevel: "alta",
+        unidade: "assinatura mensal",
+        fontePreco: "Spotify Premium Individual, reajuste de ago. 2025 (Tecnoblog)",
+        confiancaPreco: "alta"
       },
       {
         id: "jogo-digital",
         name: "Jogo Digital",
         description: "Game para PC, console ou mobile",
-        averagePrice: 180,
-        demandLevel: "alta"
+        averagePrice: 399.9,
+        demandLevel: "alta",
+        unidade: "unidade (lançamento)",
+        fontePreco: "Sony, preço padrão de lançamentos first-party para PS5, maio 2025 (Fast Company Brasil)",
+        confiancaPreco: "alta"
       },
       {
         id: "ingresso-show",
         name: "Ingresso de Show",
         description: "Ingresso para show ou evento presencial",
-        averagePrice: 250,
-        demandLevel: "media"
+        averagePrice: 200.0,
+        demandLevel: "media",
+        unidade: "ingresso",
+        fontePreco: "Serasa/Opinion Box 2025: faixa de gasto mais comum por ingresso R$ 101–300 (valor central)",
+        confiancaPreco: "media"
       }
     ],
     trends: [

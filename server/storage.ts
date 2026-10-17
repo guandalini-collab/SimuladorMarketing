@@ -1777,7 +1777,7 @@ export class MemStorage implements IStorage {
 
   async getProductsBySector(sectorId: string): Promise<Product[]> {
     return Array.from(this.products.values()).filter(
-      product => product.sector === sectorId
+      product => product.sector === sectorId && product.active !== false
     );
   }
 

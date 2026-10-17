@@ -280,8 +280,16 @@ export function computeMarketFit(bulletin: MarketBulletin, mix: MarketingMix, pr
 export function precoMedioDaCategoria(sectorId: string | null | undefined, product: { slug?: string | null; name?: string | null } | null | undefined): number | null {
   const sector = marketSectors.find((s) => s.id === sectorId);
   if (!sector || !product) return null;
+  // Out/2026: os produtos da turma têm slug "<categoria>-<setor>" (ver
+  // ensureProductCatalog.ts) e o nome pode vir sem acento ("Snack Saudavel");
+  // antes só batia o slug puro ou o nome idêntico, e o preço caía no da 1ª
+  // categoria do setor.
+  const semAcento = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   const cat = sector.categories.find(
-    (c) => c.id === product.slug || (c.name && product.name && c.name.toLowerCase() === String(product.name).toLowerCase()),
+    (c) =>
+      c.id === product.slug ||
+      `${c.id}-${sector.id}` === product.slug ||
+      (c.name && product.name && semAcento(c.name) === semAcento(String(product.name))),
   );
   return cat?.averagePrice ?? null;
 }

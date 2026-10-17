@@ -602,9 +602,13 @@ export default function Decisoes() {
 
   // Categoria do setor correspondente ao produto (ex.: "Smartphone"), para
   // usar o preço médio certo. Antes a tela mostrava sempre a 1ª categoria.
+  // Out/2026: slug do produto é "<categoria>-<setor>" e o nome pode vir sem
+  // acento — mesma regra de server/services/marketBulletin.ts.
+  const semAcento = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   const productCategory = (marketSector?.categories ?? []).find((c: any) =>
     c.id === selectedProduct?.slug ||
-    (c.name && selectedProduct?.name && c.name.toLowerCase() === String(selectedProduct.name).toLowerCase())
+    `${c.id}-${marketSector?.id}` === selectedProduct?.slug ||
+    (c.name && selectedProduct?.name && semAcento(c.name) === semAcento(String(selectedProduct.name)))
   ) ?? marketSector?.categories?.[0];
 
   // Use decisionsAllowed from backend as source of truth

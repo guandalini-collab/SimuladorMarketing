@@ -1342,7 +1342,10 @@ export class PgStorage implements IStorage {
   }
 
   async getProductsBySector(sectorId: string): Promise<Product[]> {
-    return db.select().from(products).where(eq(products.sector, sectorId));
+    // Só produtos ativos (out/2026): categorias que saíram da base de
+    // mercado ficam inativas (ensureProductCatalog.ts) e não devem mais ser
+    // oferecidas às turmas; o histórico continua acessível por getProduct(id).
+    return db.select().from(products).where(and(eq(products.sector, sectorId), eq(products.active, true)));
   }
 
   async getProductsByClass(classId: string): Promise<Product[]> {

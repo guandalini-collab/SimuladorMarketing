@@ -466,7 +466,89 @@ Cada setor tem quatro categorias de produto associadas e dados de referência de
 | Construção e Materiais | R$ 318,6 bi | 6,1% | Abramat/Ecconit (2024) |
 | Entretenimento e Mídia | cerca de R$ 279 bi (estimativa) | 6,7% | PwC (2024) |
 
-Atenção: em alguns setores, o dado disponível cobre um recorte diferente dos produtos do jogo. Em Saúde e Bem-estar, por exemplo, o número é do mercado farmacêutico, enquanto as categorias do jogo são suplementos; em Educação, o número é da graduação privada, enquanto as categorias são cursos livres. Ajuste os campos da turma se quiser um recorte mais próximo.
+Atenção: em alguns setores, o dado disponível cobre um recorte diferente dos produtos do jogo. Em Saúde e Bem-estar, por exemplo, o número é do mercado farmacêutico, enquanto as categorias do jogo são suplementos. Ajuste os campos da turma se quiser um recorte mais próximo.
+
+### B.1 Preço médio de cada categoria
+
+Cada categoria tem um **preço médio real**, usado como referência de preço no cálculo dos resultados e mostrado aos alunos na Análise de Mercado (aba Setor), com a unidade e a fonte. A ordem de preferência das fontes é:
+
+1. **Fonte institucional**, quando existe (IDC, Procon, as próprias empresas, pesquisa Hoper/ABMES).
+2. **Levantamento de preços em lojas online**: mediana das ofertas reunidas no comparador Buscapé em 17/10/2026, sem kits nem pacotes. Reflete o mercado de massa e o varejo on-line, que pode ficar acima do preço de gôndola em itens de supermercado.
+
+A coluna Confiança indica **alta** (fonte institucional), **média** (levantamento com muitas ofertas) ou **baixa** (poucas ofertas). Em Educação e Entretenimento, que são **serviços**, o preço é uma mensalidade, assinatura ou ingresso.
+
+| Setor | Categoria | Unidade | Preço médio | Confiança |
+|---|---|---|---|---|
+| Eletrônicos e Tecnologia | Smartphone | unidade | R$ 2.557,00 | alta |
+| Eletrônicos e Tecnologia | Tablet | unidade | R$ 1.573,00 | média |
+| Eletrônicos e Tecnologia | Notebook | unidade | R$ 3.430,00 | média |
+| Eletrônicos e Tecnologia | Smartwatch | unidade | R$ 1.564,00 | média |
+| Alimentos e Bebidas | Refrigerante | garrafa 2 L | R$ 14,90 | média |
+| Alimentos e Bebidas | Suco Natural | 1 L (integral) | R$ 30,22 | baixa |
+| Alimentos e Bebidas | Snack Saudável | unidade (barra) | R$ 16,99 | média |
+| Alimentos e Bebidas | Chocolate | barra 90 g | R$ 11,83 | alta |
+| Vestuário e Moda | Tênis Esportivo | par | R$ 98,90 | média |
+| Vestuário e Moda | Jaqueta | unidade | R$ 192,95 | média |
+| Vestuário e Moda | Mochila | unidade | R$ 238,25 | média |
+| Vestuário e Moda | Relógio de Pulso | unidade (analógico) | R$ 389,90 | média |
+| Cosméticos e Beleza | Perfume | frasco 100 ml | R$ 123,41 | média |
+| Cosméticos e Beleza | Creme Facial | unidade | R$ 53,90 | média |
+| Cosméticos e Beleza | Shampoo | frasco | R$ 32,99 | média |
+| Cosméticos e Beleza | Batom | unidade | R$ 30,08 | média |
+| Móveis e Decoração | Sofá | unidade (3 lugares) | R$ 1.437,34 | média |
+| Móveis e Decoração | Mesa de Jantar | unidade (4 lugares) | R$ 828,73 | média |
+| Móveis e Decoração | Luminária | unidade (de mesa) | R$ 75,91 | média |
+| Móveis e Decoração | Estante | unidade | R$ 343,77 | média |
+| Automotivo | Óleo de Motor | 1 L (sintético 5W30) | R$ 52,08 | média |
+| Automotivo | Filtro de Ar | unidade | R$ 22,84 | baixa |
+| Automotivo | Pastilha de Freio | jogo (dianteira) | R$ 116,41 | média |
+| Automotivo | Amortecedor | unidade (dianteiro) | R$ 400,50 | média |
+| Esportes e Fitness | Tênis de Corrida | par | R$ 341,24 | média |
+| Esportes e Fitness | Bicicleta | unidade (aro 29) | R$ 1.145,37 | média |
+| Esportes e Fitness | Bola de Futebol | unidade | R$ 132,40 | média |
+| Esportes e Fitness | Smartband | unidade | R$ 354,02 | média |
+| Saúde e Bem-estar | Vitamina C | frasco | R$ 44,26 | média |
+| Saúde e Bem-estar | Whey Protein | pote 900 g | R$ 177,90 | média |
+| Saúde e Bem-estar | Ômega 3 | frasco | R$ 75,91 | média |
+| Saúde e Bem-estar | Probiótico | frasco | R$ 72,89 | média |
+| Educação e Cursos | Curso Técnico | mensalidade | R$ 109,00 | média |
+| Educação e Cursos | Graduação EAD | mensalidade | R$ 214,00 | alta |
+| Educação e Cursos | Graduação Presencial | mensalidade | R$ 835,00 | alta |
+| Educação e Cursos | Pós-graduação (Especialização/MBA) | mensalidade | R$ 550,00 | média |
+| Pet Care | Ração Premium | saco 15 kg | R$ 175,89 | média |
+| Pet Care | Petisco | pacote 500 g | R$ 29,00 | média |
+| Pet Care | Brinquedo | unidade (mordedor) | R$ 21,76 | média |
+| Pet Care | Caminha | unidade | R$ 67,85 | média |
+| Construção e Materiais | Cimento | saco 50 kg | R$ 47,37 | média |
+| Construção e Materiais | Tinta Látex | lata 18 L | R$ 337,25 | média |
+| Construção e Materiais | Porcelanato | caixa (60×60) | R$ 77,51 | baixa |
+| Construção e Materiais | Torneira | unidade (cozinha) | R$ 218,80 | média |
+| Entretenimento e Mídia | Streaming de Vídeo | assinatura mensal | R$ 44,90 | alta |
+| Entretenimento e Mídia | Streaming de Música | assinatura mensal | R$ 23,90 | alta |
+| Entretenimento e Mídia | Jogo Digital | unidade (lançamento) | R$ 399,90 | alta |
+| Entretenimento e Mídia | Ingresso de Show | ingresso | R$ 200,00 | média |
+
+### B.2 Margens e verba de marketing por setor
+
+| Fonte | Uso |
+|---|---|
+| **Margens:** Damodaran (NYU Stern), *Margins by Sector – Emerging Markets*, jan. 2026. Pet Care usa a categoria varejo especializado como aproximação. | Custo dos produtos no novo motor de resultados, a partir da Rodada 1 do jogo |
+| **Verba de marketing:** Gartner CMO Spend Survey 2025 (América do Norte e Europa); para Construção, The CMO Survey (Duke), 2024. Não há pesquisa brasileira por setor; são referências internacionais. | Verba das rodadas, pelo método da porcentagem sobre as vendas (Kotler e Keller), no novo motor |
+
+| Setor | Margem bruta | Margem líquida | Verba de marketing (% da receita) |
+|---|---|---|---|
+| Eletrônicos e Tecnologia | 18,6% | 1,7% | 9,5% |
+| Alimentos e Bebidas | 23,5% | 5,1% | 9,7% |
+| Vestuário e Moda | 22% | 4,2% | 7,7% |
+| Cosméticos e Beleza | 47,5% | 5,5% | 9,7% |
+| Móveis e Decoração | 27,9% | 8,2% | 9,5% |
+| Automotivo | 18,8% | 4,5% | 9,5% |
+| Esportes e Fitness | 31,8% | 3,9% | 7,7% |
+| Saúde e Bem-estar | 45,6% | 10% | 9% |
+| Educação e Cursos | 51,1% | 13,4% | 7,7% |
+| Pet Care | 32,1% | 3,5% | 7,7% |
+| Construção e Materiais | 23,9% | 3,8% | 1% |
+| Entretenimento e Mídia | 58,5% | 12,1% | 7,7% |
 
 ## Apêndice C — Referências Bibliográficas (ABNT)
 

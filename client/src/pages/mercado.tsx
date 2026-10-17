@@ -230,17 +230,35 @@ export default function Mercado() {
                     </div>
                     <div>
                       <CardTitle>Categorias de Produtos</CardTitle>
-                      <CardDescription>Principais categorias disponíveis no setor</CardDescription>
+                      <CardDescription>Categorias do setor e preço médio praticado no mercado real</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="grid gap-2 md:grid-cols-3">
-                    {marketSector.categories?.map((category: any, idx: number) => (
-                      <Badge key={idx} variant="secondary" className="justify-center py-2">
-                        {category.name}
-                      </Badge>
-                    ))}
+                  {/* Out/2026: preço médio real de cada categoria, com unidade e fonte. */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm" data-testid="tabela-categorias-precos">
+                      <thead>
+                        <tr className="border-b text-left text-xs text-muted-foreground">
+                          <th className="py-2 pr-3 font-medium">Categoria</th>
+                          <th className="py-2 pr-3 font-medium text-right">Preço médio</th>
+                          <th className="py-2 pr-3 font-medium">Unidade</th>
+                          <th className="py-2 font-medium">Fonte</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {marketSector.categories?.map((category: any, idx: number) => (
+                          <tr key={idx} className="border-b last:border-0 align-top">
+                            <td className="py-2 pr-3 font-medium">{category.name}</td>
+                            <td className="py-2 pr-3 text-right tabular-nums">
+                              {Number(category.averagePrice).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                            </td>
+                            <td className="py-2 pr-3 text-muted-foreground">{category.unidade ?? "—"}</td>
+                            <td className="py-2 text-xs text-muted-foreground">{category.fontePreco ?? "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </CardContent>
               </Card>
