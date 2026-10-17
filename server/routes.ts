@@ -3657,6 +3657,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: "Salve suas decisões antes de submeter."
       });
     }
+    if (!(Number(existing.priceValue) > 0)) {
+      return res.status(400).json({
+        error: "Preço não definido",
+        details: "Defina o preço de venda do produto antes de enviar a decisão.",
+      });
+    }
     
     if (existing.submittedAt) {
       return res.status(400).json({ 
@@ -6509,6 +6515,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         roundId,
         productId,
       });
+
+      // Out/2026: o preço começa em branco (0 = não definido) e é obrigatório
+      // no envio final. Rascunho pode ser salvo sem preço.
+      if (isDraft === false && !(Number(data.priceValue) > 0)) {
+        return res.status(400).json({
+          error: "Preço não definido",
+          details: "Defina o preço de venda do produto antes de enviar a decisão.",
+        });
+      }
 
       // Validar valores mínimos das mídias selecionadas (se houver promotionBudgets)
       if (data.promotionBudgets && typeof data.promotionBudgets === 'object') {

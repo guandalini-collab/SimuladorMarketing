@@ -186,6 +186,8 @@ Os itens do grupo **Consulta** (Fechamento anual, Insights de Mercado, Orçament
 
 **Conjuntura real.** A IA usa, na PESTEL, nos eventos e no boletim, os **indicadores oficiais do Banco Central** (Selic, IPCA, dólar, PIB, desemprego e confiança do consumidor, atualizados automaticamente) e o texto **Conjuntura Brasil** (fatos econômicos e políticos atuais, com data e fonte; Seção 12). Os alunos veem o mesmo conteúdo na aba Economia e Política da Análise de Mercado.
 
+**Tela de decisões dos alunos.** O preço de cada produto **começa em branco** em toda rodada e é obrigatório: sem ele, o envio é recusado. A tela não traz mais os cartões de “Orientações Estratégicas” gerados pela IA nem textos de recomendação; mostra apenas dados de mercado com fonte (preço médio de referência da categoria, margens do setor e investimento típico em marketing). A equipe decide e descobre as consequências nos resultados.
+
 Durante a rodada, você tem três ferramentas à disposição na aba **Aula**, seção **Eventos de Mercado**:
 
 1. **Criar Manual** — você mesmo escreve um evento (tipo, severidade, título, descrição e impacto esperado) e aplica a uma rodada específica.

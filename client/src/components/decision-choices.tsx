@@ -349,27 +349,36 @@ export function PriceSlider({ value, onChange, disabled, reference, inputId }: P
 
   const step = niceStep(max);
   const pct = (v: number) => Math.min(100, Math.max(0, (v / max) * 100));
+  // Out/2026: preço 0 = ainda não definido (o campo começa em branco e é
+  // obrigatório no envio). Sem preço, não há faixa nem comparação.
+  const definido = value > 0;
   const band = priceBand(value, reference);
-  const diff = reference ? ((value - reference) / reference) * 100 : null;
+  const diff = definido && reference ? ((value - reference) / reference) * 100 : null;
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-muted-foreground">Preço unitário</p>
-          <p className="text-3xl font-bold tabular-nums" data-testid="text-price-value">{moeda(value)}</p>
-          <p className="mt-1 text-sm">
-            Faixa <span className={cn("font-semibold", band.tone)}>{band.label}</span>
-            {diff !== null && (
-              <span className="text-muted-foreground">
-                {" "}({diff >= 0 ? "+" : ""}{diff.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% em relação à média da categoria)
-              </span>
-            )}
-          </p>
+          <p className={cn("text-3xl font-bold tabular-nums", !definido && "text-muted-foreground")} data-testid="text-price-value">{definido ? moeda(value) : "—"}</p>
+          {definido ? (
+            <p className="mt-1 text-sm">
+              Faixa <span className={cn("font-semibold", band.tone)}>{band.label}</span>
+              {diff !== null && (
+                <span className="text-muted-foreground">
+                  {" "}({diff >= 0 ? "+" : ""}{diff.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% em relação à média da categoria)
+                </span>
+              )}
+            </p>
+          ) : (
+            <p className="mt-1 text-sm font-medium text-[#8a4a00] dark:text-orange-300" data-testid="text-price-missing">
+              Preço não definido. Ele é obrigatório para enviar a decisão.
+            </p>
+          )}
         </div>
         <div className="w-full sm:w-56">
           <label htmlFor={inputId} className="mb-1 block text-sm font-medium">Valor exato</label>
-          <FormattedMoneyInput id={inputId} value={value} onChange={onChange} disabled={disabled} placeholder="50" testId="input-price" />
+          <FormattedMoneyInput id={inputId} value={value} onChange={onChange} disabled={disabled} placeholder="Digite o preço" emptyWhenZero testId="input-price" />
         </div>
       </div>
 

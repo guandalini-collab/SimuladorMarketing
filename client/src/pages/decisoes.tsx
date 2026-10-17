@@ -20,7 +20,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { RecommendationCard } from "@/components/recommendation-card";
 import { formatarNumeroBR } from "@/lib/formatters";
 import { ChoiceCards, ScaleSelector, ToggleTiles, PriceSlider, MediaTile, BudgetMeter, mediaQuantityStep, type ChoiceOption } from "@/components/decision-choices";
 import {
@@ -109,7 +108,7 @@ const createDefaultDecisions = (): ProductDecisions => ({
   productFeatures: "basico",
   brandPositioning: "qualidade",
   priceStrategy: "competitivo",
-  priceValue: 50,
+  priceValue: 0, // Out/2026: preço em branco (0 = não definido); obrigatório no envio
   distributionChannels: ["varejo"],
   distributionCoverage: "regional",
   promotionMix: [],
@@ -254,17 +253,9 @@ export default function Decisoes() {
     enabled: !!activeRoundId,
   });
 
-  // Buscar recomendações estratégicas automáticas via IA - only when decisions are allowed
-  const { data: recommendations, isLoading: isLoadingRecommendations } = useQuery<{
-    product: string[];
-    price: string[];
-    place: string[];
-    promotion: string[];
-    updatedAt: string;
-  } | null>({
-    queryKey: ["/api/ai/strategic-recommendations/current", activeRoundId],
-    enabled: !!activeRoundId && !!team,
-  });
+  // Out/2026: os cartões "Orientações Estratégicas" (recomendações da IA)
+  // saíram da tela de decisões, a pedido do professor — a equipe decide com
+  // base nos dados de mercado e descobre as consequências nos resultados.
 
   // Verificar se todas as ferramentas estratégicas foram preenchidas
   const isSwotComplete = strategicTools?.swot && (
@@ -343,7 +334,7 @@ export default function Decisoes() {
               productFeatures: mix.productFeatures || "basico",
               brandPositioning: mix.brandPositioning || "qualidade",
               priceStrategy: mix.priceStrategy || "competitivo",
-              priceValue: mix.priceValue ?? 50,
+              priceValue: mix.priceValue ?? 0,
               distributionChannels: mix.distributionChannels || ["varejo"],
               distributionCoverage: mix.distributionCoverage || "regional",
               promotionMix: normalizedPromotionMix,
@@ -520,6 +511,20 @@ export default function Decisoes() {
       toast({
         title: "Ferramentas estratégicas incompletas",
         description: "Complete todas as ferramentas estratégicas (SWOT, Porter, BCG, PESTEL e Segmentação de Mercado) antes de submeter suas decisões.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Out/2026: preço é obrigatório (começa em branco) em todos os produtos pendentes.
+    const semPreco = products.filter((product: any) => {
+      const d = productDecisions[product.id];
+      return !d?.submittedAt && !((d?.priceValue ?? 0) > 0);
+    });
+    if (semPreco.length > 0) {
+      toast({
+        title: "Preço não definido",
+        description: `Defina o preço de venda antes de enviar: ${semPreco.map((p: any) => p.name).join(", ")}.`,
         variant: "destructive",
       });
       return;
@@ -850,19 +855,15 @@ export default function Decisoes() {
         </TabsList>
 
         <TabsContent value="produto" className="space-y-6 mt-6">
-          <RecommendationCard
-            title="Orientações Estratégicas - Produto"
-            recommendations={recommendations?.product}
-            isLoading={isLoadingRecommendations}
-            emptyMessage="Nenhuma recomendação estratégica disponível"
-            testId="card-recommendation-product"
-          />
 
           {marketSector && (
             <Alert>
               <Package className="h-4 w-4" />
               <AlertDescription>
-                <strong>Informações do Setor:</strong> {marketSector.name} - Margem média de {marketSector.averageMargin}%. 
+                <strong>Informações do Setor:</strong> {marketSector.name}
+                {marketSector.margemBruta != null
+                  ? ` – margem bruta média de ${String(marketSector.margemBruta).replace(".", ",")}% (Damodaran, 2026).`
+                  : ` – margem média de ${marketSector.averageMargin}%.`}
                 {marketSector.categories && marketSector.categories.length > 0 && (
                   <span> Preço médio da categoria {productCategory?.name ?? ''}: R$ {(productCategory?.averagePrice ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.</span>
                 )}
@@ -946,23 +947,21 @@ export default function Decisoes() {
         </TabsContent>
 
         <TabsContent value="preco" className="space-y-6 mt-6">
-          <RecommendationCard
-            title="Orientações Estratégicas - Preço"
-            recommendations={recommendations?.price}
-            isLoading={isLoadingRecommendations}
-            emptyMessage="Nenhuma recomendação estratégica disponível"
-            testId="card-recommendation-price"
-          />
 
           {marketSector && (
             <Alert>
               <DollarSign className="h-4 w-4" />
               <AlertDescription>
-                <strong>Margem do Setor:</strong> {marketSector.averageMargin}% em média. 
-                Nível de concorrência: <strong>{currentClass?.competitionLevel || marketSector.competitionLevel}</strong> - 
-                {currentClass?.competitionLevel === 'alta' && ' margens mais apertadas, foco em volume.'}
-                {currentClass?.competitionLevel === 'media' && ' margem moderada, balanceie preço e qualidade.'}
-                {currentClass?.competitionLevel === 'baixa' && ' maior flexibilidade de preço.'}
+                {marketSector.margemBruta != null ? (
+                  <>
+                    <strong>Margens do setor:</strong> bruta de {String(marketSector.margemBruta).replace(".", ",")}% e líquida de {String(marketSector.margemLiquida).replace(".", ",")}% da receita (Damodaran, 2026).
+                    {productCategory?.averagePrice ? (
+                      <> Preço médio de referência da categoria {productCategory.name}: <strong>{formatarNumeroBR(productCategory.averagePrice, 'moeda')}</strong>{productCategory.unidade ? ` (${productCategory.unidade})` : ""}{productCategory.fontePreco ? `. Fonte: ${productCategory.fontePreco}` : ""}.</>
+                    ) : null}
+                  </>
+                ) : (
+                  <><strong>Margem do Setor:</strong> {marketSector.averageMargin}% em média.</>
+                )}
               </AlertDescription>
             </Alert>
           )}
@@ -1012,28 +1011,12 @@ export default function Decisoes() {
                   reference={productCategory?.averagePrice}
                   inputId="price-input"
                 />
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm">
-                    <strong>Margem estimada para a estratégia escolhida:</strong>{" "}
-                    {priceStrategy === "penetracao" ? "Baixa (15-25%)" : 
-                     priceStrategy === "competitivo" ? "Média (25-40%)" :
-                     priceStrategy === "skimming" ? "Alta (40-60%)" :
-                     "Variável (20-50%)"}
-                  </p>
-                </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
         <TabsContent value="praca" className="space-y-6 mt-6">
-          <RecommendationCard
-            title="Orientações Estratégicas - Praça"
-            recommendations={recommendations?.place}
-            isLoading={isLoadingRecommendations}
-            emptyMessage="Nenhuma recomendação estratégica disponível"
-            testId="card-recommendation-place"
-          />
 
           {currentClass?.businessType && (
             <Alert>
@@ -1043,9 +1026,6 @@ export default function Decisoes() {
                     antes a comparação era com "B2C"/"B2B"/"Híbrido" e a
                     recomendação nunca aparecia. Só exibição. */}
                 <strong>Tipo de Negócio:</strong> {BUSINESS_TYPE_LABELS[currentClass.businessType] ?? currentClass.businessType}.
-                {currentClass.businessType === 'b2c' && ' Recomendado: Varejo, E-commerce, Marketplaces.'}
-                {currentClass.businessType === 'b2b' && ' Recomendado: Venda Direta, Atacado, Representantes.'}
-                {currentClass.businessType === 'hibrido' && ' Combine canais B2B e B2C para maximizar alcance.'}
               </AlertDescription>
             </Alert>
           )}
@@ -1094,22 +1074,13 @@ export default function Decisoes() {
         </TabsContent>
 
         <TabsContent value="promocao" className="space-y-6 mt-6">
-          <RecommendationCard
-            title="Orientações Estratégicas - Promoção"
-            recommendations={recommendations?.promotion}
-            isLoading={isLoadingRecommendations}
-            emptyMessage="Nenhuma recomendação estratégica disponível"
-            testId="card-recommendation-promotion"
-          />
 
-          {currentClass?.competitionLevel && (
+          {marketSector?.verbaMarketingPct != null && (
             <Alert>
               <Megaphone className="h-4 w-4" />
               <AlertDescription>
-                <strong>Concorrência {currentClass.competitionLevel}:</strong> 
-                {currentClass.competitionLevel === 'alta' && ' Necessário alto investimento em promoção para se destacar.'}
-                {currentClass.competitionLevel === 'media' && ' Investimento balanceado em comunicação.'}
-                {currentClass.competitionLevel === 'baixa' && ' Menor pressão promocional, foco em construção de marca.'}
+                <strong>Investimento em marketing no setor:</strong> {String(marketSector.verbaMarketingPct).replace(".", ",")}% da receita, em média
+                {marketSector.fonteVerbaMarketing ? ` (${marketSector.fonteVerbaMarketing})` : ""}.
               </AlertDescription>
             </Alert>
           )}
@@ -1335,7 +1306,7 @@ export default function Decisoes() {
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Dica:</strong> Você pode salvar seu rascunho quantas vezes quiser. 
+            <strong>Rascunho e envio:</strong> o rascunho pode ser salvo quantas vezes for necessário. 
             Quando estiver satisfeito com suas decisões, clique em "Enviar Decisão da Equipe" 
             para submeter oficialmente. Após o envio, não será possível fazer alterações.
           </AlertDescription>

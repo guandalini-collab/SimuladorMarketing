@@ -45,6 +45,8 @@ interface FormattedMoneyInputProps {
   placeholder?: string;
   testId?: string;
   className?: string;
+  /** Out/2026: exibe o campo vazio quando o valor é 0 (ex.: preço ainda não definido). */
+  emptyWhenZero?: boolean;
 }
 
 /**
@@ -60,7 +62,9 @@ export function FormattedMoneyInput({
   placeholder = '0',
   testId,
   className = '',
+  emptyWhenZero = false,
 }: FormattedMoneyInputProps) {
+  const exibir = (v: number) => (emptyWhenZero && !v ? '' : formatarNumeroBR(v, 'moeda'));
   const [displayValue, setDisplayValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -68,7 +72,7 @@ export function FormattedMoneyInput({
   // Atualiza display quando value prop mudar
   useEffect(() => {
     if (!isFocused) {
-      setDisplayValue(formatarNumeroBR(value, 'moeda'));
+      setDisplayValue(exibir(value));
     }
   }, [value, isFocused]);
 
@@ -129,7 +133,7 @@ export function FormattedMoneyInput({
   const handleBlur = () => {
     setIsFocused(false);
     // Ao perder o foco, formata completamente (com centavos)
-    setDisplayValue(formatarNumeroBR(value, 'moeda'));
+    setDisplayValue(exibir(value));
     onBlur?.();
   };
 
@@ -144,7 +148,7 @@ export function FormattedMoneyInput({
       onFocus={handleFocus}
       onBlur={handleBlur}
       disabled={disabled}
-      placeholder={placeholder ? `R$ ${placeholder}` : 'R$ 0'}
+      placeholder={emptyWhenZero ? placeholder : placeholder ? `R$ ${placeholder}` : 'R$ 0'}
       className={`text-lg font-semibold ${className}`}
       data-testid={testId}
     />
