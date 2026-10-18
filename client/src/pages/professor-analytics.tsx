@@ -203,7 +203,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
         />
         <MetricCard
           title="Taxa de Submissão"
-          value={`${analytics.engagement.overall.avgSubmissionRate.toFixed(1)}%`}
+          value={`${Number(analytics.engagement.overall.avgSubmissionRate ?? 0).toFixed(1)}%`}
           subtitle="Média entre equipes"
           icon={CheckCircle2}
           color="green"
@@ -212,7 +212,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
         />
         <MetricCard
           title="Ferramentas Concluídas"
-          value={analytics.engagement.overall.avgToolsCompleted.toFixed(1)}
+          value={Number(analytics.engagement.overall.avgToolsCompleted ?? 0).toFixed(1)}
           subtitle="de 4 ferramentas (média)"
           icon={Target}
           color="orange"
@@ -336,7 +336,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
                       </TableCell>
                       <TableCell className="font-medium">{team.teamName}</TableCell>
                       <TableCell className="text-right">R$ {team.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                      <TableCell className="text-right">{team.margin.toFixed(1)}%</TableCell>
+                      <TableCell className="text-right">{Number(team.margin ?? 0).toFixed(1)}%</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -362,7 +362,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium">{team.teamName}</TableCell>
-                      <TableCell className="text-right">{team.marketShare.toFixed(1)}%</TableCell>
+                      <TableCell className="text-right">{Number(team.marketShare ?? 0).toFixed(1)}%</TableCell>
                       <TableCell className="text-right">R$ {team.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     </TableRow>
                   ))}
@@ -389,7 +389,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium">{team.teamName}</TableCell>
-                      <TableCell className="text-right">{team.nps.toFixed(0)}</TableCell>
+                      <TableCell className="text-right">{Number(team.nps ?? 0).toFixed(0)}</TableCell>
                       <TableCell className="text-right">R$ {team.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     </TableRow>
                   ))}
@@ -416,8 +416,8 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium">{team.teamName}</TableCell>
-                      <TableCell className="text-right">{team.roi.toFixed(1)}%</TableCell>
-                      <TableCell className="text-right">{team.margin.toFixed(1)}%</TableCell>
+                      <TableCell className="text-right">{Number(team.roi ?? 0).toFixed(1)}%</TableCell>
+                      <TableCell className="text-right">{Number(team.margin ?? 0).toFixed(1)}%</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -457,7 +457,7 @@ export default function ProfessorAnalytics({ classId }: { classId: string }) {
                   </TableCell>
                   <TableCell className="text-right">
                     <Badge variant={team.submissionRate >= 80 ? "default" : team.submissionRate >= 50 ? "secondary" : "outline"}>
-                      {team.submissionRate.toFixed(0)}%
+                      {Number(team.submissionRate ?? 0).toFixed(0)}%
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">

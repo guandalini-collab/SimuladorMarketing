@@ -71,7 +71,10 @@ export function AlignmentTeamReport({ classId, lastCompletedRound }: AlignmentTe
 
   const criticalTeams = alignmentData.filter(t => t.alignmentScore !== null && t.alignmentScore < 30);
   const weakTeams = alignmentData.filter(t => t.alignmentScore !== null && t.alignmentScore >= 30 && t.alignmentScore < 50);
-  const noSubmissionTeams = alignmentData.filter(t => t.alignmentScore === null);
+  // Out/2026 (Grupo E): "sem envio" só para quem de fato não tem resultado.
+  // Quem enviou mas ficou sem nota de alinhamento (análises da rodada
+  // indisponíveis por falha da IA) aparece à parte, sem ser acusado.
+  const noSubmissionTeams = alignmentData.filter(t => t.alignmentScore === null && t.hasSubmission !== true);
   const goodTeams = alignmentData.filter(t => t.alignmentScore !== null && t.alignmentScore >= 50);
 
   const totalTeams = alignmentData.length;
@@ -190,6 +193,7 @@ export function AlignmentTeamReport({ classId, lastCompletedRound }: AlignmentTe
                   const isCritical = score !== null && score < 30;
                   const isWeak = score !== null && score >= 30 && score < 50;
                   const noData = score === null;
+                  const enviouSemAlinhamento = noData && team.hasSubmission === true;
                   
                   return (
                     <TableRow 
@@ -210,7 +214,7 @@ export function AlignmentTeamReport({ classId, lastCompletedRound }: AlignmentTe
                             {score}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground text-sm">Sem dados</span>
+                          <span className="text-muted-foreground text-sm">{enviouSemAlinhamento ? "Neutro" : "Sem envio"}</span>
                         )}
                       </TableCell>
                       <TableCell className="text-center">
@@ -223,9 +227,13 @@ export function AlignmentTeamReport({ classId, lastCompletedRound }: AlignmentTe
                         )}
                       </TableCell>
                       <TableCell>
-                        {noData ? (
+                        {enviouSemAlinhamento ? (
                           <span className="text-sm text-muted-foreground italic">
-                            Equipe não submeteu análises ou mix de marketing
+                            Decisão enviada; alinhamento neutro nesta rodada (as análises da rodada não estavam disponíveis). O peso do alinhamento foi redistribuído na nota.
+                          </span>
+                        ) : noData ? (
+                          <span className="text-sm text-muted-foreground italic">
+                            Equipe não enviou a decisão nesta rodada
                           </span>
                         ) : team.alignmentIssues.length > 0 ? (
                           <ul className="space-y-1 text-sm text-muted-foreground">

@@ -36,11 +36,15 @@ function Valor({ v }: { v: number | null }) {
 export function RelatorioSemelhanca({ classId, rounds }: { classId: string; rounds: { id: string; roundNumber: number; status: string; isPractice?: boolean | null }[] }) {
   const disponiveis = rounds.filter((r) => r.status === "active" || r.status === "completed").sort((a, b) => b.roundNumber - a.roundNumber);
   const [roundId, setRoundId] = useState<string>("");
+  // Out/2026 (Grupo E): ao trocar de turma, a rodada escolhida volta para a
+  // mais recente da turma nova (antes ficava a rodada da turma anterior).
+  const idsDisponiveis = disponiveis.map((r) => r.id).join(",");
   useEffect(() => {
-    if (!roundId && disponiveis.length) setRoundId(disponiveis[0].id);
-  }, [disponiveis, roundId]);
+    if (!disponiveis.length) { if (roundId) setRoundId(""); return; }
+    if (!roundId || !disponiveis.some((r) => r.id === roundId)) setRoundId(disponiveis[0].id);
+  }, [idsDisponiveis, roundId]);
 
-  const { data, isLoading } = useQuery<{ roundNumber: number; analisesProntas: boolean; linhas: LinhaSemelhanca[] }>({
+  const { data, isLoading, isError } = useQuery<{ roundNumber: number; analisesProntas: boolean; linhas: LinhaSemelhanca[] }>({
     queryKey: [`/api/classes/${classId}/relatorio-semelhanca?roundId=${roundId}`],
     enabled: !!classId && !!roundId,
   });
@@ -74,8 +78,12 @@ export function RelatorioSemelhanca({ classId, rounds }: { classId: string; roun
         <p className="text-sm text-muted-foreground">
           Mede quantas palavras da Segmentação de Mercado de cada equipe coincidem com as das outras equipes e com a da própria equipe na rodada anterior. Valores a partir de 70% merecem uma leitura atenta; são um indício, não uma prova de cópia, e o relatório não identifica textos produzidos com ferramentas externas.
         </p>
-        {isLoading || !data ? (
+        {isError ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Não foi possível carregar o relatório. Recarregue a página.</p>
+        ) : isLoading || !data ? (
           <p className="py-6 text-center text-sm text-muted-foreground">Carregando…</p>
+        ) : data.linhas.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Nenhuma equipe nesta rodada.</p>
         ) : (
           <div className="overflow-x-auto rounded-lg border">
             <Table>

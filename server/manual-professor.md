@@ -213,10 +213,10 @@ Ao longo da rodada, acompanhe na aba **Aula** quantas equipes já enviaram suas 
 
 ## 9. Passo a Passo: Encerrar uma Rodada
 
-Na aba **Aula**, com a rodada ativa, clique em **Encerrar Rodada** (marcadores 1 ou 4 na imagem acima). Isso dispara o cálculo de todos os resultados e KPIs daquela rodada para todas as equipes, com base nas decisões enviadas.
+Na aba **Aula**, com a rodada ativa, clique em **Encerrar Rodada** (marcadores 1 ou 4 na imagem acima). O sistema pede confirmação e mostra quantas equipes, e quais, ainda não enviaram a decisão (essas ficam com nota 0 na rodada). Ao confirmar, ele calcula todos os resultados e KPIs daquela rodada para todas as equipes, com base nas decisões enviadas, e atualiza a tela inteira (notas, resultados e relatórios). Se o encerramento falhar, aparece uma mensagem de erro.
 
 :::alerta Atenção — este é o ponto mais importante deste manual
-Se uma equipe **não enviou nenhuma decisão** na rodada, o sistema **não cria nenhum registro de resultado para ela** ao encerrar — ela simplesmente fica de fora do processamento daquela rodada, silenciosamente, sem nenhum aviso ou bloqueio. O contador de "equipes que enviaram" mencionado na Seção 8 é só informativo; ele não impede o encerramento.
+Se uma equipe **não enviou nenhuma decisão** na rodada, o sistema **não cria nenhum registro de resultado para ela** ao encerrar — ela fica de fora do processamento daquela rodada e recebe nota 0 nela. A janela de confirmação do encerramento lista essas equipes, mas não impede o encerramento.
 
 Antes de clicar em Encerrar Rodada, confira manualmente na aba Aula se todas as equipes que deveriam participar já enviaram suas decisões — essa conferência é uma decisão e responsabilidade do professor, feita no momento do encerramento. Se uma equipe ficou de fora por engano, a forma de corrigir depois é reabrir a rodada e reprocessá-la — mais trabalhoso do que simplesmente conferir antes.
 :::
@@ -319,7 +319,7 @@ Nas turmas do motor competitivo, SWOT, 5 Forças de Porter, Matriz BCG e PESTEL 
 
 As instruções dadas à IA proíbem recomendar decisões e inventar números: os textos são diagnóstico, com os dados fornecidos pelo sistema. As análises ficam gravadas por rodada; reabrir a tela não gera conteúdo novo.
 
-O botão **Gerar Análises**, no cartão **Análises Estratégicas Automáticas** da aba **Aula**, refaz as quatro análises da rodada ativa (útil se a IA estiver indisponível na preparação). Se mesmo assim alguma análise não puder ser gerada, a tela do aluno mostra "em preparação", o envio da decisão não é bloqueado e o alinhamento estratégico daquela equipe fica neutro na rodada.
+O botão **Gerar Análises**, no cartão **Análises Estratégicas Automáticas** da aba **Aula**, pede confirmação e refaz as quatro análises da rodada ativa (útil se a IA estiver indisponível na preparação). Se mesmo assim alguma análise não puder ser gerada, a tela do aluno mostra "em preparação", o envio da decisão não é bloqueado e o alinhamento estratégico daquela equipe fica neutro na rodada.
 
 :::alerta Rodada de teste e Segmentação
 A rodada de teste também recebe as análises prontas. A Segmentação feita nela é apagada em **Iniciar o jogo**; na Rodada 1, cada equipe registra a sua de novo.
@@ -350,7 +350,7 @@ O score de alinhamento combina dois blocos: 70% mede a coerência entre as cinco
 
 ### 11.3 Sistema de Notas
 
-Assim que a primeira rodada é encerrada, aparece a seção **Sistema de Notas**, com uma nota de **0 a 100, com uma casa decimal**, por equipe (todos os membros da equipe recebem a mesma nota). Ela é recalculada sozinha a cada rodada encerrada, com uma fórmula fixa e os seguintes pesos:
+Assim que a primeira rodada é encerrada, aparece a seção **Sistema de Notas**, com uma nota de **0 a 100, com uma casa decimal**, por equipe (todos os membros da equipe recebem a mesma nota). A cada rodada encerrada entra uma nota nova, calculada com uma fórmula fixa e os seguintes pesos:
 
 | Métrica | Peso |
 |---|---|
@@ -361,14 +361,18 @@ Assim que a primeira rodada é encerrada, aparece a seção **Sistema de Notas**
 | Margem | 15% |
 | Alinhamento Estratégico | 10% |
 
-Cada métrica é normalizada (0 a 100) comparando o resultado da equipe com os resultados de todas as equipes da turma nas rodadas encerradas, antes de aplicar os pesos — ou seja, é uma nota relativa à turma, não uma escala absoluta.
+Cada métrica é normalizada de 0 a 100 comparando o resultado da equipe com os das **demais equipes da turma na mesma rodada**: a equipe com o maior valor da rodada recebe 100 naquela métrica, a de menor valor recebe 0, e as demais ficam proporcionalmente entre elas. Depois os pesos são aplicados. É uma nota relativa à turma em cada rodada, não uma escala absoluta.
+
+- **A nota de uma rodada não muda depois de publicada** (out/2026): como cada rodada é comparada só com ela mesma, encerrar as rodadas seguintes não altera as notas anteriores. Antes, todas as rodadas eram comparadas juntas, e as notas antigas mudavam a cada semana.
+- **Quando só uma equipe enviou** a decisão numa rodada (ou todas tiveram o mesmo valor numa métrica), aquela métrica vale 50 para todas, porque não há com quem comparar.
+- **Alinhamento indisponível:** quando a equipe enviou a decisão mas ficou sem nota de alinhamento (análises da rodada indisponíveis por falha da IA), os 10% do alinhamento são divididos igualmente entre as outras cinco métricas (2% para cada uma). No Relatório de Alinhamento, essa equipe aparece como "Neutro", e não como "sem envio".
 
 - **Todas as rodadas encerradas contam**, inclusive a Rodada 1. A rodada de teste não conta.
 - **Rodada sem decisão enviada vale 0** e entra na média, como uma falta à atividade daquele dia. Na tabela, essa célula aparece como "0,0 · sem envio". Só não contam as rodadas encerradas antes de a equipe ser formada.
-- A **Nota Final** é a média das notas de cada rodada.
+- A **Nota Final** é a média das notas de cada rodada, arredondada uma única vez para uma casa decimal. Em caso de empate, a ordem da tabela segue o nome da empresa.
 - O número total de rodadas da turma não interfere na nota: você pode aumentar o "Total de Rodadas" a qualquer momento.
 
-A tabela de notas pode ser exportada em **CSV** pela tela, com ponto e vírgula como separador e vírgula decimal (abre direto no Excel em português), para lançamento em outro sistema de avaliação.
+A tabela de notas pode ser exportada em **CSV** pela tela, com ponto e vírgula como separador e vírgula decimal (abre direto no Excel em português), para lançamento em outro sistema de avaliação. Cada campo vai entre aspas, para que um ponto e vírgula no nome de uma equipe não desalinhe as colunas, e um nome que comece com =, +, - ou @ recebe um apóstrofo na frente, para o Excel não tratá-lo como fórmula. O nome do arquivo leva a data de Brasília.
 
 ### 11.4 Relatório de semelhança
 

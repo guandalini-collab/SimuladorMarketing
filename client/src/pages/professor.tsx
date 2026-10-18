@@ -136,7 +136,10 @@ function AccessLogsReport({ classId, rounds, teams }: { classId: string; rounds:
     queryKey: ["/api/classes", classId, "round-access-logs"],
     queryFn: async () => {
       const res = await fetch(`/api/classes/${classId}/round-access-logs`, { credentials: "include" });
-      return res.json();
+      // Out/2026 (Grupo E): erro (401/500) não derruba mais a página do professor.
+      if (!res.ok) return [];
+      const dados = await res.json();
+      return Array.isArray(dados) ? dados : [];
     },
     refetchInterval: 10000, // Atualiza a cada 10 segundos
   });
@@ -1932,9 +1935,9 @@ function RoundsTimeline({
   const iniciarJogoMutation = useMutation({
     mutationFn: async () => (await apiRequest("POST", `/api/classes/${currentClass.id}/iniciar-jogo`)).json(),
     onSuccess: (r: { rodadasApagadas: number; equipesRestauradas: number }) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/rounds", currentClass.id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/classes"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+      // Out/2026 (Grupo E): atualiza toda a tela (resultados, notas, eventos e
+      // relatórios da rodada de teste deixam de existir).
+      queryClient.invalidateQueries();
       setConfirmarInicioJogo(false);
       toast({ title: "Jogo iniciado!", description: `${r.rodadasApagadas} rodada(s) de teste apagada(s) e verba inicial devolvida a ${r.equipesRestauradas} equipe(s). A próxima rodada é a Rodada 1.` });
     },
@@ -2229,22 +2232,28 @@ function GradesRanking({
     });
   }, [allResults, teamIdSet, gradableRoundIdSet, rounds]);
   
-  const calculateBenchmarks = useMemo(() => {
-    if (classGradableResults.length === 0) return null;
-    
-    const profits = classGradableResults.map(r => r.profit);
-    const rois = classGradableResults.map(r => r.roi);
-    const marketShares = classGradableResults.map(r => r.marketShare);
-    const npss = classGradableResults.map(r => r.nps);
-    const margins = classGradableResults.map(r => r.margin);
-    
-    return {
-      profit: { min: Math.min(...profits), max: Math.max(...profits) },
-      roi: { min: Math.min(...rois), max: Math.max(...rois) },
-      marketShare: { min: Math.min(...marketShares), max: Math.max(...marketShares) },
-      nps: { min: Math.min(...npss), max: Math.max(...npss) },
-      margin: { min: Math.min(...margins), max: Math.max(...margins) }
-    };
+  // Out/2026 (decisão do professor): cada rodada é normalizada só com os
+  // resultados das equipes NAQUELA rodada. Antes, mínimos e máximos vinham
+  // de todas as rodadas juntas: a nota da Rodada 1 era medida contra valores
+  // da Rodada 10, e cada rodada encerrada mudava as notas já publicadas.
+  type Benchmarks = Record<"profit" | "roi" | "marketShare" | "nps" | "margin", { min: number; max: number }>;
+  const numeroValido = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : Number(v) || 0);
+  const benchmarksPorRodada = useMemo(() => {
+    const mapa = new Map<string, Benchmarks>();
+    const porRodada = new Map<string, any[]>();
+    for (const r of classGradableResults) {
+      const lista = porRodada.get(r.roundId) ?? [];
+      lista.push(r);
+      porRodada.set(r.roundId, lista);
+    }
+    porRodada.forEach((lista, roundId) => {
+      const faixa = (campo: string) => {
+        const valores = lista.map((r) => numeroValido(r[campo]));
+        return { min: Math.min(...valores), max: Math.max(...valores) };
+      };
+      mapa.set(roundId, { profit: faixa("profit"), roi: faixa("roi"), marketShare: faixa("marketShare"), nps: faixa("nps"), margin: faixa("margin") });
+    });
+    return mapa;
   }, [classGradableResults]);
   
   const normalizeScore = (value: number, min: number, max: number): number => {
@@ -2253,7 +2262,7 @@ function GradesRanking({
     return Math.min(100, Math.max(0, normalized));
   };
   
-  const calculateGrade = (results: any[], benchmarks: typeof calculateBenchmarks): number => {
+  const calculateGrade = (results: any[], benchmarks: Benchmarks | null | undefined): number => {
     if (results.length === 0 || !benchmarks) return 0;
     
     const weights = {
@@ -2271,19 +2280,19 @@ function GradesRanking({
     results.forEach(result => {
       let roundScore = 0;
       
-      const profitScore = normalizeScore(result.profit, benchmarks.profit.min, benchmarks.profit.max);
+      const profitScore = normalizeScore(numeroValido(result.profit), benchmarks.profit.min, benchmarks.profit.max);
       roundScore += profitScore * weights.profit;
       
-      const roiScore = normalizeScore(result.roi, benchmarks.roi.min, benchmarks.roi.max);
+      const roiScore = normalizeScore(numeroValido(result.roi), benchmarks.roi.min, benchmarks.roi.max);
       roundScore += roiScore * weights.roi;
       
-      const marketShareScore = normalizeScore(result.marketShare, benchmarks.marketShare.min, benchmarks.marketShare.max);
+      const marketShareScore = normalizeScore(numeroValido(result.marketShare), benchmarks.marketShare.min, benchmarks.marketShare.max);
       roundScore += marketShareScore * weights.marketShare;
       
-      const npsScore = normalizeScore(result.nps, benchmarks.nps.min, benchmarks.nps.max);
+      const npsScore = normalizeScore(numeroValido(result.nps), benchmarks.nps.min, benchmarks.nps.max);
       roundScore += npsScore * weights.nps;
       
-      const marginScore = normalizeScore(result.margin, benchmarks.margin.min, benchmarks.margin.max);
+      const marginScore = normalizeScore(numeroValido(result.margin), benchmarks.margin.min, benchmarks.margin.max);
       roundScore += marginScore * weights.margin;
       
       if (result.alignmentScore !== null && result.alignmentScore !== undefined) {
@@ -2302,7 +2311,8 @@ function GradesRanking({
     });
     
     // Pedido do professor (out/2026): nota de 0 a 100 com uma casa decimal.
-    return validRounds > 0 ? Math.round((totalScore / validRounds) * 10) / 10 : 0;
+    // (O arredondamento é feito só na exibição e na média final.)
+    return validRounds > 0 ? totalScore / validRounds : 0;
   };
 
   const formatarNota = (nota: number) => nota.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -2322,8 +2332,8 @@ function GradesRanking({
   };
   
   const teamGrades = useMemo(() => {
-    if (!calculateBenchmarks) return [];
-    
+    // Out/2026: sem nenhum resultado (ex.: rodada encerrada sem envios), as
+    // equipes continuam listadas, com 0 nas rodadas sem envio.
     return teams.map(team => {
       const teamResults = classGradableResults.filter(r => r.teamId === team.id);
       // Pedido do professor (out/2026): rodada sem decisão enviada vale 0 —
@@ -2339,10 +2349,11 @@ function GradesRanking({
           roundNumber: round.roundNumber,
           roundId: round.id,
           semEnvio: existia && !roundResult,
-          grade: roundResult ? calculateGrade([roundResult], calculateBenchmarks) : existia ? 0 : null
+          grade: roundResult ? calculateGrade([roundResult], benchmarksPorRodada.get(round.id)) : existia ? 0 : null
         };
       });
       const notasValidas = roundGrades.filter(rg => rg.grade !== null).map(rg => rg.grade as number);
+      // Média das notas exatas de cada rodada, arredondada uma única vez.
       const grade = notasValidas.length > 0
         ? Math.round((notasValidas.reduce((a, b) => a + b, 0) / notasValidas.length) * 10) / 10
         : 0;
@@ -2358,8 +2369,8 @@ function GradesRanking({
         roundGrades,
         roundsParticipated: teamResults.length
       };
-    }).sort((a, b) => b.finalGrade - a.finalGrade);
-  }, [teams, classGradableResults, gradableRounds, calculateBenchmarks, userMap]);
+    }).sort((a, b) => b.finalGrade - a.finalGrade || String(a.companyName || a.teamName).localeCompare(String(b.companyName || b.teamName), "pt-BR"));
+  }, [teams, classGradableResults, gradableRounds, benchmarksPorRodada, userMap]);
   
   const exportToExcel = () => {
     const headers = ["Posição", "Equipe", "Empresa", "Alunos", ...gradableRounds.map(r => `Rodada ${r.roundNumber}`), "Nota Final"];
@@ -2370,21 +2381,33 @@ function GradesRanking({
         (index + 1).toString(),
         team.teamName,
         team.companyName || "-",
-        `"${memberNamesStr}"`,
+        memberNamesStr,
         ...roundColumns,
         formatarNota(team.finalGrade)
       ];
     });
     
+    // Out/2026 (Grupo E): todo campo vai entre aspas (aspas internas
+    // duplicadas), para ";" ou quebra de linha no nome da equipe não quebrar
+    // as colunas; e texto que começa com =, +, - ou @ recebe um apóstrofo,
+    // para o Excel não executá-lo como fórmula. Notas não são afetadas.
+    const campoCsv = (v: string) => {
+      const texto = /^[=+\-@\t\r][\s\S]/.test(v) && !/^-?\d/.test(v) ? `'${v}` : v;
+      return `"${texto.replace(/"/g, '""')}"`;
+    };
     // ";" como separador: as notas usam vírgula decimal (padrão do Excel em português).
-    const csvContent = [headers, ...rows].map(row => row.join(";")).join("\n");
+    const csvContent = [headers, ...rows].map(row => row.map(campoCsv).join(";")).join("\r\n");
     const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `notas_simulador_${new Date().toISOString().split("T")[0]}.csv`;
+    // Data de Brasília no nome do arquivo (antes, depois das 21h saía a data de amanhã).
+    const hojeBrasilia = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+    link.download = `notas_simulador_${hojeBrasilia}.csv`;
+    document.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(url);
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     
     toast({ title: "Notas exportadas!", description: "Arquivo CSV gerado com sucesso." });
   };
@@ -2636,6 +2659,13 @@ export default function Professor() {
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [teamBudgetEdits, setTeamBudgetEdits] = useState<Record<string, number>>({});
   const [classToDelete, setClassToDelete] = useState<string | null>(null);
+  // Out/2026 (Grupo E): confirmação antes de encerrar a rodada e de refazer as análises.
+  const [confirmarEncerramento, setConfirmarEncerramento] = useState<string | null>(null);
+  const [confirmarGerarAnalises, setConfirmarGerarAnalises] = useState<string | null>(null);
+  const pedirEncerramento = (roundId: string) => {
+    queryClient.invalidateQueries({ queryKey: ["/api/classes"] });
+    setConfirmarEncerramento(roundId);
+  };
   const [teamToDelete, setTeamToDelete] = useState<string | null>(null);
   const [marketConfigEdits, setMarketConfigEdits] = useState<any>(null);
   const [addMemberDialog, setAddMemberDialog] = useState<{open: boolean; teamId: string | null; teamName: string}>({
@@ -3034,8 +3064,7 @@ export default function Professor() {
     },
     onSuccess: () => {
       setShowStartRoundDialog(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/rounds", selectedClass] });
-      queryClient.invalidateQueries({ queryKey: ["/api/classes"] });
+      queryClient.invalidateQueries();
       toast({ title: "Rodada iniciada!", description: "Os alunos já podem tomar decisões." });
     },
     onError: (error: any) => {
@@ -3045,9 +3074,15 @@ export default function Professor() {
 
   // Quantidade de produtos escolhida pelo professor para a próxima rodada.
   const [nextRoundProductCount, setNextRoundProductCount] = useState<number>(1);
+  // Out/2026 (Grupo E): a referência é a rodada ativa ou, sem ela, a última
+  // já aberta. Antes era a de maior número, que com rodadas semanais criadas
+  // com antecedência é uma rodada futura ainda bloqueada.
   const previousRoundProductCount = useMemo(() => {
     if (rounds.length === 0) return 1;
-    return [...rounds].sort((a, b) => b.roundNumber - a.roundNumber)[0]?.productCount ?? 1;
+    const ativa = rounds.find((r: any) => r.status === "active");
+    if (ativa) return ativa.productCount ?? 1;
+    const abertas = rounds.filter((r: any) => r.status !== "locked").sort((a: any, b: any) => b.roundNumber - a.roundNumber);
+    return abertas[0]?.productCount ?? 1;
   }, [rounds]);
   const maxRoundProducts = sectorProducts.length > 0 ? sectorProducts.length : 1;
 
@@ -3104,8 +3139,17 @@ export default function Professor() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/rounds", selectedClass] });
-      toast({ title: "Rodada encerrada!" });
+      // Out/2026 (Grupo E): atualiza toda a tela (notas, resultados,
+      // alinhamento, contadores). Antes só a lista de rodadas era atualizada,
+      // e a rodada recém-encerrada aparecia com todas as equipes "sem envio".
+      queryClient.invalidateQueries();
+      setConfirmarEncerramento(null);
+      toast({ title: "Rodada encerrada!", description: "Os resultados foram calculados." });
+    },
+    onError: (error: any) => {
+      setConfirmarEncerramento(null);
+      queryClient.invalidateQueries();
+      toast({ title: "Não foi possível encerrar a rodada", description: error.message, variant: "destructive" });
     },
   });
 
@@ -3190,8 +3234,7 @@ export default function Professor() {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/classes", selectedClass, "teams"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/rounds", selectedClass] });
+      queryClient.invalidateQueries();
       toast({ title: "Decisões resetadas!", description: data.message });
       setTeamToReset(null);
     },
@@ -3433,7 +3476,7 @@ export default function Professor() {
                   <Button 
                     variant="destructive" 
                     size="sm" 
-                    onClick={() => endRoundMutation.mutate(activeRound.id)}
+                    onClick={() => pedirEncerramento(activeRound.id)}
                     disabled={endRoundMutation.isPending}
                     data-testid="button-quick-end-round"
                   >
@@ -3686,7 +3729,7 @@ export default function Professor() {
                             size="lg"
                             variant="destructive"
                             className="min-w-[200px] h-12 text-base"
-                            onClick={() => endRoundMutation.mutate(activeRound.id)}
+                            onClick={() => pedirEncerramento(activeRound.id)}
                             disabled={endRoundMutation.isPending}
                             data-testid="button-main-action"
                           >
@@ -3894,7 +3937,7 @@ export default function Professor() {
                       activeRound={activeRound}
                       currentClass={currentClass}
                       onStartRound={handleStartRoundClick}
-                      onEndRound={(roundId) => endRoundMutation.mutate(roundId)}
+                      onEndRound={(roundId) => pedirEncerramento(roundId)}
                       onScheduleRound={handleScheduleRound}
                       onAddRound={() => addRoundMutation.mutate(selectedClass)}
                       onRemoveRound={(roundNumber) => removeRoundMutation.mutate({ classId: selectedClass, roundNumber })}
@@ -4007,7 +4050,7 @@ export default function Professor() {
                             </p>
                           </div>
                           <Button
-                            onClick={() => generateAnalysesMutation.mutate(activeRound.id)}
+                            onClick={() => setConfirmarGerarAnalises(activeRound.id)}
                             disabled={generateAnalysesMutation.isPending}
                             data-testid="button-generate-analyses"
                           >
@@ -4943,6 +4986,57 @@ export default function Professor() {
       </AlertDialog>
 
       {/* AlertDialogs de confirmação */}
+      <AlertDialog open={!!confirmarEncerramento} onOpenChange={(open) => !open && !endRoundMutation.isPending && setConfirmarEncerramento(null)}>
+        <AlertDialogContent data-testid="dialog-encerrar-rodada">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Encerrar a rodada agora?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>O sistema calcula os resultados de todas as equipes e a rodada não pode ser reaberta.</p>
+                {submissionStats.pending.length > 0 ? (
+                  <p className="font-medium text-[#b42318]">
+                    {submissionStats.pending.length} de {submissionStats.total} equipe(s) ainda não enviaram a decisão e ficarão com nota 0 nesta rodada: {submissionStats.pending.join(", ")}.
+                  </p>
+                ) : (
+                  <p>Todas as equipes enviaram a decisão.</p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={endRoundMutation.isPending} data-testid="button-cancel-encerrar">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); if (confirmarEncerramento) endRoundMutation.mutate(confirmarEncerramento); }}
+              disabled={endRoundMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-encerrar"
+            >
+              {endRoundMutation.isPending ? "Encerrando..." : "Encerrar rodada"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmarGerarAnalises} onOpenChange={(open) => !open && setConfirmarGerarAnalises(null)}>
+        <AlertDialogContent data-testid="dialog-gerar-analises">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Refazer as análises da rodada?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A IA gera de novo as análises estratégicas da rodada ativa para todas as equipes. Use quando a preparação automática falhou. Pode levar alguns minutos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-gerar-analises">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (confirmarGerarAnalises) generateAnalysesMutation.mutate(confirmarGerarAnalises); setConfirmarGerarAnalises(null); }}
+              data-testid="button-confirm-gerar-analises"
+            >
+              Refazer análises
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={!!classToDelete} onOpenChange={(open) => !open && setClassToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
