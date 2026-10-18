@@ -104,7 +104,17 @@ Os caminhos antigos continuam disponíveis, para casos especiais (por exemplo, u
 
 ![Antes de qualquer equipe existir, a aba Aula mostra "Turma sem equipes" e um atalho para os alunos criarem a primeira.](05-aula-sem-equipes.jpg)
 
-Depois de escolher a turma, o aluno passa a ver, na primeira tela do seu painel, a opção de **criar uma nova equipe** ou **entrar em uma equipe já existente** daquela turma. A formação de equipes é feita pelos próprios alunos — não existe, na interface do professor, nenhum botão para criar uma equipe em nome deles. **Criar a equipe não torna o aluno líder**: a equipe nasce sem líder e os membros o escolhem em consenso, pelo botão **Definir como Líder**, no Dashboard deles (qualquer membro pode usá-lo, também para trocar o líder depois). Enquanto a equipe não tiver líder, ninguém consegue salvar nem enviar as decisões, e o card da equipe no seu painel mostra **Sem líder escolhido**. Se o líder sair da equipe, ela volta a ficar sem líder. A interface mostrada ao aluno sugere um limite de até 5 alunos por equipe, mas esse limite é apenas uma orientação de tela — não há, hoje, um bloqueio no servidor que impeça uma equipe de crescer além disso.
+Depois de escolher a turma, o aluno passa a ver, na primeira tela do seu painel, a opção de **criar uma nova equipe** ou **entrar em uma equipe já existente** daquela turma. A formação de equipes é feita pelos próprios alunos — não existe, na interface do professor, nenhum botão para criar uma equipe em nome deles. **Criar a equipe não torna o aluno líder**: a equipe nasce sem líder e os membros o escolhem em consenso, pelo botão **Definir como Líder**, no Dashboard deles (qualquer membro pode usá-lo, também para trocar o líder depois). Enquanto a equipe não tiver líder, ninguém consegue salvar nem enviar as decisões, e o card da equipe no seu painel mostra **Sem líder escolhido**. Se você remover o líder da equipe, ela volta a ficar sem líder.
+
+**O aluno não sai da equipe.** Depois de entrar em uma equipe, o aluno permanece nela até o fim do jogo: não há botão para sair nem para trocar de equipe, e a tela de escolha avisa isso em destaque. Só você pode remover um aluno (aba **Alunos**).
+
+**Tamanho das equipes: de 3 a 5 alunos.**
+
+- **Máximo de 5:** uma equipe com 5 alunos aparece para os alunos como **Equipe completa**, e o sistema recusa a entrada de um sexto (também quando é você quem adiciona).
+- **Mínimo de 3:** enquanto **alguma** equipe da turma tiver menos de 3 alunos, **nenhuma rodada abre** — nem pelo botão **Iniciar Rodada**, nem pelo agendamento. O jogo fica parado para todas as equipes. Ao tentar abrir, o sistema mostra quais equipes estão fora do tamanho; a equipe incompleta vê o aviso **Equipe incompleta** no Dashboard.
+- **Rodada agendada:** se o horário de abertura chegar com alguma equipe incompleta, a rodada espera e abre sozinha no primeiro minuto em que todas tiverem de 3 a 5 alunos, desde que antes do horário de fechamento. Depois do fechamento, ela não abre mais e precisa ser reagendada.
+- **Rodada já aberta:** segue normalmente até o fim, mesmo que uma equipe fique com menos de 3 (por exemplo, se você remover um aluno). A trava vale para a abertura da rodada seguinte.
+- **Rodada de teste:** a mesma regra vale para ela.
 
 O que você, professor, pode fazer sobre as equipes, na aba **Equipes** de cada turma:
 
@@ -127,7 +137,7 @@ O que você, professor, pode fazer sobre as equipes, na aba **Equipes** de cada 
 
 ### 5.1 A aba Alunos
 
-A aba **Alunos** (entre Equipes e Analisar) reúne os alunos da turma (os que a escolheram e os incluídos por você) numa tabela com **Nome**, **E-mail**, **Equipe** (com a marca "líder" ou o aviso "Sem equipe") e **Ações** (redefinir senha e remover da turma). Quando há alunos sem equipe, a aba mostra um número ao lado do nome. É também nela que ficam o botão **Cadastrar Aluno** e o campo para matricular um aluno já cadastrado.
+A aba **Alunos** (entre Equipes e Analisar) reúne os alunos da turma (os que a escolheram e os incluídos por você), **agrupados por equipe**, numa tabela com as colunas **Equipe** (nome e número de alunos, destacado em vermelho quando fora de 3 a 5), **Alunos na equipe** (com a marca "líder"), **Nome de login** (o e-mail com que o aluno entra) e **Ações** (redefinir senha e remover da turma). Os alunos ainda sem equipe aparecem no fim, no grupo **Sem equipe**. A tabela se atualiza sozinha a cada 30 segundos. Quando há alunos sem equipe, a aba mostra um número ao lado do nome. É também nela que ficam o botão **Cadastrar Aluno** e o campo para matricular um aluno já cadastrado.
 
 Se, ao iniciar uma rodada, existir alguma equipe sem nenhum membro, o sistema avisa (sem bloquear) que essa equipe não vai conseguir enviar decisões na rodada — vale conferir isso antes de abrir cada rodada, especialmente a primeira.
 
@@ -298,7 +308,7 @@ A partir da Rodada 1, as equipes da turma disputam **o mesmo mercado**, ao mesmo
 - **Praça:** Rio Grande do Sul. O mercado semanal de cada categoria é o tamanho anual do setor (campo **Tamanho do Mercado** da turma ou, se vazio, o dado real do setor) × 5,26% (participação do RS na população, IBGE 2025) ÷ 52 ÷ número de categorias do setor.
 - **Participação de mercado:** modelo de atratividade (Cooper e Nakanishi, 1988). Pesam o preço em relação ao valor percebido do produto, a lembrança de marca construída pela comunicação, a distribuição, a fidelidade e o alinhamento estratégico. As fatias de equipes e concorrentes somam 100%.
 - **Concorrentes simulados:** quatro perfis fictícios (Alfa, líder premium; Beta, popular de volume; Gama, intermediário; Delta, regional), que reagem a cortes de preço e a aumentos de comunicação das equipes. O campo **Número de Concorrentes** da turma define quantos entram (de 1 a 12; acima de 4, os perfis se repetem com numeração).
-- **Verba de marketing:** método da porcentagem sobre as vendas (Kotler e Keller). Na Rodada 1, percentual de marketing do setor × receita de referência × número de produtos; nas seguintes, o mesmo percentual × receita obtida na rodada anterior, com piso de 30% da verba inicial. A verba não acumula. Comunicação **e distribuição** saem dela, e o envio final acima da verba não é aceito. O campo **Orçamento Padrão** deixa de ser usado nas rodadas valendo.
+- **Verba de marketing:** método da porcentagem sobre as vendas (Kotler e Keller). Na Rodada 1, percentual de marketing do setor × receita de referência × número de produtos; nas seguintes, o mesmo percentual × receita obtida na rodada anterior, com piso de 30% da verba inicial. A verba não acumula. Comunicação **e distribuição** saem dela, e o envio final acima da verba não é aceito. O campo **Orçamento Padrão** deixa de ser usado nas rodadas valendo: antes da 1ª rodada, as equipes veem esse valor com o aviso **Verba provisória**, e na abertura da 1ª rodada o motor calcula a verba de todas. Equipe criada depois que o jogo começou (entre rodadas ou com rodada aberta) recebe a verba inicial do motor já ao ser criada, e não o Orçamento Padrão.
 - **Custos:** custo dos produtos pela margem bruta real do setor; despesas administrativas calibradas para que uma empresa “média” obtenha a margem líquida real do setor (Damodaran, 2026; Apêndice B.2); tributos sobre vendas de 12% e IR/CSLL de 34% sobre lucro positivo.
 - **Campos sem efeito no novo motor:** Nível de Concorrência, Estrutura de Mercado e Força dos Concorrentes continuam visíveis na configuração, mas não entram no cálculo das rodadas valendo.
 
@@ -426,7 +436,7 @@ Para consulta rápida, depois de já ter lido o manual completo uma vez:
 
 1. Criar a turma (Nome da Turma é o único campo obrigatório).
 2. Completar a configuração de mercado em Configurar → Configuração de Mercado (use **Preencher com dados reais do setor** para tamanho, crescimento e consumidores potenciais) e conferir a Conjuntura Brasil.
-3. Informar aos alunos o nome da turma: eles se cadastram com o email institucional, escolhem a turma e formam as equipes, escolhendo o líder em consenso.
+3. Informar aos alunos o nome da turma: eles se cadastram com o email institucional, escolhem a turma e formam as equipes de 3 a 5 alunos (sem poder sair depois), escolhendo o líder em consenso. A rodada só abre quando todas as equipes tiverem de 3 a 5 alunos.
 4. Aguardar os alunos formarem suas próprias equipes (você não cria equipes).
 5. Definir as datas e horários de cada rodada no calendário (rodada de teste: vários dias, até 23h59 do último; rodadas que valem nota, inclusive a Rodada 1: dia da aula, abertura no horário da aula e fechamento sugerido 2 horas depois) ou definir a quantidade de produtos e clicar em Iniciar Rodada. Marcar a última rodada do ano letivo.
 6. Acompanhar submissões e, se quiser, criar ou gerar eventos de mercado.

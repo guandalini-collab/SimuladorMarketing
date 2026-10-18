@@ -17,6 +17,7 @@ import { randomUUID, randomInt } from "crypto";
 import { limiteLogin, limiteCadastro, limiteEsqueciSenha, limiteRecuperacao, limiteRedefinir, zerarTentativas } from "./limiteDeTentativas";
 import { getAlignmentScoreLevel } from "@shared/alignmentUtils";
 import { semelhancaTextual } from "@shared/semelhanca";
+import { MAX_ALUNOS_POR_EQUIPE, equipesForaDoTamanho, mensagemEquipesForaDoTamanho } from "@shared/tamanhoEquipe";
 import { getProductCountBudgetMultiplier } from "@shared/budgetUtils";
 import { aberturaDaRodada, fechamentoDaRodada, fechamentoPadrao, formatarSemanaDaRodada, anoLetivoEncerrado, rodadaDeAdaptacao } from "@shared/rodadaSemanal";
 import { custoEstimadoDaDecisao, parametrosDeCustoDaEquipe } from "./services/roundCompletionCompetitive";
@@ -1595,6 +1596,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: MSG_SEM_SETOR });
     }
 
+    // Tamanho das equipes (out/2026): com alguma equipe fora de 3 a 5
+    // alunos, a rodada não abre — o jogo fica parado para toda a turma.
+    {
+      const fora = equipesForaDoTamanho(await storage.getTeamsByClass(req.params.classId));
+      if (fora.length > 0) {
+        return res.status(400).json({ error: mensagemEquipesForaDoTamanho(fora) });
+      }
+    }
+
     const nextRoundNumber = classData.currentRound + 1;
     if (nextRoundNumber > classData.maxRounds) {
       return res.status(400).json({ error: "Número máximo de rodadas atingido" });
@@ -1762,6 +1772,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // não conseguiria ser encerrada. Avisa já na abertura.
     if (!classData.sector) {
       return res.status(400).json({ error: MSG_SEM_SETOR });
+    }
+
+    // Tamanho das equipes (out/2026): com alguma equipe fora de 3 a 5
+    // alunos, a rodada não abre — o jogo fica parado para toda a turma.
+    {
+      const fora = equipesForaDoTamanho(await storage.getTeamsByClass(req.params.classId));
+      if (fora.length > 0) {
+        return res.status(400).json({ error: mensagemEquipesForaDoTamanho(fora) });
+      }
     }
 
     const nextRoundNumber = classData.currentRound + 1;
@@ -2661,8 +2680,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(403).json({ error: "Você só pode entrar em equipes da mesma turma em que está matriculado" });
     }
 
+    if ((team.memberIds?.length ?? 0) >= MAX_ALUNOS_POR_EQUIPE) {
+      return res.status(400).json({ error: `Esta equipe já tem ${MAX_ALUNOS_POR_EQUIPE} alunos, o máximo permitido. Escolha outra equipe ou crie uma nova.` });
+    }
+
     try {
       const updatedTeam = await storage.addMemberToTeam(teamId, req.session.userId);
+      // Duas entradas no mesmo instante podiam passar da checagem acima.
+      if (updatedTeam && (updatedTeam.memberIds?.length ?? 0) > MAX_ALUNOS_POR_EQUIPE) {
+        await storage.removeMemberFromTeam(teamId, req.session.userId);
+        return res.status(400).json({ error: `Esta equipe já tem ${MAX_ALUNOS_POR_EQUIPE} alunos, o máximo permitido. Escolha outra equipe ou crie uma nova.` });
+      }
       res.json(updatedTeam);
     } catch (error) {
       res.status(400).json({ error: "Erro ao entrar na equipe" });
@@ -2781,6 +2809,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Este aluno não está matriculado na mesma turma desta equipe" });
     }
     
+    if ((team.memberIds?.length ?? 0) >= MAX_ALUNOS_POR_EQUIPE) {
+      return res.status(400).json({ error: `Esta equipe já tem ${MAX_ALUNOS_POR_EQUIPE} alunos, o máximo permitido.` });
+    }
+
     const updatedTeam = await storage.addMemberToTeam(req.params.teamId, member.id);
     res.json(updatedTeam);
   });

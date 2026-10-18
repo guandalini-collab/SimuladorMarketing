@@ -5,6 +5,7 @@ import { carryForwardStrategyAnalyses } from "./strategyCarryForward";
 import { scheduleRoundOpenedAutomation, scheduleRoundPreparation } from "./roundAutomation";
 import { anoLetivoEncerrado, preparacaoDaRodada } from "@shared/rodadaSemanal";
 import { abrirRodadaBloqueada, comBloqueioDoAgendador } from "./transicaoDeRodada";
+import { equipesForaDoTamanho, mensagemEquipesForaDoTamanho } from "@shared/tamanhoEquipe";
 
 export class RoundScheduler {
   private storage: IStorage;
@@ -133,6 +134,18 @@ export class RoundScheduler {
             if (!this.expiradasAvisadas.has(`sem-setor:${round.id}`)) {
               this.expiradasAvisadas.add(`sem-setor:${round.id}`);
               console.warn(`[ROUND_SCHEDULER] Rodada ${round.id} (Round ${round.roundNumber}) não aberta: a turma ${round.classId} está sem setor.`);
+            }
+            continue;
+          }
+
+          // Tamanho das equipes (out/2026): com alguma equipe fora de 3 a 5
+          // alunos, a rodada espera. O agendador tenta de novo a cada minuto
+          // e abre assim que todas estiverem completas (até o fechamento).
+          const foraDoTamanho = equipesForaDoTamanho(await this.storage.getTeamsByClass(round.classId));
+          if (foraDoTamanho.length > 0) {
+            if (!this.expiradasAvisadas.has(`tamanho:${round.id}`)) {
+              this.expiradasAvisadas.add(`tamanho:${round.id}`);
+              console.warn(`[ROUND_SCHEDULER] Rodada ${round.id} (Round ${round.roundNumber}) aguardando: ${mensagemEquipesForaDoTamanho(foraDoTamanho)}`);
             }
             continue;
           }

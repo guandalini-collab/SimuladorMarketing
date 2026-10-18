@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { MIN_ALUNOS_POR_EQUIPE, MAX_ALUNOS_POR_EQUIPE } from "@shared/tamanhoEquipe";
 import heroBanner from "@assets/generated_images/Marketing_dashboard_hero_banner_7c645c89.png";
 
 interface Team {
@@ -86,7 +87,7 @@ export default function Dashboard() {
 
   // Painel de leitura rápida (etapa 4 do redesign): mesmos resultados, em
   // ordem de rodada, para indicadores com variação e minigráficos.
-  const points: (RoundPoint & { budgetAfter: number })[] = teamResults
+  const points: (RoundPoint & { budgetAfter: number; budgetBefore: number })[] = teamResults
     .map((r: any) => ({
       roundNumber: rounds.find((rd: any) => rd.id === r.roundId)?.roundNumber ?? 0,
       revenue: r.revenue || 0,
@@ -95,6 +96,7 @@ export default function Dashboard() {
       marketShare: r.marketShare || 0,
       roi: r.roi || 0,
       budgetAfter: r.budgetAfter || 0,
+      budgetBefore: r.budgetBefore || 0,
     }))
     .sort((a, b) => a.roundNumber - b.roundNumber);
   const lastPoint = points[points.length - 1];
@@ -326,7 +328,7 @@ export default function Dashboard() {
                     <div className="mt-2 text-sm text-blue-700 dark:text-blue-300 space-y-2">
                       <p>1. Escolha a turma que o professor indicou.</p>
                       <p>2. Entre em uma equipe da turma ou crie a sua; os colegas entram nela.</p>
-                      <p>3. As equipes são compostas por até 5 alunos da mesma turma.</p>
+                      <p>3. Cada equipe tem de {MIN_ALUNOS_POR_EQUIPE} a {MAX_ALUNOS_POR_EQUIPE} alunos da mesma turma. Depois de entrar numa equipe, você não pode sair.</p>
                       <p>4. A equipe escolhe o líder em consenso. Só o líder envia as decisões.</p>
                       <p>Escolheu a turma errada? Enquanto não estiver em uma equipe, você pode trocar.</p>
                     </div>
@@ -359,6 +361,12 @@ export default function Dashboard() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6 pt-6">
+            <div className="rounded-xl border-2 border-[#b42318]/40 bg-[#fde8e6] p-4 text-[#7a1a12] dark:bg-red-950/30 dark:text-red-200" role="note" data-testid="alert-team-permanent">
+              <p className="font-bold">Escolha com cuidado</p>
+              <p className="text-sm mt-1">
+                Procure a equipe em que você quer entrar. <strong>Depois de entrar, você não pode sair nem trocar de equipe até o fim do jogo.</strong> Cada equipe tem de {MIN_ALUNOS_POR_EQUIPE} a {MAX_ALUNOS_POR_EQUIPE} alunos, e as rodadas só abrem quando todas as equipes da turma tiverem esse tamanho.
+              </p>
+            </div>
             {teamsLoading ? (
               <p className="text-muted-foreground text-center py-8">
                 Carregando equipes...
@@ -384,7 +392,7 @@ export default function Dashboard() {
                               <CardTitle className="text-lg">{t.name}</CardTitle>
                             </div>
                             <CardDescription className="text-base">
-                              {(t.memberIds ?? []).length} {(t.memberIds ?? []).length === 1 ? 'membro' : 'membros'}
+                              {(t.memberIds ?? []).length} de {MAX_ALUNOS_POR_EQUIPE} alunos
                             </CardDescription>
                           </CardHeader>
                           <CardContent className="pt-4">
@@ -392,11 +400,11 @@ export default function Dashboard() {
                               className="w-full" 
                               size="lg"
                               onClick={() => joinTeamMutation.mutate(t.id)}
-                              disabled={joinTeamMutation.isPending}
+                              disabled={joinTeamMutation.isPending || (t.memberIds ?? []).length >= MAX_ALUNOS_POR_EQUIPE}
                               data-testid={`button-join-team-${t.id}`}
                             >
                               <UserPlus className="h-4 w-4 mr-2" />
-                              {joinTeamMutation.isPending ? "Entrando..." : "Entrar na Equipe"}
+                              {(t.memberIds ?? []).length >= MAX_ALUNOS_POR_EQUIPE ? "Equipe completa" : joinTeamMutation.isPending ? "Entrando..." : "Entrar na Equipe"}
                             </Button>
                           </CardContent>
                         </Card>
@@ -529,10 +537,37 @@ export default function Dashboard() {
       </div>
 
       {(() => {
-        const health = computeHealth(points, team.budget ?? 0, team.initialBudget ?? 0);
-        const budgetDelta = (team.initialBudget ?? 0) > 0 ? ((team.budget ?? 0) / team.initialBudget - 1) * 100 : null;
+        // Base de comparação do caixa: a verba com que a equipe começou a
+        // 1ª rodada jogada (no motor competitivo ela é calculada pelo setor;
+        // o Orçamento Padrão da turma, ex. R$ 100.000, não é a verba real).
+        // Só a exibição muda; o cálculo do motor continua igual.
+        const verbaDeInicio = points.find((p) => p.budgetBefore > 0)?.budgetBefore ?? (team.initialBudget ?? 0);
+        const health = computeHealth(points, team.budget ?? 0, verbaDeInicio);
+        const budgetDelta = verbaDeInicio > 0 && points.length > 0 ? ((team.budget ?? 0) / verbaDeInicio - 1) * 100 : null;
+        // Grupo J (out/2026): antes da 1ª rodada valendo, a verba ainda é
+        // provisória (o motor recalcula na abertura, conforme o setor e o
+        // número de equipes da turma).
+        const jogoComecou = rounds.some((r: any) => !r.isPractice && (r.status === "active" || r.status === "completed"));
         return (
           <>
+            {(team.memberIds?.length ?? 0) < MIN_ALUNOS_POR_EQUIPE && (
+              <div className="flex items-start gap-3 rounded-xl border-2 border-[#b42318]/40 bg-[#fde8e6] p-4 text-[#7a1a12] dark:bg-red-950/30 dark:text-red-200" role="alert" data-testid="alert-team-too-small">
+                <Users className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-semibold">Equipe incompleta: {team.memberIds?.length ?? 0} de no mínimo {MIN_ALUNOS_POR_EQUIPE} alunos</p>
+                  <p className="text-sm">Enquanto alguma equipe da turma tiver menos de {MIN_ALUNOS_POR_EQUIPE} alunos, nenhuma rodada abre, para nenhuma equipe. Chamem colegas que ainda estão sem equipe.</p>
+                </div>
+              </div>
+            )}
+            {!jogoComecou && (
+              <div className="flex items-start gap-3 rounded-xl border border-[#8a5a00]/30 bg-[#fff6e0] p-4 text-[#8a5a00] dark:bg-yellow-900/20 dark:text-yellow-200" data-testid="alert-provisional-budget">
+                <DollarSign className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-semibold">Verba provisória</p>
+                  <p className="text-sm">O valor definitivo da verba é calculado na abertura da primeira rodada, conforme o setor e o número de equipes da turma.</p>
+                </div>
+              </div>
+            )}
             {health.alert && (
               <div className="flex items-start gap-3 rounded-xl border-2 border-[#e5484d]/40 bg-[#fde8e6] p-4 text-[#7a1a12] dark:bg-red-950/30 dark:text-red-200" role="alert" data-testid="alert-financial-risk">
                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />

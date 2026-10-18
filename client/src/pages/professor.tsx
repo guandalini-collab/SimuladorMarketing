@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { MIN_ALUNOS_POR_EQUIPE, MAX_ALUNOS_POR_EQUIPE, equipesForaDoTamanho, mensagemEquipesForaDoTamanho } from "@shared/tamanhoEquipe";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -2701,10 +2702,12 @@ export default function Professor() {
   const { data: competitionLevels = [] } = useQuery<any[]>({ queryKey: ["/api/market/competition-levels"] });
   const { data: rounds = [] } = useQuery<Round[]>({ queryKey: ["/api/rounds", selectedClass], enabled: !!selectedClass });
   const { data: sectorProducts = [] } = useQuery<any[]>({ queryKey: ["/api/products/class", selectedClass], enabled: !!selectedClass });
-  const { data: teams = [] } = useQuery<any[]>({ queryKey: ["/api/classes", selectedClass, "teams"], enabled: !!selectedClass });
+  // Out/2026: os alunos escolhem a turma e formam as equipes sozinhos; sem
+  // atualização periódica o painel mostrava "0 alunos" até recarregar.
+  const { data: teams = [] } = useQuery<any[]>({ queryKey: ["/api/classes", selectedClass, "teams"], enabled: !!selectedClass, refetchInterval: 30_000, refetchOnWindowFocus: true });
   const { data: economicData } = useQuery<any>({ queryKey: ["/api/economic/latest"] });
   const { data: users = [] } = useQuery<any[]>({ queryKey: ["/api/admin/users"] });
-  const { data: enrolledStudents = [] } = useQuery<any[]>({ queryKey: ["/api/classes", selectedClass, "students"], enabled: !!selectedClass });
+  const { data: enrolledStudents = [] } = useQuery<any[]>({ queryKey: ["/api/classes", selectedClass, "students"], enabled: !!selectedClass, refetchInterval: 30_000, refetchOnWindowFocus: true });
   const { data: allProfessorStudents = [] } = useQuery<any[]>({ queryKey: ["/api/professor/students/all"] });
 
   const lastCompletedRound = rounds.filter(r => r.status === "completed").sort((a, b) => b.roundNumber - a.roundNumber)[0];
@@ -2874,6 +2877,13 @@ export default function Professor() {
   const preRoundWarnings = useMemo(() => {
     if (!currentClass) return [];
     const warnings: string[] = [];
+
+    // Tamanho das equipes (out/2026): este item BLOQUEIA a abertura (o
+    // servidor recusa); os demais são só avisos.
+    const foraDoTamanho = equipesForaDoTamanho(teams);
+    if (foraDoTamanho.length > 0) {
+      warnings.push(mensagemEquipesForaDoTamanho(foraDoTamanho) + " Este item impede a abertura.");
+    }
 
     const emptyTeams = teams.filter((t: any) => !t.memberIds || t.memberIds.length === 0);
     if (emptyTeams.length > 0) {
@@ -4278,7 +4288,7 @@ export default function Professor() {
                   <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                       <h2 className="text-lg font-semibold">Alunos</h2>
-                      <p className="text-sm text-muted-foreground">Alunos matriculados na turma e a equipe de cada um.</p>
+                      <p className="text-sm text-muted-foreground">Alunos da turma, agrupados por equipe. Cada equipe precisa ter de 3 a 5 alunos para as rodadas abrirem.</p>
                     </div>
                     <Button onClick={() => { setNewStudentData({ ...newStudentData, classId: selectedClass }); setIsCreateStudentDialogOpen(true); }} data-testid="button-create-student-alunos">
                       <UserPlus className="h-4 w-4 mr-2" />
@@ -4288,7 +4298,7 @@ export default function Professor() {
                   {/* Alunos Matriculados */}
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-base">Alunos Matriculados</CardTitle>
+                      <CardTitle className="text-base">Alunos por equipe</CardTitle>
                       <CardDescription>
                         {sortedEnrolledStudents.length} alunos na turma
                         {(() => {
@@ -4319,77 +4329,117 @@ export default function Professor() {
                         </Button>
                       </div>
 
-                      {sortedEnrolledStudents.length > 0 && (
-                        <div className="border rounded-lg overflow-hidden">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Nome</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Equipe</TableHead>
-                                <TableHead className="text-right">Ações</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {sortedEnrolledStudents.map((student: any) => {
-                                const studentTeam = getStudentTeam(student.id);
-                                return (
-                                <TableRow key={student.id}>
-                                  <TableCell className="font-medium">{student.name}</TableCell>
-                                  <TableCell className="text-muted-foreground">{student.email}</TableCell>
-                                  <TableCell>
-                                    {studentTeam ? (
-                                      <Badge variant="outline" className="gap-1 bg-[#e6f7ee] text-[#0f7a44] border-transparent">
-                                        <Users className="h-3 w-3" />
-                                        {studentTeam.name}
-                                        {studentTeam.leaderId === student.id && (
-                                          <span className="ml-1 text-[10px] font-semibold">(líder)</span>
-                                        )}
-                                      </Badge>
-                                    ) : (
-                                      <Badge variant="outline" className="gap-1 bg-[#fff3d6] text-[#7a5300] border-transparent">
-                                        <AlertTriangle className="h-3 w-3" />
-                                        Sem equipe
-                                      </Badge>
-                                    )}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <div className="flex items-center justify-end gap-1">
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => setPasswordResetStudent({ studentId: student.id, studentName: student.name, studentEmail: student.email })}
-                                            data-testid={`button-reset-password-${student.id}`}
-                                          >
-                                            <Key className="h-4 w-4 text-primary" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>Redefinir Senha</TooltipContent>
-                                      </Tooltip>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => setStudentToRemove({ studentId: student.id, studentName: student.name })}
-                                            data-testid={`button-remove-student-${student.id}`}
-                                          >
-                                            <UserMinus className="h-4 w-4 text-destructive" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>Remover da Turma</TooltipContent>
-                                      </Tooltip>
-                                    </div>
-                                  </TableCell>
+                      {sortedEnrolledStudents.length > 0 && (() => {
+                        // Pedido do professor (out/2026): alunos agrupados por
+                        // equipe — Equipe | Alunos na equipe | Nome de login.
+                        const grupos = [...teams]
+                          .sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "pt-BR"))
+                          .map((t: any) => ({
+                            team: t,
+                            alunos: sortedEnrolledStudents.filter((st: any) => t.memberIds?.includes(st.id)),
+                          }))
+                          .filter((g) => g.alunos.length > 0 || (g.team.memberIds?.length ?? 0) === 0);
+                        const semEquipe = sortedEnrolledStudents.filter((st: any) => !getStudentTeam(st.id));
+                        const acoes = (student: any) => (
+                          <div className="flex items-center justify-end gap-1">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setPasswordResetStudent({ studentId: student.id, studentName: student.name, studentEmail: student.email })}
+                                  data-testid={`button-reset-password-${student.id}`}
+                                >
+                                  <Key className="h-4 w-4 text-primary" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Redefinir Senha</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setStudentToRemove({ studentId: student.id, studentName: student.name })}
+                                  data-testid={`button-remove-student-${student.id}`}
+                                >
+                                  <UserMinus className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Remover da Turma</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        );
+                        const celulaEquipe = (nome: string, n: number, rowSpan: number, semTime: boolean) => {
+                          const fora = !semTime && (n < MIN_ALUNOS_POR_EQUIPE || n > MAX_ALUNOS_POR_EQUIPE);
+                          return (
+                            <TableCell rowSpan={rowSpan} className="align-top font-medium border-r">
+                              <div className="flex flex-col gap-1">
+                                <span className="break-words">{nome}</span>
+                                {semTime ? (
+                                  <Badge variant="outline" className="w-fit gap-1 bg-[#fff3d6] text-[#7a5300] border-transparent">
+                                    <AlertTriangle className="h-3 w-3" />
+                                    {n} {n === 1 ? "aluno" : "alunos"}
+                                  </Badge>
+                                ) : (
+                                  <Badge
+                                    variant="outline"
+                                    className={`w-fit gap-1 border-transparent ${fora ? "bg-[#fde8e6] text-[#b42318]" : "bg-[#e6f7ee] text-[#0f7a44]"}`}
+                                    data-testid={`badge-team-size-${nome}`}
+                                  >
+                                    {fora ? <AlertTriangle className="h-3 w-3" /> : <Users className="h-3 w-3" />}
+                                    {n} {n === 1 ? "aluno" : "alunos"}{fora ? ` · precisa de ${MIN_ALUNOS_POR_EQUIPE} a ${MAX_ALUNOS_POR_EQUIPE}` : ""}
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                          );
+                        };
+                        return (
+                          <div className="border rounded-lg overflow-x-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Equipe</TableHead>
+                                  <TableHead>Alunos na equipe</TableHead>
+                                  <TableHead>Nome de login</TableHead>
+                                  <TableHead className="text-right">Ações</TableHead>
                                 </TableRow>
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      )}
+                              </TableHeader>
+                              <TableBody>
+                                {grupos.map(({ team: t, alunos }) =>
+                                  alunos.length === 0 ? (
+                                    <TableRow key={t.id}>
+                                      {celulaEquipe(t.name, 0, 1, false)}
+                                      <TableCell colSpan={3} className="text-muted-foreground text-sm">Equipe sem alunos</TableCell>
+                                    </TableRow>
+                                  ) : (
+                                    alunos.map((student: any, i: number) => (
+                                      <TableRow key={student.id}>
+                                        {i === 0 && celulaEquipe(t.name, alunos.length, alunos.length, false)}
+                                        <TableCell>
+                                          {student.name}
+                                          {t.leaderId === student.id && <span className="ml-1 text-[10px] font-semibold text-[#0f7a44]">(líder)</span>}
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground break-all">{student.email}</TableCell>
+                                        <TableCell className="text-right">{acoes(student)}</TableCell>
+                                      </TableRow>
+                                    ))
+                                  )
+                                )}
+                                {semEquipe.map((student: any, i: number) => (
+                                  <TableRow key={student.id}>
+                                    {i === 0 && celulaEquipe("Sem equipe", semEquipe.length, semEquipe.length, true)}
+                                    <TableCell>{student.name}</TableCell>
+                                    <TableCell className="text-muted-foreground break-all">{student.email}</TableCell>
+                                    <TableCell className="text-right">{acoes(student)}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        );
+                      })()}
                     </CardContent>
                   </Card>
 

@@ -1,4 +1,5 @@
 import type { IStorage } from "../storage";
+import type { Round } from "@shared/schema";
 
 // Automação de IA ligada ao ciclo das rodadas (pedido do professor, out/2026):
 //
@@ -151,7 +152,12 @@ export async function aplicarVerbaInicialSeNecessario(storage: IStorage, roundId
   const round = await storage.getRound(roundId);
   if (!round) return;
   const { rodadaNoMotorCompetitivo, temEstadoDeMercado, verbaInicialDaTurma } = await import("./roundCompletionCompetitive");
-  if (await temEstadoDeMercado(round.classId)) return;
+  if (await temEstadoDeMercado(round.classId)) {
+    // Grupo J (out/2026): jogo já começou — só as equipes que ainda não
+    // jogaram nenhuma rodada recebem a verba inicial do motor.
+    await darVerbaInicialAsEquipesNovas(storage, round);
+    return;
+  }
   if (!(await rodadaNoMotorCompetitivo(storage, round))) return;
   const classData = await storage.getClass(round.classId);
   if (!classData) return;
@@ -162,6 +168,33 @@ export async function aplicarVerbaInicialSeNecessario(storage: IStorage, roundId
     if (team.budget !== verba) await storage.updateTeam(team.id, { budget: verba });
   }
   console.log(`[ROUND-AUTO] Verba inicial do motor competitivo aplicada: R$ ${verba} por equipe (${teams.length} equipe(s))`);
+}
+
+/**
+ * Grupo J (out/2026): equipe criada ENTRE rodadas, depois do início do jogo,
+ * ficava com o Orçamento Padrão da turma (ex.: R$ 100.000) para sempre,
+ * enquanto as demais jogavam com a verba do motor. Na abertura de cada
+ * rodada, a equipe que não aparece no último estado de mercado (ou seja,
+ * ainda não passou por nenhum encerramento) recebe a verba inicial do motor,
+ * calculada como para uma equipe que entra com a rodada aberta. As equipes
+ * que já jogaram não são tocadas.
+ */
+async function darVerbaInicialAsEquipesNovas(storage: IStorage, round: Round): Promise<void> {
+  const { rodadaNoMotorCompetitivo, estadoAnterior, verbaInicialDaTurma } = await import("./roundCompletionCompetitive");
+  if (!(await rodadaNoMotorCompetitivo(storage, round))) return;
+  const estado = await estadoAnterior(round.classId, round.roundNumber);
+  if (!estado) return;
+  const classData = await storage.getClass(round.classId);
+  if (!classData) return;
+  const teams = await storage.getTeamsByClass(round.classId);
+  const novas = teams.filter((t) => !estado.equipes?.[t.id]);
+  if (novas.length === 0) return;
+  const verba = verbaInicialDaTurma(classData, teams.length, round.productCount ?? 1);
+  if (verba <= 0) return;
+  for (const team of novas) {
+    if (team.budget !== verba) await storage.updateTeam(team.id, { budget: verba });
+  }
+  console.log(`[ROUND-AUTO] Verba inicial do motor aplicada a ${novas.length} equipe(s) que ainda não tinham jogado: R$ ${verba}`);
 }
 
 async function gerarConteudoDaRodada(
@@ -309,8 +342,25 @@ export function scheduleRoundClosedAutomation(storage: IStorage, roundId: string
 export function integrarEquipeNovaNaRodada(storage: IStorage, teamId: string, classId: string): void {
   void (async () => {
     const round = await storage.getCurrentRound(classId);
-    if (!round || round.status !== "active") return;
     const { rodadaNoMotorCompetitivo, temEstadoDeMercado, verbaInicialDaTurma } = await import("./roundCompletionCompetitive");
+    if (!round || round.status !== "active") {
+      // Grupo J (out/2026): sem rodada aberta, mas com o jogo já começado
+      // (há estado de mercado), a equipe nova já recebe a verba do motor,
+      // para o aluno ver desde o início o valor com que vai jogar.
+      if (!(await temEstadoDeMercado(classId))) return;
+      const rodadas = (await storage.getRoundsByClass(classId))
+        .filter((r) => !r.isPractice)
+        .sort((a, b) => b.roundNumber - a.roundNumber);
+      const referencia = rodadas.find((r) => r.status === "completed") ?? rodadas[0];
+      if (!referencia || !(await rodadaNoMotorCompetitivo(storage, referencia))) return;
+      const classData = await storage.getClass(classId);
+      const teams = await storage.getTeamsByClass(classId);
+      if (classData) {
+        const verba = verbaInicialDaTurma(classData, teams.length, referencia.productCount ?? 1);
+        if (verba > 0) await storage.updateTeam(teamId, { budget: verba });
+      }
+      return;
+    }
     if (!(await rodadaNoMotorCompetitivo(storage, round))) return;
     if (await temEstadoDeMercado(classId)) {
       const classData = await storage.getClass(classId);
