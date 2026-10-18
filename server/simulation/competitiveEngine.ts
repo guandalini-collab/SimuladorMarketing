@@ -231,14 +231,22 @@ export function calcularCategoria(ctx: ContextoCategoria, ofertas: Oferta[], fat
     const fator = fatoresAtratividade?.[i] ?? 1;
     return termoValor * termoMarca * termoDistribuicao * termoFidelidade * coerenciaPrecoProduto(o.decisao, ref) * fator;
   });
-  const somaA = atratividades.reduce((a, b) => a + b, 0) || 1;
-  const fatias = atratividades.map((a) => a / somaA);
+  // Out/2026 (Grupo B): proteção contra valor inválido (NaN/Infinity), que
+  // antes desfazia a normalização das fatias. Sem efeito para valores válidos.
+  const somaBruta = atratividades.reduce((a, b) => a + (Number.isFinite(b) ? b : 0), 0);
+  const somaA = Number.isFinite(somaBruta) && somaBruta > 0 ? somaBruta : 1;
+  const fatias = atratividades.map((a) => (Number.isFinite(a) ? a : 0) / somaA);
 
   // 3) Demanda total da categoria: base real × sazonalidade/eventos × nível de preço
   const precoMedio = ofertas.reduce((s, o, i) => s + fatias[i] * o.decisao.preco, 0) || ref;
   const elasticidadeCategoria = 0.4 * elasticidade;
   const demandaBase = ctx.valorSemanal / ref;
-  const demanda = demandaBase * ctx.multiplicadorDemanda * Math.pow(precoMedio / ref, -elasticidadeCategoria);
+  // Out/2026 (Grupo B): a razão entre o preço médio e o de referência fica
+  // limitada a [0,2; 5], a mesma faixa aceita no envio do preço. Para preços
+  // dentro da faixa, nada muda; fora dela, um erro de digitação não
+  // multiplica mais a demanda da categoria inteira.
+  const razaoPreco = Math.min(5, Math.max(0.2, Number.isFinite(precoMedio / ref) ? precoMedio / ref : 1));
+  const demanda = demandaBase * ctx.multiplicadorDemanda * Math.pow(razaoPreco, -elasticidadeCategoria);
 
   const receitaRef = receitaReferencia(ctx);
   // Margem bruta (Damodaran) é sobre a receita líquida dos tributos sobre vendas.

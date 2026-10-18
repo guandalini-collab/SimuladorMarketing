@@ -4597,7 +4597,7 @@ export default function Professor() {
                     <SelectValue placeholder="Selecione o setor" />
                   </SelectTrigger>
                   <SelectContent>
-                    {marketSectors.map((sector: any) => (
+                    {marketSectors.filter((sector: any) => sector.disponivel !== false).map((sector: any) => (
                       <SelectItem key={sector.id} value={sector.id}>{sector.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -4667,7 +4667,7 @@ export default function Professor() {
                   <Select value={marketConfigEdits.sector} onValueChange={(value) => setMarketConfigEdits({ ...marketConfigEdits, sector: value })}>
                     <SelectTrigger data-testid="select-edit-sector"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {marketSectors.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                      {marketSectors.filter((s: any) => s.disponivel !== false || s.id === marketConfigEdits.sector).map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>

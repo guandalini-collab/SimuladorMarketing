@@ -642,6 +642,26 @@ export default function Decisoes() {
     (c.name && selectedProduct?.name && semAcento(c.name) === semAcento(String(selectedProduct.name)))
   ) ?? marketSector?.categories?.[0];
 
+  // Out/2026 (Grupo B): conferência de digitação do preço. Antes de enviar,
+  // a confirmação lista os produtos com preço abaixo da metade ou acima do
+  // dobro do preço médio de referência da categoria (ex.: "2.557" digitado
+  // no lugar de "25,57"). É só uma checagem de digitação, não uma
+  // orientação: o servidor recusa apenas valores abaixo de 0,2× ou acima de 5×.
+  const categoriaDe = (produto: any) => (marketSector?.categories ?? []).find((c: any) =>
+    c.id === produto?.slug ||
+    `${c.id}-${marketSector?.id}` === produto?.slug ||
+    (c.name && produto?.name && semAcento(c.name) === semAcento(String(produto.name)))
+  ) ?? marketSector?.categories?.[0];
+  const precosParaConferir = products
+    .map((p: any) => {
+      const ref = Number(categoriaDe(p)?.averagePrice) || 0;
+      const preco = Number(productDecisions[p.id]?.priceValue) || 0;
+      if (!ref || !preco || productDecisions[p.id]?.submittedAt) return null;
+      const razao = preco / ref;
+      return razao < 0.5 || razao > 2 ? { nome: p.name as string, preco, ref, razao } : null;
+    })
+    .filter(Boolean) as { nome: string; preco: number; ref: number; razao: number }[];
+
   // Use decisionsAllowed from backend as source of truth
   // Only show locked state after initial data has loaded to avoid flash
   // During refetch (isFetching but not isLoading), keep previous state to avoid control flashes
@@ -1339,8 +1359,20 @@ export default function Decisoes() {
               </p>
               <p>
                 Certifique-se de que todas as informações estão corretas antes de confirmar.
-                Seu professor e você receberão um email de confirmação.
               </p>
+              {precosParaConferir.length > 0 && (
+                <div className="rounded-md border border-[#c9871a] bg-[#fff8e6] p-3 text-sm text-[#7a4f00] dark:bg-amber-950/30 dark:text-amber-300" data-testid="aviso-conferir-preco">
+                  <p className="font-semibold">Confira o preço digitado:</p>
+                  <ul className="mt-1 list-disc pl-5">
+                    {precosParaConferir.map((x) => (
+                      <li key={x.nome}>
+                        {x.nome}: {formatarNumeroBR(x.preco, 'moeda')} equivale a {x.razao.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}× o preço médio de referência da categoria ({formatarNumeroBR(x.ref, 'moeda')}).
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-1">No campo de preço, a vírgula separa os centavos (ex.: 25,90); o ponto é ignorado.</p>
+                </div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

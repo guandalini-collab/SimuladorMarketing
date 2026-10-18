@@ -111,6 +111,14 @@ const STUDENT_INSTITUTIONAL_EMAIL_DOMAIN = STUDENT_INSTITUTIONAL_EMAIL_DOMAINS.j
 // joaoz@gmail.com: aluno de teste criado pelo professor (confirmado em out/2026).
 const STUDENT_REGISTRATION_EMAIL_EXCEPTIONS = new Set<string>(["joaoz@gmail.com", "guandalinib@gmail.com"]);
 
+// Out/2026 (decisão do professor): setores que não são oferecidos para
+// turmas novas. Construção e Materiais tem verba real de marketing de 1% da
+// receita (The CMO Survey), que não paga nenhuma mídia no jogo. Turmas que
+// já usam o setor continuam funcionando.
+const SETORES_FORA_DE_OFERTA = new Set<string>(["construcao"]);
+
+const MSG_SEM_SETOR = "Defina o setor da turma (Configurar → Configuração de Mercado) antes de abrir ou agendar uma rodada.";
+
 function emailDeAlunoPermitido(email: string): boolean {
   const e = email.trim().toLowerCase();
   return STUDENT_REGISTRATION_EMAIL_EXCEPTIONS.has(e) || STUDENT_INSTITUTIONAL_EMAIL_DOMAINS.some((d) => e.endsWith(d));
@@ -978,6 +986,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const data = insertClassFormSchema.parse({ ...req.body, professorId: user.id });
+      if (data.sector && SETORES_FORA_DE_OFERTA.has(data.sector)) {
+        return res.status(400).json({ error: "Este setor não está disponível para turmas novas." });
+      }
 
       // Impede que o MESMO professor tenha duas turmas com o mesmo nome
       // (comparação sem diferenciar maiúsculas/minúsculas e ignorando espaços
@@ -1515,6 +1526,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Já existe uma rodada ativa" });
     }
 
+    // Out/2026 (Grupo B): sem setor não há produtos nem mercado, e a rodada
+    // não conseguiria ser encerrada. Avisa já na abertura.
+    if (!classData.sector) {
+      return res.status(400).json({ error: MSG_SEM_SETOR });
+    }
+
     const nextRoundNumber = classData.currentRound + 1;
     if (nextRoundNumber > classData.maxRounds) {
       return res.status(400).json({ error: "Número máximo de rodadas atingido" });
@@ -1676,6 +1693,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const currentActive = await storage.getCurrentRound(req.params.classId);
     if (currentActive) {
       return res.status(400).json({ error: "Já existe uma rodada ativa" });
+    }
+
+    // Out/2026 (Grupo B): sem setor não há produtos nem mercado, e a rodada
+    // não conseguiria ser encerrada. Avisa já na abertura.
+    if (!classData.sector) {
+      return res.status(400).json({ error: MSG_SEM_SETOR });
     }
 
     const nextRoundNumber = classData.currentRound + 1;
@@ -2283,6 +2306,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const classForRound = await storage.getClass(round.classId);
       if (!classForRound || classForRound.professorId !== user.id) {
         return res.status(403).json({ error: "Você não tem permissão para agendar esta rodada" });
+      }
+      if (!classForRound.sector && req.body?.clear !== true) {
+        return res.status(400).json({ error: MSG_SEM_SETOR });
       }
 
       const { scheduledStartAt, scheduledEndAt, clear } = req.body;
@@ -3294,7 +3320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/market/sectors", async (req, res) => {
-    res.json(marketSectors);
+    res.json(marketSectors.map((s) => ({ ...s, disponivel: !SETORES_FORA_DE_OFERTA.has(s.id) })));
   });
 
   app.get("/api/market/sectors/:id", async (req, res) => {
@@ -3337,6 +3363,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
+      if (typeof req.body?.sector === "string" && req.body.sector !== classData.sector && SETORES_FORA_DE_OFERTA.has(req.body.sector)) {
+        return res.status(400).json({ error: "Este setor não está disponível para turmas novas." });
+      }
       const { maxRounds } = req.body;
       if (maxRounds !== undefined) {
         if (!Number.isInteger(maxRounds) || maxRounds < 1 || maxRounds > 20) {
@@ -3702,6 +3731,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PATCH: Salva rascunho do marketing mix (sem submittedAt) - permite múltiplas edições
+  // Out/2026 (Grupo B): rotas antigas do Mix de Marketing desativadas.
+  // Nenhuma tela as usa; elas não tinham as validações atuais (preço,
+  // verba, etapas da rodada, decisão já enviada) e permitiam contorná-las.
+  // A rota em uso é POST /api/marketing-mix/product.
+  for (const [metodo, caminho] of [["patch", "/api/marketing-mix/draft"], ["post", "/api/marketing-mix/submit"], ["post", "/api/marketing-mix"], ["get", "/api/marketing-mix/current"]] as const) {
+    app[metodo](caminho, (_req, res) => {
+      res.status(410).json({ error: "Rota desativada. Use a tela Mix de Marketing." });
+    });
+  }
+
   app.patch("/api/marketing-mix/draft", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
@@ -6860,11 +6899,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Out/2026: o preço começa em branco (0 = não definido) e é obrigatório
       // no envio final. Rascunho pode ser salvo sem preço.
-      if (isDraft === false && !(Number(data.priceValue) > 0)) {
+      // Grupo B: o preço precisa vir no pedido (antes, se faltasse, o banco
+      // gravava o padrão de R$ 50 e o envio passava).
+      if (isDraft === false && (typeof mixData.priceValue !== "number" || !Number.isFinite(mixData.priceValue) || !(Number(data.priceValue) > 0))) {
         return res.status(400).json({
           error: "Preço não definido",
           details: "Defina o preço de venda do produto antes de enviar a decisão.",
         });
+      }
+
+      // Out/2026 (Grupo B): faixa aceita para o preço no envio final, de
+      // 0,2× a 5× o preço médio de referência da categoria. Pega erros de
+      // digitação (ex.: "2.557" no lugar de "25,57"), que no mercado
+      // compartilhado distorciam o resultado da turma inteira. Cobre com
+      // folga estratégias de penetração e de preço premium.
+      if (isDraft === false) {
+        const turmaDoPreco = await storage.getClass(team.classId);
+        const produtoDoPreco = await storage.getProduct(productId);
+        const { precoMedioDaCategoria } = await import("./services/marketBulletin");
+        const ref = precoMedioDaCategoria(turmaDoPreco?.sector ?? null, produtoDoPreco ?? null);
+        const preco = Number(data.priceValue);
+        if (ref && ref > 0 && (preco < 0.2 * ref || preco > 5 * ref)) {
+          const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+          return res.status(400).json({
+            error: "Preço fora da faixa aceita",
+            details: `O preço de ${fmt(preco)} está fora da faixa aceita pelo jogo para esta categoria: de ${fmt(0.2 * ref)} a ${fmt(5 * ref)} (de 0,2 a 5 vezes o preço médio de referência, ${fmt(ref)}). Confira a digitação: a vírgula separa os centavos.`,
+            priceReference: ref,
+            min: Math.round(0.2 * ref * 100) / 100,
+            max: Math.round(5 * ref * 100) / 100,
+          });
+        }
+      }
+
+      // Out/2026 (Grupo B): valores das mídias precisam ser números finitos,
+      // não negativos e de mídias existentes (antes, um valor negativo
+      // reduzia o custo estimado e furava o limite da verba).
+      if (data.promotionBudgets !== undefined && data.promotionBudgets !== null) {
+        if (typeof data.promotionBudgets !== "object" || Array.isArray(data.promotionBudgets)) {
+          return res.status(400).json({ error: "Valores de mídia inválidos" });
+        }
+        for (const [midiaId, valor] of Object.entries(data.promotionBudgets as Record<string, unknown>)) {
+          if (typeof valor !== "number" || !Number.isFinite(valor) || valor < 0) {
+            return res.status(400).json({ error: "Valores de mídia inválidos", details: "Cada valor investido em mídia deve ser um número maior ou igual a zero." });
+          }
+          if (!(await storage.getMidia(midiaId))) {
+            return res.status(400).json({ error: "Mídia desconhecida", details: "Uma das mídias escolhidas não existe no catálogo." });
+          }
+        }
       }
 
       // Validar valores mínimos das mídias selecionadas (se houver promotionBudgets)
@@ -6930,6 +7011,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const existing = await storage.getMarketingMix(team.id, roundId, productId);
+
+      // Out/2026 (Grupo B): decisão já enviada não pode ser alterada (nem por
+      // rascunho, nem por um novo envio). Antes, salvar um rascunho por cima
+      // mudava a decisão enviada, que continuava marcada como enviada.
+      if (existing?.submittedAt) {
+        return res.status(409).json({ error: "Decisão já enviada", details: "A decisão deste produto já foi enviada e não pode mais ser alterada nesta rodada." });
+      }
 
       let result;
       if (existing) {

@@ -186,7 +186,7 @@ Os itens do grupo **Consulta** (Fechamento anual, Insights de Mercado, Orçament
 
 **Conjuntura real.** A IA usa, na PESTEL, nos eventos e no boletim, os **indicadores oficiais do Banco Central** (Selic, IPCA, dólar, PIB, desemprego e confiança do consumidor, atualizados automaticamente) e o texto **Conjuntura Brasil** (fatos econômicos e políticos atuais, com data e fonte; Seção 12). Os alunos veem o mesmo conteúdo na aba Economia e Política da Análise de Mercado.
 
-**Tela de decisões dos alunos.** O preço de cada produto **começa em branco** em toda rodada e é obrigatório: sem ele, o envio é recusado. A tela não traz mais os cartões de “Orientações Estratégicas” gerados pela IA nem textos de recomendação; mostra apenas dados de mercado com fonte (preço médio de referência da categoria, margens do setor e investimento típico em marketing). A equipe decide e descobre as consequências nos resultados.
+**Tela de decisões dos alunos.** O preço de cada produto **começa em branco** em toda rodada e é obrigatório: sem ele, o envio é recusado. O envio só é aceito com preço entre **0,2 e 5 vezes** o preço médio de referência da categoria, para barrar erros de digitação (por exemplo, "2.557" no lugar de "25,57"), que no mercado compartilhado afetariam a turma inteira; entre 0,5 e 2 vezes não há aviso, e fora dessa faixa a janela de confirmação pede ao aluno que confira o valor. Depois de enviada, a decisão de um produto não pode mais ser alterada naquela rodada, nem por rascunho. Os valores investidos em cada mídia precisam ser números maiores ou iguais a zero. A tela não traz mais os cartões de “Orientações Estratégicas” gerados pela IA nem textos de recomendação; mostra apenas dados de mercado com fonte (preço médio de referência da categoria, margens do setor e investimento típico em marketing). A equipe decide e descobre as consequências nos resultados.
 
 **Sem dicas aos alunos.** O sistema não diz aos alunos o que fazer. O Feedback Inteligente é só diagnóstico (o que aconteceu, por quê e a literatura relacionada), sem sugestões de ação; o cartão de Recomendações Estratégicas saiu da tela Insights de Mercado; e a linha "Análise de Tendência" dos eventos descreve os efeitos sobre o mercado, sem recomendar decisões. As recomendações por P do feedback determinístico continuam visíveis só para você, na aba Analisar. Na tela Análise de Mercado também saíram os blocos "Implicações Estratégicas" e "Impactos nas Decisões de Marketing"; na tela Insights de Mercado saíram as "metas de referência" fixas (a única comparação que ficou é com a margem média real do setor); e o Feedback Inteligente não exibe número de capítulo nas leituras relacionadas, porque a IA não tem o sumário das obras.
 
@@ -220,6 +220,10 @@ Se uma equipe **não enviou nenhuma decisão** na rodada, o sistema **não cria 
 
 Antes de clicar em Encerrar Rodada, confira manualmente na aba Aula se todas as equipes que deveriam participar já enviaram suas decisões — essa conferência é uma decisão e responsabilidade do professor, feita no momento do encerramento. Se uma equipe ficou de fora por engano, a forma de corrigir depois é reabrir a rodada e reprocessá-la — mais trabalhoso do que simplesmente conferir antes.
 :::
+
+**Se o encerramento falhar no meio** (por exemplo, por uma queda de conexão com o banco de dados), a rodada volta a ficar aberta e pode ser encerrada de novo. Na nova tentativa, o sistema desfaz o que a tentativa anterior chegou a gravar e recalcula o mercado com todas as equipes; nenhuma equipe é tratada como "não enviou" por causa da falha.
+
+**Turma sem setor:** o sistema não abre nem agenda rodada de uma turma sem setor definido, porque sem setor não há produtos nem mercado. A mensagem pede para definir o setor em Configurar → Configuração de Mercado.
 
 Depois de encerrada, uma rodada não pode ser reaberta pela mesma tela com um clique simples de "desfazer" — trate o encerramento como uma ação que vale a pena confirmar visualmente antes de executar.
 
@@ -494,7 +498,7 @@ Os setores disponíveis para configurar uma turma (Seção 3) são:
 8. Saúde e Bem-estar
 9. Educação e Cursos
 10. Pet Care
-11. Construção e Materiais
+11. Construção e Materiais (não é oferecido para turmas novas desde out/2026: a verba real de marketing do setor, 1% da receita, não paga nenhuma mídia no jogo; turmas que já usam o setor continuam funcionando)
 12. Entretenimento e Mídia
 
 Cada setor tem quatro categorias de produto associadas e dados de referência de tamanho de mercado e crescimento, com fonte e ano (Seção 3.1). Os números vêm de entidades setoriais e órgãos oficiais (base 2024 na maioria dos setores) e são revisados uma vez por ano. Alguns são estimativas, e isso aparece indicado na tela:

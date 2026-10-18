@@ -126,6 +126,17 @@ export class RoundScheduler {
             continue;
           }
 
+          // Out/2026 (Grupo B): turma sem setor não abre rodada (não há
+          // produtos nem mercado; a rodada não conseguiria ser encerrada).
+          const turmaDaRodada = await this.storage.getClass(round.classId);
+          if (!turmaDaRodada?.sector) {
+            if (!this.expiradasAvisadas.has(`sem-setor:${round.id}`)) {
+              this.expiradasAvisadas.add(`sem-setor:${round.id}`);
+              console.warn(`[ROUND_SCHEDULER] Rodada ${round.id} (Round ${round.roundNumber}) não aberta: a turma ${round.classId} está sem setor.`);
+            }
+            continue;
+          }
+
           console.log(`[ROUND_SCHEDULER] Ativando rodada ${round.id} (Round ${round.roundNumber})`);
 
           // Out/2026 (Grupo C): abertura atômica. Se o professor clicou em

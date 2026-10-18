@@ -110,20 +110,51 @@ export async function temEstadoDeMercado(classId: string): Promise<boolean> {
  * competitivo vale para turmas que começam do zero — ou que já estão nele.
  * Rodadas de teste não contam (são apagadas em "Iniciar o jogo").
  */
-export async function turmaNoMotorCompetitivo(storage: IStorage, classId: string): Promise<boolean> {
+export async function turmaNoMotorCompetitivo(storage: IStorage, classId: string, rodadaAtualId?: string): Promise<boolean> {
   if (await temEstadoDeMercado(classId)) return true;
   const rodadas = await storage.getRoundsByClass(classId);
   for (const r of rodadas) {
     if (r.isPractice) continue;
+    // Out/2026 (Grupo B): os resultados da própria rodada em encerramento
+    // não contam. Antes, se o primeiro encerramento valendo falhasse no meio
+    // (com resultados de parte das equipes gravados), a nova tentativa
+    // mandava a turma para o motor antigo.
+    if (rodadaAtualId && r.id === rodadaAtualId) continue;
     if ((await storage.getResultsByRound(r.id)).length > 0) return false;
   }
   return true;
 }
 
 /** Decide o motor da rodada: competitivo só fora da rodada de teste e em turma elegível. */
-export async function rodadaNoMotorCompetitivo(storage: IStorage, round: Pick<Round, "isPractice" | "classId">): Promise<boolean> {
+export async function rodadaNoMotorCompetitivo(storage: IStorage, round: Pick<Round, "isPractice" | "classId"> & { id?: string }): Promise<boolean> {
   if (!usarMotorCompetitivo(round)) return false;
-  return turmaNoMotorCompetitivo(storage, round.classId);
+  return turmaNoMotorCompetitivo(storage, round.classId, round.id);
+}
+
+/**
+ * Out/2026 (Grupo B): nova tentativa de encerramento depois de uma falha
+ * no meio do processamento. Antes, as equipes já processadas eram puladas
+ * e tratadas como "não enviou" (verba cortada para o piso), e o mercado era
+ * recalculado sem elas. Agora o que a tentativa anterior gravou nesta
+ * rodada é desfeito (resultados, resultados por produto, estado do mercado
+ * e a verba das equipes volta ao valor de antes da rodada), e o mercado é
+ * calculado de novo com todas as equipes.
+ */
+async function desfazerEncerramentoParcial(storage: IStorage, round: Round, teams: Team[]): Promise<Team[]> {
+  const parciais = await pool.query<{ team_id: string; budget_before: number }>(
+    `SELECT team_id, budget_before FROM results WHERE round_id = $1`,
+    [round.id],
+  );
+  if (!parciais.rowCount) return teams;
+  for (const linha of parciais.rows) {
+    await pool.query(`UPDATE teams SET budget = $2 WHERE id = $1`, [linha.team_id, linha.budget_before]);
+  }
+  await pool.query(`DELETE FROM product_results WHERE round_id = $1`, [round.id]);
+  await pool.query(`DELETE FROM results WHERE round_id = $1`, [round.id]);
+  await pool.query(`DELETE FROM market_states WHERE round_id = $1`, [round.id]);
+  console.warn(`[MOTOR v3] Rodada ${round.id}: encerramento anterior incompleto desfeito (${parciais.rowCount} equipe(s)); recalculando o mercado com todas as equipes.`);
+  const atualizadas = await Promise.all(teams.map((t) => storage.getTeam(t.id)));
+  return atualizadas.filter((t): t is Team => !!t);
 }
 
 // ---------------------------------------------------------------- contexto
@@ -281,6 +312,8 @@ export async function processarMercadoCompetitivo(
   if (!setor || !setor.margemBruta || !setor.verbaMarketingPct || setor.margemLiquida === undefined) {
     throw new Error("Turma sem setor configurado: o motor competitivo precisa do setor para calcular o mercado.");
   }
+
+  teams = await desfazerEncerramentoParcial(storage, round, teams);
 
   const anterior = await estadoAnterior(classData.id, round.roundNumber);
   const perfis = concorrentesDaTurma(numeroDeConcorrentes(classData));
