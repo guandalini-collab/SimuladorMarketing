@@ -1552,6 +1552,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // ativa". Agora a rodada existente é aberta no lugar.
     const rodadaBloqueada = rodadasDaTurma.find((r) => r.roundNumber === nextRoundNumber && r.status === "locked");
 
+    // Out/2026 (Grupo C): abrir a rodada já agendada de forma atômica. Se
+    // o agendador a abriu neste mesmo instante, este pedido para aqui em
+    // vez de repetir a abertura (e as tarefas de abertura) em dobro.
+    if (rodadaBloqueada) {
+      const { abrirRodadaBloqueada } = await import("./services/transicaoDeRodada");
+      try {
+        if (!(await abrirRodadaBloqueada(rodadaBloqueada.id))) {
+          return res.status(409).json({ error: "Esta rodada acabou de ser aberta pelo agendamento. Atualize a página." });
+        }
+      } catch (error: any) {
+        if (error?.code === "23505") {
+          return res.status(400).json({ error: "Já existe uma rodada ativa" });
+        }
+        console.error("[ROUND-START] Erro ao abrir a rodada agendada:", error);
+        return res.status(500).json({ error: "Não foi possível abrir a rodada" });
+      }
+    }
+
     let round;
     try {
       round = rodadaBloqueada
@@ -2195,9 +2213,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (teste.length === 0) {
         return res.status(400).json({ error: "Esta turma não tem rodada de teste para apagar." });
       }
-      const { iniciarJogoDaTurma } = await import("./iniciarJogo");
-      const resumo = await iniciarJogoDaTurma(req.params.classId, teste.map((r) => r.id));
-      res.json(resumo);
+      const { iniciarJogoDaTurma, IniciarJogoRecusado } = await import("./iniciarJogo");
+      try {
+        const resumo = await iniciarJogoDaTurma(req.params.classId, teste.map((r) => r.id));
+        res.json(resumo);
+      } catch (error: any) {
+        if (error instanceof IniciarJogoRecusado) {
+          return res.status(400).json({ error: error.message });
+        }
+        throw error;
+      }
     } catch (error: any) {
       console.error("Erro ao iniciar o jogo:", error);
       res.status(500).json({ error: "Erro ao iniciar o jogo" });
@@ -2320,6 +2345,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       if (round.status === "active" && endDate && endDate <= new Date()) {
         return res.status(400).json({ error: "O novo fechamento já passou — escolha um horário futuro" });
+      }
+      // Out/2026 (Grupo C): uma rodada ainda não aberta também não pode ser
+      // agendada com fechamento no passado (o agendador não a abriria).
+      if (round.status === "locked" && fimEfetivo && fimEfetivo <= new Date()) {
+        return res.status(400).json({ error: "O fechamento escolhido já passou — escolha datas futuras" });
       }
 
       // Duas rodadas da mesma turma não podem ocupar a mesma semana: o

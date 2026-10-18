@@ -4,6 +4,10 @@ import type { MarketingMix, Result, MarketEvent, Class, Team } from "@shared/sch
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  // Out/2026 (Grupo C): tempo limite por chamada, para nada ficar
+  // esperando a IA indefinidamente (ex.: o agendador de rodadas).
+  timeout: 120_000,
+  maxRetries: 1,
 });
 
 export interface FeedbackAnalysis {

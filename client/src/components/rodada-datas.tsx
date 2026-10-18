@@ -121,6 +121,11 @@ export function SemanaDaRodada({ round }: { round: Round }) {
       )}
       {inicio && <p>{round.status === "locked" ? "Abre" : "Aberta em"} {dataHora(inicio)}</p>}
       {round.scheduledEndAt && <p>{round.status === "completed" ? "Prazo era" : "Fecha"} {dataHora(round.scheduledEndAt)}</p>}
+      {round.status === "locked" && round.scheduledEndAt && new Date(round.scheduledEndAt) <= new Date() && (
+        <p className="font-medium text-[#b42318]" data-testid={`aviso-rodada-expirada-${round.roundNumber}`}>
+          O horário de fechamento passou e a rodada não foi aberta. Reagende as datas.
+        </p>
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { autoGenerateMinimalAnalysesForAllTeams } from "./autoStrategicGeneratio
 import { carryForwardStrategyAnalyses } from "./strategyCarryForward";
 import { scheduleRoundOpenedAutomation, scheduleRoundPreparation } from "./roundAutomation";
 import { anoLetivoEncerrado, preparacaoDaRodada } from "@shared/rodadaSemanal";
+import { abrirRodadaBloqueada, comBloqueioDoAgendador } from "./transicaoDeRodada";
 
 export class RoundScheduler {
   private storage: IStorage;
@@ -12,6 +13,9 @@ export class RoundScheduler {
   // cada minuto). Após um reinício a preparação pode rodar outra vez, sem
   // problema: cada passo pula o que já existe.
   private preparadas = new Set<string>();
+  // Rodadas cujo horário de fechamento passou antes de abrirem (avisadas
+  // uma vez no log; o professor vê o aviso no painel).
+  private expiradasAvisadas = new Set<string>();
 
   constructor(storage: IStorage) {
     this.storage = storage;
@@ -25,11 +29,18 @@ export class RoundScheduler {
     this.isProcessing = true;
 
     try {
-      const now = new Date();
-      
-      await this.processScheduledPreparations(now);
-      await this.processScheduledStarts(now);
-      await this.processScheduledEnds(now);
+      // Out/2026 (Grupo C): só um processo do app executa o agendador por
+      // vez (durante uma publicação no Railway, o processo antigo e o novo
+      // rodam juntos por alguns instantes).
+      const executou = await comBloqueioDoAgendador(async () => {
+        const now = new Date();
+        await this.processScheduledPreparations(now);
+        await this.processScheduledStarts(now);
+        await this.processScheduledEnds(now);
+      });
+      if (!executou) {
+        console.log("[ROUND_SCHEDULER] Outro processo está executando o agendador; esta verificação foi pulada.");
+      }
     } catch (error) {
       console.error("[ROUND_SCHEDULER] Erro ao processar rodadas agendadas:", error);
     } finally {
@@ -68,7 +79,19 @@ export class RoundScheduler {
         !round.startedAt
       );
 
+      // Out/2026 (Grupo C): se o site ficou fora do ar e voltou depois do
+      // horário de FECHAMENTO, a rodada não é mais aberta (antes ela abria
+      // e fechava no mesmo minuto, sem decisões das equipes). Ela fica
+      // parada; o painel do professor mostra o aviso para reagendar.
       for (const round of roundsToStart) {
+        if (round.scheduledEndAt && new Date(round.scheduledEndAt) <= now && !this.expiradasAvisadas.has(round.id)) {
+          this.expiradasAvisadas.add(round.id);
+          console.warn(`[ROUND_SCHEDULER] Rodada ${round.id} (Round ${round.roundNumber}) não aberta: o horário de fechamento já passou. Reagende as datas.`);
+        }
+      }
+      const abriveis = roundsToStart.filter((round) => !(round.scheduledEndAt && new Date(round.scheduledEndAt) <= now));
+
+      for (const round of abriveis) {
         // Grupo D (auditoria de 2026-09): antes, ativava a rodada agendada
         // sem checar se a turma já tinha outra rodada "active" — duas
         // rodadas agendadas para o mesmo horário (ou próximo de), ou um
@@ -105,10 +128,13 @@ export class RoundScheduler {
 
           console.log(`[ROUND_SCHEDULER] Ativando rodada ${round.id} (Round ${round.roundNumber})`);
 
-          await this.storage.updateRound(round.id, {
-            status: "active",
-            startedAt: new Date(),
-          });
+          // Out/2026 (Grupo C): abertura atômica. Se o professor clicou em
+          // "Iniciar rodada" no mesmo instante, só um dos dois abre.
+          const abriu = await abrirRodadaBloqueada(round.id);
+          if (!abriu) {
+            console.log(`[ROUND_SCHEDULER] Rodada ${round.id} (Round ${round.roundNumber}) já tinha sido aberta por outro caminho; nada a fazer.`);
+            continue;
+          }
 
           const classData = await this.storage.getClass(round.classId);
           if (classData && classData.currentRound < round.roundNumber) {
@@ -121,12 +147,12 @@ export class RoundScheduler {
 
           if (round.roundNumber === 1) {
             console.log(`[ROUND_SCHEDULER] Gerando análises estratégicas automáticas para rodada ${round.roundNumber}...`);
-            try {
-              const result = await autoGenerateMinimalAnalysesForAllTeams(this.storage, round.id);
-              console.log(`[ROUND_SCHEDULER] Análises geradas: ${result.successCount}/${result.totalTeams} equipes`);
-            } catch (error) {
-              console.error(`[ROUND_SCHEDULER] Erro ao gerar análises automáticas para rodada ${round.id}:`, error);
-            }
+            // Out/2026 (Grupo C): em segundo plano. Antes o agendador ficava
+            // esperando a IA terminar para todas as equipes, e nesse tempo
+            // nenhuma outra rodada de nenhuma turma abria ou fechava.
+            void autoGenerateMinimalAnalysesForAllTeams(this.storage, round.id)
+              .then((result) => console.log(`[ROUND_SCHEDULER] Análises geradas: ${result.successCount}/${result.totalTeams} equipes`))
+              .catch((error) => console.error(`[ROUND_SCHEDULER] Erro ao gerar análises automáticas para rodada ${round.id}:`, error));
           } else {
             // Pedido do professor (2026-09): a partir da Rodada 2, em vez de a
             // IA gerar uma sugestão nova (ou a tela começar em branco), a

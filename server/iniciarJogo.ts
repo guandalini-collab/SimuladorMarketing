@@ -14,10 +14,35 @@ import { pool } from "./pg-storage";
  * 5. devolve a cada equipe a verba inicial (initial_budget).
  * Alunos, equipes, produtos da turma e configuração de mercado ficam intactos.
  */
-export async function iniciarJogoDaTurma(classId: string, rodadasDeTeste: string[]) {
+/** Erro de regra ("não pode iniciar agora"), com mensagem para o professor. */
+export class IniciarJogoRecusado extends Error {}
+
+export async function iniciarJogoDaTurma(classId: string, rodadasPedidas: string[]) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+
+    // Out/2026 (Grupo C): as condições são conferidas DENTRO da transação,
+    // com a turma e as rodadas travadas (FOR UPDATE). Antes eram conferidas
+    // antes do BEGIN, e o agendador podia abrir uma rodada no intervalo.
+    await client.query(`SELECT id FROM classes WHERE id = $1 FOR UPDATE`, [classId]);
+    const rodadas = await client.query<{ id: string; status: string; is_practice: boolean | null; round_number: number }>(
+      `SELECT id, status, is_practice, round_number FROM rounds WHERE class_id = $1 FOR UPDATE`,
+      [classId]
+    );
+    if (rodadas.rows.some((r) => r.status === "active")) {
+      throw new IniciarJogoRecusado("Há uma rodada aberta. Encerre-a antes de iniciar o jogo.");
+    }
+    const realJaAberta = rodadas.rows.find((r) => !r.is_practice && r.status !== "locked");
+    if (realJaAberta) {
+      throw new IniciarJogoRecusado(`A Rodada ${realJaAberta.round_number} (que não é de teste) já foi aberta: o jogo já começou.`);
+    }
+    // Só apaga rodadas que são de teste E desta turma, mesmo que o pedido
+    // traga outros ids.
+    const rodadasDeTeste = rodadas.rows.filter((r) => r.is_practice === true && rodadasPedidas.includes(r.id)).map((r) => r.id);
+    if (rodadasDeTeste.length === 0) {
+      throw new IniciarJogoRecusado("Esta turma não tem rodada de teste para apagar.");
+    }
 
     const tabelas = await client.query<{ table_name: string }>(`
       SELECT DISTINCT c.table_name

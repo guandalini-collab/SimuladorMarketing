@@ -257,6 +257,10 @@ Com as datas salvas, o sistema abre e encerra a rodada sozinho, sem que você pr
 - **Semanas ocupadas:** no calendário, os dias que já pertencem a outra rodada da turma aparecem desabilitados, e o sistema recusa datas que se sobreponham.
 - **Rodada em andamento:** o botão passa a se chamar **Alterar fechamento** e permite mudar o dia e o **horário** do fechamento, por exemplo para 22h45 se a aula atrasar. O horário precisa ser futuro.
 - **Remover datas:** numa rodada que ainda não abriu, o botão **Remover datas** apaga o agendamento.
+- **Fechamento no passado:** numa rodada que ainda não abriu, o sistema recusa datas cujo fechamento já passou.
+- **Site fora do ar no horário da rodada:** se o site voltar depois do horário de **fechamento** de uma rodada que ainda não tinha aberto, ela **não é aberta**: fica parada, e o card mostra em vermelho "O horário de fechamento passou e a rodada não foi aberta. Reagende as datas." Antes, a rodada abria e fechava no mesmo minuto, sem decisões. Se o site voltar entre a abertura e o fechamento, a rodada abre normalmente, só que mais tarde.
+- **Clique em Iniciar Rodada no horário do agendamento:** se você clicar em **Iniciar Rodada** no mesmo instante em que o agendamento abre a rodada, ela é aberta uma única vez; o segundo pedido recebe o aviso "Esta rodada acabou de ser aberta pelo agendamento". O mesmo vale durante uma atualização do site: só um processo executa o agendamento por vez.
+- **Tempo limite da IA:** cada chamada à IA tem um tempo limite de 2 minutos (com uma nova tentativa). Se a IA demorar ou cair, a abertura e o fechamento das rodadas seguem no horário; as análises podem ser refeitas pelo botão **Gerar Análises** (Seção 10.3), e os eventos de mercado podem ser gerados na aba **Aula**.
 
 Tanto no card da rodada (aba Aula) quanto no painel do aluno aparece um contador de tempo restante até o fechamento, atualizado automaticamente.
 
@@ -267,7 +271,7 @@ Antes da Rodada 1, você pode abrir uma **rodada de teste** para a turma conhece
 1. Crie a rodada com **Adicionar**, clique em **Definir datas** e marque a opção **Rodada de teste**. A mesma opção existe no diálogo de **Iniciar Rodada**. O card mostra o selo **Rodada de teste**, e os alunos veem o aviso de que ela não vale nota nem resultado.
 2. A rodada de teste funciona como uma rodada normal (decisões, resultados, eventos), mas **nunca entra no Sistema de Notas**.
 3. Quando a turma estiver pronta, encerre a rodada de teste e clique em **Iniciar o jogo**, no painel que aparece na aba **Aula**. O sistema pede confirmação e então **apaga definitivamente** tudo o que as rodadas de teste geraram (decisões, resultados, eventos, boletins, análises, feedbacks e as próprias rodadas), **devolve a verba inicial** a cada equipe e renumera as rodadas futuras já criadas a partir da Rodada 1. Alunos, equipes, produtos e configuração de mercado ficam intactos.
-4. O botão só aparece enquanto nenhuma rodada que não seja de teste tiver sido aberta.
+4. O botão só aparece enquanto nenhuma rodada que não seja de teste tiver sido aberta. As condições são conferidas de novo no momento da confirmação: se nesse meio-tempo alguma rodada tiver sido aberta (por exemplo, pelo agendamento), o sistema recusa e nada é apagado. Só são apagadas rodadas marcadas como de teste da própria turma.
 
 ### Última rodada do ano letivo
 
