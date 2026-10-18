@@ -359,6 +359,7 @@ export async function processarMercadoCompetitivo(
         porterAiPercentage: porter?.aiGeneratedPercentage ?? undefined,
         bcgAiPercentage: bcgDoProduto?.aiGeneratedPercentage ?? undefined,
         pestelAiPercentage: pestel?.aiGeneratedPercentage ?? undefined,
+        analisesProntas,
       });
       const alinhamentoNeutro = analisesProntas && (!swot || !porter || !pestel || !bcgDoProduto);
       const lista = porCategoria.get(categoria.id) ?? [];

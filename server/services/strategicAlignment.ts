@@ -44,6 +44,13 @@ export interface AlignmentParams {
   bcgAiPercentage?: number;
   pestelAiPercentage?: number;
   segmentationAiPercentage?: number;
+  // Out/2026 (Grupo D): turma com análises prontas da rodada. A SWOT e a
+  // PESTEL são escritas pela IA (somente leitura), então a procura de
+  // palavras no texto delas ("lei", "inflação", "digital"...) não pode tirar
+  // pontos da equipe. Nesse caso as duas contam como completas e sem
+  // inconsistências; o alinhamento compara as decisões com as 5 Forças, a
+  // BCG (calculada pelo jogo) e a Segmentação (escrita pela equipe).
+  analisesProntas?: boolean;
 }
 
 // Com 5 ferramentas estratégicas (SWOT, Porter, BCG, PESTEL, Segmentação),
@@ -102,10 +109,13 @@ export function calculateStrategicAlignment(params: AlignmentParams): AlignmentA
 
   const completionScore = calculateCompletionScore(swot, porter, bcg, pestel, segmentation, businessType);
 
-  const swotAlignment = analyzeSwotAlignment(swot, marketingMix);
+  // Sem o sinal explícito (motor antigo / rodada de teste), as análises
+  // entregues pela IA são reconhecidas por virem marcadas como 100% geradas.
+  const textoDaIA = params.analisesProntas ?? (swotAiPercentage === 100 && pestelAiPercentage === 100);
+  const swotAlignment = textoDaIA && swot ? { score: 100, issues: [], weight: TOOL_WEIGHT } : analyzeSwotAlignment(swot, marketingMix);
   const porterAlignment = analyzePorterAlignment(porter, marketingMix);
   const bcgAlignment = analyzeBcgAlignment(bcg, marketingMix);
-  const pestelAlignment = analyzePestelAlignment(pestel, marketingMix);
+  const pestelAlignment = textoDaIA && pestel ? { score: 100, issues: [], weight: TOOL_WEIGHT } : analyzePestelAlignment(pestel, marketingMix);
   const segmentationAlignment = analyzeSegmentationAlignment(segmentation, businessType, marketingMix);
 
   const aiPenalties: Array<{ description: string; impact: number }> = [];
@@ -335,7 +345,7 @@ function analyzeSwotAlignment(swot: SwotAnalysis | null, mix: MarketingMix): Ali
   }
 
   if (hasHighCostWeakness && mix.priceValue && mix.priceValue < 20) {
-    issues.push("SWOT indica custo alto como fraqueza, mas preço muito baixo não compensa");
+    issues.push("SWOT aponta custo alto como fraqueza, com preço muito baixo");
     alignmentPoints -= 18;
   }
 
@@ -373,7 +383,7 @@ function analyzePorterAlignment(porter: PorterAnalysis | null, mix: MarketingMix
   }
 
   if (porter.competitiveRivalry >= 8 && getTotalPromotion(mix) < 15000) {
-    issues.push("Rivalidade competitiva alta, mas investimento promocional insuficiente");
+    issues.push("Rivalidade competitiva alta, com investimento promocional reduzido");
     alignmentPoints -= 25;
   }
 
@@ -388,22 +398,22 @@ function analyzePorterAlignment(porter: PorterAnalysis | null, mix: MarketingMix
   }
 
   if (porter.buyerPower >= 8 && mix.priceStrategy === "skimming") {
-    issues.push("Alto poder dos clientes dificulta estratégia premium");
+    issues.push("Alto poder de barganha dos clientes, com estratégia de preço de desnatamento (skimming)");
     alignmentPoints -= 18;
   }
 
   if (porter.supplierPower >= 8 && mix.priceValue && mix.priceValue < 20) {
-    issues.push("Alto poder dos fornecedores aumenta custos, mas preço está muito baixo");
+    issues.push("Alto poder dos fornecedores (pressão sobre custos), com preço muito baixo");
     alignmentPoints -= 15;
   }
 
   if (porter.threatOfSubstitutes >= 8 && getTotalPromotion(mix) < 12000) {
-    issues.push("Alta ameaça de substitutos requer diferenciação promocional maior");
+    issues.push("Alta ameaça de substitutos, com investimento promocional reduzido");
     alignmentPoints -= 20;
   }
 
   if (porter.threatOfNewEntry >= 8 && getTotalPromotion(mix) < 10000) {
-    issues.push("Alta ameaça de novos entrantes exige investimento maior em brand awareness");
+    issues.push("Alta ameaça de novos entrantes, com investimento promocional reduzido");
     alignmentPoints -= 15;
   }
 
@@ -432,32 +442,32 @@ function analyzeBcgAlignment(bcg: BcgAnalysis | null, mix: MarketingMix): Alignm
   // as comparações abaixo nunca batiam, então nenhuma dessas penalidades
   // de alinhamento era aplicada.
   if (bcg.quadrant === "Estrela" && totalInvestment < 20000) {
-    issues.push("Produto classificado como ESTRELA requer alto investimento para manter crescimento");
+    issues.push("Produto no quadrante ESTRELA com investimento promocional baixo");
     alignmentPoints -= 25;
   }
 
   if (bcg.quadrant === "Vaca Leiteira" && totalInvestment > 25000) {
-    issues.push("Produto VACA LEITEIRA não justifica investimento tão alto");
+    issues.push("Produto no quadrante VACA LEITEIRA com investimento promocional alto");
     alignmentPoints -= 15;
   }
 
   if (bcg.quadrant === "Ponto de Interrogação" && totalInvestment < 15000) {
-    issues.push("Produto INTERROGAÇÃO precisa de investimento para se tornar Estrela");
+    issues.push("Produto no quadrante PONTO DE INTERROGAÇÃO com investimento promocional reduzido");
     alignmentPoints -= 20;
   }
 
   if (bcg.quadrant === "Abacaxi" && totalInvestment > 10000) {
-    issues.push("Produto ABACAXI tem baixo potencial, investimento deveria ser mínimo");
+    issues.push("Produto no quadrante ABACAXI (baixo crescimento e baixa participação) com investimento promocional acima do mínimo");
     alignmentPoints -= 18;
   }
 
   if (bcg.quadrant === "Vaca Leiteira" && mix.priceStrategy === "penetracao") {
-    issues.push("VACA LEITEIRA deveria maximizar lucros, não penetração de mercado");
+    issues.push("Produto no quadrante VACA LEITEIRA com estratégia de preço de penetração");
     alignmentPoints -= 15;
   }
 
   if (bcg.quadrant === "Estrela" && mix.priceValue && mix.priceValue < 20) {
-    issues.push("ESTRELA permite preço premium devido ao crescimento e participação");
+    issues.push("Produto no quadrante ESTRELA com preço reduzido");
     alignmentPoints -= 12;
   }
 
@@ -495,7 +505,7 @@ function analyzePestelAlignment(pestel: PestelAnalysis | null, mix: MarketingMix
   }
 
   if (hasInflation && mix.priceValue && mix.priceValue < 15) {
-    issues.push("PESTEL indica inflação, mas preço não acompanha custos crescentes");
+    issues.push("PESTEL indica inflação, com preço reduzido");
     alignmentPoints -= 15;
   }
 
@@ -516,7 +526,7 @@ function analyzePestelAlignment(pestel: PestelAnalysis | null, mix: MarketingMix
   );
 
   if (hasTechTrends && !hasDigitalChannel) {
-    issues.push("PESTEL indica tendências digitais, mas canais tradicionais predominam");
+    issues.push("PESTEL indica tendências digitais, sem canais digitais na distribuição");
     alignmentPoints -= 18;
   }
 
@@ -527,7 +537,7 @@ function analyzePestelAlignment(pestel: PestelAnalysis | null, mix: MarketingMix
   );
 
   if (hasSocialChange && mix.promotionIntensity === "alto") {
-    issues.push("PESTEL indica mudanças sociais que requerem marketing consciente");
+    issues.push("PESTEL indica mudanças sociais ligadas a sustentabilidade, com intensidade promocional elevada");
     alignmentPoints -= 8;
   }
 
@@ -539,7 +549,7 @@ function analyzePestelAlignment(pestel: PestelAnalysis | null, mix: MarketingMix
 
   if (hasRegulation) {
     alignmentPoints -= 5;
-    issues.push("Atenção: regulações identificadas no PESTEL podem impactar operações");
+    issues.push("PESTEL registra regulações que afetam o setor");
   }
 
   const score = Math.max(0, Math.min(100, alignmentPoints));
@@ -621,12 +631,12 @@ function analyzeSegmentationAlignment(
     }
 
     if (hasSmallBusinessSegment && getTotalPromotion(mix) > 25000) {
-      issues.push("Segmentação B2B indica pequenas empresas como público-alvo, mas o investimento promocional está desproporcional a esse ticket");
+      issues.push("Segmentação B2B indica pequenas empresas como público-alvo, com investimento promocional acima de R$ 25 mil");
       alignmentPoints -= 12;
     }
 
     if (hasLongBuyingCycle && mix.priceStrategy === "penetracao") {
-      issues.push("Segmentação B2B indica ciclo de decisão longo (comitê de compras), pouco compatível com estratégia de penetração por preço baixo");
+      issues.push("Segmentação B2B indica ciclo de decisão longo (comitê de compras), com estratégia de penetração por preço baixo");
       alignmentPoints -= 15;
     }
   }

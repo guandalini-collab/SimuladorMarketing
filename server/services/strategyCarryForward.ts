@@ -64,6 +64,14 @@ export async function carryForwardStrategyAnalyses(
     return { success: true, totalTeams: 0, carriedCount: 0, results: [] };
   }
 
+  // Out/2026 (Grupo D): nas turmas com análises prontas, SWOT, 5 Forças,
+  // BCG e PESTEL são refeitas a cada rodada pelo sistema e não são mais
+  // copiadas da rodada anterior. Antes, se a geração falhasse, a análise da
+  // semana anterior aparecia como se fosse da rodada atual. Só a
+  // Segmentação de Mercado, que é da equipe, continua herdada.
+  const { turmaComAnalisesDaIA } = await import("./analisesDaIA");
+  const soSegmentacao = await turmaComAnalisesDaIA(storage, round.classId);
+
   const teams = await storage.getTeamsByClass(round.classId);
   const results: CarryForwardTeamResult[] = [];
   let carriedCount = 0;
@@ -77,12 +85,14 @@ export async function carryForwardStrategyAnalyses(
         storage.getBcgAnalyses(team.id, round.id),
       ]);
 
-      const [prevSwot, prevPorter, prevPestel, prevBcg] = await Promise.all([
-        storage.getSwotAnalysis(team.id, previousRound.id),
-        storage.getPorterAnalysis(team.id, previousRound.id),
-        storage.getPestelAnalysis(team.id, previousRound.id),
-        storage.getBcgAnalyses(team.id, previousRound.id),
-      ]);
+      const [prevSwot, prevPorter, prevPestel, prevBcg] = soSegmentacao
+        ? [undefined, undefined, undefined, [] as Awaited<ReturnType<typeof storage.getBcgAnalyses>>]
+        : await Promise.all([
+            storage.getSwotAnalysis(team.id, previousRound.id),
+            storage.getPorterAnalysis(team.id, previousRound.id),
+            storage.getPestelAnalysis(team.id, previousRound.id),
+            storage.getBcgAnalyses(team.id, previousRound.id),
+          ]);
 
       let carriedAny = false;
 

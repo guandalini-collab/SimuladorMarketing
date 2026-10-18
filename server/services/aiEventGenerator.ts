@@ -181,7 +181,7 @@ ${sector.challenges.map((c, i) => `${i + 1}. ${c}`).join('\n')}
 ${sector.opportunities.map((o, i) => `${i + 1}. ${o}`).join('\n')}
 
 **Instruções:**
-1. Gere eventos realistas baseados em dados REAIS do mercado brasileiro atual
+1. Gere eventos plausíveis (cenário simulado), coerentes com a conjuntura real informada abaixo
 2. Cubra diferentes categorias PESTEL:
    - **Político**: Mudanças em políticas, regulamentações, impostos
    - **Econômico**: Inflação, câmbio, taxas de juros, PIB
@@ -196,7 +196,7 @@ ${sector.opportunities.map((o, i) => `${i + 1}. ${o}`).join('\n')}
    - description: três elementos nesta ordem, na mesma string:
      1. "Jornal: Simula+ News"
      2. "[Lead]: " seguido de UMA ÚNICA FRASE objetiva contendo o quê, quem, quando e o impacto geral do evento
-     3. "[Coluna Macroeconômica]: " seguido de um bloco analítico e frio com os dados numéricos reais do setor/mercado brasileiro (números, percentuais, indicadores) necessários para a tomada de decisão do aluno
+     3. "[Coluna Macroeconômica]: " seguido de um bloco analítico e frio sobre o cenário macroeconômico; use números SOMENTE se eles constarem da conjuntura informada (com o mesmo valor); caso contrário, descreva a tendência sem números
      Total: 300-500 caracteres.
    - impact: "[Análise de Tendência]: " seguido de um parágrafo fundamentado — de forma implícita ou explícita — em teorias reais de mercado (ex: movimentos nas Forças de Porter ou na categoria PESTEL correspondente ao evento), descrevendo os efeitos prováveis sobre o mercado, a demanda e a concorrência. É proibido dizer o que a empresa deve fazer ou recomendar decisões de preço, produto, praça ou promoção: a interpretação e a decisão são do aluno. 150-300 caracteres.
    - Tom estritamente jornalístico, profissional, informativo e frio em todos os campos — livre de bajulações, cortesias ou linguagem motivacional.
@@ -205,7 +205,7 @@ ${sector.opportunities.map((o, i) => `${i + 1}. ${o}`).join('\n')}
    - pestelCategory: categoria PESTEL por extenso ("Político", "Econômico", "Social", "Tecnológico", "Ambiental", "Legal")
 
 4. Eventos devem ser variados em severidade (distribua entre baixo, médio e alto) e em sentiment (não gere só eventos negativos nem só positivos)
-5. Use dados e tendências REAIS do mercado brasileiro de ${currentYear} — é proibido inventar instituições, indicadores ou dados fictícios apresentados como reais
+5. Não escreva números, percentuais ou indicadores que não estejam na conjuntura informada — é proibido inventar instituições, indicadores ou dados apresentados como reais
 6. Seja específico e prático: os eventos devem ter efeito real sobre o mercado do setor, sem recomendar decisões à empresa (o aluno interpreta e decide)
 7. Nunca mencione, sugira ou admita ser uma inteligência artificial, modelo de linguagem, ChatGPT ou software externo. Você é a redação do Simula+ News, parte nativa do ecossistema do simulador.
 

@@ -116,7 +116,7 @@ async function gerarTextoComIA(params: {
 
   const { getConjunturaParaPrompt } = await import("./conjuntura");
   const conjuntura = await getConjunturaParaPrompt(params.classId);
-  const prompt = `Setor: ${params.sectorName}. Tipo de negócio: ${params.businessType}. Mês ${params.roundNumber} da simulação.
+  const prompt = `Setor: ${params.sectorName}. Tipo de negócio: ${params.businessType}. Semana da rodada ${params.roundNumber} da simulação.
 Eventos de mercado desta semana:
 ${listaEventos}
 
@@ -128,13 +128,12 @@ Responda em JSON com exatamente estes campos:
   "headline": "título curto do boletim",
   "summary": "2 a 4 frases descrevendo o comportamento do consumidor, da demanda e dos preços na semana, sem recomendar o que as empresas devem fazer",
   "indicators": {
-    "confiancaConsumidor": número de 0 a 100,
-    "variacaoPrecosSetor": número (variação % dos preços do setor na semana, ex.: -0.3),
     "intensidadeConcorrencia": "baixa" | "media" | "alta",
     "tendencias": ["2 a 3 tendências curtas da semana"]
   }
 }
-Os eventos são a semana simulada; a conjuntura abaixo é o pano de fundo real do país e deve ser coerente com o boletim.${conjuntura}`;
+Os eventos são a semana simulada; a conjuntura abaixo é o pano de fundo real do país e deve ser coerente com o boletim.
+Não escreva números (percentuais, índices, valores) que não estejam nos eventos ou na conjuntura abaixo.${conjuntura}`;
 
   const completion = await getOpenAI().chat.completions.create({
     model: "gpt-4o-mini",
@@ -161,13 +160,13 @@ Os eventos são a semana simulada; a conjuntura abaixo é o pano de fundo real d
   return {
     demand: parsed.demand,
     priceSensitivity: parsed.priceSensitivity,
-    headline: parsed.headline.trim(),
-    summary: parsed.summary.trim(),
+    headline: parsed.headline.trim().slice(0, 140),
+    summary: parsed.summary.trim().slice(0, 900),
     indicators: {
-      confiancaConsumidor: Number.isFinite(Number(ind.confiancaConsumidor)) ? Math.max(0, Math.min(100, Number(ind.confiancaConsumidor))) : undefined,
-      variacaoPrecosSetor: Number.isFinite(Number(ind.variacaoPrecosSetor)) ? Number(ind.variacaoPrecosSetor) : undefined,
+      // Out/2026 (Grupo D): confiança do consumidor e variação de preços não
+      // são mais pedidas à IA (eram números sem fonte).
       intensidadeConcorrencia: ["baixa", "media", "alta"].includes(ind.intensidadeConcorrencia) ? ind.intensidadeConcorrencia : undefined,
-      tendencias: Array.isArray(ind.tendencias) ? ind.tendencias.filter((t: any) => typeof t === "string").slice(0, 3) : undefined,
+      tendencias: Array.isArray(ind.tendencias) ? ind.tendencias.filter((t: any) => typeof t === "string").map((t: string) => t.slice(0, 160)).slice(0, 3) : undefined,
     },
   };
 }

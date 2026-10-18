@@ -76,22 +76,12 @@ export function MonthlyBulletinCard({ classId, activeRoundId }: { classId: strin
           <h3 className="font-semibold">{atual.headline}</h3>
           <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{atual.summary}</p>
         </div>
-        {(ind.confiancaConsumidor !== undefined || ind.variacaoPrecosSetor !== undefined || ind.intensidadeConcorrencia) && (
+        {/* Out/2026 (Grupo D): "confiança do consumidor" e "preços do setor"
+            eram números criados pelo texto do boletim, sem fonte, e não são
+            mais exibidos. A confiança do consumidor real (Fecomercio-SP) está
+            na Conjuntura Brasil. */}
+        {ind.intensidadeConcorrencia && (
           <div className="grid gap-3 sm:grid-cols-3">
-            {ind.confiancaConsumidor !== undefined && (
-              <div className="rounded-lg border p-3">
-                <p className="text-xs text-muted-foreground">Confiança do consumidor</p>
-                <p className="text-xl font-semibold tabular-nums">{Math.round(ind.confiancaConsumidor)}<span className="text-sm text-muted-foreground"> /100</span></p>
-              </div>
-            )}
-            {ind.variacaoPrecosSetor !== undefined && (
-              <div className="rounded-lg border p-3">
-                <p className="text-xs text-muted-foreground">Preços do setor na semana</p>
-                <p className="text-xl font-semibold tabular-nums">
-                  {ind.variacaoPrecosSetor > 0 ? "+" : ""}{ind.variacaoPrecosSetor.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%
-                </p>
-              </div>
-            )}
             {ind.intensidadeConcorrencia && (
               <div className="rounded-lg border p-3">
                 <p className="text-xs text-muted-foreground">Intensidade da concorrência</p>
