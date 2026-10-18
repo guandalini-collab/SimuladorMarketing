@@ -472,50 +472,7 @@ export default function Mercado() {
                           </div>
                         )}
 
-                        <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-                          <h4 className="text-sm font-semibold flex items-center gap-2">
-                            <Lightbulb className="h-4 w-4" />
-                            Implicações Estratégicas
-                          </h4>
-                          <ul className="space-y-2 text-xs text-muted-foreground">
-                            {currentClass.competitionLevel === "baixa" && (
-                              <>
-                                <li className="flex items-start gap-2">
-                                  <span className="text-primary mt-0.5">•</span>
-                                  <span>Maior flexibilidade de preço e posicionamento</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                  <span className="text-primary mt-0.5">•</span>
-                                  <span>Oportunidade para construir marca forte</span>
-                                </li>
-                              </>
-                            )}
-                            {(currentClass.competitionLevel === "alta" || currentClass.competitionLevel === "muito_alta") && (
-                              <>
-                                <li className="flex items-start gap-2">
-                                  <span className="text-primary mt-0.5">•</span>
-                                  <span>Diferenciação é crucial para destaque</span>
-                                </li>
-                                <li className="flex items-start gap-2">
-                                  <span className="text-primary mt-0.5">•</span>
-                                  <span>Pressão sobre margens e necessidade de eficiência</span>
-                                </li>
-                              </>
-                            )}
-                            {currentClass.marketConcentration === "monopolio" && (
-                              <li className="flex items-start gap-2">
-                                <span className="text-primary mt-0.5">•</span>
-                                <span>Barreiras de entrada elevadas, dificulta novos entrantes</span>
-                              </li>
-                            )}
-                            {currentClass.marketConcentration === "concorrencia_perfeita" && (
-                              <li className="flex items-start gap-2">
-                                <span className="text-primary mt-0.5">•</span>
-                                <span>Preço determinado pelo mercado, foco em volume e custo</span>
-                              </li>
-                            )}
-                          </ul>
-                        </div>
+                        {/* Out/2026: o bloco "Implicações Estratégicas" foi retirado; ele orientava a decisão do aluno. */}
                       </div>
                     </div>
                   </div>
@@ -639,14 +596,6 @@ export default function Mercado() {
                       {economicData.analysis?.condition === "unfavorable" && "Desfavorável"}
                       {economicData.analysis?.condition === "neutral" && "Neutra"}
                     </Badge>
-                    <p className="text-xs text-muted-foreground mt-3">
-                      {economicData.analysis?.condition === "favorable" &&
-                        "Bom momento para investir e expandir"}
-                      {economicData.analysis?.condition === "unfavorable" &&
-                        "Momento de cautela e reservas"}
-                      {economicData.analysis?.condition === "neutral" &&
-                        "Cenário equilibrado, avaliar riscos"}
-                    </p>
                   </CardContent>
                 </Card>
               </div>
@@ -691,57 +640,7 @@ export default function Mercado() {
                 </Card>
               )}
 
-              <Card>
-                <CardHeader className="bg-muted/30">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-[#ff8c1a] flex items-center justify-center">
-                      <Zap className="h-5 w-5 text-white" />
-                    </div>
-                    <CardTitle>Impactos nas Decisões de Marketing</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    <div>
-                      <p className="font-semibold text-sm mb-2">Produto</p>
-                      <p className="text-sm text-muted-foreground">
-                        {economicData.analysis?.trend === "up" 
-                          ? "Custos de importação podem aumentar. Considere fornecedores locais."
-                          : economicData.analysis?.trend === "down"
-                          ? "Oportunidade para produtos importados com melhor margem."
-                          : "Mantenha equilíbrio entre fornecedores locais e importados."}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm mb-2">Preço</p>
-                      <p className="text-sm text-muted-foreground">
-                        {economicData.analysis?.condition === "favorable"
-                          ? "Consumidores mais dispostos a pagar. Considere preço premium."
-                          : economicData.analysis?.condition === "unfavorable"
-                          ? "Reduza preços ou ofereça promoções para manter volume."
-                          : "Mantenha preços competitivos com flexibilidade para ajustes."}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm mb-2">Praça</p>
-                      <p className="text-sm text-muted-foreground">
-                        Canais digitais são menos afetados por variações cambiais. 
-                        Priorize e-commerce e marketplaces.
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm mb-2">Promoção</p>
-                      <p className="text-sm text-muted-foreground">
-                        {economicData.analysis?.condition === "favorable"
-                          ? "Invista em branding e posicionamento de marca."
-                          : economicData.analysis?.condition === "unfavorable"
-                          ? "Foque em promoções de preço e descontos agressivos."
-                          : "Equilibre investimentos entre branding e promoções."}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Out/2026: o card "Impactos nas Decisões de Marketing" foi retirado; ele dizia ao aluno o que decidir. */}
             </>
           ) : (
             <Card>

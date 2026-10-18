@@ -148,7 +148,7 @@ export function DeterministicFeedbackCard({ teamId, roundId, compact = false, mo
               <h3 className="font-semibold">O que aconteceu</h3>
             </div>
             <ul className="space-y-2">
-              {feedback.whatHappened.map((item, index) => (
+              {(feedback.whatHappened ?? []).map((item, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm">
                   <ChevronRight className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <span>{item}</span>
@@ -163,7 +163,7 @@ export function DeterministicFeedbackCard({ teamId, roundId, compact = false, mo
               <h3 className="font-semibold">Por que aconteceu</h3>
             </div>
             <ul className="space-y-2">
-              {feedback.whyItHappened.map((item, index) => (
+              {(feedback.whyItHappened ?? []).map((item, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm">
                   <ChevronRight className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <span>{item}</span>

@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Newspaper, Scale, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Boletim mensal de mercado e adequação ao mercado do mês
+// Boletim semanal de mercado (um por rodada) e adequação ao mercado da semana
 // (server/services/marketBulletin.ts). Só leitura.
 
 type Demanda = "retracao" | "estavel" | "aquecida";
@@ -48,8 +48,8 @@ export function MonthlyBulletinCard({ classId, activeRoundId }: { classId: strin
 
   if (bulletins.length === 0) return null;
   const atual = bulletins.find((b) => b.roundId === activeRoundId) ?? bulletins[bulletins.length - 1];
-  const d = DEMANDA[atual.demand];
-  const s = SENSIB[atual.priceSensitivity];
+  const d = DEMANDA[atual.demand] ?? DEMANDA.estavel;
+  const s = SENSIB[atual.priceSensitivity] ?? SENSIB.normal;
   const DIcon = d.icon;
   const ind = atual.indicators ?? {};
   const anteriores = bulletins.filter((b) => b.id !== atual.id).slice(-6).reverse();
@@ -107,12 +107,12 @@ export function MonthlyBulletinCard({ classId, activeRoundId }: { classId: strin
         )}
         {anteriores.length > 0 && (
           <div className="border-t pt-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Meses anteriores</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Rodadas anteriores</p>
             <ul className="space-y-1 text-sm">
               {anteriores.map((b) => (
                 <li key={b.id} className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="text-muted-foreground">Mês {b.roundNumber ?? "—"}</span>
-                  <span>{DEMANDA[b.demand].label} · {SENSIB[b.priceSensitivity].label.toLowerCase()}</span>
+                  <span className="text-muted-foreground">Rodada {b.roundNumber ?? "—"}</span>
+                  <span>{DEMANDA[b.demand]?.label ?? "—"} · {(SENSIB[b.priceSensitivity]?.label ?? "—").toLowerCase()}</span>
                 </li>
               ))}
             </ul>
@@ -162,7 +162,7 @@ export function MarketFitCard({ teamId, roundId }: { teamId: string; roundId: st
       </Card>
     );
   }
-  if (data.products.length === 0) return null;
+  if (!data.products?.length) return null;
 
   return (
     <Card data-testid="card-market-fit">
@@ -191,7 +191,7 @@ export function MarketFitCard({ teamId, roundId }: { teamId: string; roundId: st
                 {p.percent > 0 ? "+" : ""}{p.percent}% na receita
               </span>
             </div>
-            {p.reasons.length > 0 ? (
+            {(p.reasons ?? []).length > 0 ? (
               <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-0.5">
                 {p.reasons.map((r) => <li key={r}>{r}</li>)}
               </ul>

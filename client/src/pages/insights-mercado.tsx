@@ -122,7 +122,7 @@ export default function InsightsMercado() {
     enabled: !!team,
   });
 
-  const { data: insights, isLoading: insightsLoading } = useQuery<MarketInsights>({
+  const { data: insights, isLoading: insightsLoading, isError: insightsError } = useQuery<MarketInsights>({
     queryKey: ["/api/insights/market", team?.id],
     enabled: !!team,
   });
@@ -157,7 +157,7 @@ export default function InsightsMercado() {
         <div>
           <h1 className="text-3xl font-accent font-bold">Insights de Mercado</h1>
           <p className="text-muted-foreground">
-            Análise do setor, tendências e recomendações estratégicas
+            Análise do setor e indicadores da equipe
           </p>
         </div>
         <Alert data-testid="alert-no-results">
@@ -176,41 +176,36 @@ export default function InsightsMercado() {
         <div>
           <h1 className="text-3xl font-accent font-bold">Insights de Mercado</h1>
           <p className="text-muted-foreground">
-            Carregando análises do mercado...
+            {insightsError ? "Não foi possível carregar os insights." : "Carregando análises do mercado..."}
           </p>
         </div>
         <Alert data-testid="alert-loading">
           <Info className="h-4 w-4" />
           <AlertDescription>
-            Aguarde enquanto geramos os insights personalizados para sua equipe.
+            {insightsError
+              ? "Não foi possível carregar os insights agora. Recarregue a página em alguns instantes."
+              : "Aguarde enquanto os insights da sua equipe são preparados."}
           </AlertDescription>
         </Alert>
       </div>
     );
   }
 
-  // Nota (auditoria 2026-09): "Margem" vem de um valor real por setor
-  // (insights.sectorInfo.averageMargin, definido em server/data/marketData.ts
-  // — varia por setor, ex.: 12% a 75%). Os demais benchmarks (ROI 40,
-  // Market Share 25, Satisfação 70, NPS 60) são metas de referência FIXAS,
-  // iguais para todos os setores — não são médias calculadas da turma nem
-  // valores específicos do setor. Por isso os rótulos na tela dizem "Meta
-  // de Referência", nunca "média do setor" ou algo que sugira um cálculo
-  // real (ver também os rótulos abaixo, no Radar e no BarChart).
+  // Out/2026: as "metas de referência" fixas (ROI 40, Market Share 25,
+  // Satisfação 70, NPS 60) foram retiradas: eram iguais para todos os setores
+  // e indicavam ao aluno onde mirar. A única comparação que ficou é com a
+  // margem média real do setor (insights.sectorInfo.averageMargin, de
+  // server/data/marketData.ts).
   const sectorData = [
-    { metric: "Margem", value: currentResult?.margin || 0, benchmark: insights.sectorInfo.averageMargin },
-    { metric: "ROI", value: Math.min(currentResult?.roi || 0, 100), benchmark: 40 },
-    { metric: "Market Share", value: currentResult?.marketShare || 0, benchmark: 25 },
-    { metric: "Satisfação", value: currentResult?.customerSatisfaction || 0, benchmark: 70 },
-    { metric: "NPS", value: ((currentResult?.nps || 0) + 100) / 2, benchmark: 60 },
+    { metric: "Margem", value: currentResult?.margin || 0 },
+    { metric: "ROI", value: Math.min(currentResult?.roi || 0, 100) },
+    { metric: "Market Share", value: currentResult?.marketShare || 0 },
+    { metric: "Satisfação", value: currentResult?.customerSatisfaction || 0 },
+    { metric: "NPS", value: ((currentResult?.nps || 0) + 100) / 2 },
   ];
 
-  // O limite de 100 acima (ROI do Radar) não é inconsistente com o limite de
-  // 150 abaixo — são propositalmente diferentes: o Radar tem eixo fixo
-  // 0-100 (PolarRadiusAxis domain={[0, 100]}), então precisa desse teto
-  // para não distorcer o desenho; o BarChart abaixo não tem eixo fixo (a
-  // escala se ajusta sozinha) e só usa 150 como teto de sanidade contra um
-  // outlier extremo, sem achatar o gráfico.
+  // O ROI do Radar tem teto 100 (eixo fixo 0-100); no gráfico de barras o
+  // teto 150 só protege contra um valor extremo.
   const performanceComparison = [
     {
       category: "Sua Equipe",
@@ -219,10 +214,8 @@ export default function InsightsMercado() {
       marketShare: currentResult?.marketShare || 0,
     },
     {
-      category: "Meta de Referência",
+      category: "Margem média do setor",
       margem: insights.sectorInfo.averageMargin,
-      roi: 40,
-      marketShare: 25,
     },
   ];
 
@@ -259,7 +252,7 @@ export default function InsightsMercado() {
       <div>
         <h1 className="text-3xl font-accent font-bold" data-testid="heading-market-insights">Insights de Mercado</h1>
         <p className="text-muted-foreground">
-          Análise do setor {insights.sectorInfo.name} e recomendações personalizadas
+          Análise do setor {insights.sectorInfo.name} e indicadores da equipe
         </p>
       </div>
 
@@ -286,7 +279,7 @@ export default function InsightsMercado() {
               <div>
                 <p className="text-sm font-medium">Margem Média</p>
                 <p className="text-2xl font-bold text-[#1447e6]" data-testid="text-sector-margin">
-                  {insights.sectorInfo.averageMargin.toFixed(1)}%
+                  {Number(insights.sectorInfo.averageMargin ?? 0).toFixed(1)}%
                 </p>
               </div>
               <div>
@@ -299,7 +292,7 @@ export default function InsightsMercado() {
             <div>
               <p className="text-sm font-medium mb-2">Principais Desafios</p>
               <ul className="space-y-1">
-                {insights.sectorInfo.mainChallenges.map((challenge, index) => (
+                {(insights.sectorInfo.mainChallenges ?? []).map((challenge, index) => (
                   <li key={index} className="text-sm text-muted-foreground flex items-start gap-2" data-testid={`text-challenge-${index}`}>
                     <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0 text-[#ff8c1a]" />
                     {challenge}
@@ -310,7 +303,7 @@ export default function InsightsMercado() {
             <div>
               <p className="text-sm font-medium mb-2">Oportunidades</p>
               <ul className="space-y-1">
-                {insights.sectorInfo.opportunities.map((opportunity, index) => (
+                {(insights.sectorInfo.opportunities ?? []).map((opportunity, index) => (
                   <li key={index} className="text-sm text-muted-foreground flex items-start gap-2" data-testid={`text-opportunity-${index}`}>
                     <TrendingUp className="h-4 w-4 mt-0.5 flex-shrink-0 text-[#1aa15c]" />
                     {opportunity}
@@ -387,8 +380,8 @@ export default function InsightsMercado() {
                 <BarChart3 className="h-5 w-5 text-white" />
               </div>
               <div>
-                <CardTitle>Comparação com o Setor</CardTitle>
-                <CardDescription>Sua performance vs. metas de referência do setor</CardDescription>
+                <CardTitle>Indicadores da Equipe</CardTitle>
+                <CardDescription>Escala de 0 a 100 (ROI limitado a 100; NPS convertido de −100/100 para 0/100)</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -405,13 +398,6 @@ export default function InsightsMercado() {
                   fill="#1447e6"
                   fillOpacity={0.6}
                 />
-                <Radar
-                  name="Meta de Referência"
-                  dataKey="benchmark"
-                  stroke="#ffcc00"
-                  fill="#ffcc00"
-                  fillOpacity={0.3}
-                />
                 <Tooltip />
               </RadarChart>
             </ResponsiveContainer>
@@ -426,7 +412,7 @@ export default function InsightsMercado() {
               </div>
               <div>
                 <CardTitle>Indicadores Comparativos</CardTitle>
-                <CardDescription>Margem, ROI e Market Share</CardDescription>
+                <CardDescription>Margem, ROI e Market Share da equipe; margem média real do setor</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -447,99 +433,7 @@ export default function InsightsMercado() {
         </Card>
       </div>
 
-      {insights.recommendations?.length > 0 && (
-      <Card data-testid="card-recommendations" className="border-primary/20">
-        <CardHeader className="bg-muted/30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-[#ffcc00] flex items-center justify-center">
-                <Lightbulb className="h-5 w-5 text-[#0a1830]" />
-              </div>
-              <CardTitle>Recomendações Estratégicas</CardTitle>
-            </div>
-            <Badge className="bg-[#7c3aed] text-white border-transparent hover:bg-[#7c3aed]" data-testid="badge-ai-generated">
-              <span className="mr-1">✨</span> Automático
-            </Badge>
-          </div>
-          <CardDescription>
-            Ações priorizadas e acionáveis para melhorar sua performance
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {insights.recommendations.map((rec, index) => (
-              <div 
-                key={index} 
-                className="border rounded-lg p-5 hover-elevate" 
-                data-testid={`recommendation-${index}`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5">
-                    {getPriorityIcon(rec.priority)}
-                  </div>
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-semibold text-base" data-testid={`text-recommendation-title-${index}`}>
-                        {rec.title}
-                      </h4>
-                      <Badge variant="outline" className="text-xs" data-testid={`badge-category-${index}`}>
-                        {rec.category}
-                      </Badge>
-                      <Badge
-                        className={
-                          rec.priority === "alta" ? "bg-[#fde8e6] text-[#a3241c] border-transparent" :
-                          rec.priority === "media" ? "bg-[#fff3d6] text-[#7a5300] border-transparent" :
-                          "bg-[#e6f7ee] text-[#0f7a44] border-transparent"
-                        }
-                        data-testid={`badge-priority-${index}`}
-                      >
-                        {rec.priority === "alta" ? "Alta" : rec.priority === "media" ? "Média" : "Baixa"}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground" data-testid={`text-recommendation-description-${index}`}>
-                      {rec.description}
-                    </p>
-                    
-                    {rec.actionableSteps && rec.actionableSteps.length > 0 && (
-                      <div className="pt-2 border-t">
-                        <p className="text-xs font-medium mb-2 flex items-center gap-1">
-                          <Target className="h-3 w-3" />
-                          Passos Acionáveis:
-                        </p>
-                        <ul className="space-y-1">
-                          {rec.actionableSteps.map((step, stepIndex) => (
-                            <li 
-                              key={stepIndex} 
-                              className="text-xs text-muted-foreground flex items-start gap-2"
-                              data-testid={`text-step-${index}-${stepIndex}`}
-                            >
-                              <span className="text-primary mt-0.5">•</span>
-                              {step}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {rec.expectedImpact && (
-                      <div className="pt-2 border-t">
-                        <p className="text-xs font-medium mb-1 flex items-center gap-1">
-                          <TrendingUp className="h-3 w-3" />
-                          Impacto Esperado:
-                        </p>
-                        <p className="text-xs text-muted-foreground" data-testid={`text-impact-${index}`}>
-                          {rec.expectedImpact}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      )}
+      {/* Out/2026: o card "Recomendações Estratégicas" foi retirado; o sistema não orienta a decisão do aluno. */}
     </div>
   );
 }

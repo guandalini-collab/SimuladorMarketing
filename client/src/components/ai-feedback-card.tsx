@@ -31,7 +31,7 @@ interface AiFeedback {
 }
 
 export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
-  const { data: feedback, isLoading, error } = useQuery<AiFeedback | undefined>({
+  const { data: feedback, isLoading, error } = useQuery<AiFeedback | null>({
     queryKey: [`/api/feedback/${teamId}/${roundId}`],
     enabled: !!teamId && !!roundId,
     retry: false,
@@ -41,8 +41,9 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
         cache: "no-store",
       });
 
+      // Sem feedback ainda: null (undefined é tratado como erro pelo TanStack Query v5).
       if (res.status === 404) {
-        return undefined;
+        return null;
       }
 
       if (!res.ok) {
@@ -128,7 +129,7 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
           <Alert data-testid="alert-no-feedback">
             <Info className="h-4 w-4" />
             <AlertDescription>
-              O feedback ainda não foi gerado para esta rodada. O professor pode gerar o feedback após o encerramento da rodada.
+              O feedback desta rodada ainda não está disponível. Ele é gerado automaticamente depois do encerramento da rodada.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -201,7 +202,7 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
                   <div className="h-8 w-8 rounded-lg bg-[#ff8c1a] flex items-center justify-center">
                     <TrendingDown className="h-4 w-4 text-white" />
                   </div>
-                  <span className="font-semibold">Oportunidades de Aprendizado</span>
+                  <span className="font-semibold">Pontos de Atenção</span>
                   <Badge variant="outline" className="ml-2">{feedback.weaknesses.length}</Badge>
                 </div>
               </AccordionTrigger>
@@ -218,30 +219,7 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
             </AccordionItem>
           )}
 
-          {/* Suggestions */}
-          {feedback.suggestions && feedback.suggestions.length > 0 && (
-            <AccordionItem value="suggestions">
-              <AccordionTrigger className="hover:no-underline" data-testid="trigger-suggestions">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-[#1447e6] flex items-center justify-center">
-                    <Lightbulb className="h-4 w-4 text-white" />
-                  </div>
-                  <span className="font-semibold">Sugestões para Reflexão</span>
-                  <Badge variant="outline" className="ml-2">{feedback.suggestions.length}</Badge>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <ul className="space-y-3 mt-2">
-                  {feedback.suggestions.map((suggestion, index) => (
-                    <li key={index} className="flex gap-3" data-testid={`text-suggestion-${index}`}>
-                      <Lightbulb className="h-5 w-5 text-[#1447e6] flex-shrink-0 mt-0.5" />
-                      <span className="text-muted-foreground">{suggestion}</span>
-                    </li>
-                  ))}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-          )}
+          {/* Out/2026: "Sugestões" não são exibidas ao aluno (o sistema não orienta decisões). */}
 
           {/* Literature Recommendations */}
           {feedback.literatureRecommendations && feedback.literatureRecommendations.length > 0 && (
@@ -251,7 +229,7 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
                   <div className="h-8 w-8 rounded-lg bg-[#2f2a8f] flex items-center justify-center">
                     <BookOpen className="h-4 w-4 text-white" />
                   </div>
-                  <span className="font-semibold">Leituras Recomendadas</span>
+                  <span className="font-semibold">Leituras relacionadas</span>
                   <Badge variant="outline" className="ml-2">{feedback.literatureRecommendations.length}</Badge>
                 </div>
               </AccordionTrigger>
@@ -271,7 +249,6 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
                           </p>
                           <p className="text-sm text-muted-foreground mt-1" data-testid={`text-book-author-${index}`}>
                             {book.author}
-                            {book.chapter && ` - ${book.chapter}`}
                           </p>
                           <p className="text-sm text-muted-foreground mt-2 italic" data-testid={`text-book-reason-${index}`}>
                             {book.reason}
@@ -291,7 +268,7 @@ export function AiFeedbackCard({ teamId, roundId }: AiFeedbackCardProps) {
           <AlertDescription className="text-xs">
             <strong>Método Socrático:</strong> Este feedback usa perguntas reflexivas para estimular seu pensamento crítico. 
             Não esperamos respostas prontas, mas que você investigue, discuta com sua equipe e chegue às suas próprias conclusões. 
-            O aprendizado acontece quando você mesmo descobre as respostas!
+            O aprendizado acontece quando a própria equipe chega às respostas.
           </AlertDescription>
         </Alert>
       </CardContent>

@@ -149,7 +149,7 @@ export default function Empresa() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/team/current"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/team/current"] }); queryClient.invalidateQueries({ queryKey: ["/api/team/current-round-status"] });
       toast({
         title: "Identidade atualizada!",
         description: "Nome da empresa e slogan foram salvos com sucesso.",
@@ -198,7 +198,7 @@ export default function Empresa() {
       setLogoFile(null);
       
       // Invalida para garantir sincronização com servidor
-      queryClient.invalidateQueries({ queryKey: ["/api/team/current"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/team/current"] }); queryClient.invalidateQueries({ queryKey: ["/api/team/current-round-status"] });
     },
     onError: (error: any, _newLogoUrl, context) => {
       // Reverte cache em caso de erro
@@ -256,7 +256,7 @@ export default function Empresa() {
       setLogoFile(null);
       
       // Invalida para obter URL real do servidor
-      queryClient.invalidateQueries({ queryKey: ["/api/team/current"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/team/current"] }); queryClient.invalidateQueries({ queryKey: ["/api/team/current-round-status"] });
     },
     onError: (error: any, _variables, context) => {
       // Revoga preview local blob URL
@@ -293,7 +293,7 @@ export default function Empresa() {
       return res.json();
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/team-products", team?.id, activeRound?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/team-products", team?.id, activeRound?.id] }); queryClient.invalidateQueries({ queryKey: ["/api/team/current-round-status"] });
       toast({
         title: variables.isDraft ? "Rascunho salvo!" : "Produto configurado!",
         description: variables.isDraft
@@ -413,7 +413,7 @@ export default function Empresa() {
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="bg-muted/30">
             <div className="flex items-center gap-3">
@@ -423,7 +423,7 @@ export default function Empresa() {
               <div>
                 <CardTitle>Nome da Empresa</CardTitle>
                 <CardDescription>
-                  Escolha um nome criativo e memorável para sua empresa
+                  Nome da empresa da equipe
                 </CardDescription>
               </div>
             </div>
@@ -521,7 +521,7 @@ export default function Empresa() {
             ) : (
             <>
             <div className="space-y-4">
-              <div className="flex gap-2 p-1 bg-muted rounded-lg">
+              <div className="flex flex-wrap gap-2 p-1 bg-muted rounded-lg">
                 <Button
                   type="button"
                   variant={logoMethod === "upload" ? "default" : "ghost"}
@@ -630,7 +630,7 @@ export default function Empresa() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue={classProducts[0]?.id} className="w-full">
-              <TabsList className="grid w-full h-auto" style={{ gridTemplateColumns: `repeat(${classProducts.length}, 1fr)` }}>
+              <TabsList className="flex w-full h-auto flex-wrap gap-1">
                 {classProducts.map((product: any, index: number) => {
                   const teamProduct = teamProducts?.find((tp) => tp.productId === product.id);
                   const isSubmitted = !!teamProduct?.submittedAt;
@@ -871,7 +871,7 @@ export default function Empresa() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {team.logoUrl && (
                 <div className="flex flex-col items-center md:items-start">
                   <p className="text-sm font-medium text-muted-foreground mb-2">Logomarca</p>

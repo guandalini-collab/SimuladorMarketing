@@ -15,6 +15,25 @@ export default function Orcamento() {
     enabled: !!team?.id,
   });
   
+  const { data: rounds } = useQuery<any[]>({
+    queryKey: ["/api/rounds"],
+    enabled: !!team?.id,
+  });
+
+  // Out/2026 (Grupo G): ordem por rodada, numa cópia (antes o array do
+  // cache era reordenado no lugar), e com o número real da rodada.
+  const rodadaDe = (roundId: string) => rounds?.find((r: any) => r.id === roundId);
+  const resultadosOrdenados = [...(results || [])].sort((a, b) => {
+    const ra = rodadaDe(a.roundId), rb = rodadaDe(b.roundId);
+    if (ra && rb) return (ra.roundNumber ?? 0) - (rb.roundNumber ?? 0);
+    return new Date(a.calculatedAt).getTime() - new Date(b.calculatedAt).getTime();
+  });
+  const rotuloDaRodada = (roundId: string) => {
+    const r = rodadaDe(roundId);
+    if (!r) return "Rodada";
+    return r.isPractice ? "Rodada de teste" : `Rodada ${r.roundNumber}`;
+  };
+
   const currentBudget = team?.budget || 0;
   const accumulatedResult = (results || []).reduce((sum, r) => sum + (r.profitImpact || 0), 0);
 
@@ -32,7 +51,7 @@ export default function Orcamento() {
           title="Orçamento Atual"
           value={`R$ ${currentBudget.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={Wallet}
-          description="Disponível para investimentos nas próximas rodadas"
+          description="Verba de marketing da próxima rodada"
           testId="text-current-budget"
           color="blue"
         />
@@ -41,7 +60,7 @@ export default function Orcamento() {
           <>
             <KPICard
               title="Orçamento Inicial"
-              value={`R$ ${(results[0]?.budgetBefore || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              value={`R$ ${(resultadosOrdenados[0]?.budgetBefore || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               icon={DollarSign}
               description="Definido no início da simulação"
               color="gold"
@@ -67,7 +86,7 @@ export default function Orcamento() {
             Histórico de Fluxo de Caixa
           </CardTitle>
           <CardDescription>
-            Evolução do orçamento ao longo das rodadas (lucros aumentam, prejuízos diminuem)
+            Verba de cada rodada, lucro ou prejuízo obtido e verba definida para a rodada seguinte
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -85,19 +104,18 @@ export default function Orcamento() {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left py-3 px-4 font-medium">Rodada</th>
-                    <th className="text-right py-3 px-4 font-medium">Orçamento Inicial</th>
-                    <th className="text-right py-3 px-4 font-medium">Resultado</th>
-                    <th className="text-right py-3 px-4 font-medium">Orçamento Final</th>
+                    <th className="text-right py-3 px-4 font-medium">Verba da rodada</th>
+                    <th className="text-right py-3 px-4 font-medium">Lucro / prejuízo</th>
+                    <th className="text-right py-3 px-4 font-medium">Verba da rodada seguinte</th>
                     <th className="text-center py-3 px-4 font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {results
-                    .sort((a, b) => new Date(a.calculatedAt).getTime() - new Date(b.calculatedAt).getTime())
+                  {resultadosOrdenados
                     .map((result, index) => (
                       <tr key={result.id} className="border-b hover-elevate" data-testid={`cashflow-row-${index}`}>
                         <td className="py-3 px-4">
-                          <span className="font-medium">Rodada {index + 1}</span>
+                          <span className="font-medium">{rotuloDaRodada(result.roundId)}</span>
                         </td>
                         <td className="text-right py-3 px-4">
                           <span className="text-muted-foreground">
@@ -140,9 +158,9 @@ export default function Orcamento() {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Como funciona o orçamento:</strong> O orçamento da sua equipe é utilizado ao longo de TODAS as rodadas. 
-          Em cada rodada, você decide quanto investir no Mix de Marketing (4 Ps). Quando a rodada fecha, os custos são deduzidos 
-          e os lucros ou prejuízos são aplicados ao seu orçamento. Gerencie seus recursos com sabedoria!
+          <strong>Como funciona o orçamento:</strong> Em cada rodada, a equipe dispõe de uma verba de marketing e decide quanto investir
+          no Mix de Marketing (4 Ps). A verba não acumula de uma rodada para a outra. Quando a rodada fecha, o jogo calcula o resultado
+          e define a verba da rodada seguinte, como explica o Apêndice “Como o mercado é calculado” do Manual do Aluno.
         </AlertDescription>
       </Alert>
     </div>

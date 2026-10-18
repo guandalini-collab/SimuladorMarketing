@@ -76,9 +76,9 @@ export function computeHealth(points: RoundPoint[], budget: number, initialBudge
 
   let alert: string | null = null;
   if (ratio < 0.25) {
-    alert = `O caixa está em ${pct}% do orçamento inicial. Revise custos e investimentos antes de enviar a próxima decisão.`;
+    alert = `O caixa está em ${pct}% do orçamento inicial.`;
   } else if (prev && last.profit < 0 && prev.profit < 0) {
-    alert = "Duas rodadas seguidas com prejuízo. Vale rever preço, custos e mix antes da próxima decisão.";
+    alert = "Duas rodadas seguidas com prejuízo.";
   }
 
   return { level, score, factors, alert };

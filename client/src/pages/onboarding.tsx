@@ -65,9 +65,9 @@ const SECTIONS: SectionContent[] = [
     icon: Calendar,
     color: "#7c3aed",
     body: [
-      "O professor controla o ritmo do jogo: ele inicia cada rodada, define o prazo (data e hora de encerramento) e, quando o prazo chega, encerra a rodada e processa os resultados. Fique de olho no prazo — depois que a rodada fecha, não dá mais para enviar ou alterar decisões daquela rodada.",
+      "Cada rodada corresponde a uma semana do mercado. O professor define a data e o horário de abertura e de fechamento de cada rodada; no horário de fechamento a rodada é encerrada e os resultados são processados. Fique de olho no prazo — depois que a rodada fecha, não dá mais para enviar ou alterar decisões daquela rodada.",
       "Dentro de uma rodada ativa, sua equipe pode revisar as análises estratégicas, ajustar o Mix de Marketing quantas vezes quiser, e só precisa enviar (submeter) a decisão final quando estiver pronta. Depois de enviada, ela fica travada até o fechamento da rodada.",
-      "Um detalhe importante: as suas análises estratégicas (que você vai conhecer daqui a pouco) não precisam ser refeitas a cada rodada. O que você preencheu continua valendo automaticamente nas rodadas seguintes — você só edita se a sua estratégia realmente mudou. Isso existe porque, na vida real, uma empresa não reinventa sua estratégia toda semana.",
+      "Um detalhe importante: a Segmentação de Mercado (que você vai conhecer daqui a pouco) não precisa ser refeita a cada rodada. O que a equipe salvou continua valendo nas rodadas seguintes e pode ser editado quando a equipe quiser.",
       "Ao final de cada rodada, o sistema calcula indicadores (KPIs) como participação de mercado, faturamento e satisfação do cliente, considerando as decisões de todas as equipes, as condições do mercado e eventuais eventos de mercado daquele período. Você vai poder comparar seu desempenho com o das outras equipes da turma.",
     ],
   },
@@ -78,8 +78,8 @@ const SECTIONS: SectionContent[] = [
     color: "#ff8c1a",
     body: [
       "A cada rodada, sua equipe toma decisões nos famosos 4 Ps do marketing: Produto (características, qualidade, portfólio), Preço (quanto cobrar e com que estratégia de precificação), Praça (canais de distribuição, onde o produto chega ao cliente) e Promoção (como e quanto investir em comunicação e divulgação).",
-      "O ponto-chave é a coerência entre os 4 Ps: eles precisam contar a mesma história. Um produto posicionado como premium não combina com preço baixo e distribuição de massa, por exemplo. O sistema avalia se suas decisões fazem sentido entre si e também se conversam com as análises estratégicas que sua equipe registrou.",
-      "Antes de conseguir enviar (submeter) o Mix de Marketing de uma rodada, o sistema exige que sua equipe já tenha preenchido as análises estratégicas — é assim que garantimos que a decisão não é feita \"no chute\", mas com uma leitura prévia do cenário.",
+      "O sistema avalia a coerência das decisões dos 4 Ps entre si e com a Segmentação de Mercado da equipe; o efeito dessa avaliação aparece nos resultados da rodada.",
+      "Antes de conseguir enviar (submeter) o Mix de Marketing de uma rodada, o sistema exige que a equipe tenha preenchido a Segmentação de Mercado e definido o preço de cada produto.",
     ],
   },
   {
@@ -100,7 +100,7 @@ const SECTIONS: SectionContent[] = [
     color: "#e5352b",
     body: [
       "Durante o jogo, o professor pode introduzir Eventos de Mercado: situações que representam mudanças no ambiente de negócios (econômicas, tecnológicas, sociais, competitivas, regulatórias). Cada evento tem uma severidade e um efeito — ele pode favorecer o mercado, prejudicar, ou ser neutro, dependendo do que representa.",
-      "Fique atento aos eventos ativos na sua rodada: eles fazem parte da leitura de cenário que deveria influenciar suas decisões de Mix de Marketing, do mesmo jeito que aconteceria numa empresa real reagindo a uma mudança no mercado.",
+      "Os eventos ativos fazem parte do cenário da rodada, assim como as mudanças de ambiente fazem parte da realidade de uma empresa.",
       "Ao fechar a rodada, o sistema calcula os resultados combinando suas decisões do Mix, as condições de mercado, os eventos ativos e o alinhamento estratégico da sua equipe. Os indicadores (participação de mercado, faturamento, satisfação do cliente, entre outros) ficam disponíveis para você acompanhar sua evolução e se comparar com as demais equipes da turma.",
     ],
   },
@@ -111,7 +111,7 @@ const SECTIONS: SectionContent[] = [
     color: "#0891b2",
     body: [
       "O Simula+ é jogado em equipe, e por isso cada integrante — não só um representante — precisa concluir esta introdução individualmente. Discutir as decisões junto com o time antes de enviar é o que torna a experiência mais próxima de uma gestão real.",
-      "Sobre a versão inicial das análises estratégicas: ela existe para te dar um ponto de partida, não para substituir o raciocínio da equipe. Análises copiadas sem revisão tendem a não bater com as decisões reais do Mix de Marketing — e isso reduz sua pontuação de alinhamento.",
+      "A Segmentação de Mercado é escrita pela própria equipe. As demais análises chegam prontas a cada rodada e são somente leitura.",
       "Fique de olho nos prazos de cada rodada: submissões fora do prazo não são aceitas. Se tiver dúvidas sobre qualquer mecânica do jogo, o Manual do Aluno completo (liberado no menu assim que você concluir esta introdução) traz o detalhamento de cada ferramenta, fórmula e regra do simulador.",
     ],
   },

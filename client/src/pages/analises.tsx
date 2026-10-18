@@ -35,6 +35,11 @@ import { Info } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { useState } from "react";
 
+
+// Out/2026 (Grupo G): número seguro para formatação. Um campo ausente no
+// resultado (null/undefined) derrubava a tela inteira em .toFixed().
+const num = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : Number(v) || 0);
+
 interface Team {
   id: string;
   name: string;
@@ -49,6 +54,7 @@ interface Round {
   status: string;
   startedAt: string | null;
   endedAt: string | null;
+  isPractice?: boolean | null;
 }
 
 interface Result {
@@ -110,6 +116,7 @@ interface Result {
   lucrosAcumulados: number;
   patrimonioLiquido: number;
   passivoPlTotal: number;
+  engineVersion?: string | null;
   // Outros campos
   budgetBefore: number;
   profitImpact: number;
@@ -157,15 +164,31 @@ export default function Analises() {
 
   const currentResult = teamResults?.find(r => r.roundId === lastCompletedRound?.id);
 
+  // Out/2026 (Grupo G): nome real dos produtos (antes o nome era montado a
+  // partir do identificador interno).
+  const { data: produtosDaTurma = [] } = useQuery<any[]>({
+    queryKey: ["/api/products/class", team?.classId && lastCompletedRound ? `${team.classId}?roundId=${lastCompletedRound.id}` : undefined],
+    enabled: !!team?.classId && !!lastCompletedRound,
+  });
+  const nomeDoProduto = (productId: string | null | undefined) => {
+    const achado = produtosDaTurma.find((p: any) => p.id === productId);
+    if (achado?.name) return achado.name as string;
+    const id = String(productId ?? "");
+    return id ? id.charAt(0).toUpperCase() + id.slice(1) : "Produto";
+  };
+
   const { data: productResults, isLoading: productResultsLoading } = useQuery<ProductResult[]>({
     queryKey: [`/api/results/team/${team?.id}/round/${lastCompletedRound?.id}/products`],
     enabled: !!team && !!lastCompletedRound,
   });
 
-  const evolutionData = teamResults?.map((result, index) => {
-    const round = rounds?.find(r => r.id === result.roundId);
+  // Out/2026 (Grupo G): série em ordem de rodada, com o número real da rodada.
+  const evolutionData = [...(teamResults ?? [])]
+    .map((result) => ({ result, round: rounds?.find(r => r.id === result.roundId) }))
+    .sort((a, b) => (a.round?.roundNumber ?? 0) - (b.round?.roundNumber ?? 0))
+    .map(({ result, round }) => {
     return {
-      rodada: `R${round?.roundNumber || index + 1}`,
+      rodada: round ? (round.isPractice ? "Teste" : `R${round.roundNumber}`) : "—",
       receita: result.revenue,
       lucro: result.profit,
       marketShare: result.marketShare,
@@ -231,11 +254,11 @@ export default function Analises() {
       ['Data: ' + new Date().toLocaleDateString('pt-BR'), '', ''],
       [''],
       ['Item', 'Valor (R$)', '% Receita'],
-      ['RECEITA OPERACIONAL BRUTA', currentResult.receitaBruta.toFixed(2), '100.0%'],
+      ['RECEITA OPERACIONAL BRUTA', num(currentResult.receitaBruta).toFixed(2), '100.0%'],
       ['(-) Impostos sobre Vendas', impostos.toFixed(2), (currentResult.receitaBruta > 0 ? (impostos/currentResult.receitaBruta*100).toFixed(1) : '0.0') + '%'],
       ['(-) Devoluções e Cancelamentos', devolucoes.toFixed(2), (currentResult.receitaBruta > 0 ? (devolucoes/currentResult.receitaBruta*100).toFixed(1) : '0.0') + '%'],
       ['(-) Descontos Concedidos', descontos.toFixed(2), (currentResult.receitaBruta > 0 ? (descontos/currentResult.receitaBruta*100).toFixed(1) : '0.0') + '%'],
-      ['(=) RECEITA OPERACIONAL LÍQUIDA', currentResult.receitaLiquida.toFixed(2), (currentResult.receitaBruta > 0 ? (currentResult.receitaLiquida/currentResult.receitaBruta*100).toFixed(1) : '0.0') + '%'],
+      ['(=) RECEITA OPERACIONAL LÍQUIDA', num(currentResult.receitaLiquida).toFixed(2), (currentResult.receitaBruta > 0 ? (currentResult.receitaLiquida/currentResult.receitaBruta*100).toFixed(1) : '0.0') + '%'],
       ['(-) Custo dos Produtos Vendidos (CPV)', cpv.toFixed(2), (currentResult.receitaBruta > 0 ? (cpv/currentResult.receitaBruta*100).toFixed(1) : '0.0') + '%'],
       ['(=) LUCRO BRUTO', lucroBruto.toFixed(2), (currentResult.receitaBruta > 0 ? (lucroBruto/currentResult.receitaBruta*100).toFixed(1) : '0.0') + '%'],
       [''],
@@ -284,7 +307,7 @@ export default function Analises() {
       ['  Capital Social', capitalSocial.toFixed(2)],
       ['  Lucros Acumulados', lucrosAcum.toFixed(2)],
       [''],
-      ['TOTAL PASSIVO + PL', ativoTotal.toFixed(2)],
+      ['TOTAL PASSIVO + PL', (currentResult.passivoPlTotal || 0).toFixed(2)],
       [''],
       ['EQUAÇÃO PATRIMONIAL: ATIVO = PASSIVO + PL', ''],
       ['Verificação: ' + (Math.abs(ativoTotal - (passivoCirculante + passivoNaoCirculante + patrimonioLiquido)) < 0.01 ? 'EQUILIBRADO ✓' : 'DESEQUILIBRADO ✗'), ''],
@@ -293,18 +316,18 @@ export default function Analises() {
     // KPIs
     const kpisData = [
       ['PRINCIPAIS KPIs', 'Valor'],
-      ['ROI (%)', currentResult.roi.toFixed(2)],
-      ['Margem Bruta (%)', currentResult.margin.toFixed(2)],
-      ['Margem de Contribuição (%)', currentResult.margemContribuicao.toFixed(2)],
-      ['CAC (R$)', currentResult.cac.toFixed(2)],
-      ['LTV (R$)', currentResult.ltv.toFixed(2)],
-      ['Razão LTV/CAC', currentResult.razaoLtvCac.toFixed(2)],
-      ['Taxa de Conversão (%)', currentResult.taxaConversao.toFixed(2)],
-      ['Ticket Médio (R$)', currentResult.ticketMedio.toFixed(2)],
-      ['Market Share (%)', currentResult.marketShare.toFixed(2)],
-      ['Percepção de Marca', currentResult.brandPerception.toFixed(1)],
-      ['Satisfação do Cliente', currentResult.customerSatisfaction.toFixed(1)],
-      ['Fidelização', currentResult.customerLoyalty.toFixed(1)],
+      ['ROI (%)', num(currentResult.roi).toFixed(2)],
+      ['Margem (%)', num(currentResult.margin).toFixed(2)],
+      ['Margem de Contribuição (R$)', num(currentResult.margemContribuicao).toFixed(2)],
+      ['CAC (R$)', num(currentResult.cac).toFixed(2)],
+      ['LTV (R$)', num(currentResult.ltv).toFixed(2)],
+      ['Razão LTV/CAC', num(currentResult.razaoLtvCac).toFixed(2)],
+      ['Taxa de Conversão (%)', num(currentResult.taxaConversao).toFixed(2)],
+      ['Ticket Médio (R$)', num(currentResult.ticketMedio).toFixed(2)],
+      ['Market Share (%)', num(currentResult.marketShare).toFixed(2)],
+      ['Percepção de Marca', num(currentResult.brandPerception).toFixed(1)],
+      ['Satisfação do Cliente', num(currentResult.customerSatisfaction).toFixed(1)],
+      ['Fidelização', num(currentResult.customerLoyalty).toFixed(1)],
     ];
 
     // Criar worksheets
@@ -389,7 +412,7 @@ export default function Analises() {
               <BarChart3 className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white drop-shadow-lg break-words">
                 Resultados e KPIs
               </h1>
               <p className="text-white/80 text-lg mt-1">
@@ -410,14 +433,14 @@ export default function Analises() {
           <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-6">
             <KPICard
               title="Receita"
-              value={`R$ ${currentResult.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              value={`R$ ${num(currentResult.revenue).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               icon={DollarSign}
               testId="text-revenue"
               color="green"
             />
             <KPICard
               title="Lucro"
-              value={`R$ ${currentResult.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              value={`R$ ${num(currentResult.profit).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               trend={{
                 value: currentResult.margin,
                 isPositive: currentResult.profit > 0,
@@ -428,28 +451,28 @@ export default function Analises() {
             />
             <KPICard
               title="Margem"
-              value={`${currentResult.margin.toFixed(1)}%`}
+              value={`${num(currentResult.margin).toFixed(1)}%`}
               icon={TrendingUp}
               testId="text-margin"
               color="violet"
             />
             <KPICard
               title="ROI"
-              value={`${currentResult.roi.toFixed(1)}%`}
+              value={`${num(currentResult.roi).toFixed(1)}%`}
               icon={Award}
               testId="text-roi"
               color="orange"
             />
             <KPICard
               title="Market Share"
-              value={`${currentResult.marketShare.toFixed(1)}%`}
+              value={`${num(currentResult.marketShare).toFixed(1)}%`}
               icon={Users}
               testId="text-market-share"
               color="green"
             />
             <KPICard
               title="Fidelização"
-              value={`${currentResult.customerLoyalty.toFixed(0)}/100`}
+              value={`${num(currentResult.customerLoyalty).toFixed(0)}/100`}
               icon={Heart}
               testId="text-loyalty"
               color="blue"
@@ -483,7 +506,7 @@ export default function Analises() {
                         <p className="text-sm text-muted-foreground">CAC</p>
                         <p className="text-xl font-bold">
                           {(currentResult.cac ?? 0) > 0 
-                            ? `R$ ${currentResult.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                            ? `R$ ${num(currentResult.cac).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
                             : <span className="text-muted-foreground">R$ 0,00</span>}
                         </p>
                       </div>
@@ -491,7 +514,7 @@ export default function Analises() {
                         <p className="text-sm text-muted-foreground">LTV</p>
                         <p className="text-xl font-bold">
                           {(currentResult.ltv ?? 0) > 0 
-                            ? `R$ ${currentResult.ltv.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                            ? `R$ ${num(currentResult.ltv).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
                             : <span className="text-muted-foreground">R$ 0,00</span>}
                         </p>
                       </div>
@@ -499,7 +522,7 @@ export default function Analises() {
                         <p className="text-sm text-muted-foreground">LTV/CAC</p>
                         <p className="text-xl font-bold">
                           {(currentResult.razaoLtvCac ?? 0) > 0 
-                            ? currentResult.razaoLtvCac.toFixed(2) 
+                            ? num(currentResult.razaoLtvCac).toFixed(2) 
                             : <span className="text-muted-foreground">0,00</span>}
                         </p>
                       </div>
@@ -507,7 +530,7 @@ export default function Analises() {
                         <p className="text-sm text-muted-foreground">Taxa de Conversão</p>
                         <p className="text-xl font-bold">
                           {(currentResult.taxaConversao ?? 0) > 0 
-                            ? `${currentResult.taxaConversao.toFixed(1)}%` 
+                            ? `${num(currentResult.taxaConversao).toFixed(1)}%` 
                             : <span className="text-muted-foreground">0,0%</span>}
                         </p>
                       </div>
@@ -515,7 +538,7 @@ export default function Analises() {
                         <p className="text-sm text-muted-foreground">Ticket Médio</p>
                         <p className="text-xl font-bold">
                           {(currentResult.ticketMedio ?? 0) > 0 
-                            ? `R$ ${currentResult.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                            ? `R$ ${num(currentResult.ticketMedio).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
                             : <span className="text-muted-foreground">R$ 0,00</span>}
                         </p>
                       </div>
@@ -523,7 +546,7 @@ export default function Analises() {
                         <p className="text-sm text-muted-foreground">NPS</p>
                         <p className="text-xl font-bold">
                           {(currentResult.nps ?? 0) !== 0 
-                            ? currentResult.nps.toFixed(0) 
+                            ? num(currentResult.nps).toFixed(0) 
                             : <span className="text-muted-foreground">0</span>}
                         </p>
                       </div>
@@ -531,7 +554,7 @@ export default function Analises() {
                         <p className="text-sm text-muted-foreground">Tempo Médio Conversão</p>
                         <p className="text-xl font-bold">
                           {(currentResult.tempoMedioConversao ?? 0) > 0 
-                            ? `${currentResult.tempoMedioConversao.toFixed(1)} dias` 
+                            ? `${num(currentResult.tempoMedioConversao).toFixed(1)} dias` 
                             : <span className="text-muted-foreground">0 dias</span>}
                         </p>
                       </div>
@@ -751,7 +774,7 @@ export default function Analises() {
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                   {productResults.map((product, index) => {
-                    const productName = product.productId.charAt(0).toUpperCase() + product.productId.slice(1);
+                    const productName = nomeDoProduto(product.productId);
                     return (
                       <Card key={product.id} className="border-2" data-testid={`card-product-result-${index}`}>
                         <CardHeader className="pb-3">
@@ -771,7 +794,7 @@ export default function Analises() {
                             <div>
                               <p className="text-muted-foreground">Receita</p>
                               <p className="font-semibold" data-testid={`text-product-revenue-${index}`}>
-                                R$ {product.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                R$ {num(product.revenue).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </p>
                             </div>
                             <div>
@@ -780,19 +803,19 @@ export default function Analises() {
                                 className={`font-semibold ${product.profit > 0 ? 'text-[#1aa15c]' : 'text-destructive'}`}
                                 data-testid={`text-product-profit-${index}`}
                               >
-                                R$ {product.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                R$ {num(product.profit).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </p>
                             </div>
                             <div>
                               <p className="text-muted-foreground">ROI</p>
                               <p className="font-semibold" data-testid={`text-product-roi-${index}`}>
-                                {product.roi.toFixed(1)}%
+                                {num(product.roi).toFixed(1)}%
                               </p>
                             </div>
                             <div>
                               <p className="text-muted-foreground">Margem</p>
                               <p className="font-semibold" data-testid={`text-product-margin-${index}`}>
-                                {product.margin.toFixed(1)}%
+                                {num(product.margin).toFixed(1)}%
                               </p>
                             </div>
                           </div>
@@ -815,7 +838,7 @@ export default function Analises() {
                 <CardContent>
                   <ResponsiveContainer width="100%" height={350}>
                     <BarChart data={productResults.map(p => ({
-                      produto: p.productId.charAt(0).toUpperCase() + p.productId.slice(1),
+                      produto: nomeDoProduto(p.productId),
                       receita: p.revenue,
                       custos: p.costs,
                       lucro: p.profit,
@@ -823,7 +846,7 @@ export default function Analises() {
                       <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                       <XAxis dataKey="produto" />
                       <YAxis />
-                      <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                      <Tooltip formatter={(value: number) => `R$ ${num(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
                       <Legend />
                       <Bar dataKey="receita" fill="#1447e6" name="Receita" radius={[4, 4, 0, 0]} />
                       <Bar dataKey="custos" fill="#ff8c1a" name="Custos" radius={[4, 4, 0, 0]} />
@@ -867,7 +890,7 @@ export default function Analises() {
                       <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                       <XAxis dataKey="rodada" />
                       <YAxis />
-                      <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                      <Tooltip formatter={(value: number) => `R$ ${num(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
                       <Legend />
                       <Line
                         type="monotone"
@@ -974,7 +997,7 @@ export default function Analises() {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold text-[#1447e6]" data-testid="text-brand-perception">
-                  {currentResult.brandPerception.toFixed(1)}
+                  {num(currentResult.brandPerception).toFixed(1)}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">de 100 pontos</p>
               </CardContent>
@@ -985,7 +1008,7 @@ export default function Analises() {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold text-[#1aa15c]" data-testid="text-satisfaction">
-                  {currentResult.customerSatisfaction.toFixed(1)}
+                  {num(currentResult.customerSatisfaction).toFixed(1)}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">de 100 pontos</p>
               </CardContent>
@@ -996,10 +1019,10 @@ export default function Analises() {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold text-[#ff8c1a]" data-testid="text-costs">
-                  R$ {currentResult.costs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  R$ {num(currentResult.costs).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {team!.budget > 0 ? ((currentResult.costs / team!.budget) * 100).toFixed(1) : "0.0"}% do orçamento
+                  {(() => { const base = num(currentResult.budgetBefore) || num(team!.budget); return base > 0 ? ((num(currentResult.costs) / base) * 100).toFixed(1) : "0.0"; })()}% do orçamento da rodada
                 </p>
               </CardContent>
             </Card>
@@ -1016,7 +1039,7 @@ export default function Analises() {
             <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-5">
               <KPICard
                 title="CAC"
-                value={`R$ ${currentResult.cac.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                value={`R$ ${num(currentResult.cac).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={Target}
                 description="Custo de Aquisição por Cliente"
                 testId="text-cac"
@@ -1024,7 +1047,7 @@ export default function Analises() {
               />
               <KPICard
                 title="LTV"
-                value={`R$ ${currentResult.ltv.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                value={`R$ ${num(currentResult.ltv).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={Sparkles}
                 description="Lifetime Value do Cliente"
                 testId="text-ltv"
@@ -1032,7 +1055,7 @@ export default function Analises() {
               />
               <KPICard
                 title="Razão LTV/CAC"
-                value={currentResult.razaoLtvCac.toFixed(2)}
+                value={num(currentResult.razaoLtvCac).toFixed(2)}
                 icon={TrendingUpDown}
                 description={currentResult.razaoLtvCac >= 3 ? "Excelente!" : currentResult.razaoLtvCac >= 1 ? "Regular" : "Atenção"}
                 trend={{
@@ -1044,7 +1067,7 @@ export default function Analises() {
               />
               <KPICard
                 title="Taxa de Conversão"
-                value={`${currentResult.taxaConversao.toFixed(2)}%`}
+                value={`${num(currentResult.taxaConversao).toFixed(2)}%`}
                 icon={Percent}
                 description="Conversão de leads em clientes"
                 testId="text-conversion-rate"
@@ -1052,7 +1075,7 @@ export default function Analises() {
               />
               <KPICard
                 title="Ticket Médio"
-                value={`R$ ${currentResult.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                value={`R$ ${num(currentResult.ticketMedio).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={ShoppingCart}
                 description="Valor médio por compra"
                 testId="text-average-ticket"
@@ -1072,7 +1095,7 @@ export default function Analises() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <KPICard
                 title="NPS"
-                value={currentResult.nps.toFixed(0)}
+                value={num(currentResult.nps).toFixed(0)}
                 icon={Star}
                 description="Net Promoter Score (-100 a +100)"
                 trend={{
@@ -1084,7 +1107,7 @@ export default function Analises() {
               />
               <KPICard
                 title="Tempo de Conversão"
-                value={`${currentResult.tempoMedioConversao.toFixed(0)} dias`}
+                value={`${num(currentResult.tempoMedioConversao).toFixed(0)} dias`}
                 icon={Clock}
                 description="Tempo médio até fechar venda"
                 testId="text-conversion-time"
@@ -1092,21 +1115,17 @@ export default function Analises() {
               />
               <KPICard
                 title="Margem de Contribuição"
-                value={`${currentResult.margemContribuicao.toFixed(1)}%`}
+                value={`R$ ${num(currentResult.margemContribuicao).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={BarChart3}
-                description="Margem após custos variáveis"
-                trend={{
-                  value: currentResult.margemContribuicao,
-                  isPositive: currentResult.margemContribuicao >= 30,
-                }}
+                description="Receita líquida menos custos variáveis (em R$)"
                 testId="text-contribution-margin"
                 color="violet"
               />
               <KPICard
                 title="Receita Líquida"
-                value={`R$ ${currentResult.receitaLiquida.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                value={`R$ ${num(currentResult.receitaLiquida).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={Coins}
-                description={`Bruta: R$ ${currentResult.receitaBruta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                description={`Bruta: R$ ${num(currentResult.receitaBruta).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 testId="text-net-revenue"
                 color="orange"
               />
@@ -1153,7 +1172,7 @@ export default function Analises() {
                   <TableRow className="font-semibold bg-blue-50 dark:bg-blue-950/20">
                     <TableCell>RECEITA OPERACIONAL BRUTA</TableCell>
                     <TableCell className="text-right" data-testid="text-receita-bruta">
-                      {currentResult.receitaBruta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {num(currentResult.receitaBruta).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-right">100,0%</TableCell>
                   </TableRow>
@@ -1191,7 +1210,7 @@ export default function Analises() {
                   <TableRow className="font-semibold bg-blue-50 dark:bg-blue-950/20 border-t">
                     <TableCell>(=) RECEITA OPERACIONAL LÍQUIDA</TableCell>
                     <TableCell className="text-right" data-testid="text-receita-liquida-dre">
-                      {currentResult.receitaLiquida.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {num(currentResult.receitaLiquida).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-right">
                       {currentResult.receitaBruta > 0 ? ((currentResult.receitaLiquida / currentResult.receitaBruta) * 100).toFixed(1) : '0.0'}%
@@ -1462,7 +1481,7 @@ export default function Analises() {
                         <TableRow className="font-bold bg-blue-50 dark:bg-blue-950/20 border-t-2">
                           <TableCell>TOTAL PASSIVO + PL</TableCell>
                           <TableCell className="text-right" data-testid="text-passivo-pl-total">
-                            {(currentResult.ativoTotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {(currentResult.passivoPlTotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </TableCell>
                         </TableRow>
                       </TableBody>
@@ -1475,8 +1494,8 @@ export default function Analises() {
                   <AlertTitle>Equação Patrimonial</AlertTitle>
                   <AlertDescription>
                     <strong>ATIVO = PASSIVO + PATRIMÔNIO LÍQUIDO</strong><br />
-                    O balanço sempre se mantém equilibrado. Os ativos representam os bens e direitos da empresa, 
-                    enquanto passivos e patrimônio líquido mostram as fontes de recursos (obrigações e capital próprio).
+                    Os ativos representam os bens e direitos da empresa; passivos e patrimônio líquido mostram as fontes
+                    desses recursos (obrigações e capital próprio). Os valores acima são os calculados pelo jogo.
                   </AlertDescription>
                 </Alert>
               </CardContent>
@@ -1503,7 +1522,7 @@ export default function Analises() {
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px',
                     }}
-                    formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    formatter={(value: number) => `R$ ${num(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                   />
                   <Legend />
                   <Line
@@ -1538,12 +1557,12 @@ export default function Analises() {
           <div className="grid gap-6 lg:grid-cols-3">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Margem Bruta</CardTitle>
+                <CardTitle className="text-lg">Margem</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{currentResult.margin.toFixed(2)}%</div>
+                <div className="text-3xl font-bold">{num(currentResult.margin).toFixed(2)}%</div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Lucro sobre receita líquida
+                  Lucro sobre a receita
                 </p>
               </CardContent>
             </Card>
@@ -1552,9 +1571,9 @@ export default function Analises() {
                 <CardTitle className="text-lg">Margem de Contribuição</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{currentResult.margemContribuicao.toFixed(2)}%</div>
+                <div className="text-3xl font-bold">R$ {num(currentResult.margemContribuicao).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Após custos variáveis
+                  Receita líquida menos custos variáveis
                 </p>
               </CardContent>
             </Card>
@@ -1564,7 +1583,7 @@ export default function Analises() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                  {currentResult.roi.toFixed(2)}%
+                  {num(currentResult.roi).toFixed(2)}%
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   Retorno sobre investimento
@@ -1579,7 +1598,7 @@ export default function Analises() {
               <strong>Metodologia:</strong> Deduções estimadas em {currentResult.receitaBruta > 0
                 ? (((currentResult.receitaBruta - currentResult.receitaLiquida) / currentResult.receitaBruta) * 100).toFixed(1)
                 : '0.0'}% 
-              (impostos, devoluções, descontos). Custos fixos representam 40% (infraestrutura, pessoal) e variáveis 60% (produção, logística, comissões).
+              (impostos, devoluções, descontos).
               Para detalhes completos sobre cálculos e fórmulas, consulte o Manual do Aluno.
             </AlertDescription>
           </Alert>

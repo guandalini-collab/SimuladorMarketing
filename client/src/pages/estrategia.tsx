@@ -100,7 +100,7 @@ export default function Estrategia() {
               <Target className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
                 Ferramentas Estratégicas
               </h1>
               <p className="text-white/80 text-lg mt-1">
@@ -112,71 +112,71 @@ export default function Estrategia() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted">
+        <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted overflow-x-auto">
           <TabsTrigger
             value="swot"
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
+            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
           >
             <Target className="h-5 w-5" />
-            <span className="font-semibold">SWOT</span>
+            <span className="font-semibold text-[11px] sm:text-sm">SWOT</span>
           </TabsTrigger>
           <TabsTrigger
             value="porter"
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
+            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
           >
             <Shield className="h-5 w-5" />
-            <span className="font-semibold">5 Forças</span>
+            <span className="font-semibold text-[11px] sm:text-sm">5 Forças</span>
           </TabsTrigger>
           <TabsTrigger
             value="bcg"
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
+            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
           >
             <TrendingUp className="h-5 w-5" />
-            <span className="font-semibold">BCG</span>
+            <span className="font-semibold text-[11px] sm:text-sm">BCG</span>
           </TabsTrigger>
           <TabsTrigger
             value="pestel"
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
+            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
           >
             <Globe className="h-5 w-5" />
-            <span className="font-semibold">PESTEL</span>
+            <span className="font-semibold text-[11px] sm:text-sm">PESTEL</span>
           </TabsTrigger>
           <TabsTrigger
             value="segmentacao"
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
+            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-3 data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-950"
           >
             <Users className="h-5 w-5" />
-            <span className="font-semibold">Segmentação</span>
+            <span className="font-semibold text-[11px] sm:text-sm">Segmentação</span>
           </TabsTrigger>
         </TabsList>
 
         {/* Out/2026: nas turmas com análises prontas da rodada, SWOT, Porter,
             BCG e PESTEL são somente leitura; a Segmentação segue com a equipe. */}
-        <TabsContent value="swot">
+        <TabsContent value="swot" forceMount className="data-[state=inactive]:hidden">
           {strategy?.analisesDaIA
             ? <SwotSomenteLeitura data={strategy?.swot} />
             : <SwotTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.swot} />}
         </TabsContent>
 
-        <TabsContent value="porter">
+        <TabsContent value="porter" forceMount className="data-[state=inactive]:hidden">
           {strategy?.analisesDaIA
             ? <PorterSomenteLeitura data={strategy?.porter} />
             : <PorterTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.porter} />}
         </TabsContent>
 
-        <TabsContent value="bcg">
+        <TabsContent value="bcg" forceMount className="data-[state=inactive]:hidden">
           {strategy?.analisesDaIA
             ? <BcgSomenteLeitura data={strategy?.bcg || []} />
             : <BcgTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.bcg || []} />}
         </TabsContent>
 
-        <TabsContent value="pestel">
+        <TabsContent value="pestel" forceMount className="data-[state=inactive]:hidden">
           {strategy?.analisesDaIA
             ? <PestelSomenteLeitura data={strategy?.pestel} />
             : <PestelTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.pestel} />}
         </TabsContent>
 
-        <TabsContent value="segmentacao">
+        <TabsContent value="segmentacao" forceMount className="data-[state=inactive]:hidden">
           <SegmentacaoTab
             roundId={currentRound.id}
             roundNumber={currentRound.roundNumber}
@@ -226,8 +226,10 @@ function SwotTab({ roundId, roundNumber, roundStatus, data }: { roundId: string;
     onSuccess: () => {
       setNewItem({ strengths: "", weaknesses: "", opportunities: "", threats: "" });
       queryClient.invalidateQueries({ queryKey: ["/api/strategy", roundId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/team/current-round-status"] });
       toast({ title: "Análise SWOT salva!", description: "Sua análise foi atualizada com sucesso." });
     },
+    onError: (e: any) => toast({ title: "Não foi possível salvar", description: e?.message || "Verifique a conexão e tente de novo.", variant: "destructive" }),
   });
 
   const addItem = (category: keyof typeof swot) => {
@@ -364,8 +366,10 @@ function PorterTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/strategy", roundId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/team/current-round-status"] });
       toast({ title: "5 Forças de Porter salvas!", description: "Sua análise foi atualizada." });
     },
+    onError: (e: any) => toast({ title: "Não foi possível salvar", description: e?.message || "Verifique a conexão e tente de novo.", variant: "destructive" }),
   });
 
   const forces = [
@@ -449,7 +453,7 @@ function PorterTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
 // da empresa e do maior concorrente; a participação relativa e o quadrante
 // são calculados pela regra única de shared/bcg.ts (a mesma do servidor).
 // Os dados reais do jogo (crescimento da turma, participações e receita do
-// último mês com resultado) vêm de /api/strategy/:roundId/bcg-contexto.
+// última rodada com resultado) vêm de /api/strategy/:roundId/bcg-contexto.
 interface BcgContexto {
   crescimentoMercado: number | null;
   fonteCrescimento: string | null;
@@ -498,7 +502,7 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
   const addMutation = useMutation({
     mutationFn: async () => {
       if (crescimento === null || relativa === null) throw new Error("Preencha o crescimento e as duas participações.");
-      const produto = contexto?.receitas.find((r) => r.productName && r.productName.trim().toLowerCase() === form.productName.trim().toLowerCase());
+      const produto = contexto?.receitas?.find((r) => r.productName && r.productName.trim().toLowerCase() === form.productName.trim().toLowerCase());
       const res = await apiRequest("POST", "/api/strategy/bcg", {
         roundId,
         productName: form.productName.trim(),
@@ -511,6 +515,7 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/strategy", roundId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/team/current-round-status"] });
       toast({ title: "Produto adicionado!", description: "Produto inserido na Matriz BCG." });
       setForm((f) => ({ ...formVazio, crescimento: f.crescimento }));
     },
@@ -523,11 +528,13 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/strategy", roundId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/team/current-round-status"] });
       toast({ title: "Produto removido", description: "Produto removido da matriz." });
     },
+    onError: (e: any) => toast({ title: "Não foi possível salvar", description: e?.message || "Verifique a conexão e tente de novo.", variant: "destructive" }),
   });
 
-  // Receita do produto no último mês: pelo id; senão, pelo nome (igual ou
+  // Receita do produto na última rodada: pelo id; senão, pelo nome (igual ou
   // contido — ex.: "Smartphone Recondicionado" ↔ "Smartphone").
   const receitaDe = (p: any) => {
     const lista = contexto?.receitas ?? [];
@@ -562,7 +569,7 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
                 {roundNumber === 1
                   ? "Esta é uma versão inicial fornecida como ponto de partida. Personalize, adicione suas próprias ideias e clique em 'Salvar' para preservar suas alterações."
                   : hasData
-                    ? "Você já mapeou seus produtos antes, e eles continuam valendo automaticamente nesta rodada — não precisa reinserir nada. Reveja se ainda fazem sentido com os números do último mês: exclua e adicione de novo os produtos cuja posição mudou. Atenção: se o quadrante não bater com o que você está realmente praticando no mix de marketing, isso reduz sua pontuação de alinhamento estratégico."
+                    ? "Você já mapeou seus produtos antes, e eles continuam valendo automaticamente nesta rodada — não precisa reinserir nada. Reveja se ainda fazem sentido com os números da última rodada: exclua e adicione de novo os produtos cuja posição mudou. Atenção: se o quadrante não bater com o que você está realmente praticando no mix de marketing, isso reduz sua pontuação de alinhamento estratégico."
                     : "Adicione seus produtos à matriz — eles vão continuar valendo nas próximas rodadas até você decidir mudar algo."}
               </p>
             </div>
@@ -591,18 +598,18 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
               </li>
               {contexto?.referencia ? (
                 <li>
-                  Mês {contexto.referencia.roundNumber}: participação da equipe <strong className="text-foreground">{numBR(contexto.referencia.participacaoEquipe)}%</strong>
+                  Rodada {contexto.referencia.roundNumber}: participação da equipe <strong className="text-foreground">{numBR(contexto.referencia.participacaoEquipe)}%</strong>
                   {contexto.referencia.participacaoMaiorConcorrente != null && (
                     <> · maior concorrente <strong className="text-foreground">{numBR(contexto.referencia.participacaoMaiorConcorrente)}%</strong> · relativa <strong className="text-foreground">{numBR(contexto.participacaoRelativa, 2)}×</strong></>
                   )}
                 </li>
               ) : (
-                <li>As participações aparecem aqui depois do primeiro mês com resultado. Até lá, use as estimativas da equipe.</li>
+                <li>As participações aparecem aqui depois da primeira rodada com resultado.</li>
               )}
             </ul>
             {contexto?.referencia && roundStatus === "active" && (
               <Button variant="outline" size="sm" className="mt-2" onClick={usarDadosDoJogo} data-testid="button-bcg-usar-dados">
-                Usar os números do mês {contexto.referencia.roundNumber}
+                Usar os números da rodada {contexto.referencia.roundNumber}
               </Button>
             )}
           </div>
@@ -676,7 +683,7 @@ function BcgTab({ roundId, roundNumber, roundStatus, data }: { roundId: string; 
                       <div className="text-sm text-muted-foreground">
                         <p>Crescimento do mercado: {numBR(Number(product.marketGrowth))}%</p>
                         <p>Participação relativa: {numBR(Number(product.relativeMarketShare), 2)}×</p>
-                        {product.revenue ? <p>Receita no último mês: {Number(product.revenue).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}</p> : null}
+                        {product.revenue ? <p>Receita na última rodada: {Number(product.revenue).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}</p> : null}
                       </div>
                     </div>
                   );
@@ -737,8 +744,10 @@ function PestelTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
     onSuccess: () => {
       setNewItem({ political: "", economic: "", social: "", technological: "", environmental: "", legal: "" });
       queryClient.invalidateQueries({ queryKey: ["/api/strategy", roundId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/team/current-round-status"] });
       toast({ title: "Análise PESTEL salva!", description: "Sua análise foi atualizada." });
     },
+    onError: (e: any) => toast({ title: "Não foi possível salvar", description: e?.message || "Verifique a conexão e tente de novo.", variant: "destructive" }),
   });
 
   const addItem = (category: keyof typeof pestel) => {
@@ -974,8 +983,10 @@ function SegmentationSection({
     onSuccess: () => {
       setNewItem(emptyNewItem());
       queryClient.invalidateQueries({ queryKey: ["/api/strategy", roundId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/team/current-round-status"] });
       toast({ title: "Segmentação salva!", description: "Sua análise foi atualizada." });
     },
+    onError: (e: any) => toast({ title: "Não foi possível salvar", description: e?.message || "Verifique a conexão e tente de novo.", variant: "destructive" }),
   });
 
   const addItem = (category: SegmentationCategoryKey) => {

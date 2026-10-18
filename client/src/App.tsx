@@ -25,6 +25,8 @@ import Manual from "@/pages/manual";
 import GuiaMidias from "@/pages/guia-midias";
 import Perfil from "@/pages/perfil";
 import { JourneyGate, JourneyAckBar } from "@/components/round-journey";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { useAtualizacaoDaRodada } from "@/hooks/use-atualizacao-da-rodada";
 import Login from "@/pages/login";
 import Professor from "@/pages/professor";
 import ProfessorAnalytics from "@/pages/professor-analytics";
@@ -48,7 +50,7 @@ interface User {
 }
 
 function AuthenticatedApp() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ["user"],
@@ -65,13 +67,18 @@ function AuthenticatedApp() {
     enabled: !!user && user.role === "equipe",
   });
 
+  // Out/2026 (Grupo G): mantém as telas do aluno em dia com a rodada.
+  useAtualizacaoDaRodada(!!user && user.role === "equipe");
+
   const logoutMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/auth/logout");
     },
     onSuccess: () => {
+      // Out/2026 (Grupo G): apaga todo o cache ao sair, para o próximo aluno
+      // no mesmo computador não ver os dados do anterior.
+      queryClient.clear();
       queryClient.setQueryData(["user"], null);
-      queryClient.invalidateQueries();
       setLocation("/");
     },
   });
@@ -150,7 +157,8 @@ function AuthenticatedApp() {
               </Button>
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-8">
+          <main className="flex-1 overflow-auto p-4 md:p-8">
+            <ErrorBoundary resetKey={location}>
             <Switch>
               <Route path="/" component={Dashboard} />
               <Route path="/empresa">{() => <JourneyGate path="/empresa"><Empresa /></JourneyGate>}</Route>
@@ -169,6 +177,7 @@ function AuthenticatedApp() {
               <Route path="/fechamento-anual" component={FechamentoAnual} />
               <Route component={NotFound} />
             </Switch>
+            </ErrorBoundary>
           </main>
         </div>
       </div>

@@ -11,7 +11,7 @@ const URL_PDF = "/api/manual/aluno/pdf";
 
 export default function Manual() {
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
+    <div className="mx-auto max-w-6xl space-y-6 p-0 md:p-6">
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 space-y-0">
           <div className="flex items-center gap-3">

@@ -53,7 +53,7 @@ export function stepForPath(journey: Journey | null, path: string): JourneyStep 
 // Tela exibida no lugar de uma página cuja etapa ainda está bloqueada.
 export function JourneyGate({ path, children }: { path: string; children: React.ReactNode }) {
   const { journey, isLoading } = useJourney();
-  if (isLoading) return null;
+  if (isLoading) return <p className="py-10 text-center text-sm text-muted-foreground" data-testid="journey-carregando">Carregando…</p>;
   const step = stepForPath(journey, path);
   if (!journey || !step || !step.locked) return <>{children}</>;
   const atual = journey.steps.find((s) => s.key === journey.currentStep);

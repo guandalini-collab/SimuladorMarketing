@@ -5961,7 +5961,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(null);
       }
 
-      const recommendations = await storage.getStrategicRecommendations(team.id, activeRound.id);
+      // Out/2026 (Grupo G): rota só de alunos que devolvia recomendações de
+      // 4Ps. O sistema não orienta decisões do aluno; a rota responde vazio.
+      const RECOMENDACOES_4P_AO_ALUNO = false;
+      const recommendations = RECOMENDACOES_4P_AO_ALUNO
+        ? await storage.getStrategicRecommendations(team.id, activeRound.id)
+        : undefined;
       
       if (!recommendations) {
         return res.json(null);
@@ -6254,7 +6259,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Feedback não encontrado" });
       }
 
-      res.json(feedback);
+      // Out/2026 (Grupo G): feedbacks antigos podem ter "sugestões"; o aluno
+      // não as recebe (diagnóstico apenas).
+      res.json(user.role === "equipe" ? { ...feedback, suggestions: [] } : feedback);
     } catch (error: any) {
       console.error("Erro ao buscar feedback:", error);
       res.status(500).json({ error: "Erro ao buscar feedback" });
@@ -6291,7 +6298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const feedbacks = await storage.getAiFeedbacksByTeam(teamId);
-      res.json(feedbacks);
+      res.json(user.role === "equipe" ? feedbacks.map((f: any) => ({ ...f, suggestions: [] })) : feedbacks);
     } catch (error: any) {
       console.error("Erro ao buscar feedbacks:", error);
       res.status(500).json({ error: "Erro ao buscar feedbacks" });

@@ -125,6 +125,8 @@ export default function Dashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/team/current"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/team/members"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/team/current-round-status"] });
       toast({
         title: "Equipe criada!",
         description: "Sua equipe foi criada com sucesso.",
@@ -148,6 +150,8 @@ export default function Dashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/team/current"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/team/members"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/team/current-round-status"] });
       toast({
         title: "Equipe selecionada!",
         description: "Você entrou na equipe com sucesso.",
@@ -315,7 +319,7 @@ export default function Dashboard() {
                               <CardTitle className="text-lg">{t.name}</CardTitle>
                             </div>
                             <CardDescription className="text-base">
-                              {t.memberIds.length} {t.memberIds.length === 1 ? 'membro' : 'membros'}
+                              {(t.memberIds ?? []).length} {(t.memberIds ?? []).length === 1 ? 'membro' : 'membros'}
                             </CardDescription>
                           </CardHeader>
                           <CardContent className="pt-4">
@@ -445,7 +449,7 @@ export default function Dashboard() {
               )}
             </div>
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white drop-shadow-lg break-words">
                 {team.companyName || team.name}
               </h1>
               <p className="text-white/80 text-lg mt-1">
@@ -454,7 +458,7 @@ export default function Dashboard() {
             </div>
           </div>
           <p className="text-white/90 text-lg max-w-2xl">
-            Continue desenvolvendo suas estratégias e acompanhe o desempenho em tempo real.
+            Acompanhe o desempenho da equipe a cada rodada.
           </p>
         </div>
       </div>
@@ -638,17 +642,17 @@ export default function Dashboard() {
               return (
                 <div 
                   key={memberId}
-                  className="flex items-center justify-between p-4 border-2 rounded-lg hover-elevate transition-all"
+                  className="flex flex-wrap items-center justify-between gap-3 p-4 border-2 rounded-lg hover-elevate transition-all"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-full bg-[#1447e6] flex items-center justify-center shadow-md">
+                  <div className="flex min-w-0 items-center gap-4">
+                    <div className="h-12 w-12 shrink-0 rounded-full bg-[#1447e6] flex items-center justify-center shadow-md">
                       <span className="text-lg font-bold text-white">
-                        {member.name.charAt(0).toUpperCase()}
+                        {(member.name || '?').charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <div>
-                      <p className="font-semibold text-base">{member.name}</p>
-                      <p className="text-sm text-muted-foreground">{member.email}</p>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-base break-words">{member.name}</p>
+                      <p className="text-sm text-muted-foreground break-all">{member.email}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
