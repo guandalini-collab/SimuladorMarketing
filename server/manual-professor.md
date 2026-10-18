@@ -158,7 +158,7 @@ No mesmo painel de **Gerenciamento de Rodadas**, existe um botão **Adicionar** 
 ![Painel Gerenciamento de Rodadas: seletor de produtos, total de rodadas e os botões Adicionar/Remover Última.](15-adicionar-rodadas.jpg)
 
 1. **Produtos por equipe na próxima rodada** — vale apenas para o botão **Iniciar Rodada** (canto 3 do passo a passo da Seção 7).
-2. **Total de Rodadas** — quantas rodadas a turma terá ao todo; editável a qualquer momento.
+2. **Total de Rodadas** — quantas rodadas a turma terá ao todo (de 1 a 52, o equivalente a um ano de rodadas semanais); editável a qualquer momento.
 3. **Adicionar** — cria uma rodada extra já travada, ao final da lista.
 4. **Remover Última** — exclui a última rodada da lista (só funciona se ela ainda não tiver sido iniciada).
 
@@ -233,7 +233,7 @@ Repita o ciclo: abra a próxima rodada (Seção 7), acompanhe eventos e submiss�
 
 - A partir da Rodada 2, a **Segmentação de Mercado** de cada equipe é copiada automaticamente da rodada anterior e pode ser editada. SWOT, 5 Forças, BCG e PESTEL são refeitas pelo sistema a cada rodada, com os resultados da rodada anterior (Seção 10.3). Em turmas que já estavam em andamento no motor anterior, as cinco análises continuam como antes: copiadas da rodada anterior e editáveis pela equipe.
 
-Você pode ajustar o número total de rodadas da turma a qualquer momento na aba **Aula**, no campo **Total de Rodadas** (não pode ser menor que a rodada atual). Também é possível remover a última rodada da lista, mas só se ela ainda estiver bloqueada (não iniciada) e sem nenhum dado associado — o botão **Remover Última** fica desabilitado automaticamente quando isso não é possível, e explica o motivo ao passar o mouse.
+Você pode ajustar o número total de rodadas da turma a qualquer momento na aba **Aula**, no campo **Total de Rodadas** (de 1 a 52; não pode ser menor que a rodada atual). Também é possível remover a última rodada da lista, mas só se ela ainda estiver bloqueada (não iniciada) e sem nenhum dado associado — o botão **Remover Última** fica desabilitado automaticamente quando isso não é possível, e explica o motivo ao passar o mouse.
 
 ### Rodadas semanais: datas de abertura e fechamento
 

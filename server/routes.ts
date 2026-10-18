@@ -3368,8 +3368,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const { maxRounds } = req.body;
       if (maxRounds !== undefined) {
-        if (!Number.isInteger(maxRounds) || maxRounds < 1 || maxRounds > 20) {
-          return res.status(400).json({ error: "maxRounds deve ser um número inteiro entre 1 e 20" });
+        // Out/2026 (Grupo F): até 52 rodadas (um ano letivo de rodadas semanais).
+        if (!Number.isInteger(maxRounds) || maxRounds < 1 || maxRounds > 52) {
+          return res.status(400).json({ error: "O total de rodadas deve ser um número inteiro entre 1 e 52" });
         }
         if (maxRounds < classData.currentRound) {
           return res.status(400).json({ error: `maxRounds não pode ser menor que a rodada atual (${classData.currentRound})` });

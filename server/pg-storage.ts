@@ -331,6 +331,10 @@ export class PgStorage implements IStorage {
   }
 
   async deleteClass(id: string): Promise<boolean> {
+    // Out/2026 (Grupo F): tabelas criadas no boot (sem chave estrangeira)
+    // também são limpas, para não ficarem dados soltos da turma apagada.
+    await apagarDasTabelasNovas(["analises_turma", "market_states", "market_bulletins"], "class_id", id);
+
     const classTeams = await this.getTeamsByClass(id);
     for (const team of classTeams) {
       await this.deleteTeam(team.id);
@@ -550,6 +554,8 @@ export class PgStorage implements IStorage {
     // já os remove sozinho quando a linha de teams é apagada abaixo.
     await db.delete(productResults).where(eq(productResults.teamId, id));
     await db.delete(strategicRecommendations).where(eq(strategicRecommendations.teamId, id));
+    // Out/2026 (Grupo F): etapas do percurso da equipe (tabela criada no boot).
+    await apagarDasTabelasNovas(["team_round_steps"], "team_id", id);
     await db.delete(teams).where(eq(teams.id, id));
     return true;
   }
@@ -602,6 +608,9 @@ export class PgStorage implements IStorage {
   }
 
   async deleteRound(roundId: string): Promise<boolean> {
+    // Out/2026 (Grupo F): uma rodada futura já preparada pela IA tem análises
+    // da turma, boletim e estado do mercado; eles saem junto com a rodada.
+    await apagarDasTabelasNovas(["analises_turma", "market_states", "market_bulletins", "team_round_steps"], "round_id", roundId);
     await db.delete(rounds).where(eq(rounds.id, roundId));
     return true;
   }
@@ -1589,4 +1598,19 @@ export class PgStorage implements IStorage {
     return result.length > 0;
   }
 
+}
+
+
+// Out/2026 (Grupo F): apaga linhas das tabelas criadas no boot pelos
+// ensure*.ts (fora do schema do Drizzle). Os nomes de tabela e coluna são
+// fixos no código (nunca vêm do usuário). Se uma tabela ainda não existir
+// (banco antigo), segue sem erro.
+async function apagarDasTabelasNovas(tabelas: string[], coluna: "class_id" | "round_id" | "team_id", valor: string): Promise<void> {
+  for (const tabela of tabelas) {
+    try {
+      await pool.query(`DELETE FROM "${tabela}" WHERE ${coluna} = $1`, [valor]);
+    } catch (e: any) {
+      if (e?.code !== "42P01" && e?.code !== "42703") console.error(`[storage] Falha ao limpar ${tabela}:`, e);
+    }
+  }
 }

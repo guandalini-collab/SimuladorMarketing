@@ -2013,7 +2013,7 @@ function RoundsTimeline({
             id="maxRounds"
             type="number"
             min={currentClass.currentRound}
-            max={20}
+            max={52}
             value={editMaxRounds}
             onChange={(e) => setEditMaxRounds(parseInt(e.target.value) || currentClass.maxRounds)}
             onBlur={() => {
@@ -4631,7 +4631,7 @@ export default function Professor() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="maxRounds">Número de Rodadas</Label>
-                <Input id="maxRounds" type="number" min={1} max={20} value={newClass.maxRounds} onChange={(e) => setNewClass({ ...newClass, maxRounds: parseInt(e.target.value) || 10 })} data-testid="input-max-rounds" />
+                <Input id="maxRounds" type="number" min={1} max={52} value={newClass.maxRounds} onChange={(e) => setNewClass({ ...newClass, maxRounds: parseInt(e.target.value) || 10 })} data-testid="input-max-rounds" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">

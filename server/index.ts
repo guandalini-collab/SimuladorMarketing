@@ -6,6 +6,7 @@ import { ensureMidiaCatalog } from "./ensureMidiaCatalog";
 import { ensureResultsUniqueIndex } from "./ensureResultsUniqueIndex";
 import { ensureBcgQuadrantPt } from "./ensureBcgQuadrantPt";
 import { ensureGrupoBUniqueIndexes } from "./ensureGrupoBUniqueIndexes";
+import { ensureGrupoFUniqueIndexes } from "./ensureGrupoFUniqueIndexes";
 import { ensureRoundsUniqueIndex } from "./ensureRoundsUniqueIndex";
 import { ensureRoundsActiveUniqueIndex } from "./ensureRoundsActiveUniqueIndex";
 import { ensureMarketEventTypePt } from "./ensureMarketEventTypePt";
@@ -75,6 +76,7 @@ app.use((req, res, next) => {
   await ensureResultsUniqueIndex();
   await ensureBcgQuadrantPt();
   await ensureGrupoBUniqueIndexes();
+  await ensureGrupoFUniqueIndexes();
   await ensureRoundsUniqueIndex();
   await ensureRoundsActiveUniqueIndex();
   await ensureRoundsWeeklyColumns();
