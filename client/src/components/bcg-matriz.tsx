@@ -187,7 +187,7 @@ export function BcgLegenda({ produtos }: { produtos: ProdutoBcg[] }) {
         <span className="text-muted-foreground">quando o mercado amadurece.</span>
       </div>
       <p className="text-xs text-muted-foreground">
-        Modelo da Boston Consulting Group (Henderson, 1970). O tamanho de cada bolha é proporcional à receita do produto no último mês com resultado; sem resultado, todas têm o mesmo tamanho.
+        Modelo da Boston Consulting Group (Henderson, 1970). O tamanho de cada bolha é proporcional à receita do produto na última rodada com resultado; sem resultado, todas têm o mesmo tamanho.
       </p>
     </div>
   );

@@ -62,7 +62,7 @@ export function MonthlyBulletinCard({ classId, activeRoundId }: { classId: strin
             <Newspaper className="h-5 w-5 text-white" />
           </div>
           <div>
-            <CardTitle>Boletim do mês{atual.roundNumber ? ` — Mês ${atual.roundNumber}` : ""}</CardTitle>
+            <CardTitle>Boletim da semana{atual.roundNumber ? ` — Rodada ${atual.roundNumber}` : ""}</CardTitle>
             <CardDescription>Como o mercado está se comportando nesta rodada. Estas condições pesam no resultado.</CardDescription>
           </div>
         </div>
@@ -86,7 +86,7 @@ export function MonthlyBulletinCard({ classId, activeRoundId }: { classId: strin
             )}
             {ind.variacaoPrecosSetor !== undefined && (
               <div className="rounded-lg border p-3">
-                <p className="text-xs text-muted-foreground">Preços do setor no mês</p>
+                <p className="text-xs text-muted-foreground">Preços do setor na semana</p>
                 <p className="text-xl font-semibold tabular-nums">
                   {ind.variacaoPrecosSetor > 0 ? "+" : ""}{ind.variacaoPrecosSetor.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%
                 </p>
@@ -131,14 +131,38 @@ interface FitProduct {
 }
 
 export function MarketFitCard({ teamId, roundId }: { teamId: string; roundId: string }) {
-  const { data } = useQuery<{ bulletin: Bulletin | null; products: FitProduct[] }>({
+  const { data } = useQuery<{ bulletin: Bulletin | null; products: FitProduct[]; motorCompetitivo?: boolean }>({
     queryKey: [`/api/market-fit/${teamId}/${roundId}`],
     enabled: !!teamId && !!roundId,
   });
 
-  if (!data?.bulletin || data.products.length === 0) return null;
+  if (!data?.bulletin) return null;
   const d = DEMANDA[data.bulletin.demand];
   const s = SENSIB[data.bulletin.priceSensitivity];
+
+  // Out/2026, motor competitivo: o boletim muda o mercado de todas as
+  // empresas; não há ajuste individual de receita para mostrar.
+  if (data.motorCompetitivo) {
+    return (
+      <Card data-testid="card-market-fit">
+        <CardHeader className="bg-muted/30">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-[#ff8c1a] flex items-center justify-center">
+              <Scale className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <CardTitle>Mercado da semana</CardTitle>
+              <CardDescription>{d.label} · {s.label.toLowerCase()}</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-5 text-sm text-muted-foreground">
+          As condições do boletim valeram para todas as empresas do mercado, equipes e concorrentes: entraram no cálculo da demanda total da categoria e da reação dos compradores ao preço. Não há ajuste individual de receita.
+        </CardContent>
+      </Card>
+    );
+  }
+  if (data.products.length === 0) return null;
 
   return (
     <Card data-testid="card-market-fit">
@@ -148,7 +172,7 @@ export function MarketFitCard({ teamId, roundId }: { teamId: string; roundId: st
             <Scale className="h-5 w-5 text-white" />
           </div>
           <div>
-            <CardTitle>Adequação ao mercado do mês</CardTitle>
+            <CardTitle>Adequação ao mercado da semana</CardTitle>
             <CardDescription>{d.label} · {s.label.toLowerCase()}</CardDescription>
           </div>
         </div>
@@ -172,7 +196,7 @@ export function MarketFitCard({ teamId, roundId }: { teamId: string; roundId: st
                 {p.reasons.map((r) => <li key={r}>{r}</li>)}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">As decisões não entraram em conflito com as condições do mês.</p>
+              <p className="text-sm text-muted-foreground">As decisões não entraram em conflito com as condições da semana.</p>
             )}
           </div>
         ))}

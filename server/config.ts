@@ -14,6 +14,7 @@ const envSchema = z.object({
   AI_INTEGRATIONS_OPENAI_API_KEY: z.string().optional(),
   AI_INTEGRATIONS_OPENAI_BASE_URL: z.string().optional(),
 
+  APP_BASE_URL: z.string().optional(),
   REPLIT_DEV_DOMAIN: z.string().optional(),
   REPLIT_CONNECTORS_HOSTNAME: z.string().optional(),
   REPL_IDENTITY: z.string().optional(),
@@ -52,6 +53,21 @@ export function getEnv(): AppEnv {
 // server/email-service.ts — o que podia divergir sem ninguém perceber.
 // Import este valor nos dois lugares em vez de repetir a string.
 export const SYSTEM_FROM_EMAIL = "simula@simulamarketing.com.br";
+
+// Endereço público do site, usado nos links dos e-mails (redefinição de
+// senha, acesso). Antes os links usavam REPLIT_DEV_DOMAIN, variável que não
+// existe no Railway, e caíam em http://localhost:5000 (out/2026, Grupo A).
+// APP_BASE_URL, se definida no Railway, tem prioridade.
+export const SITE_PUBLICO_PADRAO = "https://www.simulamarketing.com.br";
+
+export function urlBaseDoSite(): string {
+  const configurada = process.env.APP_BASE_URL?.trim();
+  if (configurada) return configurada.replace(/\/+$/, "");
+  if (process.env.NODE_ENV === "production") return SITE_PUBLICO_PADRAO;
+  const replit = process.env.REPLIT_DEV_DOMAIN?.trim();
+  if (replit) return (replit.startsWith("http") ? replit : `https://${replit}`).replace(/\/+$/, "");
+  return `http://localhost:${process.env.PORT || 5000}`;
+}
 
 export function getAuthorizedProfessorEmails(env: AppEnv): string[] {
   const raw = env.AUTHORIZED_PROFESSOR_EMAILS?.trim();

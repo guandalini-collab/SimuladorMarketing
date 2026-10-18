@@ -29,7 +29,7 @@ O acesso de professor **não é autoautorizável** — diferentemente dos alunos
 
 Depois de autorizado, o login do professor é feito na mesma tela de login do sistema (`www.simulamarketing.com.br`), com email e senha. Ao entrar, você cai diretamente no **Painel do Professor**.
 
-Uma observação importante sobre os alunos, que evita um mal-entendido comum: **os alunos se cadastram sozinhos**, mas apenas com email institucional — o sistema aceita apenas emails terminados em `@aluno.iffar.edu.br` (à data deste manual; se a sua instituição for diferente, confirme o domínio aceito com o administrador do sistema, pois ele é configurado no código do servidor). Qualquer outro email é recusado automaticamente na hora do cadastro, com uma mensagem de erro — não fica pendente de aprovação, simplesmente não é aceito. Isso é relevante porque o menu **Aprovações**, que você verá no topo da tela, é um resquício de uma versão anterior do sistema: hoje, um cadastro de aluno com email aceito é **aprovado automaticamente**, na hora, sem qualquer ação sua. Na prática, você não precisa (e normalmente não vai encontrar nada para fazer) nessa tela. O texto de ajuda que aparece nela também está desatualizado — não leve em conta as instruções escritas lá.
+Uma observação importante sobre os alunos, que evita um mal-entendido comum: **os alunos se cadastram sozinhos**, mas apenas com email institucional — o sistema aceita apenas emails terminados em `@aluno.iffarroupilha.edu.br` ou `@aluno.iffar.edu.br` (à data deste manual; se a sua instituição for diferente, confirme o domínio aceito com o administrador do sistema, pois ele é configurado no código do servidor). Qualquer outro email é recusado automaticamente no cadastro e também no login, com uma mensagem de erro — não fica pendente de aprovação, simplesmente não é aceito. Isso é relevante porque o menu **Aprovações**, que você verá no topo da tela, é um resquício de uma versão anterior do sistema: hoje, um cadastro de aluno com email aceito é **aprovado automaticamente**, na hora, sem qualquer ação sua. Na prática, você não precisa (e normalmente não vai encontrar nada para fazer) nessa tela. O texto de ajuda que aparece nela também está desatualizado — não leve em conta as instruções escritas lá.
 
 ![Tela de Aprovações: o texto "Como funciona?" cita o domínio @iffarroupilha.edu.br, diferente do domínio realmente aceito pelo sistema — outro sinal de que esse texto ficou desatualizado.](12-aprovacoes.jpg)
 
@@ -172,17 +172,17 @@ Uma vez que a rodada é criada/iniciada, a quantidade de produtos por equipe fic
 
 ## 8. Durante uma Rodada Ativa
 
-Cada rodada corresponde a **um mês** de operação, e um ano de jogo tem sempre 12 rodadas. Enquanto a rodada está ativa, cada equipe segue um **percurso obrigatório**, na ordem do menu do aluno; cada etapa só abre depois que a anterior foi concluída:
+Cada rodada corresponde a **uma semana** real do calendário. Enquanto a rodada está ativa, cada equipe segue um **percurso obrigatório**, na ordem do menu do aluno; cada etapa só abre depois que a anterior foi concluída:
 
 1. **Feedback e Resultados da rodada anterior** — leitura; a equipe confirma com o botão **Li e entendi**.
-2. **Simula+ News e Análise de Mercado** — leitura dos eventos do mês, do Boletim do mês e da Conjuntura Brasil; confirmação com **Li e entendi**.
+2. **Simula+ News e Análise de Mercado** — leitura dos eventos da semana, do Boletim da semana e da Conjuntura Brasil; confirmação com **Li e entendi**.
 3. **Ferramentas Estratégicas** — SWOT, 5 Forças de Porter, Matriz BCG e PESTEL são obrigatórias. A **Segmentação de Mercado** não bloqueia o avanço, mas conta na pontuação de Alinhamento Estratégico (Seção 11.2); vale reforçar isso em sala.
 4. **Identidade da Empresa** — nome, slogan e logomarca, definitivos para os alunos depois de salvos (só o professor corrige; Seção 5).
 5. **Mix de Marketing** — as decisões da rodada; o envio final é recusado enquanto houver etapa pendente.
 
 Os itens do grupo **Consulta** (Fechamento anual, Insights de Mercado, Orçamento, Manual do Aluno, Guia de Mídias e Meu Perfil) ficam sempre livres.
 
-**O que o sistema faz sozinho.** Na **preparação** (30 minutos antes da abertura) e na **abertura** de cada rodada: entrega as **análises estratégicas prontas** da rodada (Seção 10.3); gera de 2 a 4 eventos de mercado com IA, se a geração automática estiver ligada e a rodada ainda não tiver eventos; e publica o **Boletim do mês** (demanda e sensibilidade a preço), que pesa no resultado pela adequação ao mercado (até 12% para mais ou para menos). No **encerramento**, gera o Feedback Inteligente para cada equipe com resultado.
+**O que o sistema faz sozinho.** Na **preparação** (30 minutos antes da abertura) e na **abertura** de cada rodada: entrega as **análises estratégicas prontas** da rodada (Seção 10.3); gera de 2 a 4 eventos de mercado com IA, se a geração automática estiver ligada e a rodada ainda não tiver eventos; e publica o **Boletim da semana** (demanda e sensibilidade a preço). No motor competitivo, ele vale para todas as empresas do mercado (demanda × 0,9/1,0/1,1 e elasticidade × 1,2/1,0/0,85); na rodada de teste, que usa o motor anterior, aplica o ajuste individual de até 12% na receita. No **encerramento**, gera o Feedback Inteligente para cada equipe com resultado.
 
 **Conjuntura real.** A IA usa, na PESTEL, nos eventos e no boletim, os **indicadores oficiais do Banco Central** (Selic, IPCA, dólar, PIB, desemprego e confiança do consumidor, atualizados automaticamente) e o texto **Conjuntura Brasil** (fatos econômicos e políticos atuais, com data e fonte; Seção 12). Os alunos veem o mesmo conteúdo na aba Economia e Política da Análise de Mercado.
 
@@ -397,7 +397,11 @@ O botão **Admin**, no topo do Painel do Professor, abre um painel separado com 
 Quando um aluno esquece a senha, ele tem duas opções na tela de login, no link **"Esqueci minha senha"**:
 
 1. **Aba "Código"**: no momento do cadastro, cada aluno recebe um código de recuperação no formato `XXXX-XXXX-XXXX`, mostrado uma única vez, em uma janela que pede explicitamente para ele guardar ou fotografar o código. Com email + código + nova senha, o aluno redefine a senha na hora, sem depender de email.
-2. **Aba "Email"**: um link de redefinição de senha é enviado para o email cadastrado do aluno.
+2. **Aba "Email"**: um link de redefinição de senha, válido por 1 hora, é enviado para o email cadastrado do aluno.
+
+Se nenhuma das duas formas funcionar, você pode gerar uma **senha temporária** para o aluno (válida por 1 hora). No primeiro login com ela, o sistema exige que o aluno crie uma senha nova antes de liberar qualquer outra tela; essa exigência é feita pelo servidor, não só pela tela. Toda troca ou redefinição de senha encerra as outras sessões abertas daquele aluno.
+
+Por segurança, o login, o cadastro e a recuperação de senha têm limite de tentativas seguidas por email. Um aluno que errar a senha muitas vezes precisa aguardar alguns minutos; os demais alunos do laboratório, mesmo usando a mesma rede, não são afetados.
 
 Vale orientar a turma, logo na apresentação do sistema, a guardar esse código de recuperação assim que se cadastrarem — é o caminho mais rápido, e o código não é mostrado de novo depois.
 

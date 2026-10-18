@@ -1,4 +1,4 @@
-import { SYSTEM_FROM_EMAIL } from "../config";
+import { SYSTEM_FROM_EMAIL, urlBaseDoSite } from "../config";
 
 interface EmailPayload {
   to: string[];
@@ -68,7 +68,7 @@ export class EmailService {
           <p>Seu cadastro no <strong>Simula+</strong> foi aprovado pelo professor!</p>
           <p>Agora você já pode fazer login e começar a participar da simulação de marketing.</p>
           <p style="margin-top: 30px;">
-            <a href="${process.env.REPLIT_DEV_DOMAIN || "http://localhost:5000"}" 
+            <a href="${urlBaseDoSite()}" 
                style="background-color: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
               Acessar Simula+
             </a>
@@ -174,7 +174,7 @@ export class EmailService {
           </div>
           
           <p style="margin-top: 30px;">
-            <a href="${process.env.REPLIT_DEV_DOMAIN || "http://localhost:5000"}" 
+            <a href="${urlBaseDoSite()}" 
                style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
               Acessar Painel de Aprovações
             </a>
@@ -190,7 +190,7 @@ export class EmailService {
   }
 
   async sendPasswordResetEmail(userEmail: string, userName: string, resetToken: string): Promise<boolean> {
-    const resetUrl = `${process.env.REPLIT_DEV_DOMAIN || "http://localhost:5000"}/reset-password?token=${resetToken}`;
+    const resetUrl = `${urlBaseDoSite()}/reset-password?token=${resetToken}`;
 
     return this.sendEmail({
       to: [userEmail],

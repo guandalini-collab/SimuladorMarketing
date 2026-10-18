@@ -112,7 +112,7 @@ export function ConjunturaCard() {
           Conjuntura Brasil
         </CardTitle>
         <CardDescription>
-          O momento real da economia e da política no país. Use estes dados na sua PESTEL e para interpretar as notícias do mês.
+          O momento real da economia e da política no país: é o pano de fundo da PESTEL, das notícias e do boletim da semana.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -161,7 +161,7 @@ export function ConjunturaEditor({ classId }: { classId: string }) {
           )}
         </CardTitle>
         <CardDescription>
-          A IA usa estes fatos e os indicadores oficiais ao gerar a PESTEL, os eventos do Simula+ News e o boletim do mês. Os alunos veem o mesmo conteúdo na Análise de Mercado.
+          A IA usa estes fatos e os indicadores oficiais ao gerar a PESTEL, os eventos do Simula+ News e o boletim da semana. Os alunos veem o mesmo conteúdo na Análise de Mercado.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -39,7 +39,7 @@ export function BcgMatrixChart({ teamId, roundId }: BcgMatrixChartProps) {
           </div>
           Matriz BCG — posicionamento dos produtos
         </CardTitle>
-        <CardDescription>Modelo da Boston Consulting Group: crescimento do mercado × participação relativa; bolha proporcional à receita do mês.</CardDescription>
+        <CardDescription>Modelo da Boston Consulting Group: crescimento do mercado × participação relativa; bolha proporcional à receita da rodada.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {isLoading ? (

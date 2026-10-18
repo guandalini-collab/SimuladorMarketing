@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -13,7 +13,8 @@ import { z } from "zod";
 import { generateMarketEvents, translateEventTypeToPt, type EventGenerationParams } from "./services/aiEventGenerator";
 import { emailService } from "./services/email";
 import { sendTeamEmail } from "./email-service";
-import { randomUUID } from "crypto";
+import { randomUUID, randomInt } from "crypto";
+import { limiteLogin, limiteCadastro, limiteEsqueciSenha, limiteRecuperacao, limiteRedefinir, zerarTentativas } from "./limiteDeTentativas";
 import { getAlignmentScoreLevel } from "@shared/alignmentUtils";
 import { semelhancaTextual } from "@shared/semelhanca";
 import { getProductCountBudgetMultiplier } from "@shared/budgetUtils";
@@ -34,7 +35,7 @@ function generateRecoveryCode(): string {
   const generateBlock = () => {
     let block = '';
     for (let i = 0; i < 4; i++) {
-      block += chars.charAt(Math.floor(Math.random() * chars.length));
+      block += chars.charAt(randomInt(chars.length));
     }
     return block;
   };
@@ -101,10 +102,34 @@ const authorizedProfessorEmails = new Set<string>(
 // (nada de ficar "pendente" aguardando aprovação manual, como acontecia
 // antes). A única exceção é uma conta de verificação do próprio professor,
 // usada para entrar no sistema e checar problemas ou inconsistências.
-const STUDENT_INSTITUTIONAL_EMAIL_DOMAIN = "@aluno.iffar.edu.br";
+// Out/2026: o professor pediu que o aluno só possa se cadastrar E entrar
+// com e-mail terminado em @aluno.iffarroupilha.edu.br ou @aluno.iffar.edu.br.
+const STUDENT_INSTITUTIONAL_EMAIL_DOMAINS = ["@aluno.iffar.edu.br", "@aluno.iffarroupilha.edu.br"];
+const STUDENT_INSTITUTIONAL_EMAIL_DOMAIN = STUDENT_INSTITUTIONAL_EMAIL_DOMAINS.join(" ou ");
 // guandalinib@gmail.com: conta de aluno de teste do professor (2026-10),
 // para testar a visão de um membro que não é líder da equipe.
+// joaoz@gmail.com: aluno de teste criado pelo professor (confirmado em out/2026).
 const STUDENT_REGISTRATION_EMAIL_EXCEPTIONS = new Set<string>(["joaoz@gmail.com", "guandalinib@gmail.com"]);
+
+function emailDeAlunoPermitido(email: string): boolean {
+  const e = email.trim().toLowerCase();
+  return STUDENT_REGISTRATION_EMAIL_EXCEPTIONS.has(e) || STUDENT_INSTITUTIONAL_EMAIL_DOMAINS.some((d) => e.endsWith(d));
+}
+
+// Hash usado só para igualar o tempo de resposta do login quando o e-mail
+// não existe (gerado uma vez, na primeira necessidade).
+let _hashFicticio: string | null = null;
+function hashFicticio(): string {
+  if (!_hashFicticio) _hashFicticio = bcrypt.hashSync(randomUUID(), 10);
+  return _hashFicticio;
+}
+
+// Out/2026 (Grupo A): nenhuma resposta da API deve levar o hash da senha,
+// da senha temporária ou do código de recuperação.
+function semSegredos<T extends Record<string, any>>(u: T): Omit<T, "password" | "temporaryPassword" | "recoveryCodeHash"> {
+  const { password: _p, temporaryPassword: _t, recoveryCodeHash: _r, ...resto } = u;
+  return resto;
+}
 
 // Segmentação de Mercado (5ª ferramenta estratégica, pedido do professor
 // 2026-09): quais segmentType ("b2c" e/ou "b2b") uma turma precisa ter
@@ -165,6 +190,36 @@ function isSegmentationComplete(
 declare module "express-session" {
   interface SessionData {
     userId: string;
+    // Out/2026 (Grupo A): login feito com senha temporária ou com troca
+    // obrigatória pendente. Enquanto true, o servidor só libera as rotas de
+    // autenticação (a troca deixou de ser exigida só na tela).
+    trocaDeSenhaPendente?: boolean;
+  }
+}
+
+// Gera um novo id de sessão no login/cadastro (evita fixação de sessão em
+// computadores compartilhados) e grava o usuário nela.
+function iniciarSessao(req: Request, userId: string, trocaDeSenhaPendente = false): Promise<void> {
+  return new Promise((resolve, reject) => {
+    req.session.regenerate((err) => {
+      if (err) return reject(err);
+      req.session.userId = userId;
+      if (trocaDeSenhaPendente) req.session.trocaDeSenhaPendente = true;
+      req.session.save((e) => (e ? reject(e) : resolve()));
+    });
+  });
+}
+
+// Depois de uma troca de senha, derruba as outras sessões abertas do mesmo
+// usuário (quem tivesse a sessão antiga perde o acesso).
+async function encerrarOutrasSessoes(userId: string, sidAtual?: string): Promise<void> {
+  try {
+    await pool.query(
+      `DELETE FROM "session" WHERE sess->>'userId' = $1 AND ($2::text IS NULL OR sid <> $2)`,
+      [userId, sidAtual ?? null]
+    );
+  } catch (e) {
+    console.error("[auth] Falha ao encerrar outras sessões:", e);
   }
 }
 
@@ -204,6 +259,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     })
   );
 
+  // Out/2026 (Grupo A): troca obrigatória de senha exigida pelo servidor.
+  // Com a troca pendente, só as rotas de autenticação respondem; /api/auth/me
+  // responde 401 para a tela voltar ao login (que reabre a troca).
+  const ROTAS_LIVRES_COM_TROCA_PENDENTE = new Set([
+    "/api/auth/login",
+    "/api/auth/logout",
+    "/api/auth/register",
+    "/api/auth/forgot-password",
+    "/api/auth/reset-password",
+    "/api/auth/recover-with-code",
+    "/api/auth/change-temporary-password",
+  ]);
+  app.use((req, res, next) => {
+    if (!req.session?.trocaDeSenhaPendente) return next();
+    if (!req.path.startsWith("/api/")) return next();
+    if (ROTAS_LIVRES_COM_TROCA_PENDENTE.has(req.path)) return next();
+    return res.status(req.path === "/api/auth/me" ? 401 : 403).json({
+      error: "Troca de senha obrigatória: defina sua nova senha antes de continuar.",
+      trocaDeSenhaPendente: true,
+    });
+  });
+
   // Configuração do multer para upload de logomarcas.
   // Antes salvava em disco (attached_assets/logos): no Railway o sistema de
   // arquivos do container é efêmero, então cada novo deploy (ex.: "git push")
@@ -237,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   app.use('/attached_assets/logos', express.static(path.join(process.cwd(), 'attached_assets', 'logos')));
 
-  app.post("/api/auth/register", async (req, res) => {
+  app.post("/api/auth/register", limiteCadastro, async (req, res) => {
     try {
       const data = insertUserSchema.parse(req.body);
       const emailNormalized = data.email.trim().toLowerCase();
@@ -249,9 +326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Bloqueio de domínio institucional (case-insensitive): quem não usa o
       // email de aluno do IFFar, nem a conta de verificação do professor, é
       // recusado aqui mesmo — sem cadastro, sem status "pending".
-      const isAllowedEmail =
-        STUDENT_REGISTRATION_EMAIL_EXCEPTIONS.has(emailNormalized) ||
-        emailNormalized.endsWith(STUDENT_INSTITUTIONAL_EMAIL_DOMAIN);
+      const isAllowedEmail = emailDeAlunoPermitido(emailNormalized);
 
       if (!isAllowedEmail) {
         return res.status(403).json({
@@ -279,7 +354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         recoveryCodeHash
       });
 
-      req.session.userId = user.id;
+      await iniciarSessao(req, user.id);
       res.json({ 
         id: user.id, 
         email: user.email, 
@@ -293,20 +368,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", limiteLogin, async (req, res) => {
     try {
       const { email, password } = req.body;
       const emailNormalized = String(email || "").trim().toLowerCase();
       
       const user = await storage.getUserByEmail(emailNormalized);
       if (!user) {
+        // Mesmo custo de uma verificação real, para o tempo de resposta não
+        // revelar se o e-mail existe.
+        await bcrypt.compare(String(password || ""), hashFicticio());
         return res.status(401).json({ error: "Credenciais inválidas" });
       }
-      
-      if (user.role === "professor" && !authorizedProfessorEmails.has(emailNormalized)) {
-        return res.status(403).json({ error: "Professor não autorizado. Entre em contato com o administrador." });
-      }
-      
+
       let isValidLogin = false;
       let usingTemporaryPassword = false;
 
@@ -338,14 +412,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Credenciais inválidas" });
       }
 
-      req.session.userId = user.id;
+      // Verificações de acesso só depois da senha conferida, para não revelar
+      // a quem não sabe a senha que tipo de conta é.
+      if (user.role === "professor" && !authorizedProfessorEmails.has(emailNormalized)) {
+        return res.status(403).json({ error: "Professor não autorizado. Entre em contato com o administrador." });
+      }
+      if (user.role === "equipe" && !emailDeAlunoPermitido(emailNormalized)) {
+        return res.status(403).json({ error: `Acesso de aluno permitido apenas com e-mail institucional (${STUDENT_INSTITUTIONAL_EMAIL_DOMAIN}).` });
+      }
+      if (user.status === "rejected") {
+        return res.status(403).json({ error: "Cadastro não aprovado. Fale com o professor." });
+      }
+
+      const trocaPendente = usingTemporaryPassword || !!user.mustChangePassword;
+      zerarTentativas("login", req);
+      await iniciarSessao(req, user.id, trocaPendente);
       res.json({
         id: user.id,
         email: user.email,
         name: user.name,
         role: user.role,
         status: user.status,
-        mustChangePassword: usingTemporaryPassword || user.mustChangePassword,
+        mustChangePassword: trocaPendente,
         isAdmin: user.isAdmin,
         onboardingCompletedAt: user.onboardingCompletedAt,
       });
@@ -356,11 +444,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/logout", (req, res) => {
     req.session.destroy(() => {
+      res.clearCookie("simulamarketing.sid");
       res.json({ success: true });
     });
   });
 
-  app.post("/api/auth/forgot-password", async (req, res) => {
+  app.post("/api/auth/forgot-password", limiteEsqueciSenha, async (req, res) => {
     try {
       const { email } = req.body;
       
@@ -368,14 +457,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Email é obrigatório" });
       }
 
-      const user = await storage.getUserByEmail(email);
+      const mensagemNeutra = "✅ Se o email estiver cadastrado, você receberá um link de recuperação em instantes. Verifique sua caixa de entrada e spam. O link expira em 1 hora.";
+      const user = await storage.getUserByEmail(String(email).trim().toLowerCase());
       if (!user) {
-        // Por segurança, retorna sucesso mesmo se usuário não existir
-        return res.json({ 
-          success: true, 
-          message: "✅ Se o email estiver cadastrado, você receberá um link de recuperação em instantes. Verifique sua caixa de entrada e spam.",
-          userExists: false
-        });
+        // Mesma resposta para e-mail cadastrado ou não (não revela quem tem conta).
+        return res.json({ success: true, message: mensagemNeutra });
       }
 
       const resetToken = randomUUID();
@@ -386,15 +472,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const emailSent = await emailService.sendPasswordResetEmail(user.email, user.name, resetToken);
       
       if (!emailSent) {
-        console.log(`🔗 [DEV] Link de recuperação: ${process.env.REPLIT_DEV_DOMAIN || "http://localhost:5000"}/reset-password?token=${resetToken}`);
+        // O link não vai para o log: o log do servidor não é lugar de token.
+        console.log(`⚠️ [auth] E-mail de recuperação não enviado (verifique RESEND_API_KEY).`);
       }
       
       res.json({ 
         success: true, 
-        message: "✅ Email de recuperação enviado! Verifique sua caixa de entrada e também a pasta de spam. O link expira em 1 hora.",
-        userExists: true,
-        // Em desenvolvimento, retorna o token para facilitar testes
-        ...(process.env.NODE_ENV !== 'production' && { resetToken, resetUrl: `/reset-password?token=${resetToken}` })
+        message: mensagemNeutra,
+        // Só no ambiente de desenvolvimento local, para testes.
+        ...(process.env.NODE_ENV === 'development' && { resetToken, resetUrl: `/reset-password?token=${resetToken}` })
       });
     } catch (error) {
       console.error("Erro em forgot-password:", error);
@@ -402,7 +488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/reset-password", async (req, res) => {
+  app.post("/api/auth/reset-password", limiteRedefinir, async (req, res) => {
     try {
       const { token, newPassword } = req.body;
       
@@ -426,8 +512,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await storage.updateUserPassword(resetToken.userId, hashedPassword);
+      // Também apaga uma senha temporária que ainda estivesse valendo.
+      await storage.updatePasswordAndClearTemporary(resetToken.userId, hashedPassword);
       await storage.deletePasswordResetToken(token);
+      await encerrarOutrasSessoes(resetToken.userId);
       
       res.json({ success: true, message: "Senha redefinida com sucesso" });
     } catch (error) {
@@ -437,7 +525,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint para recuperação de senha usando código de recuperação (sem email)
-  app.post("/api/auth/recover-with-code", async (req, res) => {
+  app.post("/api/auth/recover-with-code", limiteRecuperacao, async (req, res) => {
     try {
       const { email, recoveryCode, newPassword } = req.body;
       
@@ -449,20 +537,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "A senha deve ter no mínimo 6 caracteres" });
       }
 
-      const user = await storage.getUserByEmail(email);
+      const user = await storage.getUserByEmail(String(email).trim().toLowerCase());
       
-      if (!user) {
+      // Mesma mensagem para todos os casos de falha (não revela se a conta
+      // existe, se é de aluno ou se tem código).
+      if (!user || user.role !== "equipe" || !user.recoveryCodeHash) {
         return res.status(400).json({ error: "Email ou código de recuperação inválido" });
-      }
-
-      // Verifica se o usuário é aluno (equipe)
-      if (user.role !== "equipe") {
-        return res.status(400).json({ error: "Recuperação por código disponível apenas para alunos" });
-      }
-
-      // Verifica se o usuário tem código de recuperação
-      if (!user.recoveryCodeHash) {
-        return res.status(400).json({ error: "Este usuário não possui código de recuperação configurado" });
       }
 
       // Normaliza o código (remove espaços, converte para maiúsculas)
@@ -475,9 +555,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Email ou código de recuperação inválido" });
       }
 
-      // Atualiza a senha
+      // Atualiza a senha (e apaga senha temporária pendente)
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await storage.updateUserPassword(user.id, hashedPassword);
+      await storage.updatePasswordAndClearTemporary(user.id, hashedPassword);
+      await encerrarOutrasSessoes(user.id);
       
       res.json({ success: true, message: "Senha redefinida com sucesso!" });
     } catch (error) {
@@ -514,6 +595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       await storage.updateUserPassword(user.id, hashedPassword);
+      await encerrarOutrasSessoes(user.id, req.sessionID);
       
       res.json({ success: true, message: "Senha alterada com sucesso" });
     } catch (error) {
@@ -543,12 +625,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
 
-      if (!user.mustChangePassword) {
+      if (!user.mustChangePassword && !req.session.trocaDeSenhaPendente) {
         return res.status(400).json({ error: "Você não precisa trocar a senha" });
       }
 
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       await storage.updatePasswordAndClearTemporary(user.id, hashedPassword);
+      // A tela pede para entrar de novo com a senha nova: encerra esta sessão
+      // e as demais do usuário.
+      await encerrarOutrasSessoes(user.id);
       
       res.json({ success: true, message: "Senha definida com sucesso! Faça login novamente." });
     } catch (error) {
@@ -803,6 +888,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // arquivo não estiver presente no deploy, mantém o PDF gerado por código.
     const manualAlunoArquivo = path.join(process.cwd(), 'server', 'assets', 'Manual_do_Aluno_Simula.pdf');
     if (fs.existsSync(manualAlunoArquivo)) {
+      // Out/2026: ?inline=1 abre o PDF dentro da tela "Manual do Aluno"
+      // (visualizador do navegador); sem o parâmetro, segue como download.
+      if (req.query.inline === "1") {
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'inline; filename="Manual_do_Aluno_Simula.pdf"');
+        return res.sendFile(manualAlunoArquivo);
+      }
       return res.download(manualAlunoArquivo, 'Manual_do_Aluno_Simula.pdf', (err) => {
         if (err && !res.headersSent) {
           console.error("Erro ao enviar o manual do aluno:", err);
@@ -1000,12 +1092,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Turma não encontrada" });
     }
     
-    if (classData.professorId !== user.id) {
+    if (classData.professorId !== user.id && !user.isAdmin) {
       return res.status(403).json({ error: "Você não tem permissão para acessar esta turma" });
     }
     
     const students = await storage.getStudentsByClass(req.params.classId);
-    res.json(students);
+    res.json(students.map(semSegredos));
   });
 
   app.post("/api/classes/:classId/students", async (req, res) => {
@@ -1089,7 +1181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const students = await storage.getStudentsByClass(classData.id);
         for (const student of students) {
           allStudentsWithClasses.push({
-            ...student,
+            ...semSegredos(student),
             className: classData.name,
             classId: classData.id,
           });
@@ -1204,6 +1296,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const studentClass = await storage.getClassByStudent(req.session.userId);
       if (!studentClass || studentClass.id !== req.params.classId) {
         return res.status(403).json({ error: "Você não faz parte desta turma" });
+      }
+    } else if (!user.isAdmin) {
+      // Out/2026 (Grupo A): professor só vê equipes das próprias turmas.
+      const turma = await storage.getClass(req.params.classId);
+      if (!turma || turma.professorId !== user.id) {
+        return res.status(403).json({ error: "Você não tem permissão para acessar esta turma" });
       }
     }
     const teams = await storage.getTeamsByClass(req.params.classId);
@@ -2342,6 +2440,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!studentClass || studentClass.id !== classId) {
         return res.status(403).json({ error: "Você não faz parte desta turma" });
       }
+    } else if (!user.isAdmin && classData.professorId !== user.id) {
+      // Out/2026 (Grupo A): professor só vê equipes das próprias turmas.
+      return res.status(403).json({ error: "Você não tem permissão para acessar esta turma" });
     }
 
     const teams = await storage.getTeamsByClass(classId);
@@ -2467,6 +2568,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (user.role === "equipe" && !team.memberIds.includes(req.session.userId)) {
       return res.status(403).json({ error: "Você não faz parte desta equipe" });
     }
+    if (user.role !== "equipe" && !user.isAdmin) {
+      const turma = await storage.getClass(team.classId);
+      if (!turma || turma.professorId !== user.id) {
+        return res.status(403).json({ error: "Você não tem permissão para acessar esta equipe" });
+      }
+    }
 
     res.json(team);
   });
@@ -2490,12 +2597,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (user.role === "equipe" && !team.memberIds.includes(req.session.userId)) {
       return res.status(403).json({ error: "Você não faz parte desta equipe" });
     }
+    if (user.role !== "equipe" && !user.isAdmin) {
+      const turma = await storage.getClass(team.classId);
+      if (!turma || turma.professorId !== user.id) {
+        return res.status(403).json({ error: "Você não tem permissão para acessar esta equipe" });
+      }
+    }
 
     const members = await Promise.all(
       team.memberIds.map(id => storage.getUser(id))
     );
 
-    res.json(members.filter(m => m !== undefined));
+    // Out/2026 (Grupo A): sem hashes de senha na resposta.
+    res.json(members.filter((m): m is NonNullable<typeof m> => m !== undefined).map(semSegredos));
   });
 
   app.post("/api/teams/:teamId/members", async (req, res) => {
@@ -3400,6 +3514,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!bulletin) {
       return res.json({ bulletin: null, products: [] });
     }
+    // Out/2026: no motor competitivo (v3) o boletim age sobre o mercado
+    // inteiro (demanda e sensibilidade a preço), sem o ajuste individual de
+    // até 12% do motor anterior — a tela mostra só o boletim.
+    const resultadoDaRodada = await storage.getResult(team.id, req.params.roundId);
+    if (String(resultadoDaRodada?.engineVersion ?? "").startsWith("v3")) {
+      return res.json({ bulletin, products: [], motorCompetitivo: true });
+    }
     const classData = await storage.getClass(team.classId);
     const mixes = (await storage.getMarketingMixesByTeamAndRound(team.id, req.params.roundId)).filter((m) => m.submittedAt !== null);
     const products = [];
@@ -3995,8 +4116,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(401).json({ error: "Não autenticado" });
     }
     const user = await storage.getUser(req.session.userId);
-    if (!user || user.role !== "professor") {
-      return res.status(403).json({ error: "Acesso negado" });
+    if (!user || user.role !== "professor" || !user.isAdmin) {
+      return res.status(403).json({ error: "Acesso negado: apenas o administrador do sistema" });
     }
     
     try {
@@ -4032,6 +4153,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
     
+    // Out/2026 (Grupo A): um professor só exclui aluno das próprias turmas
+    // (ou ainda sem turma); o administrador exclui qualquer aluno.
+    if (targetUser.role === "equipe" && !currentUser.isAdmin) {
+      const turmaDoAluno = await storage.getClassByStudent(targetUser.id);
+      if (turmaDoAluno && turmaDoAluno.professorId !== currentUser.id) {
+        return res.status(403).json({ error: "Você só pode excluir alunos das suas turmas" });
+      }
+    }
+
     if (targetUser.role === "professor") {
       if (authorizedProfessorEmails.has(targetUser.email.trim().toLowerCase())) {
         return res.status(400).json({ error: "Não é permitido excluir professores autorizados" });
@@ -5872,7 +6002,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     const pendingUsers = await storage.getPendingUsers();
-    res.json(pendingUsers);
+    res.json(pendingUsers.map(semSegredos));
   });
 
   app.post("/api/users/:userId/approve", async (req, res) => {
@@ -5966,7 +6096,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Sem caracteres confusos (0,O,1,I)
     let tempPassword = '';
     for (let i = 0; i < 8; i++) {
-      tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+      tempPassword += chars.charAt(randomInt(chars.length));
     }
 
     const hashedTempPassword = await bcrypt.hash(tempPassword, 10);

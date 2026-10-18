@@ -25,10 +25,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
-  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Link, useLocation } from "wouter";
-import { Progress } from "@/components/ui/progress";
 import { useJourney, stepForPath } from "@/components/round-journey";
 import logoImage from "@assets/brand/simula-logo-compacta.svg";
 
@@ -147,16 +145,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-6">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-white/70">Nível</span>
-            <span className="font-semibold text-white">3</span>
-          </div>
-          <Progress value={65} className="h-2 bg-white/15 [&>div]:bg-[#ffcc00]" />
-          <p className="text-xs text-white/70">350 / 500 XP</p>
-        </div>
-      </SidebarFooter>
     </Sidebar>
   );
 }

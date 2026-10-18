@@ -504,7 +504,7 @@ export default function Login() {
                         <p className="text-xs text-muted-foreground flex items-start gap-2">
                           <GraduationCap className="h-4 w-4 flex-shrink-0 mt-0.5" />
                           <span>
-                            O cadastro exige seu email institucional de aluno do IFFar (@aluno.iffar.edu.br).
+                            O cadastro e o login exigem seu email institucional de aluno do IFFar (@aluno.iffarroupilha.edu.br ou @aluno.iffar.edu.br).
                             Outros emails não são aceitos.
                           </span>
                         </p>
@@ -578,7 +578,7 @@ export default function Login() {
         </div>
       </footer>
 
-      <Dialog open={mustChangePassword} onOpenChange={setMustChangePassword}>
+      <Dialog open={mustChangePassword} onOpenChange={() => {}}>
         <DialogContent data-testid="dialog-change-password" className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-2 mb-2">

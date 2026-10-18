@@ -108,29 +108,29 @@ async function gerarTextoComIA(params: {
   const listaEventos = params.events
     .filter((e) => e.active)
     .map((e) => `- ${e.title} (${e.type}, ${e.severity}, ${e.sentiment}): ${e.description}`)
-    .join("\n") || "- Nenhum evento relevante neste mês.";
+    .join("\n") || "- Nenhum evento relevante nesta semana.";
 
   const { getConjunturaParaPrompt } = await import("./conjuntura");
   const conjuntura = await getConjunturaParaPrompt(params.classId);
   const prompt = `Setor: ${params.sectorName}. Tipo de negócio: ${params.businessType}. Mês ${params.roundNumber} da simulação.
-Eventos de mercado deste mês:
+Eventos de mercado desta semana:
 ${listaEventos}
 
-Redija o boletim de conjuntura do mês para este setor, coerente com os eventos acima.
+Redija o boletim de conjuntura da semana para este setor, coerente com os eventos acima.
 Responda em JSON com exatamente estes campos:
 {
   "demand": "retracao" | "estavel" | "aquecida",
   "priceSensitivity": "alta" | "normal" | "baixa",
   "headline": "título curto do boletim",
-  "summary": "2 a 4 frases descrevendo o comportamento do consumidor, da demanda e dos preços no mês, sem recomendar o que as empresas devem fazer",
+  "summary": "2 a 4 frases descrevendo o comportamento do consumidor, da demanda e dos preços na semana, sem recomendar o que as empresas devem fazer",
   "indicators": {
     "confiancaConsumidor": número de 0 a 100,
-    "variacaoPrecosSetor": número (variação % dos preços do setor no mês, ex.: -1.2),
+    "variacaoPrecosSetor": número (variação % dos preços do setor na semana, ex.: -0.3),
     "intensidadeConcorrencia": "baixa" | "media" | "alta",
-    "tendencias": ["2 a 3 tendências curtas do mês"]
+    "tendencias": ["2 a 3 tendências curtas da semana"]
   }
 }
-Os eventos são o mês simulado; a conjuntura abaixo é o pano de fundo real do país e deve ser coerente com o boletim.${conjuntura}`;
+Os eventos são a semana simulada; a conjuntura abaixo é o pano de fundo real do país e deve ser coerente com o boletim.${conjuntura}`;
 
   const completion = await getOpenAI().chat.completions.create({
     model: "gpt-4o-mini",
@@ -203,8 +203,8 @@ export async function ensureBulletinForRound(params: {
     const base = indicadoresPelosEventos(params.events);
     dados = {
       ...base,
-      headline: `${TEXTO_DEMANDA[base.demand]} no mês ${params.roundNumber}`,
-      summary: "Boletim resumido a partir dos eventos de mercado do mês.",
+      headline: `${TEXTO_DEMANDA[base.demand]} na rodada ${params.roundNumber}`,
+      summary: "Boletim resumido a partir dos eventos de mercado da semana.",
       indicators: null,
     };
   }

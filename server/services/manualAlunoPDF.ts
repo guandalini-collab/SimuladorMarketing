@@ -669,7 +669,7 @@ function addStepByStepSection(doc: PDFKit.PDFDocument) {
   doc.moveDown();
   addInfoBox(doc, 'CADASTRO EXCLUSIVO - EMAIL INSTITUCIONAL',
     'O cadastro exige seu email institucional de aluno do IFFar:\n\n' +
-    '• @aluno.iffar.edu.br\n' +
+    '• @aluno.iffarroupilha.edu.br ou @aluno.iffar.edu.br\n' +
     '• Maiúsculas/minúsculas NÃO importam (@ALUNO.IFFAR.EDU.BR funciona!)\n\n' +
     'Outros emails não são aceitos no cadastro.'
   );
