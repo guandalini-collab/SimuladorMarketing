@@ -9,7 +9,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 // Conjuntura Brasil (server/services/conjuntura.ts): indicadores oficiais do
-// Banco Central + fatos econômicos e políticos atuais usados pela IA na
+// IBGE (IPCA, PIB, desocupação) e do Banco Central (Selic, dólar, confiança) + fatos econômicos e políticos atuais usados pela IA na
 // PESTEL, nos eventos e no boletim do mês.
 
 interface Indicadores {
@@ -55,7 +55,7 @@ export function IndicadoresOficiais({ indicadores }: { indicadores: Indicadores 
     { rotulo: "Inflação (IPCA)", valor: `${num(indicadores.inflationRate)}%`, nota: "acumulado em 12 meses", ref: mesAno(ref.ipca12m) },
     { rotulo: "Dólar (PTAX)", valor: `R$ ${num(indicadores.exchangeRateUSD)}`, nota: "venda", ref: ref.cambio },
     { rotulo: "PIB", valor: `${num(indicadores.gdpGrowth, 1)}%`, nota: "variação real no último ano", ref: ref.pib ? ref.pib.slice(-4) : null },
-    { rotulo: "Desemprego", valor: indicadores.meta?.desocupacao != null ? `${num(indicadores.meta.desocupacao, 1)}%` : "—", nota: "PNAD Contínua", ref: mesAno(ref.desocupacao) },
+    { rotulo: "Desemprego", valor: indicadores.meta?.desocupacao != null ? `${num(indicadores.meta.desocupacao, 1)}%` : "—", nota: "IBGE, PNAD Contínua · trimestre móvel", ref: mesAno(ref.desocupacao) },
     {
       rotulo: "Confiança do consumidor",
       valor: num(indicadores.consumerConfidence, 1),

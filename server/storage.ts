@@ -643,9 +643,10 @@ export class MemStorage implements IStorage {
     // Remove o usuário dos membros
     team.memberIds = team.memberIds.filter(id => id !== userId);
     
-    // Se o líder foi removido e ainda há membros, promove o próximo
-    if (team.leaderId === userId && team.memberIds.length > 0) {
-      team.leaderId = team.memberIds[0];
+    // Grupo I (out/2026): se o líder sai, a equipe fica sem líder até
+    // escolher outro em consenso.
+    if (team.leaderId === userId) {
+      team.leaderId = null as any;
     }
     
     // Se não há mais membros, limpa o líder mas mantém a equipe

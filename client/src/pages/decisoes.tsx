@@ -308,7 +308,10 @@ export default function Decisoes() {
   const { data: currentUser } = useQuery<{ id: string }>({
     queryKey: ["/api/auth/me"],
   });
-  const isNonLeader = !!team?.leaderId && !!currentUser?.id && team.leaderId !== currentUser.id;
+  // Grupo I (out/2026): equipe sem líder também fica em modo visualização
+  // (o servidor recusa o envio até a equipe escolher o líder).
+  const semLider = !!team && !team.leaderId;
+  const isNonLeader = !!team && !!currentUser?.id && team.leaderId !== currentUser.id;
 
   // Carregar decisões salvas para todos os produtos
   useEffect(() => {
@@ -797,8 +800,12 @@ export default function Decisoes() {
           <Users className="h-4 w-4 text-[#1447e6]" />
           <AlertTitle className="text-[#1447e6] dark:text-blue-200">Modo visualização</AlertTitle>
           <AlertDescription className="text-[#1447e6] dark:text-blue-200">
-            Você está vendo as decisões da sua equipe. Apenas o líder pode alterá-las, salvar e enviar.
-            Converse com o líder para propor mudanças.
+            {semLider ? (
+              <>A equipe ainda não escolheu o líder. Combinem entre vocês e usem "Definir como Líder" no Painel: só o líder altera, salva e envia as decisões.</>
+            ) : (
+              <>Você está vendo as decisões da sua equipe. Apenas o líder pode alterá-las, salvar e enviar.
+              Converse com o líder para propor mudanças.</>
+            )}
           </AlertDescription>
         </Alert>
       )}

@@ -2,7 +2,7 @@
 
 ## Sobre este manual
 
-Este manual foi escrito para que um professor que **nunca usou o Simula+** consiga, sozinho, ler este documento do início ao fim e sair sabendo configurar uma turma inteira, matricular alunos, conduzir todas as rodadas da simulação e interpretar os resultados — sem depender de treinamento presencial ou de qualquer outra pessoa. Ele está organizado na ordem em que as tarefas realmente acontecem: acesso ao sistema, criação da turma, matrícula dos alunos, formação das equipes, condução das rodadas (abertura, acompanhamento, encerramento), análise dos resultados e, por fim, as configurações e ferramentas administrativas que você usa com menor frequência.
+Este manual foi escrito para que um professor que **nunca usou o Simula+** consiga, sozinho, ler este documento do início ao fim e sair sabendo configurar uma turma inteira, orientar a entrada dos alunos, conduzir todas as rodadas da simulação e interpretar os resultados — sem depender de treinamento presencial ou de qualquer outra pessoa. Ele está organizado na ordem em que as tarefas realmente acontecem: acesso ao sistema, criação da turma, entrada dos alunos na turma, formação das equipes, condução das rodadas (abertura, acompanhamento, encerramento), análise dos resultados e, por fim, as configurações e ferramentas administrativas que você usa com menor frequência.
 
 A fundamentação teórica e acadêmica que embasa cada ferramenta do simulador — os autores de marketing e estratégia por trás de cada tela — está reunida no **Apêndice A**, ao final do documento, junto com a lista de referências bibliográficas no padrão ABNT (Apêndice C). Ela não é necessária para operar o sistema, mas é útil caso você queira conectar explicitamente, em sala de aula, o que o aluno faz na tela com a teoria que ele estuda.
 
@@ -73,30 +73,30 @@ Uma turma nova já nasce com esses três campos preenchidos pelos dados do setor
 
 Clique em **Salvar** ao terminar. Essas configurações valem para toda a turma (não são por rodada) e podem ser revisadas a qualquer momento, inclusive com a simulação já em andamento.
 
-## 4. Passo a Passo: Matricular Alunos
+## 4. Passo a Passo: Entrada dos Alunos na Turma
 
-Este é o ponto do fluxo mais fácil de deixar passar despercebido: **um aluno que se cadastra sozinho no sistema não fica automaticamente vinculado a nenhuma turma.** Depois de se cadastrar e entrar, ele vê a mensagem "Você não está matriculado em nenhuma turma" e fica nessa tela, sem conseguir fazer mais nada, até que **você, professor, o matricule manualmente** em uma das suas turmas. Não existe, hoje, nenhuma forma de o próprio aluno escolher ou entrar em uma turma sozinho — mesmo que ele saiba o nome exato da turma.
+**O próprio aluno escolhe a turma.** Você só precisa dizer aos alunos qual é o nome da turma que eles devem escolher. Não há matrícula nem aprovação a fazer.
 
-Há dois caminhos possíveis para matricular um aluno. Você pode combinar os dois livremente dentro da mesma turma.
+O caminho do aluno é este:
 
-### Caminho A — o aluno se cadastra primeiro, você matricula depois
+1. Ele acessa `www.simulamarketing.com.br` e se cadastra com o email institucional. O cadastro é aceito na hora.
+2. No primeiro acesso, passa pela Rodada 0 (Seção 6).
+3. No Dashboard, vê a lista de turmas, com o nome do professor de cada uma, seleciona a que você indicou e clica em **Entrar na turma**.
+4. Em seguida, entra em uma equipe da turma ou cria a sua (Seção 5).
 
-1. Peça para o aluno acessar `www.simulamarketing.com.br` e se cadastrar (nome, email institucional, senha), pela própria tela de login (opção de cadastro).
-2. Assim que o aluno se cadastra, a conta já existe no sistema — mesmo sem estar em nenhuma turma ainda.
-3. No Painel do Professor, selecione a turma, vá até a aba **Alunos** → card **Alunos Matriculados** → use o menu suspenso (que lista todos os alunos já cadastrados e ainda sem turma) para selecionar o aluno → clique em **Adicionar**.
+Se o aluno escolher a turma errada, ele mesmo pode trocar (**Trocar de turma**), enquanto ainda não estiver em uma equipe. Depois de entrar em uma equipe, a turma fica fixa para ele; se for preciso corrigir, use a aba **Alunos** (remover da turma) e peça que ele escolha de novo.
 
-### Caminho B — você cadastra o aluno diretamente, já com senha definida
+Dica: dê à turma um nome fácil de reconhecer na lista (por exemplo, curso, ano e turma), porque o aluno vê todas as turmas cadastradas no sistema.
 
-1. Na aba **Alunos** (ou na aba **Equipes**) de qualquer turma, clique em **Cadastrar Aluno**.
-2. Preencha **Nome Completo**, **Email** e **Senha Inicial** (os três são obrigatórios) — aqui você pode usar qualquer email, inclusive um não institucional, pois essa restrição vale só para o autocadastro do aluno, não para o cadastro feito por você.
-3. Em **Matricular na Turma**, selecione a turma desejada (ou deixe "Não matricular ainda", se quiser só criar a conta por enquanto).
+### Opcional — você cadastra ou inclui o aluno
+
+Os caminhos antigos continuam disponíveis, para casos especiais (por exemplo, um aluno com dificuldade de acesso):
+
+- **Cadastrar Aluno** (aba **Alunos** ou **Equipes**): preencha **Nome Completo**, **Email** e **Senha Inicial** (aqui vale qualquer email, inclusive um não institucional, pois a restrição de domínio vale só para o autocadastro). Em **Matricular na Turma**, escolha a turma ou deixe "Não matricular ainda". O aluno já pode entrar com o email e a senha que você definiu.
 ![Diálogo Cadastrar Novo Aluno.](03-cadastrar-aluno.jpg)
+- **Adicionar** (aba **Alunos**, card **Alunos Matriculados**): inclui na turma um aluno que já tem conta e ainda não escolheu turma.
 
-4. Clique em **Cadastrar**. O aluno já pode fazer login imediatamente com o email e a senha que você definiu.
-
-Esse segundo caminho é o mais prático quando você já tem a lista de alunos da turma e quer economizar o passo de pedir para cada um se cadastrar sozinho.
-
-**Observação sobre a tela de Aprovações**: como explicado na Seção 2, você não precisa aprovar nada — qualquer aluno cadastrado (por qualquer um dos dois caminhos) já está com status aprovado. O trabalho real é apenas matriculá-lo em uma turma, pelos passos acima.
+**Observação sobre a tela de Aprovações**: como explicado na Seção 2, você não precisa aprovar nada — qualquer aluno cadastrado já está com status aprovado.
 
 ## 5. As Equipes São Formadas Pelos Alunos, Não Por Você
 
@@ -104,15 +104,15 @@ Esse segundo caminho é o mais prático quando você já tem a lista de alunos d
 
 ![Antes de qualquer equipe existir, a aba Aula mostra "Turma sem equipes" e um atalho para os alunos criarem a primeira.](05-aula-sem-equipes.jpg)
 
-Depois de matriculado em uma turma, o aluno passa a ver, na primeira tela do seu painel, a opção de **criar uma nova equipe** ou **entrar em uma equipe já existente** daquela turma. A formação de equipes é feita pelos próprios alunos — não existe, na interface do professor, nenhum botão para criar uma equipe em nome deles. O aluno que cria a equipe se torna automaticamente o líder dela. A interface mostrada ao aluno sugere um limite de até 5 alunos por equipe, mas esse limite é apenas uma orientação de tela — não há, hoje, um bloqueio no servidor que impeça uma equipe de crescer além disso.
+Depois de escolher a turma, o aluno passa a ver, na primeira tela do seu painel, a opção de **criar uma nova equipe** ou **entrar em uma equipe já existente** daquela turma. A formação de equipes é feita pelos próprios alunos — não existe, na interface do professor, nenhum botão para criar uma equipe em nome deles. **Criar a equipe não torna o aluno líder**: a equipe nasce sem líder e os membros o escolhem em consenso, pelo botão **Definir como Líder**, no Dashboard deles (qualquer membro pode usá-lo, também para trocar o líder depois). Enquanto a equipe não tiver líder, ninguém consegue salvar nem enviar as decisões, e o card da equipe no seu painel mostra **Sem líder escolhido**. Se o líder sair da equipe, ela volta a ficar sem líder. A interface mostrada ao aluno sugere um limite de até 5 alunos por equipe, mas esse limite é apenas uma orientação de tela — não há, hoje, um bloqueio no servidor que impeça uma equipe de crescer além disso.
 
 O que você, professor, pode fazer sobre as equipes, na aba **Equipes** de cada turma:
 
 ![Aba Equipes completa (imagem anterior à criação da aba Alunos; a lista de matriculados agora fica nessa aba).](16-equipes-completo.jpg)
 
-1. **Cadastrar Aluno** — cria a conta do aluno diretamente (Caminho B da Seção 4), já com senha definida por você.
+1. **Cadastrar Aluno** — cria a conta do aluno diretamente (opcional, Seção 4), já com senha definida por você.
 2. **Card da equipe** — clique para expandir e ver detalhes; o ícone de adicionar membro (ao lado do card) matricula um aluno já cadastrado na turma dentro dessa equipe.
-3. **Adicionar** (na aba **Alunos**, card "Alunos Matriculados") — matricula, na turma, um aluno que já tem conta no sistema mas ainda não está nesta turma.
+3. **Adicionar** (na aba **Alunos**, card "Alunos Matriculados") — inclui na turma um aluno que já tem conta no sistema e ainda não escolheu turma (opcional; normalmente o próprio aluno escolhe).
 4. **Orçamento (R$) da equipe** — campo editável, na tabela "Orçamentos das Equipes": permite ajustar manualmente o orçamento de uma equipe específica, sem alterar o Orçamento Padrão da turma (útil para corrigir um caso pontual, por exemplo).
 5. **Ícone de lixeira** — exclui a equipe (ação irreversível; os alunos que eram membros dela ficam sem equipe, mas continuam matriculados na turma).
 
@@ -127,7 +127,7 @@ O que você, professor, pode fazer sobre as equipes, na aba **Equipes** de cada 
 
 ### 5.1 A aba Alunos
 
-A aba **Alunos** (entre Equipes e Analisar) reúne os alunos matriculados na turma numa tabela com **Nome**, **E-mail**, **Equipe** (com a marca "líder" ou o aviso "Sem equipe") e **Ações** (redefinir senha e remover da turma). Quando há alunos sem equipe, a aba mostra um número ao lado do nome. É também nela que ficam o botão **Cadastrar Aluno** e o campo para matricular um aluno já cadastrado.
+A aba **Alunos** (entre Equipes e Analisar) reúne os alunos da turma (os que a escolheram e os incluídos por você) numa tabela com **Nome**, **E-mail**, **Equipe** (com a marca "líder" ou o aviso "Sem equipe") e **Ações** (redefinir senha e remover da turma). Quando há alunos sem equipe, a aba mostra um número ao lado do nome. É também nela que ficam o botão **Cadastrar Aluno** e o campo para matricular um aluno já cadastrado.
 
 Se, ao iniciar uma rodada, existir alguma equipe sem nenhum membro, o sistema avisa (sem bloquear) que essa equipe não vai conseguir enviar decisões na rodada — vale conferir isso antes de abrir cada rodada, especialmente a primeira.
 
@@ -135,7 +135,7 @@ Se, ao iniciar uma rodada, existir alguma equipe sem nenhum membro, o sistema av
 
 Antes de participar da Rodada 1, cada aluno passa por um tutorial interno de boas-vindas, dividido em 6 seções (boas-vindas, como funcionam as rodadas, mix de marketing, ferramentas estratégicas, eventos e resultados, e regras de equipe). O sistema exige um tempo mínimo de leitura de 2 minutos por seção antes de liberar a seção seguinte — é uma trava de tempo, não de conteúdo, pensada para evitar que o aluno pule direto para o final sem ler.
 
-Isso costuma aparecer, informalmente, como "Rodada 0" — mas é importante que fique claro: **não é uma rodada de verdade**. Ela não existe como registro no banco de dados da turma, não conta para o número de rodadas configurado, não aparece no seu painel de professor em nenhum momento, e não afeta a numeração das rodadas reais (a Rodada 1 é sempre a primeira rodada de fato). É inteiramente uma etapa do lado do aluno, e você não precisa fazer nada em relação a ela — apenas saber que, quando um aluno recém-matriculado entra pela primeira vez, é por esse tutorial que ele vai passar antes de ver a tela normal de decisões.
+Isso costuma aparecer, informalmente, como "Rodada 0" — mas é importante que fique claro: **não é uma rodada de verdade**. Ela não existe como registro no banco de dados da turma, não conta para o número de rodadas configurado, não aparece no seu painel de professor em nenhum momento, e não afeta a numeração das rodadas reais (a Rodada 1 é sempre a primeira rodada de fato). É inteiramente uma etapa do lado do aluno, e você não precisa fazer nada em relação a ela — apenas saber que, quando um aluno recém-cadastrado entra pela primeira vez, é por esse tutorial que ele vai passar antes de ver a tela normal de decisões.
 
 ## 7. Passo a Passo: Iniciar a Rodada 1
 
@@ -184,7 +184,7 @@ Os itens do grupo **Consulta** (Fechamento anual, Insights de Mercado, Orçament
 
 **O que o sistema faz sozinho.** Na **preparação** (30 minutos antes da abertura) e na **abertura** de cada rodada: entrega as **análises estratégicas prontas** da rodada (Seção 10.3); gera de 2 a 4 eventos de mercado com IA, se a geração automática estiver ligada e a rodada ainda não tiver eventos; e publica o **Boletim da semana** (demanda e sensibilidade a preço). No motor competitivo, ele vale para todas as empresas do mercado (demanda × 0,9/1,0/1,1 e elasticidade × 1,2/1,0/0,85); na rodada de teste, que usa o motor anterior, aplica o ajuste individual de até 12% na receita. No **encerramento**, gera o Feedback Inteligente para cada equipe com resultado.
 
-**Conjuntura real.** A IA usa, na PESTEL, nos eventos e no boletim, os **indicadores oficiais do Banco Central** (Selic, IPCA, dólar, PIB, desemprego e confiança do consumidor, atualizados automaticamente) e o texto **Conjuntura Brasil** (fatos econômicos e políticos atuais, com data e fonte; Seção 12). Os alunos veem o mesmo conteúdo na aba Economia e Política da Análise de Mercado. A IA é instruída a não escrever números que não estejam nesses indicadores ou no texto da Conjuntura, e o boletim e os eventos são apresentados como cenário simulado da semana, não como dado oficial (o boletim deixou de mostrar "confiança do consumidor" e "preços do setor", que eram números sem fonte). O Feedback Inteligente cita a obra e o conceito, sem número de capítulo. Nomes e slogans das equipes entram nas instruções da IA apenas como dados, com tamanho limitado, para que um texto digitado por uma equipe não altere as análises da turma.
+**Conjuntura real.** A IA usa, na PESTEL, nos eventos e no boletim, os **indicadores oficiais** (IPCA, PIB e desemprego direto do IBGE — o desemprego é a taxa de desocupação da PNAD Contínua, em trimestre móvel; Selic, dólar e confiança do consumidor do Banco Central; todos atualizados automaticamente) e o texto **Conjuntura Brasil** (fatos econômicos e políticos atuais, com data e fonte; Seção 12). Os alunos veem o mesmo conteúdo na aba Economia e Política da Análise de Mercado. A IA é instruída a não escrever números que não estejam nesses indicadores ou no texto da Conjuntura, e o boletim e os eventos são apresentados como cenário simulado da semana, não como dado oficial (o boletim deixou de mostrar "confiança do consumidor" e "preços do setor", que eram números sem fonte). O Feedback Inteligente cita a obra e o conceito, sem número de capítulo. Nomes e slogans das equipes entram nas instruções da IA apenas como dados, com tamanho limitado, para que um texto digitado por uma equipe não altere as análises da turma.
 
 **Tela de decisões dos alunos.** O preço de cada produto **começa em branco** em toda rodada e é obrigatório: sem ele, o envio é recusado. O envio só é aceito com preço entre **0,2 e 5 vezes** o preço médio de referência da categoria, para barrar erros de digitação (por exemplo, "2.557" no lugar de "25,57"), que no mercado compartilhado afetariam a turma inteira; entre 0,5 e 2 vezes não há aviso, e fora dessa faixa a janela de confirmação pede ao aluno que confira o valor. Depois de enviada, a decisão de um produto não pode mais ser alterada naquela rodada, nem por rascunho. Os valores investidos em cada mídia precisam ser números maiores ou iguais a zero. A tela não traz mais os cartões de “Orientações Estratégicas” gerados pela IA nem textos de recomendação; mostra apenas dados de mercado com fonte (preço médio de referência da categoria, margens do setor e investimento típico em marketing). A equipe decide e descobre as consequências nos resultados.
 
@@ -195,7 +195,7 @@ Os itens do grupo **Consulta** (Fechamento anual, Insights de Mercado, Orçament
 Durante a rodada, você tem três ferramentas à disposição na aba **Aula**, seção **Eventos de Mercado**:
 
 1. **Criar Manual** — você mesmo escreve um evento (tipo, severidade, título, descrição e impacto esperado) e aplica a uma rodada específica.
-2. **Gerar com IA** — você escolhe uma quantidade e a IA gera eventos contextualizados para a turma, com base no setor configurado, nos indicadores oficiais do Banco Central e na Conjuntura Brasil.
+2. **Gerar com IA** — você escolhe uma quantidade e a IA gera eventos contextualizados para a turma, com base no setor configurado, nos indicadores oficiais (IBGE e Banco Central) e na Conjuntura Brasil.
 3. **Geração automática** — um interruptor liga/desliga a criação automática de 2 a 4 eventos com IA na abertura de cada rodada (quando a rodada ainda não tem eventos), além dos que você cria manualmente ou por IA.
 
 Os dois primeiros botões (Criar Manual e Gerar com IA) só ficam habilitados quando já existe ao menos uma rodada ativa ou concluída na turma — ou seja, **você não consegue criar eventos de mercado antes de iniciar a primeira rodada**.
@@ -312,7 +312,7 @@ Nas turmas do motor competitivo, SWOT, 5 Forças de Porter, Matriz BCG e PESTEL 
 
 | Análise | Como é feita |
 |---|---|
-| **PESTEL** | Pela IA, uma para a turma, com os indicadores oficiais do Banco Central, a Conjuntura Brasil, os dados reais do setor, os eventos e o boletim da semana |
+| **PESTEL** | Pela IA, uma para a turma, com os indicadores oficiais (IBGE e Banco Central), a Conjuntura Brasil, os dados reais do setor, os eventos e o boletim da semana |
 | **5 Forças de Porter** | Pela IA, uma para a turma, com os dados reais do setor e a estrutura do mercado do jogo (número de empresas e participações da rodada anterior) |
 | **SWOT** | Pela IA, uma por equipe: forças e fraquezas a partir dos números da equipe (resultado, participação, preço, lembrança de marca, satisfação); oportunidades e ameaças a partir da PESTEL e de Porter |
 | **Matriz BCG** | Calculada, sem IA: participação relativa de cada produto na rodada anterior (equipe ÷ maior concorrente) e crescimento real do setor (fonte setorial). Na Rodada 1, a participação relativa é zero |
@@ -394,7 +394,7 @@ Valores a partir de 70% aparecem em vermelho e merecem leitura atenta; de 40% a 
 A aba **Configurar** reúne o que você mexe com pouca frequência, depois da configuração inicial da turma:
 
 1. **Abrir Configurações de Mercado** — já descrita na Seção 3.1.
-- **Conjuntura Brasil (economia e política)** — mostra os indicadores oficiais do Banco Central e o texto de conjuntura que a IA usa na PESTEL, nos eventos e no boletim. O texto padrão é atualizado pelo sistema (com data e fontes); se quiser, edite-o para a sua turma e clique em **Salvar para esta turma**, ou use **Voltar ao texto padrão**. Mantenha o texto factual, datado e neutro em temas políticos.
+- **Conjuntura Brasil (economia e política)** — mostra os indicadores oficiais (IBGE e Banco Central do Brasil) e o texto de conjuntura que a IA usa na PESTEL, nos eventos e no boletim. O texto padrão é atualizado pelo sistema (com data e fontes); se quiser, edite-o para a sua turma e clique em **Salvar para esta turma**, ou use **Voltar ao texto padrão**. Mantenha o texto factual, datado e neutro em temas políticos.
 - **Relatório de Acessos** — um painel expansível que mostra o histórico de acessos dos alunos à turma (quem acessou, quando), com exportação em CSV.
 - **Enviar Email para Equipes** — permite mandar uma mensagem por email para uma ou mais equipes da turma diretamente pelo sistema.
 2. **Excluir Turma** (dentro da **Zona de Perigo**) — exclusão definitiva da turma. Apaga permanentemente equipes, alunos matriculados nela, rodadas e todas as decisões. Não há como desfazer; use apenas quando tiver certeza absoluta.
@@ -426,7 +426,7 @@ Para consulta rápida, depois de já ter lido o manual completo uma vez:
 
 1. Criar a turma (Nome da Turma é o único campo obrigatório).
 2. Completar a configuração de mercado em Configurar → Configuração de Mercado (use **Preencher com dados reais do setor** para tamanho, crescimento e consumidores potenciais) e conferir a Conjuntura Brasil.
-3. Matricular os alunos (pedir que se cadastrem sozinhos com email institucional e depois adicioná-los à turma, ou cadastrá-los você mesmo já com turma definida).
+3. Informar aos alunos o nome da turma: eles se cadastram com o email institucional, escolhem a turma e formam as equipes, escolhendo o líder em consenso.
 4. Aguardar os alunos formarem suas próprias equipes (você não cria equipes).
 5. Definir as datas e horários de cada rodada no calendário (rodada de teste: vários dias, até 23h59 do último; rodadas que valem nota, inclusive a Rodada 1: dia da aula, abertura no horário da aula e fechamento sugerido 2 horas depois) ou definir a quantidade de produtos e clicar em Iniciar Rodada. Marcar a última rodada do ano letivo.
 6. Acompanhar submissões e, se quiser, criar ou gerar eventos de mercado.
@@ -440,12 +440,12 @@ Para consulta rápida, depois de já ter lido o manual completo uma vez:
 
 **Uma equipe ficou de fora dos resultados de uma rodada** — normalmente é porque ela não enviou nenhuma decisão antes do encerramento (Seção 9). Não há aviso automático disso; é preciso conferir antes de encerrar. Dois pontos importantes para reduzir esse risco:
 
-- **A responsabilidade pelo envio é do líder da equipe**: o sistema só permite que o líder submeta as decisões de Mix de Marketing — os demais membros podem preencher e salvar rascunhos, mas não enviar. Se uma equipe está com decisões pendentes, é o líder quem precisa entrar e clicar em enviar; vale reforçar isso com a turma logo no início.
-- **Recomendação de prazo**: cerca de **3 horas antes do horário previsto para encerrar a rodada** (manualmente ou por agendamento, Seção 10), verifique na aba Aula quais equipes ainda não enviaram e avise **todos os membros** dessas equipes — não só o líder, já que qualquer um pode preencher o rascunho, mesmo que só o líder consiga enviar. A forma mais direta é pelo recurso **Enviar Email para Equipes** (Seção 12): selecione a(s) equipe(s) pendente(s) e envie a mensagem — o sistema manda o email para o endereço cadastrado de cada membro da equipe automaticamente, não é preciso digitar os emails um a um. Isso dá tempo hábil para a equipe corrigir antes do fechamento, já que o sistema não bloqueia nem avisa automaticamente sobre equipes pendentes.
+- **A responsabilidade pelo envio é do líder da equipe**: o sistema só permite que o líder salve e envie as decisões de Mix de Marketing — os demais membros acompanham em modo de visualização. Equipe sem líder não consegue enviar: confira no seu painel se alguma aparece com **Sem líder escolhido**. Se uma equipe está com decisões pendentes, é o líder quem precisa entrar e clicar em enviar; vale reforçar isso com a turma logo no início.
+- **Recomendação de prazo**: cerca de **3 horas antes do horário previsto para encerrar a rodada** (manualmente ou por agendamento, Seção 10), verifique na aba Aula quais equipes ainda não enviaram e avise **todos os membros** dessas equipes — não só o líder, já que a equipe inteira participa da decisão e qualquer membro pode trocar o líder se ele não estiver disponível. A forma mais direta é pelo recurso **Enviar Email para Equipes** (Seção 12): selecione a(s) equipe(s) pendente(s) e envie a mensagem — o sistema manda o email para o endereço cadastrado de cada membro da equipe automaticamente, não é preciso digitar os emails um a um. Isso dá tempo hábil para a equipe corrigir antes do fechamento, já que o sistema não bloqueia nem avisa automaticamente sobre equipes pendentes.
 
 **Uma rodada pré-adicionada abriu com só 1 produto por equipe, mesmo eu tendo configurado mais** — é o comportamento das rodadas criadas pelo botão "Adicionar" e abertas pelo agendamento (Seção 7.1). Para usar outra quantidade, abra essa rodada pelo botão "Iniciar Rodada", que respeita o seletor de produtos.
 
-**Um aluno diz que se cadastrou mas não consegue fazer nada** — confira se ele já foi matriculado em uma turma (Seção 4). Cadastro sozinho não inclui matrícula automática.
+**Um aluno diz que se cadastrou mas não consegue fazer nada** — ele ainda precisa escolher a turma no Dashboard e entrar em uma equipe (Seção 4). Se a equipe dele não consegue enviar decisões, verifique se ela já escolheu o líder.
 
 **Não consigo achar onde configurar algo, e o botão de ajuda "Onde está o quê?" do sistema me manda para uma aba que não existe** — esse painel de ajuda interno ainda referencia nomes antigos de abas (por exemplo, "Resultados" e "Notas", que hoje são a aba "Analisar"; ou "Visão Geral" e "Acessos", que hoje ficam dentro de "Aula" e "Configurar"). Use a estrutura de abas real descrita neste manual (Aula, Equipes, Analisar, Configurar) em vez do texto desse painel.
 

@@ -786,6 +786,9 @@ function TeamCard({
               <Badge variant="default" className="text-xs">{leader.name}</Badge>
             </div>
           )}
+          {!team.leaderId && memberCount > 0 && (
+            <Badge variant="outline" className="text-xs" data-testid={`badge-no-leader-${team.id}`}>Sem líder escolhido</Badge>
+          )}
         </div>
         <CollapsibleContent className="mt-4">
           {membersLoading ? (

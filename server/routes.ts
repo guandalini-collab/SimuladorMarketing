@@ -118,6 +118,7 @@ const STUDENT_REGISTRATION_EMAIL_EXCEPTIONS = new Set<string>(["joaoz@gmail.com"
 const SETORES_FORA_DE_OFERTA = new Set<string>(["construcao"]);
 
 const MSG_SEM_SETOR = "Defina o setor da turma (Configurar → Configuração de Mercado) antes de abrir ou agendar uma rodada.";
+const MSG_SEM_LIDER = "A equipe ainda não escolheu o líder. Combinem entre vocês e usem \"Definir como Líder\" na tela da equipe: só o líder envia as decisões.";
 
 function emailDeAlunoPermitido(email: string): boolean {
   const e = email.trim().toLowerCase();
@@ -1274,6 +1275,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Grupo I (out/2026, pedido do professor): o aluno escolhe a própria
+  // turma — o professor só diz aos alunos qual é. Não há matrícula nem
+  // aprovação do professor. A matrícula feita pelo professor continua
+  // existindo como opção. Enquanto o aluno não estiver em uma equipe, pode
+  // trocar de turma (para corrigir uma escolha errada).
+  app.get("/api/student/available-classes", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "equipe") {
+      return res.status(403).json({ error: "Acesso negado" });
+    }
+    const turmas = await storage.getAllClasses();
+    const nomesProfessores = new Map<string, string>();
+    for (const t of turmas) {
+      if (!nomesProfessores.has(t.professorId)) {
+        const prof = await storage.getUser(t.professorId);
+        nomesProfessores.set(t.professorId, prof?.name || "Professor");
+      }
+    }
+    res.json(
+      turmas
+        .map((t) => ({ id: t.id, name: t.name, professorName: nomesProfessores.get(t.professorId) || "Professor" }))
+        .sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
+    );
+  });
+
+  app.post("/api/student/join-class", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "equipe") {
+      return res.status(403).json({ error: "Apenas alunos escolhem turma" });
+    }
+    const classId = typeof req.body?.classId === "string" ? req.body.classId : "";
+    const turma = classId ? await storage.getClass(classId) : undefined;
+    if (!turma) {
+      return res.status(404).json({ error: "Turma não encontrada" });
+    }
+    const equipe = await storage.getTeamByUser(req.session.userId);
+    if (equipe) {
+      return res.status(400).json({ error: "Você já está em uma equipe. A turma não pode mais ser trocada." });
+    }
+    try {
+      const atual = await storage.getClassByStudent(req.session.userId);
+      if (atual?.id === turma.id) {
+        return res.json(turma);
+      }
+      if (atual) {
+        await storage.removeStudentFromClass(atual.id, req.session.userId);
+      }
+      await storage.addStudentToClass(turma.id, req.session.userId);
+      res.json(turma);
+    } catch (error: any) {
+      res.status(400).json({ error: error?.message || "Não foi possível entrar na turma" });
+    }
+  });
+
   app.get("/api/student/class", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
@@ -1361,7 +1422,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: data.name,
         classId: data.classId,
         memberIds: [req.session.userId],
-        leaderId: req.session.userId,
+        // Grupo I (out/2026): criar a equipe não torna o aluno líder; a
+        // equipe escolhe o líder em consenso (botão "Definir como Líder").
+        leaderId: null,
         initialBudget: classData.defaultBudget,
         budget: classData.defaultBudget,
         companyName: null,
@@ -2536,7 +2599,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: data.name,
         classId: studentClass.id,
         memberIds: [req.session.userId],
-        leaderId: req.session.userId,
+        // Grupo I (out/2026): criar a equipe não torna o aluno líder; a
+        // equipe escolhe o líder em consenso (botão "Definir como Líder").
+        leaderId: null,
         initialBudget: studentClass.defaultBudget,
         budget: studentClass.defaultBudget,
         companyName: null,
@@ -3751,7 +3816,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
     
-    if (team.leaderId && team.leaderId !== req.session.userId) {
+    if (!team.leaderId) {
+      return res.status(403).json({ error: MSG_SEM_LIDER });
+    }
+    if (team.leaderId !== req.session.userId) {
       return res.status(403).json({ error: "Apenas o líder da equipe pode editar decisões de marketing mix" });
     }
     
@@ -3843,7 +3911,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
     
-    if (team.leaderId && team.leaderId !== req.session.userId) {
+    if (!team.leaderId) {
+      return res.status(403).json({ error: MSG_SEM_LIDER });
+    }
+    if (team.leaderId !== req.session.userId) {
       return res.status(403).json({ error: "Apenas o líder da equipe pode submeter decisões de marketing mix" });
     }
     
@@ -4036,7 +4107,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
     
-    if (team.leaderId && team.leaderId !== req.session.userId) {
+    if (!team.leaderId) {
+      return res.status(403).json({ error: MSG_SEM_LIDER });
+    }
+    if (team.leaderId !== req.session.userId) {
       return res.status(403).json({ error: "Apenas o líder da equipe pode enviar decisões de marketing mix" });
     }
     
@@ -6820,7 +6894,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
 
-    if (team.leaderId && team.leaderId !== req.session.userId) {
+    if (!team.leaderId) {
+      return res.status(403).json({ error: MSG_SEM_LIDER });
+    }
+    if (team.leaderId !== req.session.userId) {
       return res.status(403).json({ error: "Apenas o líder da equipe pode enviar decisões de marketing mix" });
     }
 

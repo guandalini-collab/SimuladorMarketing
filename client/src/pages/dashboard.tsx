@@ -118,6 +118,33 @@ export default function Dashboard() {
     enabled: !!studentClass?.id && !team,
   });
 
+  // Grupo I (out/2026): o aluno escolhe a própria turma (o professor só diz
+  // qual é); sem matrícula nem aprovação do professor.
+  const [turmaEscolhida, setTurmaEscolhida] = useState("");
+  const [trocandoTurma, setTrocandoTurma] = useState(false);
+  const { data: turmasDisponiveis = [], isLoading: turmasLoading } = useQuery<{ id: string; name: string; professorName: string }[]>({
+    queryKey: ["/api/student/available-classes"],
+    enabled: !team && !teamLoading && !classLoading && (!studentClass || trocandoTurma),
+  });
+
+  const joinClassMutation = useMutation({
+    mutationFn: async (classId: string) => {
+      const res = await apiRequest("POST", "/api/student/join-class", { classId });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/student/class"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teams/class"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rounds"] });
+      setTurmaEscolhida("");
+      setTrocandoTurma(false);
+      toast({ title: "Você entrou na turma", description: "Agora entre em uma equipe ou crie a sua." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Não foi possível entrar na turma", description: error.message, variant: "destructive" });
+    },
+  });
+
   const createTeamMutation = useMutation({
     mutationFn: async (data: { classId: string; name: string }) => {
       const res = await apiRequest("POST", "/api/teams/create", data);
@@ -242,17 +269,51 @@ export default function Dashboard() {
       );
     }
 
-    if (!studentClass) {
+    if (!studentClass || trocandoTurma) {
       return (
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Você não está matriculado em nenhuma turma</CardTitle>
+              <CardTitle>{trocandoTurma ? "Trocar de turma" : "Escolha a sua turma"}</CardTitle>
               <CardDescription>
-                Aguarde o professor matricular você em uma turma para começar a participar das atividades
+                Selecione a turma que o professor indicou. Depois você entra em uma equipe ou cria a sua.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {turmasLoading ? (
+                <p className="text-muted-foreground text-sm">Carregando turmas...</p>
+              ) : turmasDisponiveis.length === 0 ? (
+                <p className="text-muted-foreground text-sm">Nenhuma turma foi criada ainda. Aguarde o professor criar a turma e volte a esta tela.</p>
+              ) : (
+                <div className="space-y-2" role="radiogroup" aria-label="Turmas">
+                  {turmasDisponiveis.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={turmaEscolhida === t.id}
+                      onClick={() => setTurmaEscolhida(t.id)}
+                      className={`w-full rounded-lg border p-3 text-left transition-colors hover-elevate ${turmaEscolhida === t.id ? "border-[#1447e6] bg-[#eef2ff] dark:bg-blue-950/30" : ""}`}
+                      data-testid={`option-class-${t.id}`}
+                    >
+                      <p className="font-medium break-words">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">Professor: {t.professorName}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <Button
+                onClick={() => turmaEscolhida && joinClassMutation.mutate(turmaEscolhida)}
+                disabled={!turmaEscolhida || joinClassMutation.isPending}
+                data-testid="button-join-class"
+              >
+                {joinClassMutation.isPending ? "Entrando..." : "Entrar na turma"}
+              </Button>
+              {trocandoTurma && (
+                <Button variant="ghost" className="ml-2" onClick={() => { setTrocandoTurma(false); setTurmaEscolhida(""); }} data-testid="button-cancel-change-class">
+                  Cancelar
+                </Button>
+              )}
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-4">
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0">
@@ -263,10 +324,11 @@ export default function Dashboard() {
                       Como funciona?
                     </h3>
                     <div className="mt-2 text-sm text-blue-700 dark:text-blue-300 space-y-2">
-                      <p>1. O professor irá matricular você em uma turma</p>
-                      <p>2. Após a matrícula, você poderá criar ou entrar em uma equipe</p>
-                      <p>3. As equipes são compostas por até 5 alunos da mesma turma</p>
-                      <p>4. Depois de formar sua equipe, você participará das atividades de marketing</p>
+                      <p>1. Escolha a turma que o professor indicou.</p>
+                      <p>2. Entre em uma equipe da turma ou crie a sua; os colegas entram nela.</p>
+                      <p>3. As equipes são compostas por até 5 alunos da mesma turma.</p>
+                      <p>4. A equipe escolhe o líder em consenso. Só o líder envia as decisões.</p>
+                      <p>Escolheu a turma errada? Enquanto não estiver em uma equipe, você pode trocar.</p>
                     </div>
                   </div>
                 </div>
@@ -290,6 +352,9 @@ export default function Dashboard() {
                 <CardDescription className="text-base mt-1">
                   {studentClass.name} - Escolha uma equipe existente ou crie uma nova
                 </CardDescription>
+                <button type="button" className="mt-1 text-sm text-[#1447e6] underline-offset-2 hover:underline" onClick={() => setTrocandoTurma(true)} data-testid="button-change-class">
+                  Não é esta a turma? Trocar de turma
+                </button>
               </div>
             </div>
           </CardHeader>
@@ -632,6 +697,12 @@ export default function Dashboard() {
           </div>
         </CardHeader>
         <CardContent className="pt-6">
+          {!team.leaderId && (
+            <div className="mb-4 rounded-lg border border-[#8a5a00]/30 bg-[#fff6e0] p-4 text-sm text-[#8a5a00] dark:bg-yellow-900/20 dark:text-yellow-200" data-testid="alert-no-leader">
+              <p className="font-semibold">A equipe ainda não tem líder</p>
+              <p className="mt-1">Combinem entre vocês quem será o líder e cliquem em "Definir como Líder" ao lado do nome escolhido. Só o líder envia as decisões; os demais acompanham e opinam.</p>
+            </div>
+          )}
           <div className="space-y-3">
             {team.memberIds?.map((memberId: string) => {
               const member = users.find((u: any) => u.id === memberId);

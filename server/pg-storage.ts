@@ -508,7 +508,9 @@ export class PgStorage implements IStorage {
     const result = await db.update(teams)
       .set({
         memberIds: sql`array_remove(${teams.memberIds}, ${userId})`,
-        leaderId: sql`CASE WHEN ${teams.leaderId} = ${userId} THEN (array_remove(${teams.memberIds}, ${userId}))[1] ELSE ${teams.leaderId} END`,
+        // Grupo I (out/2026): se o líder sai, a equipe fica sem líder até
+        // escolher outro em consenso (antes, o primeiro membro virava líder).
+        leaderId: sql`CASE WHEN ${teams.leaderId} = ${userId} THEN NULL ELSE ${teams.leaderId} END`,
       })
       .where(eq(teams.id, teamId))
       .returning();
