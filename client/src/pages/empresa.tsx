@@ -60,6 +60,7 @@ export default function Empresa() {
   const { data: team, isLoading } = useQuery<Team>({
     queryKey: ["/api/team/current"],
   });
+  const { data: currentUser } = useQuery<any>({ queryKey: ["/api/auth/me"] });
 
   const { data: currentClass } = useQuery<Class>({
     queryKey: ["/api/classes", team?.classId],
@@ -401,8 +402,17 @@ export default function Empresa() {
   // Regra do professor (out/2026): depois de criada, a identidade não muda.
   // Nome e slogan travam assim que os dois estão salvos; a logomarca trava
   // depois do primeiro envio. Só o professor pode corrigir (área do professor).
-  const identityLocked = !!team?.companyName?.trim() && !!team?.slogan?.trim();
-  const logoLocked = !!team?.logoUrl;
+  // Out/2026 (pedido do professor): só o líder grava a identidade, a
+  // logomarca e o público-alvo dos produtos; os demais veem em modo
+  // visualização (o servidor também recusa).
+  const souLider = !!team?.leaderId && !!currentUser?.id && team.leaderId === currentUser.id;
+  const identityDefinida = !!team?.companyName?.trim() && !!team?.slogan?.trim();
+  const logoDefinida = !!team?.logoUrl;
+  const identityLocked = identityDefinida || !souLider;
+  const logoLocked = logoDefinida || !souLider;
+  const avisoNaoLider = !team?.leaderId
+    ? "A equipe ainda não escolheu o líder. Combinem entre vocês e usem \"Definir como Líder\" no Dashboard: só o líder grava a identidade da empresa."
+    : "Apenas o líder grava a identidade da empresa. Discuta com a equipe e proponha o nome, o slogan e a logomarca ao líder.";
 
   return (
     <div className="space-y-6">
@@ -464,7 +474,9 @@ export default function Empresa() {
 
             {identityLocked ? (
               <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground" data-testid="text-identity-locked">
-                Identidade definitiva: depois de criados, o nome e o slogan da empresa não podem mais ser alterados pela equipe. Em caso de erro, fale com o professor.
+                {identityDefinida
+                  ? "Identidade definitiva: depois de criados, o nome e o slogan da empresa não podem mais ser alterados pela equipe. Em caso de erro, fale com o professor."
+                  : avisoNaoLider}
               </p>
             ) : (
               <>
@@ -516,7 +528,9 @@ export default function Empresa() {
 
             {logoLocked ? (
               <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground" data-testid="text-logo-locked">
-                Logomarca definitiva: depois de enviada, não pode mais ser trocada pela equipe. Em caso de erro, fale com o professor.
+                {logoDefinida
+                  ? "Logomarca definitiva: depois de enviada, não pode mais ser trocada pela equipe. Em caso de erro, fale com o professor."
+                  : avisoNaoLider}
               </p>
             ) : (
             <>
@@ -670,7 +684,7 @@ export default function Empresa() {
                           <Label htmlFor={`class-${product.id}`}>Classe Social *</Label>
                           <Select
                             value={productConfigs[product.id]?.targetClass || ""}
-                            disabled={isSubmitted}
+                            disabled={isSubmitted || !souLider}
                             onValueChange={(value) => {
                               setProductConfigs(prev => ({
                                 ...prev,
@@ -698,7 +712,7 @@ export default function Empresa() {
                           <Label htmlFor={`age-${product.id}`}>Faixa Etária *</Label>
                           <Select
                             value={productConfigs[product.id]?.targetAge || ""}
-                            disabled={isSubmitted}
+                            disabled={isSubmitted || !souLider}
                             onValueChange={(value) => {
                               setProductConfigs(prev => ({
                                 ...prev,
@@ -726,7 +740,7 @@ export default function Empresa() {
                           <Label htmlFor={`profile-${product.id}`}>Perfil *</Label>
                           <Select
                             value={productConfigs[product.id]?.targetProfile || ""}
-                            disabled={isSubmitted}
+                            disabled={isSubmitted || !souLider}
                             onValueChange={(value) => {
                               setProductConfigs(prev => ({
                                 ...prev,
@@ -798,7 +812,7 @@ export default function Empresa() {
                               });
                             }}
                             variant="outline"
-                            disabled={saveTeamProductMutation.isPending || !activeRound}
+                            disabled={saveTeamProductMutation.isPending || !activeRound || !souLider}
                             data-testid={`button-save-draft-${index + 1}`}
                             className="flex-1"
                           >
@@ -842,7 +856,7 @@ export default function Empresa() {
                                 targetAudienceProfile: targetProfile,
                               });
                             }}
-                            disabled={saveTeamProductMutation.isPending || !activeRound}
+                            disabled={saveTeamProductMutation.isPending || !activeRound || !souLider}
                             data-testid={`button-finalize-${index + 1}`}
                             className="flex-1"
                           >
@@ -941,7 +955,7 @@ export default function Empresa() {
                   isDraft: false,
                 });
               }}
-              disabled={saveTeamProductMutation.isPending}
+              disabled={saveTeamProductMutation.isPending || !souLider}
               data-testid="button-confirm-finalize"
             >
               {saveTeamProductMutation.isPending ? "Finalizando..." : "Confirmar e Finalizar"}

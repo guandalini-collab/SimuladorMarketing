@@ -120,6 +120,20 @@ const SETORES_FORA_DE_OFERTA = new Set<string>(["construcao"]);
 
 const MSG_SEM_SETOR = "Defina o setor da turma (Configurar → Configuração de Mercado) antes de abrir ou agendar uma rodada.";
 const MSG_SEM_LIDER = "A equipe ainda não escolheu o líder. Combinem entre vocês e usem \"Definir como Líder\" na tela da equipe: só o líder envia as decisões.";
+// Out/2026 (pedido do professor): só o líder grava ferramentas estratégicas,
+// segmentação e identidade da empresa, como já acontecia com as decisões.
+// Devolve true se respondeu com recusa.
+function recusaSeNaoLider(team: { leaderId: string | null }, userId: string, res: import("express").Response): boolean {
+  if (!team.leaderId) {
+    res.status(403).json({ error: MSG_SEM_LIDER });
+    return true;
+  }
+  if (team.leaderId !== userId) {
+    res.status(403).json({ error: "Apenas o líder da equipe pode gravar. Converse com o líder para propor mudanças." });
+    return true;
+  }
+  return false;
+}
 
 function emailDeAlunoPermitido(email: string): boolean {
   const e = email.trim().toLowerCase();
@@ -3225,6 +3239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!team) {
       return res.status(404).json({ error: "Você não está em uma equipe" });
     }
+    if (recusaSeNaoLider(team, req.session.userId!, res)) return;
     
     const { companyName, slogan } = req.body;
     if (!companyName || !slogan) {
@@ -3260,6 +3275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!team) {
       return res.status(404).json({ error: "Você não está em uma equipe" });
     }
+    if (recusaSeNaoLider(team, req.session.userId!, res)) return;
     
     const { logoUrl } = req.body;
     if (!logoUrl) {
@@ -3304,6 +3320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!team) {
           return res.status(404).json({ error: "Você não está em uma equipe" });
         }
+        if (recusaSeNaoLider(team, req.session.userId!, res)) return;
 
         if (!req.file) {
           return res.status(400).json({ error: "Nenhum arquivo foi enviado" });
@@ -5340,6 +5357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
+    if (recusaSeNaoLider(team, req.session.userId!, res)) return;
 
     // Out/2026: com análises prontas da rodada, SWOT, Porter, BCG e PESTEL são somente leitura.
     {
@@ -5389,6 +5407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
+    if (recusaSeNaoLider(team, req.session.userId!, res)) return;
 
     // Out/2026: com análises prontas da rodada, SWOT, Porter, BCG e PESTEL são somente leitura.
     {
@@ -5510,6 +5529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
+    if (recusaSeNaoLider(team, req.session.userId!, res)) return;
 
     // Out/2026: com análises prontas da rodada, SWOT, Porter, BCG e PESTEL são somente leitura.
     {
@@ -5550,6 +5570,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
+    if (recusaSeNaoLider(team, req.session.userId!, res)) return;
 
     // Out/2026: com análises prontas da rodada, SWOT, Porter, BCG e PESTEL são somente leitura.
     {
@@ -5592,6 +5613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
+    if (recusaSeNaoLider(team, req.session.userId!, res)) return;
 
     // Out/2026: com análises prontas da rodada, SWOT, Porter, BCG e PESTEL são somente leitura.
     {
@@ -5641,6 +5663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!team) {
       return res.status(404).json({ error: "Equipe não encontrada" });
     }
+    if (recusaSeNaoLider(team, req.session.userId!, res)) return;
 
     try {
       const data = insertMarketSegmentationSchema.parse(req.body);
@@ -6791,6 +6814,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!team) {
         return res.status(404).json({ error: "Equipe não encontrada" });
       }
+      if (recusaSeNaoLider(team, req.session.userId!, res)) return;
 
       const { roundId, productId, productName, productDescription, targetAudienceClass, targetAudienceAge, targetAudienceProfile, isDraft } = req.body;
 

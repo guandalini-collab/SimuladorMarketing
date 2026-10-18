@@ -726,7 +726,7 @@ export default function Dashboard() {
             <div>
               <CardTitle className="text-xl">Gerenciamento de Equipe</CardTitle>
               <CardDescription className="text-base">
-                {team.memberIds?.length || 0} {team.memberIds?.length === 1 ? 'membro' : 'membros'} cadastrados
+                {team.memberIds?.length || 0} {team.memberIds?.length === 1 ? 'membro cadastrado' : 'membros cadastrados'}
               </CardDescription>
             </div>
           </div>

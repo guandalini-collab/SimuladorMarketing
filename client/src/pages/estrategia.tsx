@@ -59,6 +59,14 @@ export default function Estrategia() {
     enabled: !!currentRound,
   });
 
+  // Out/2026 (pedido do professor): só o líder grava as ferramentas e a
+  // segmentação; os demais membros (e equipe sem líder) veem em modo
+  // visualização. O servidor também recusa.
+  const { data: minhaEquipe } = useQuery<any>({ queryKey: ["/api/team/current"] });
+  const semLider = !!minhaEquipe && !minhaEquipe.leaderId;
+  const naoLider = !!minhaEquipe && !!currentUser?.id && minhaEquipe.leaderId !== currentUser.id;
+  const statusEdicao = naoLider ? "visualizacao" : (currentRound?.status ?? "");
+
   // Pedido do professor (2026-09): a Segmentação de Mercado usa critérios
   // diferentes conforme o tipo de negócio da turma (B2C = consumidor
   // pessoa física, B2B = empresas) — turma "hibrido" preenche as duas.
@@ -150,37 +158,46 @@ export default function Estrategia() {
           </TabsTrigger>
         </TabsList>
 
+        {naoLider && currentRound.status === "active" && (
+          <div className="mt-4 rounded-lg border border-[#1447e6]/40 bg-[#eef2ff] p-4 text-sm text-[#1447e6] dark:bg-blue-950/20 dark:text-blue-200" data-testid="alert-strategy-view-only">
+            <p className="font-semibold">Modo visualização</p>
+            <p>{semLider
+              ? "A equipe ainda não escolheu o líder. Combinem entre vocês e usem \"Definir como Líder\" no Dashboard: só o líder grava as ferramentas e a segmentação."
+              : "Apenas o líder grava as ferramentas e a segmentação. Discuta com a equipe e proponha as mudanças ao líder."}</p>
+          </div>
+        )}
+
         {/* Out/2026: nas turmas com análises prontas da rodada, SWOT, Porter,
             BCG e PESTEL são somente leitura; a Segmentação segue com a equipe. */}
         <TabsContent value="swot" forceMount className="data-[state=inactive]:hidden">
           {strategy?.analisesDaIA
             ? <SwotSomenteLeitura data={strategy?.swot} />
-            : <SwotTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.swot} />}
+            : <SwotTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={statusEdicao} data={strategy?.swot} />}
         </TabsContent>
 
         <TabsContent value="porter" forceMount className="data-[state=inactive]:hidden">
           {strategy?.analisesDaIA
             ? <PorterSomenteLeitura data={strategy?.porter} />
-            : <PorterTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.porter} />}
+            : <PorterTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={statusEdicao} data={strategy?.porter} />}
         </TabsContent>
 
         <TabsContent value="bcg" forceMount className="data-[state=inactive]:hidden">
           {strategy?.analisesDaIA
             ? <BcgSomenteLeitura data={strategy?.bcg || []} />
-            : <BcgTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.bcg || []} />}
+            : <BcgTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={statusEdicao} data={strategy?.bcg || []} />}
         </TabsContent>
 
         <TabsContent value="pestel" forceMount className="data-[state=inactive]:hidden">
           {strategy?.analisesDaIA
             ? <PestelSomenteLeitura data={strategy?.pestel} />
-            : <PestelTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={currentRound.status} data={strategy?.pestel} />}
+            : <PestelTab roundId={currentRound.id} roundNumber={currentRound.roundNumber} roundStatus={statusEdicao} data={strategy?.pestel} />}
         </TabsContent>
 
         <TabsContent value="segmentacao" forceMount className="data-[state=inactive]:hidden">
           <SegmentacaoTab
             roundId={currentRound.id}
             roundNumber={currentRound.roundNumber}
-            roundStatus={currentRound.status}
+            roundStatus={statusEdicao}
             businessType={businessType}
             b2cData={strategy?.segmentation?.b2c}
             b2bData={strategy?.segmentation?.b2b}
@@ -300,9 +317,10 @@ function SwotTab({ roundId, roundNumber, roundStatus, data }: { roundId: string;
                     placeholder={`Adicionar ${cat.label.toLowerCase()}...`}
                     value={newItem[cat.key]}
                     onChange={(e) => setNewItem((prev) => ({ ...prev, [cat.key]: e.target.value }))}
-                    onKeyPress={(e) => e.key === "Enter" && addItem(cat.key)}
+                    onKeyPress={(e) => e.key === "Enter" && roundStatus === "active" && addItem(cat.key)}
+                    disabled={roundStatus !== "active"}
                   />
-                  <Button size="icon" onClick={() => addItem(cat.key)}>
+                  <Button size="icon" onClick={() => addItem(cat.key)} disabled={roundStatus !== "active"}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -310,7 +328,7 @@ function SwotTab({ roundId, roundNumber, roundStatus, data }: { roundId: string;
                   {swot[cat.key].map((item: string, idx: number) => (
                     <div key={idx} className="flex items-center gap-2 p-2 border rounded">
                       <span className="flex-1 text-sm">{item}</span>
-                      <Button size="icon" variant="ghost" onClick={() => removeItem(cat.key, idx)}>
+                      <Button size="icon" variant="ghost" onClick={() => removeItem(cat.key, idx)} disabled={roundStatus !== "active"}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -820,9 +838,10 @@ function PestelTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
                   placeholder={`Adicionar fator ${cat.label.toLowerCase()}...`}
                   value={newItem[cat.key]}
                   onChange={(e) => setNewItem((prev) => ({ ...prev, [cat.key]: e.target.value }))}
-                  onKeyPress={(e) => e.key === "Enter" && addItem(cat.key)}
+                  onKeyPress={(e) => e.key === "Enter" && roundStatus === "active" && addItem(cat.key)}
+                    disabled={roundStatus !== "active"}
                 />
-                <Button size="icon" onClick={() => addItem(cat.key)}>
+                <Button size="icon" onClick={() => addItem(cat.key)} disabled={roundStatus !== "active"}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -830,7 +849,7 @@ function PestelTab({ roundId, roundNumber, roundStatus, data }: { roundId: strin
                 {pestel[cat.key].map((item: string, idx: number) => (
                   <div key={idx} className="flex items-center gap-2 p-2 border rounded">
                     <span className="flex-1 text-sm">{item}</span>
-                    <Button size="icon" variant="ghost" onClick={() => removeItem(cat.key, idx)}>
+                    <Button size="icon" variant="ghost" onClick={() => removeItem(cat.key, idx)} disabled={roundStatus !== "active"}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -1065,9 +1084,10 @@ function SegmentationSection({
                     placeholder={`Adicionar critério (${cat.hint})`}
                     value={newItem[cat.key] || ""}
                     onChange={(e) => setNewItem((prev) => ({ ...prev, [cat.key]: e.target.value }))}
-                    onKeyPress={(e) => e.key === "Enter" && addItem(cat.key)}
+                    onKeyPress={(e) => e.key === "Enter" && roundStatus === "active" && addItem(cat.key)}
+                    disabled={roundStatus !== "active"}
                   />
-                  <Button size="icon" onClick={() => addItem(cat.key)}>
+                  <Button size="icon" onClick={() => addItem(cat.key)} disabled={roundStatus !== "active"}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -1075,7 +1095,7 @@ function SegmentationSection({
                   {(segmentation[cat.key] || []).map((item: string, idx: number) => (
                     <div key={idx} className="flex items-center gap-2 p-2 border rounded">
                       <span className="flex-1 text-sm">{item}</span>
-                      <Button size="icon" variant="ghost" onClick={() => removeItem(cat.key, idx)}>
+                      <Button size="icon" variant="ghost" onClick={() => removeItem(cat.key, idx)} disabled={roundStatus !== "active"}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

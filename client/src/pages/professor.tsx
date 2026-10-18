@@ -4300,7 +4300,7 @@ export default function Professor() {
                     <CardHeader>
                       <CardTitle className="text-base">Alunos por equipe</CardTitle>
                       <CardDescription>
-                        {sortedEnrolledStudents.length} alunos na turma
+                        {sortedEnrolledStudents.length} {sortedEnrolledStudents.length === 1 ? "aluno" : "alunos"} na turma
                         {(() => {
                           const semEquipe = sortedEnrolledStudents.filter((s: any) => !getStudentTeam(s.id)).length;
                           return semEquipe > 0 ? ` · ${semEquipe} sem equipe` : "";
