@@ -2789,7 +2789,9 @@ export default function Professor() {
       return { 
         status: "no_teams", 
         label: "Turma sem equipes", 
-        action: { label: "Criar Equipes", tab: "equipes" }
+        // Out/2026: as equipes são formadas pelos alunos; o atalho leva à
+        // aba de equipes para acompanhar.
+        action: { label: "Ver Equipes", tab: "equipes" }
       };
     }
     
@@ -4993,7 +4995,9 @@ export default function Professor() {
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
                 <p>O sistema calcula os resultados de todas as equipes e a rodada não pode ser reaberta.</p>
-                {submissionStats.pending.length > 0 ? (
+                {submissionStats.total === 0 ? (
+                  <p>A turma ainda não tem equipes formadas.</p>
+                ) : submissionStats.pending.length > 0 ? (
                   <p className="font-medium text-[#b42318]">
                     {submissionStats.pending.length} de {submissionStats.total} equipe(s) ainda não enviaram a decisão e ficarão com nota 0 nesta rodada: {submissionStats.pending.join(", ")}.
                   </p>
