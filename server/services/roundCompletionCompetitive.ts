@@ -190,9 +190,20 @@ export function verbaInicialDaTurma(classData: Class, numeroEquipes: number, num
   return verbaInicial(receitaReferenciaDaTurma(classData, numeroEquipes), setor.verbaMarketingPct, numeroProdutos);
 }
 
+/**
+ * Out/2026: soma o investimento só das mídias ativas na decisão. Decisões
+ * salvas antes da correção podiam guardar o valor de uma mídia já
+ * desativada; esse valor não é mais cobrado nem conta como investimento.
+ */
+export function investimentoEmMidias(mix: Pick<MarketingMix, "promotionBudgets" | "promotionMix">): number {
+  const budgets = (mix.promotionBudgets as Record<string, number> | null) ?? {};
+  const ativas = Array.isArray(mix.promotionMix) ? new Set(mix.promotionMix as string[]) : null;
+  return Object.entries(budgets).reduce((s, [id, v]) => (ativas && !ativas.has(id) ? s : s + (Number(v) || 0)), 0);
+}
+
 /** Custo da decisão no motor competitivo: comunicação (mídias) + distribuição. */
-export function custoDecisaoCompetitiva(mix: Pick<MarketingMix, "promotionBudgets" | "distributionChannels" | "distributionCoverage">, receitaRef: number): number {
-  const midias = Object.values((mix.promotionBudgets as Record<string, number> | null) ?? {}).reduce((s, v) => s + (Number(v) || 0), 0);
+export function custoDecisaoCompetitiva(mix: Pick<MarketingMix, "promotionBudgets" | "promotionMix" | "distributionChannels" | "distributionCoverage">, receitaRef: number): number {
+  const midias = investimentoEmMidias(mix);
   return midias + custoDistribuicao({ canais: mix.distributionChannels ?? [], cobertura: mix.distributionCoverage ?? "regional" }, receitaRef);
 }
 
@@ -200,7 +211,7 @@ const MULT_DEMANDA: Record<string, number> = { retracao: 0.9, estavel: 1.0, aque
 const MULT_SENSIBILIDADE: Record<string, number> = { alta: 1.2, normal: 1.0, baixa: 0.85 };
 
 function decisaoDaEquipe(mix: MarketingMix): DecisaoProduto {
-  const midias = Object.values((mix.promotionBudgets as Record<string, number> | null) ?? {}).reduce((s, v) => s + (Number(v) || 0), 0);
+  const midias = investimentoEmMidias(mix);
   return {
     qualidade: mix.productQuality,
     recursos: mix.productFeatures,

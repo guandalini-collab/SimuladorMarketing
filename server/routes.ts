@@ -7031,6 +7031,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         productId,
       });
 
+      // Out/2026: só contam os valores das mídias que estão ativas na
+      // decisão. Uma mídia desativada na tela podia deixar o valor para trás.
+      if (data.promotionBudgets && typeof data.promotionBudgets === "object" && !Array.isArray(data.promotionBudgets) && Array.isArray(data.promotionMix)) {
+        const ativas = new Set(data.promotionMix as string[]);
+        data.promotionBudgets = Object.fromEntries(
+          Object.entries(data.promotionBudgets as Record<string, unknown>).filter(([midiaId]) => ativas.has(midiaId)),
+        );
+      }
+
       // Out/2026: o preço começa em branco (0 = não definido) e é obrigatório
       // no envio final. Rascunho pode ser salvo sem preço.
       // Grupo B: o preço precisa vir no pedido (antes, se faltasse, o banco

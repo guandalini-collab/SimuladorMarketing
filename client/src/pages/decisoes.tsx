@@ -330,7 +330,7 @@ export default function Decisoes() {
             const normalizedBudgets: Record<string, number> = {};
             if (mix.promotionBudgets && typeof mix.promotionBudgets === 'object') {
               Object.entries(mix.promotionBudgets).forEach(([key, value]) => {
-                if (validMidiaIds.includes(key)) {
+                if (validMidiaIds.includes(key) && normalizedPromotionMix.includes(key)) {
                   normalizedBudgets[key] = value as number;
                 }
               });
@@ -493,6 +493,14 @@ export default function Decisoes() {
         });
         return;
       }
+    }
+    // Out/2026: ao desativar, o valor da mídia sai junto. Antes ficava
+    // guardado, entrava no total gasto em promoção e era cobrado no
+    // encerramento sem a mídia estar marcada.
+    if (!adding) {
+      const { [promo]: _removida, ...restantes } = promotionBudgets;
+      updateCurrentDecisions({ promotionMix: newPromotion, promotionBudgets: restantes });
+      return;
     }
     setPromotionMix(newPromotion);
   };
