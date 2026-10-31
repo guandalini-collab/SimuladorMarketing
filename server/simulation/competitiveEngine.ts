@@ -72,6 +72,27 @@ const ALCANCE_COBERTURA: Record<string, number> = { local: 0.55, regional: 0.85,
 /** PARÂMETRO DO MODELO: custo semanal de distribuição, em % da receita de referência. */
 export const CUSTO_COBERTURA: Record<string, number> = { local: 0.005, regional: 0.01, nacional: 0.015, internacional: 0.02 };
 export const CUSTO_POR_CANAL = 0.005;
+/**
+ * PARÂMETRO DO MODELO (grupo D, nov/2026): custo semanal de cada canal, em % da
+ * receita de referência. A média fica perto do valor único anterior (0,5%).
+ * As fontes sustentam apenas a ORDEM entre os canais, não o nível absoluto:
+ * - atacado: um contrato alcança muitos pontos de venda (ABAD/NielsenIQ, 2026:
+ *   o atacado abastece 68% das compras do pequeno varejo). Sem dado de margem;
+ * - ecommerce: sem intermediário, mas com plataforma, pagamento e frete;
+ * - marketplace: comissão de 11% a 18% (Mercado Livre) e 10% a 15% (Amazon);
+ * - franquias: estrutura e apoio à rede;
+ * - varejo: margem bruta de 30,6% no Magazine Luiza (1T25);
+ * - direto: revendedor fica com cerca de 30% (percentual mais frequente das marcas).
+ * Canal desconhecido ou nenhum canal: CUSTO_POR_CANAL (mínimo de um canal).
+ */
+export const CUSTO_POR_TIPO_DE_CANAL: Record<string, number> = {
+  atacado: 0.003,
+  ecommerce: 0.004,
+  marketplace: 0.005,
+  franquias: 0.006,
+  varejo: 0.007,
+  direto: 0.007,
+};
 
 /** PARÂMETRO DO MODELO: memória de marca (adstock semanal) e resposta à comunicação. */
 const RETENCAO_LEMBRANCA = 0.7;
@@ -228,7 +249,10 @@ export function receitaReferencia(ctx: Pick<ContextoCategoria, "valorSemanal" | 
 
 export function custoDistribuicao(decisao: Pick<DecisaoProduto, "canais" | "cobertura">, receitaRef: number): number {
   const cobertura = CUSTO_COBERTURA[decisao.cobertura] ?? CUSTO_COBERTURA.regional;
-  return receitaRef * (cobertura + CUSTO_POR_CANAL * Math.max(1, decisao.canais.length));
+  const canais = decisao.canais.length > 0
+    ? decisao.canais.reduce((s, c) => s + (CUSTO_POR_TIPO_DE_CANAL[c] ?? CUSTO_POR_CANAL), 0)
+    : CUSTO_POR_CANAL;
+  return receitaRef * (cobertura + canais);
 }
 
 function valorPercebido(d: DecisaoProduto): number {

@@ -152,7 +152,7 @@ export default function Decisoes() {
     enabled: !!team?.classId,
   });
 
-  const { data: custosDecisao } = useQuery<{ ativo: boolean; receitaReferencia: number; custoCobertura: Record<string, number>; custoPorCanal: number }>({
+  const { data: custosDecisao } = useQuery<{ ativo: boolean; receitaReferencia: number; custoCobertura: Record<string, number>; custoPorCanal: number; custoPorTipoDeCanal?: Record<string, number> }>({
     queryKey: ["/api/team/custos-da-decisao"],
     enabled: !!team?.id && decisionsAllowed,
   });
@@ -628,7 +628,12 @@ export default function Decisoes() {
   const distribuicaoDoProduto = (channels: string[] | undefined, coverage: string | undefined) => {
     if (!custosDecisao?.ativo) return 0;
     const cobertura = custosDecisao.custoCobertura[coverage || "regional"] ?? custosDecisao.custoCobertura.regional ?? 0;
-    return custosDecisao.receitaReferencia * (cobertura + custosDecisao.custoPorCanal * Math.max(1, channels?.length ?? 0));
+    // Grupo D: cada canal tem custo próprio (mesma regra do servidor).
+    const porTipo = custosDecisao.custoPorTipoDeCanal ?? {};
+    const canais = channels && channels.length > 0
+      ? channels.reduce((s, c) => s + (porTipo[c] ?? custosDecisao.custoPorCanal), 0)
+      : custosDecisao.custoPorCanal;
+    return custosDecisao.receitaReferencia * (cobertura + canais);
   };
   const allProductsDistributionTotal = products.reduce((sum: number, product: any) => {
     const d = product.id === selectedProductId
@@ -642,7 +647,7 @@ export default function Decisoes() {
   // Mesma fórmula de distribuicaoDoProduto; só exibição.
   const custoCanalPraca = (canal: string) => {
     if (!custosDecisao?.ativo) return 0;
-    const porTipo = (custosDecisao as any).custoPorTipoDeCanal as Record<string, number> | undefined;
+    const porTipo = custosDecisao.custoPorTipoDeCanal;
     return custosDecisao.receitaReferencia * (porTipo?.[canal] ?? custosDecisao.custoPorCanal);
   };
   const custoCoberturaPraca = (cobertura: string) =>

@@ -44,6 +44,7 @@ import {
   type ResultadoOferta,
   CUSTO_COBERTURA,
   CUSTO_POR_CANAL,
+  CUSTO_POR_TIPO_DE_CANAL,
 } from "../simulation/competitiveEngine";
 
 /** Liga/desliga o motor competitivo (rodadas de teste seguem no motor V1). */
@@ -670,7 +671,7 @@ export async function custoEstimadoDaDecisao(
 export async function parametrosDeCustoDaEquipe(
   storage: IStorage,
   team: Pick<Team, "classId">,
-): Promise<{ ativo: boolean; receitaReferencia: number; custoCobertura: Record<string, number>; custoPorCanal: number }> {
+): Promise<{ ativo: boolean; receitaReferencia: number; custoCobertura: Record<string, number>; custoPorCanal: number; custoPorTipoDeCanal?: Record<string, number> }> {
   const inativo = { ativo: false, receitaReferencia: 0, custoCobertura: {}, custoPorCanal: 0 };
   const classData = await storage.getClass(team.classId);
   if (!classData) return inativo;
@@ -682,5 +683,6 @@ export async function parametrosDeCustoDaEquipe(
     receitaReferencia: receitaReferenciaDaTurma(classData, teams.length),
     custoCobertura: { ...CUSTO_COBERTURA },
     custoPorCanal: CUSTO_POR_CANAL,
+    custoPorTipoDeCanal: { ...CUSTO_POR_TIPO_DE_CANAL },
   };
 }
