@@ -35,6 +35,10 @@ import {
   type ContextoCategoria,
   type DecisaoProduto,
   type EstadoConcorrente,
+  type LiderCategoria,
+  eficaciaPorRepeticao,
+  mesmaCombinacaoDeMidias,
+  multiplicadorDeCusto,
   type Oferta,
   type ResultadoCategoria,
   type ResultadoOferta,
@@ -54,8 +58,12 @@ export function usarMotorCompetitivo(round: Pick<Round, "isPractice">): boolean 
 
 export interface EstadoMercado {
   versao: string;
-  equipes: Record<string, { verbaInicial: number; produtos: Record<string, { lembranca: number; fidelidade: number }> }>;
+  equipes: Record<string, { verbaInicial: number; produtos: Record<string, { lembranca: number; fidelidade: number; midias?: string[]; semanasMesmasMidias?: number }> }>;
   concorrentes: Record<string, Record<string, EstadoConcorrente>>; // categoria -> concorrente -> estado
+  /** H4 (nov/2026): dólar e IPCA da semana-base, para o custo do produto acompanhar a economia real. */
+  custos?: { cambioBase: number; rodadaBase: number; cambioAtual?: number; ipca12m?: number; multiplicador?: number };
+  /** H1 (nov/2026): equipe líder de cada categoria e semanas seguidas na liderança. */
+  lideranca?: Record<string, { equipeId: string; rodadas: number }>;
   categorias: {
     categoriaId: string;
     categoriaNome: string;
@@ -311,6 +319,21 @@ const arred = (k: ResultCoreMetrics): ResultCoreMetrics =>
 
 // ---------------------------------------------------------------- processamento
 
+/**
+ * H1 (nov/2026): equipe de maior participação (em valor) na categoria na
+ * semana anterior, com as semanas seguidas em que liderou. Sem semana
+ * anterior para a categoria, não há reação.
+ */
+export function liderDaSemanaAnterior(anterior: EstadoMercado | null, categoriaId: string): LiderCategoria | null {
+  const cat = anterior?.categorias?.find((c) => c.categoriaId === categoriaId);
+  const equipes = (cat?.ofertas ?? []).filter((o) => o.tipo === "equipe" && o.equipeId && o.preco > 0);
+  if (equipes.length === 0) return null;
+  const top = equipes.reduce((a, b) => (b.participacaoValor > a.participacaoValor ? b : a));
+  const registro = anterior?.lideranca?.[categoriaId];
+  const rodadas = registro && registro.equipeId === top.equipeId ? registro.rodadas : 1;
+  return { preco: top.preco, qualidade: top.qualidade, comunicacao: top.comunicacao, rodadasSeguidas: rodadas };
+}
+
 export async function processarMercadoCompetitivo(
   storage: IStorage,
   round: Round,
@@ -332,8 +355,37 @@ export async function processarMercadoCompetitivo(
   const numeroEmpresas = teams.length + perfis.length;
   const receitaRef = receitaReferencia({ valorSemanal, numeroEmpresas });
   const despesaAdminPct = despesaAdministrativaCalibrada(setor.margemBruta, setor.verbaMarketingPct, setor.margemLiquida);
-  const multDemanda = (MULT_DEMANDA[bulletin?.demand ?? "estavel"] ?? 1) * calculateEventImpact(activeEvents);
-  const multSensibilidade = MULT_SENSIBILIDADE[bulletin?.priceSensitivity ?? "normal"] ?? 1;
+  // H2 (nov/2026): calendário real. Em semana de data comercial, vale o
+  // maior efeito entre o boletim e o calendário (sem somar os dois, já que o
+  // boletim também passa a considerar a data).
+  const { semanaSimulada } = await import("@shared/rodadaSemanal");
+  const { sazonalidadeDaSemana, preferenciaDaSemana, fatorPreferencia } = await import("@shared/calendarioMercado");
+  const aberturaRodada = round.scheduledStartAt ?? round.startedAt;
+  const saz = sazonalidadeDaSemana(aberturaRodada ? semanaSimulada(aberturaRodada)?.inicio : null);
+  const preferencia = preferenciaDaSemana(classData.id, round.roundNumber, saz);
+  const demandaBoletim = MULT_DEMANDA[bulletin?.demand ?? "estavel"] ?? 1;
+  const sensibilidadeBoletim = MULT_SENSIBILIDADE[bulletin?.priceSensitivity ?? "normal"] ?? 1;
+  const multDemanda = (saz.rotulo ? Math.max(demandaBoletim, saz.demanda) : demandaBoletim) * calculateEventImpact(activeEvents);
+  const multSensibilidade = saz.rotulo ? saz.sensibilidade : sensibilidadeBoletim;
+  // H4 (nov/2026): custo do produto acompanha o dólar e a inflação reais.
+  // A semana-base é a primeira rodada encerrada com esta regra.
+  let custos: EstadoMercado["custos"];
+  try {
+    const { getIndicadoresAtuais } = await import("./conjuntura");
+    const ind = await getIndicadoresAtuais();
+    const cambioAtual = Number(ind?.exchangeRateUSD) || 0;
+    const ipca12m = Number(ind?.inflationRate) || 0;
+    const base = anterior?.custos ?? (cambioAtual > 0 ? { cambioBase: cambioAtual, rodadaBase: round.roundNumber } : undefined);
+    if (base) {
+      const multiplicador = multiplicadorDeCusto({ setorId: setor.id, cambioBase: base.cambioBase, cambioAtual: cambioAtual || base.cambioBase, ipca12m, semanas: round.roundNumber - base.rodadaBase });
+      custos = { cambioBase: base.cambioBase, rodadaBase: base.rodadaBase, cambioAtual: cambioAtual || base.cambioBase, ipca12m, multiplicador };
+    }
+  } catch (error) {
+    console.error("[MOTOR-V3] Indicadores econômicos indisponíveis; custo sem ajuste nesta rodada:", error);
+    custos = anterior?.custos ? { ...anterior.custos, multiplicador: anterior.custos.multiplicador ?? 1 } : undefined;
+  }
+  const multiplicadorCusto = custos?.multiplicador ?? 1;
+  const fatorSemana = (d: DecisaoProduto) => fatorPreferencia(d.posicionamento, preferencia) * (d.qualidade === "premium" ? saz.bonusPremium : 1);
 
   // 1) Decisões enviadas de cada equipe, agrupadas por categoria
   interface ItemEquipe { team: Team; mix: MarketingMix; categoriaId: string; alinhamento: ReturnType<typeof calculateStrategicAlignment>; alinhamentoNeutro?: boolean }
@@ -379,7 +431,7 @@ export async function processarMercadoCompetitivo(
     }
   }
 
-  const novoEstado: EstadoMercado = { versao: VERSAO_MOTOR, equipes: {}, concorrentes: {}, categorias: [] };
+  const novoEstado: EstadoMercado = { versao: VERSAO_MOTOR, equipes: {}, concorrentes: {}, categorias: [], lideranca: {}, custos };
   for (const team of teams) {
     const prev = anterior?.equipes?.[team.id];
     novoEstado.equipes[team.id] = {
@@ -407,13 +459,19 @@ export async function processarMercadoCompetitivo(
       numeroEmpresas,
       multiplicadorDemanda: multDemanda,
       multiplicadorSensibilidade: multSensibilidade,
+      multiplicadorCusto,
     };
     const decisoesEquipes = itens.map((i) => decisaoDaEquipe(i.mix));
+    const desgaste = new Map<string, { midias: string[]; semanas: number }>();
     const mediaPreco = decisoesEquipes.reduce((s, d) => s + d.preco, 0) / decisoesEquipes.length;
     const mediaComunicacao = decisoesEquipes.reduce((s, d) => s + d.investimentoComunicacao, 0) / decisoesEquipes.length;
 
     const ofertas: Oferta[] = itens.map((i, idx) => {
       const prev = anterior?.equipes?.[i.team.id]?.produtos?.[categoriaId];
+      // H3 (nov/2026): semanas seguidas com a mesma combinação de mídias.
+      const midias = Array.isArray(i.mix.promotionMix) ? (i.mix.promotionMix as string[]) : [];
+      const semanas = midias.length === 0 ? 0 : mesmaCombinacaoDeMidias(prev?.midias, midias) ? (prev?.semanasMesmasMidias ?? 1) + 1 : 1;
+      desgaste.set(`${i.team.id}:${i.mix.id}`, { midias, semanas });
       return {
         id: `${i.team.id}:${i.mix.id}`,
         tipo: "equipe",
@@ -423,11 +481,13 @@ export async function processarMercadoCompetitivo(
         decisao: decisoesEquipes[idx],
         lembrancaAnterior: prev?.lembranca ?? 0.25,
         fidelidadeAnterior: prev?.fidelidade ?? 50,
+        eficaciaComunicacao: eficaciaPorRepeticao(semanas),
       };
     });
     const estadoConc = anterior?.concorrentes?.[categoriaId] ?? {};
+    const lider = liderDaSemanaAnterior(anterior, categoriaId);
     for (const p of perfis) {
-      const d = decisaoConcorrente(p, categoria.averagePrice, valorSemanal, estadoConc[p.id], mediaPreco, mediaComunicacao);
+      const d = decisaoConcorrente(p, categoria.averagePrice, valorSemanal, estadoConc[p.id], mediaPreco, mediaComunicacao, lider);
       ofertas.push({
         id: `conc:${p.id}`,
         tipo: "concorrente",
@@ -442,9 +502,10 @@ export async function processarMercadoCompetitivo(
     // demanda da oferta): aplicamos sobre a lembrança usada no cálculo para
     // não alterar a estrutura do núcleo puro.
     const ajustadas = ofertas.map((o, idx) => {
-      if (o.tipo !== "equipe") return o;
+      // H2: preferência do consumidor e Natal valem para equipes e concorrentes.
+      if (o.tipo !== "equipe") return { ...o, fatorAlinhamento: fatorSemana(o.decisao) };
       const mod = itens[idx].alinhamentoNeutro ? 0 : itens[idx].alinhamento.kpiModifiers.revenueModifier ?? 0;
-      return { ...o, decisao: { ...o.decisao }, fatorAlinhamento: Math.max(0.5, 1 + mod) };
+      return { ...o, decisao: { ...o.decisao }, fatorAlinhamento: Math.max(0.5, 1 + mod) * fatorSemana(o.decisao) };
     });
     const resultado = calcularCategoriaComAlinhamento(ctx, ajustadas);
 
@@ -454,12 +515,23 @@ export async function processarMercadoCompetitivo(
         const id = o.id.replace("conc:", "");
         novoEstado.concorrentes[categoriaId][id] = { preco: o.preco, comunicacao: o.comunicacao, lembranca: o.lembranca, fidelidade: o.fidelidade };
       } else if (o.equipeId) {
-        novoEstado.equipes[o.equipeId].produtos[categoriaId] = { lembranca: o.lembranca, fidelidade: o.fidelidade };
+        const dg = desgaste.get(o.id);
+        novoEstado.equipes[o.equipeId].produtos[categoriaId] = { lembranca: o.lembranca, fidelidade: o.fidelidade, midias: dg?.midias ?? [], semanasMesmasMidias: dg?.semanas ?? 0 };
         const item = itens.find((i) => `${i.team.id}:${i.mix.id}` === o.id)!;
         const lista = kpisPorEquipe.get(o.equipeId) ?? [];
         lista.push({ kpis: kpisDaOferta(o, resultado), mix: item.mix, alinhamento: item.alinhamento, alinhamentoNeutro: item.alinhamentoNeutro });
         kpisPorEquipe.set(o.equipeId, lista);
       }
+    }
+    // H1 (nov/2026): registra a equipe líder desta semana na categoria.
+    const ofertasEquipes = resultado.ofertas.filter((o) => o.tipo === "equipe" && o.equipeId);
+    if (ofertasEquipes.length > 0) {
+      const liderAgora = ofertasEquipes.reduce((a, b) => (b.participacaoValor > a.participacaoValor ? b : a));
+      const antes = anterior?.lideranca?.[categoriaId];
+      novoEstado.lideranca![categoriaId] = {
+        equipeId: liderAgora.equipeId!,
+        rodadas: antes && antes.equipeId === liderAgora.equipeId ? antes.rodadas + 1 : 1,
+      };
     }
     novoEstado.categorias.push({
       categoriaId,
@@ -532,6 +604,10 @@ export async function processarMercadoCompetitivo(
         produtos: lista.map((l) => ({ productId: l.mix.productId, receita: l.kpis.revenue, lucro: l.kpis.profit })),
         multiplicadorDemanda: multDemanda,
         multiplicadorSensibilidade: multSensibilidade,
+        // Nov/2026 (H2 e H4): registro do que pesou na semana.
+        dataComercial: saz.rotulo,
+        preferenciaConsumidor: preferencia,
+        multiplicadorCusto,
       },
       competitorResponse: null,
       eventImpacts: null,

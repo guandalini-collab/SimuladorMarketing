@@ -101,6 +101,33 @@ export interface Oferta {
   decisao: DecisaoProduto;
   lembrancaAnterior: number;  // 0..1
   fidelidadeAnterior: number; // 0..100
+  /**
+   * H3 (nov/2026): eficácia da comunicação (1 = normal). Cai quando a equipe
+   * repete a mesma combinação de mídias semana após semana. Afeta só a
+   * lembrança gerada; o custo das mídias continua o valor investido.
+   */
+  eficaciaComunicacao?: number;
+}
+
+/**
+ * H3 (nov/2026, PARÂMETRO DO MODELO): desgaste publicitário (advertising
+ * wear-out; CALDER; STERNTHAL, 1980; PECHMANN; STEWART, 1988). Cada semana
+ * seguida com a mesma combinação de mídias tira 15% da eficácia, até o
+ * mínimo de 55%. Trocar a combinação (ou pausar a comunicação) recomeça.
+ */
+export const DESGASTE_POR_REPETICAO = 0.15;
+export const EFICACIA_MINIMA = 0.55;
+export function eficaciaPorRepeticao(semanasSeguidas: number): number {
+  return Math.max(EFICACIA_MINIMA, 1 - DESGASTE_POR_REPETICAO * Math.max(0, semanasSeguidas - 1));
+}
+
+/** H3: duas combinações contam como "a mesma" quando compartilham ao menos 75% das mídias (índice de Jaccard). */
+export function mesmaCombinacaoDeMidias(a: string[] | undefined, b: string[] | undefined): boolean {
+  if (!a?.length || !b?.length) return false;
+  const sa = new Set(a), sb = new Set(b);
+  const inter = Array.from(sa).filter((x) => sb.has(x)).length;
+  const uniao = new Set([...a, ...b]).size;
+  return uniao > 0 && inter / uniao >= 0.75;
 }
 
 export interface ContextoCategoria {
@@ -116,6 +143,29 @@ export interface ContextoCategoria {
   numeroEmpresas: number;     // equipes + concorrentes (para a receita de referência)
   multiplicadorDemanda: number;   // sazonalidade, boletim e eventos
   multiplicadorSensibilidade: number; // boletim: sensibilidade a preço
+  /** H4 (nov/2026): custo do produto conforme dólar e inflação reais (1 = custo da semana-base). */
+  multiplicadorCusto?: number;
+}
+
+/**
+ * H4 (nov/2026, PARÂMETRO DO MODELO): repasse do câmbio ao custo do produto,
+ * por setor (parcela do custo atrelada ao dólar). Eletrônicos dependem de
+ * componentes importados; os demais setores usam o valor padrão.
+ */
+export const REPASSE_CAMBIAL: Record<string, number> = { eletronicos: 0.6 };
+export const REPASSE_CAMBIAL_PADRAO = 0.25;
+
+/**
+ * H4: multiplicador do custo do produto em relação à semana-base do jogo.
+ * Dólar (PTAX, Banco Central) com repasse do setor e inflação (IPCA em 12
+ * meses, IBGE) proporcional às semanas decorridas.
+ */
+export function multiplicadorDeCusto(params: { setorId: string; cambioBase: number; cambioAtual: number; ipca12m: number; semanas: number }): number {
+  const repasse = REPASSE_CAMBIAL[params.setorId] ?? REPASSE_CAMBIAL_PADRAO;
+  const cambio = params.cambioBase > 0 && params.cambioAtual > 0 ? 1 + repasse * (params.cambioAtual / params.cambioBase - 1) : 1;
+  const inflacao = Math.pow(1 + Math.max(-0.5, params.ipca12m / 100), Math.max(0, params.semanas) / SEMANAS_NO_ANO);
+  const m = cambio * inflacao;
+  return Number.isFinite(m) && m > 0 ? limitar(m, 0.7, 1.5) : 1;
 }
 
 export interface ResultadoOferta {
@@ -216,7 +266,7 @@ export function calcularCategoria(ctx: ContextoCategoria, ofertas: Oferta[], fat
 
   // 1) Lembrança de marca após a semana (adstock)
   const lembrancas = ofertas.map((o) => {
-    const resposta = 1 - Math.exp(-o.decisao.investimentoComunicacao / escalaComunicacao);
+    const resposta = 1 - Math.exp(-(o.decisao.investimentoComunicacao * (o.eficaciaComunicacao ?? 1)) / escalaComunicacao);
     return limitar(RETENCAO_LEMBRANCA * o.lembrancaAnterior + (1 - RETENCAO_LEMBRANCA) * resposta, 0.02, 0.98);
   });
 
@@ -250,7 +300,7 @@ export function calcularCategoria(ctx: ContextoCategoria, ofertas: Oferta[], fat
 
   const receitaRef = receitaReferencia(ctx);
   // Margem bruta (Damodaran) é sobre a receita líquida dos tributos sobre vendas.
-  const custoBase = ref * (1 - ALIQUOTA_TRIBUTOS_VENDA) * (1 - ctx.margemBruta / 100);
+  const custoBase = ref * (1 - ALIQUOTA_TRIBUTOS_VENDA) * (1 - ctx.margemBruta / 100) * (ctx.multiplicadorCusto ?? 1);
 
   const resultados: ResultadoOferta[] = ofertas.map((o, i) => {
     const unidades = Math.max(0, Math.round(demanda * fatias[i]));
@@ -342,6 +392,20 @@ export function concorrentesDaTurma(n: number): PerfilConcorrente[] {
   });
 }
 
+/**
+ * H1 (nov/2026): equipe que liderou a categoria na semana anterior. Os
+ * concorrentes simulados do mesmo território de preço reagem a ela, com
+ * mais força a cada semana seguida em que a mesma equipe lidera.
+ */
+export interface LiderCategoria {
+  preco: number;
+  qualidade: string;
+  comunicacao: number;
+  rodadasSeguidas: number;
+}
+
+const NIVEL_QUALIDADE: Record<string, number> = { basico: 1, medio: 2, premium: 3 };
+
 export interface EstadoConcorrente {
   preco: number;
   comunicacao: number;
@@ -362,12 +426,16 @@ export function decisaoConcorrente(
   anterior: EstadoConcorrente | undefined,
   mediaPrecoEquipes: number | null,
   mediaComunicacaoEquipes: number | null,
+  lider?: LiderCategoria | null,
 ): DecisaoProduto {
   let preco = anterior?.preco ?? precoRef * p.precoRelativo;
   let comunicacao = anterior?.comunicacao ?? valorSemanal * p.comunicacaoPct;
+  let qualidade = p.qualidade;
   const alvo = precoRef * p.precoRelativo;
+  // H1 (nov/2026, PARÂMETRO DO MODELO): guerra de preço mais firme — o perfil
+  // de volume acompanha 7% por semana, até 75% do preço do perfil (antes 4%, até 85%).
   if (mediaPrecoEquipes && mediaPrecoEquipes < preco * 0.9 && p.estrategiaPreco !== "skimming") {
-    preco = Math.max(alvo * 0.85, preco * 0.96);
+    preco = Math.max(alvo * 0.75, preco * 0.93);
   } else {
     preco = preco + (alvo - preco) * 0.3; // volta gradual ao preço do perfil
   }
@@ -377,8 +445,30 @@ export function decisaoConcorrente(
   } else {
     comunicacao = comunicacao + (base - comunicacao) * 0.3;
   }
+  // H1 (nov/2026, PARÂMETRO DO MODELO): reação à equipe líder da semana
+  // anterior (resposta competitiva; PORTER, 1980; KOTLER; KELLER). Só reage
+  // o concorrente que disputa o mesmo território de preço (até 30% de
+  // distância do preço de referência). A força cresce com as semanas
+  // seguidas de liderança (1/3, 2/3 e, a partir da 3ª, total): aproxima o
+  // preço do líder (se ele for mais barato), acompanha a comunicação dele e, a partir da 2ª semana,
+  // iguala a qualidade quando a dele é maior.
+  if (lider && lider.preco > 0) {
+    const forca = Math.min(3, Math.max(1, lider.rodadasSeguidas)) / 3;
+    const mesmoTerritorio = Math.abs(lider.preco / precoRef - p.precoRelativo) <= 0.3;
+    if (mesmoTerritorio) {
+      // Só corta preço (nunca sobe para acompanhar um líder mais caro).
+      if (lider.preco * 0.97 < preco) preco = Math.max(alvo * 0.8, preco + (lider.preco * 0.97 - preco) * 0.5 * forca);
+      comunicacao = Math.max(comunicacao, Math.min(lider.comunicacao, base * 1.6) * forca);
+      if (lider.rodadasSeguidas >= 2 && (NIVEL_QUALIDADE[lider.qualidade] ?? 0) > (NIVEL_QUALIDADE[qualidade] ?? 0)) {
+        // Copia o produto e se posiciona logo abaixo do preço do líder
+        // (produto melhor com preço antigo daria prejuízo ao concorrente).
+        qualidade = lider.qualidade;
+        preco = Math.max(preco, lider.preco * 0.97);
+      }
+    }
+  }
   return {
-    qualidade: p.qualidade,
+    qualidade,
     recursos: p.recursos,
     posicionamento: p.posicionamento,
     estrategiaPreco: p.estrategiaPreco,

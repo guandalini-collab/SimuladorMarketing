@@ -236,6 +236,12 @@ async function gerarConteudoDaRodada(
       sectorId: classData?.sector,
       businessType: classData?.businessType,
       events,
+      inicioSemana: await (async () => {
+        const { semanaSimulada } = await import("@shared/rodadaSemanal");
+        const completa = await storage.getRound(round.id);
+        const abertura = completa?.scheduledStartAt ?? completa?.startedAt;
+        return abertura ? semanaSimulada(abertura)?.inicio ?? null : null;
+      })(),
     });
     if (bulletin) console.log(`[ROUND-AUTO] Boletim do mês: demanda ${bulletin.demand}, sensibilidade a preço ${bulletin.priceSensitivity}`);
   } catch (error) {

@@ -108,6 +108,7 @@ async function gerarTextoComIA(params: {
   roundNumber: number;
   events: MarketEvent[];
   classId?: string;
+  contextoSemana?: string;
 }): Promise<{ demand: Demanda; priceSensitivity: Sensibilidade; headline: string; summary: string; indicators: MarketBulletin["indicators"] } | null> {
   const listaEventos = params.events
     .filter((e) => e.active)
@@ -116,7 +117,7 @@ async function gerarTextoComIA(params: {
 
   const { getConjunturaParaPrompt } = await import("./conjuntura");
   const conjuntura = await getConjunturaParaPrompt(params.classId);
-  const prompt = `Setor: ${params.sectorName}. Tipo de negócio: ${params.businessType}. Semana da rodada ${params.roundNumber} da simulação.
+  const prompt = `Setor: ${params.sectorName}. Tipo de negócio: ${params.businessType}. Semana da rodada ${params.roundNumber} da simulação.${params.contextoSemana ? `\n${params.contextoSemana}` : ""}
 Eventos de mercado desta semana:
 ${listaEventos}
 
@@ -184,11 +185,23 @@ export async function ensureBulletinForRound(params: {
   sectorId: string | null | undefined;
   businessType: string | null | undefined;
   events: MarketEvent[];
+  /** H2 (nov/2026): início da semana simulada (AAAA-MM-DD), para o calendário e a preferência do consumidor. */
+  inicioSemana?: string | null;
 }): Promise<MarketBulletin | null> {
   const existente = await getBulletinByRound(params.roundId);
   if (existente) return existente;
 
   const sector = marketSectors.find((s) => s.id === params.sectorId);
+  // H2 (nov/2026): data comercial e preferência do consumidor da semana
+  // entram no boletim como notícia (os mesmos valores pesam no resultado).
+  const { sazonalidadeDaSemana, preferenciaDaSemana, TEXTO_PREFERENCIA } = await import("@shared/calendarioMercado");
+  const saz = sazonalidadeDaSemana(params.inicioSemana);
+  const preferencia = preferenciaDaSemana(params.classId, params.roundNumber, saz);
+  const contextoSemana = [
+    params.inicioSemana ? `Semana simulada iniciada em ${params.inicioSemana.split("-").reverse().join("/")}.` : null,
+    saz.rotulo ? `Data comercial da semana: ${saz.rotulo}. Mencione-a como fato do varejo, com o movimento típico de consumidores.` : null,
+    `Comportamento do consumidor nesta semana: ${TEXTO_PREFERENCIA[preferencia]}. Relate isso como notícia, sem dizer o que as empresas devem fazer.`,
+  ].filter(Boolean).join("\n");
   let dados: Awaited<ReturnType<typeof gerarTextoComIA>> = null;
   try {
     dados = await gerarTextoComIA({
@@ -197,6 +210,7 @@ export async function ensureBulletinForRound(params: {
       roundNumber: params.roundNumber,
       events: params.events,
       classId: params.classId,
+      contextoSemana,
     });
   } catch (error) {
     console.error("[BOLETIM] IA indisponível, usando leitura pelos eventos:", error);
@@ -207,7 +221,7 @@ export async function ensureBulletinForRound(params: {
     dados = {
       ...base,
       headline: `${TEXTO_DEMANDA[base.demand]} na rodada ${params.roundNumber}`,
-      summary: "Boletim resumido a partir dos eventos de mercado da semana.",
+      summary: `Boletim resumido a partir dos eventos de mercado da semana${saz.rotulo ? `, semana de ${saz.rotulo}` : ""}: ${TEXTO_PREFERENCIA[preferencia]}.`,
       indicators: null,
     };
   }
