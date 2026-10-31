@@ -51,6 +51,33 @@ export interface AlignmentParams {
   // inconsistências; o alinhamento compara as decisões com as 5 Forças, a
   // BCG (calculada pelo jogo) e a Segmentação (escrita pela equipe).
   analisesProntas?: boolean;
+  /**
+   * Nov/2026: régua de preço e de investimento do mercado da rodada. As
+   * regras abaixo usam limites fixos em reais (preço de R$ 15 a R$ 30;
+   * investimento de R$ 10 mil a R$ 25 mil) pensados para preços em torno de
+   * R$ 22,50 (o centro da faixa de R$ 15 a R$ 30) e uma verba de R$ 100 mil
+   * (o orçamento padrão). Com produtos de
+   * R$ 1.500 a R$ 3.500, todos os preços passavam como "altos". Com a régua,
+   * o preço é comparado na mesma proporção do preço de referência da
+   * categoria (preço ÷ referência × 22,5) e o investimento na mesma proporção
+   * da verba do produto (investimento ÷ verba × 100 mil). Sem a régua
+   * (motor anterior), nada muda.
+   */
+  escala?: { precoReferencia: number; verbaProduto: number };
+}
+
+/** Converte preço e investimento para a régua das regras (ver `escala`). */
+function mixNaRegua(mix: MarketingMix, escala?: { precoReferencia: number; verbaProduto: number }): MarketingMix {
+  if (!escala || !(escala.precoReferencia > 0) || !(escala.verbaProduto > 0)) return mix;
+  const fatorVerba = 100000 / escala.verbaProduto;
+  const budgets = (mix.promotionBudgets as Record<string, number> | null) ?? null;
+  return {
+    ...mix,
+    priceValue: mix.priceValue ? (mix.priceValue / escala.precoReferencia) * 22.5 : mix.priceValue,
+    promotionBudgets: budgets
+      ? Object.fromEntries(Object.entries(budgets).map(([k, v]) => [k, (Number(v) || 0) * fatorVerba]))
+      : mix.promotionBudgets,
+  } as MarketingMix;
 }
 
 // Com 5 ferramentas estratégicas (SWOT, Porter, BCG, PESTEL, Segmentação),
@@ -98,7 +125,6 @@ export function calculateStrategicAlignment(params: AlignmentParams): AlignmentA
     pestel,
     segmentation,
     businessType,
-    marketingMix,
     aiAssistanceLevel,
     swotAiPercentage,
     porterAiPercentage,
@@ -106,6 +132,7 @@ export function calculateStrategicAlignment(params: AlignmentParams): AlignmentA
     pestelAiPercentage,
     segmentationAiPercentage
   } = params;
+  const marketingMix = mixNaRegua(params.marketingMix, params.escala);
 
   const completionScore = calculateCompletionScore(swot, porter, bcg, pestel, segmentation, businessType);
 
@@ -631,7 +658,7 @@ function analyzeSegmentationAlignment(
     }
 
     if (hasSmallBusinessSegment && getTotalPromotion(mix) > 25000) {
-      issues.push("Segmentação B2B indica pequenas empresas como público-alvo, com investimento promocional acima de R$ 25 mil");
+      issues.push("Segmentação B2B indica pequenas empresas como público-alvo, com investimento promocional elevado");
       alignmentPoints -= 12;
     }
 

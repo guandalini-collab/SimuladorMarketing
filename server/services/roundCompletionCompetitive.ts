@@ -445,6 +445,8 @@ export async function processarMercadoCompetitivo(
         segmentation: segmentation.filter((s) => !s.productId),
         businessType: classData.businessType,
         marketingMix: mix,
+        // Nov/2026: régua de preço e investimento do mercado (ver strategicAlignment.ts).
+        escala: { precoReferencia: categoria.averagePrice, verbaProduto: receitaRef * (setor.verbaMarketingPct / 100) },
         aiAssistanceLevel: round.aiAssistanceLevel ?? 1,
         swotAiPercentage: swot?.aiGeneratedPercentage ?? undefined,
         porterAiPercentage: porter?.aiGeneratedPercentage ?? undefined,
