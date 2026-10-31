@@ -117,7 +117,7 @@ export function SemanaDaRodada({ round }: { round: Round }) {
       {semana && (
         <p className="flex items-center gap-1 font-medium text-foreground">
           <CalendarDays className="h-3 w-3" />
-          Semana de {semana.texto}
+          Semana simulada no jogo: {semana.texto}
         </p>
       )}
       {inicio && <p>{round.status === "locked" ? "Abre" : "Aberta em"} {dataHora(inicio)}</p>}

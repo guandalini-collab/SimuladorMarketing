@@ -638,6 +638,22 @@ export default function Decisoes() {
   }, 0);
   const productDistributionTotal = distribuicaoDoProduto(distributionChannels, distributionCoverage);
 
+  // Grupo A (nov/2026): custo de cada opção da Praça à vista, por rodada.
+  // Mesma fórmula de distribuicaoDoProduto; só exibição.
+  const custoCanalPraca = (canal: string) => {
+    if (!custosDecisao?.ativo) return 0;
+    const porTipo = (custosDecisao as any).custoPorTipoDeCanal as Record<string, number> | undefined;
+    return custosDecisao.receitaReferencia * (porTipo?.[canal] ?? custosDecisao.custoPorCanal);
+  };
+  const custoCoberturaPraca = (cobertura: string) =>
+    custosDecisao?.ativo ? custosDecisao.receitaReferencia * (custosDecisao.custoCobertura[cobertura] ?? 0) : 0;
+  const channelOptionsComCusto: ChoiceOption[] = custosDecisao?.ativo
+    ? CHANNEL_OPTIONS.map((o) => ({ ...o, description: `${o.description} · ${formatarNumeroBR(custoCanalPraca(o.value), 'moeda')} por rodada` }))
+    : CHANNEL_OPTIONS;
+  const coverageOptionsComCusto: ChoiceOption[] = custosDecisao?.ativo
+    ? COVERAGE_OPTIONS.map((o) => ({ ...o, description: `${o.description} · ${formatarNumeroBR(custoCoberturaPraca(o.value), 'moeda')} por rodada` }))
+    : COVERAGE_OPTIONS;
+
   const midiaNames: Record<string, string> = Object.fromEntries(
     midias.map((m: any) => [m.id, m.formato ? `${m.nome} — ${m.formato}` : m.nome]),
   );
@@ -1082,7 +1098,7 @@ export default function Decisoes() {
                   values={distributionChannels}
                   onToggle={handleChannelToggle}
                   disabled={!canEdit}
-                  options={CHANNEL_OPTIONS}
+                  options={channelOptionsComCusto}
                   ariaLabel="Canais de distribuição"
                 />
               </CardContent>
@@ -1098,7 +1114,7 @@ export default function Decisoes() {
                   value={distributionCoverage}
                   onValueChange={setDistributionCoverage}
                   disabled={!canEdit}
-                  options={COVERAGE_OPTIONS}
+                  options={coverageOptionsComCusto}
                   ariaLabel="Cobertura de distribuição"
                 />
                 <div className="mt-6 p-4 bg-primary/10 rounded-lg border border-primary/20">
@@ -1108,6 +1124,30 @@ export default function Decisoes() {
                       ? distributionChannels.map((c) => CHANNEL_LABELS[c] ?? c).join(", ")
                       : "Nenhum canal selecionado"}
                   </p>
+                  {custosDecisao?.ativo && (
+                    <div className="mt-3 space-y-1 border-t border-primary/20 pt-3 text-sm" data-testid="praca-custos">
+                      <p className="flex justify-between gap-3">
+                        <span className="text-muted-foreground">Cobertura {COVERAGE_OPTIONS.find((o) => o.value === distributionCoverage)?.label ?? ""}</span>
+                        <span className="tabular-nums">{formatarNumeroBR(custoCoberturaPraca(distributionCoverage || "regional"), 'moeda')}</span>
+                      </p>
+                      {distributionChannels.length > 0 ? distributionChannels.map((c) => (
+                        <p key={c} className="flex justify-between gap-3">
+                          <span className="text-muted-foreground">{CHANNEL_LABELS[c] ?? c}</span>
+                          <span className="tabular-nums">{formatarNumeroBR(custoCanalPraca(c), 'moeda')}</span>
+                        </p>
+                      )) : (
+                        <p className="flex justify-between gap-3">
+                          <span className="text-muted-foreground">Canal mínimo cobrado</span>
+                          <span className="tabular-nums">{formatarNumeroBR(custosDecisao.receitaReferencia * custosDecisao.custoPorCanal, 'moeda')}</span>
+                        </p>
+                      )}
+                      <p className="flex justify-between gap-3 border-t border-primary/20 pt-1 font-semibold">
+                        <span>Custo de distribuição{products.length > 1 && selectedProduct?.name ? ` — ${selectedProduct.name}` : ""}</span>
+                        <span className="tabular-nums" data-testid="text-praca-total">{formatarNumeroBR(productDistributionTotal, 'moeda')}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">Esse valor sai da mesma verba da Promoção. Fórmula no Manual do Aluno (custos de distribuição).</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -610,14 +610,14 @@ export function BudgetMeter({ productTotal, allProductsTotal, available, product
           <Megaphone className="h-5 w-5" />
         </span>
         <div>
-          <p className="text-sm text-muted-foreground">Investimento em promoção{productName ? ` — ${productName}` : ""}</p>
+          <p className="text-sm text-muted-foreground">Comunicação (mídias){productName ? ` — ${productName}` : ""}</p>
           <p className="text-3xl font-bold tabular-nums text-[#1447e6] dark:text-blue-300" data-testid="text-total-promotion-budget">
             {moeda(productTotal)}
           </p>
           <p className="text-sm text-muted-foreground">{mediaCount} {mediaCount === 1 ? "mídia selecionada" : "mídias selecionadas"}</p>
           {comDistribuicao && (
             <p className="mt-1 text-sm text-muted-foreground" data-testid="text-distribution-cost">
-              Distribuição (cobertura e canais): <span className="tabular-nums">{moeda(productDistribution ?? 0)}</span>
+              Distribuição (definida na aba Praça): <span className="tabular-nums">{moeda(productDistribution ?? 0)}</span>
             </p>
           )}
         </div>
