@@ -44,6 +44,7 @@ export default function Orcamento() {
         <p className="text-muted-foreground">
           Acompanhe a evolução do orçamento da sua equipe ao longo das rodadas
         </p>
+        <p className="text-xs text-muted-foreground mt-1">Como a verba é calculada: Manual do Aluno, seção 10.4 e Apêndice A (A.8).</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

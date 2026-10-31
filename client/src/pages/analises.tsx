@@ -430,9 +430,15 @@ export default function Analises() {
         </TabsList>
 
         <TabsContent value="kpis" className="space-y-6 mt-6">
+          {/* Grupo B (nov/2026): onde está a explicação de cada número, sem interpretar o resultado. */}
+          <p className="text-sm text-muted-foreground" data-testid="text-fontes-manual">
+            Cada indicador traz a seção do Manual do Aluno em que está a sua definição e a fórmula usada no cálculo. Os indicadores em linguagem simples estão no capítulo 11; as fórmulas, no Apêndice A.
+          </p>
           <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-6">
             <KPICard
               title="Receita"
+
+              fonte="A.4 e A.11"
               value={`R$ ${num(currentResult.revenue).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               icon={DollarSign}
               testId="text-revenue"
@@ -440,6 +446,8 @@ export default function Analises() {
             />
             <KPICard
               title="Lucro"
+
+              fonte="A.7 e A.11"
               value={`R$ ${num(currentResult.profit).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               trend={{
                 value: currentResult.margin,
@@ -451,6 +459,8 @@ export default function Analises() {
             />
             <KPICard
               title="Margem"
+
+              fonte="A.11"
               value={`${num(currentResult.margin).toFixed(1)}%`}
               icon={TrendingUp}
               testId="text-margin"
@@ -458,6 +468,8 @@ export default function Analises() {
             />
             <KPICard
               title="ROI"
+
+              fonte="A.7"
               value={`${num(currentResult.roi).toFixed(1)}%`}
               icon={Award}
               testId="text-roi"
@@ -465,6 +477,8 @@ export default function Analises() {
             />
             <KPICard
               title="Market Share"
+
+              fonte="A.2 e A.3"
               value={`${num(currentResult.marketShare).toFixed(1)}%`}
               icon={Users}
               testId="text-market-share"
@@ -472,6 +486,8 @@ export default function Analises() {
             />
             <KPICard
               title="Fidelização"
+
+              fonte="A.6"
               value={`${num(currentResult.customerLoyalty).toFixed(0)}/100`}
               icon={Heart}
               testId="text-loyalty"
@@ -819,6 +835,23 @@ export default function Analises() {
                               </p>
                             </div>
                           </div>
+                          {(() => {
+                            // Grupo B (nov/2026): o que o mercado leu da segmentação do produto
+                            // (dado do cálculo, sem interpretação). Fórmula: Manual do Aluno, A.3.
+                            const seg = ((currentResult as any)?.simulationBreakdown?.produtos ?? [])
+                              .find((p: any) => p?.productId === product.productId)?.segmentacao;
+                            if (!seg) return null;
+                            return (
+                              <div className="border-t pt-2 text-xs text-muted-foreground" data-testid={`text-product-segmentacao-${index}`}>
+                                <p>
+                                  Segmentação lida pelo mercado: <span className="font-medium text-foreground">{seg.segmento ?? "nenhuma opção marcada"}</span>
+                                  {seg.segmento ? ` · aderência ${Number(seg.aderencia ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}
+                                  {Array.isArray(seg.contradicoes) && seg.contradicoes.length > 0 ? ` · ${seg.contradicoes.length} combinação(ões) contraditória(s)` : ""}
+                                </p>
+                                <p>Manual do Aluno, A.3 e Apêndice B.</p>
+                              </div>
+                            );
+                          })()}
                         </CardContent>
                       </Card>
                     );
@@ -1039,6 +1072,8 @@ export default function Analises() {
             <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-5">
               <KPICard
                 title="CAC"
+
+                fonte="A.11"
                 value={`R$ ${num(currentResult.cac).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={Target}
                 description="Custo de Aquisição por Cliente"
@@ -1047,6 +1082,8 @@ export default function Analises() {
               />
               <KPICard
                 title="LTV"
+
+                fonte="A.11"
                 value={`R$ ${num(currentResult.ltv).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={Sparkles}
                 description="Lifetime Value do Cliente"
@@ -1055,6 +1092,8 @@ export default function Analises() {
               />
               <KPICard
                 title="Razão LTV/CAC"
+
+                fonte="A.11"
                 value={num(currentResult.razaoLtvCac).toFixed(2)}
                 icon={TrendingUpDown}
                 description={currentResult.razaoLtvCac >= 3 ? "Excelente!" : currentResult.razaoLtvCac >= 1 ? "Regular" : "Atenção"}
@@ -1067,6 +1106,8 @@ export default function Analises() {
               />
               <KPICard
                 title="Taxa de Conversão"
+
+                fonte="A.11"
                 value={`${num(currentResult.taxaConversao).toFixed(2)}%`}
                 icon={Percent}
                 description="Conversão de leads em clientes"
@@ -1075,6 +1116,8 @@ export default function Analises() {
               />
               <KPICard
                 title="Ticket Médio"
+
+                fonte="A.11"
                 value={`R$ ${num(currentResult.ticketMedio).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={ShoppingCart}
                 description="Valor médio por compra"
@@ -1095,6 +1138,8 @@ export default function Analises() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <KPICard
                 title="NPS"
+
+                fonte="A.6"
                 value={num(currentResult.nps).toFixed(0)}
                 icon={Star}
                 description="Net Promoter Score (-100 a +100)"
@@ -1107,6 +1152,8 @@ export default function Analises() {
               />
               <KPICard
                 title="Tempo de Conversão"
+
+                fonte="A.11"
                 value={`${num(currentResult.tempoMedioConversao).toFixed(0)} dias`}
                 icon={Clock}
                 description="Tempo médio até fechar venda"
@@ -1115,6 +1162,8 @@ export default function Analises() {
               />
               <KPICard
                 title="Margem de Contribuição"
+
+                fonte="A.11"
                 value={`R$ ${num(currentResult.margemContribuicao).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={BarChart3}
                 description="Receita líquida menos custos variáveis (em R$)"
@@ -1123,6 +1172,8 @@ export default function Analises() {
               />
               <KPICard
                 title="Receita Líquida"
+
+                fonte="A.7 e A.11"
                 value={`R$ ${num(currentResult.receitaLiquida).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={Coins}
                 description={`Bruta: R$ ${num(currentResult.receitaBruta).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
@@ -1140,6 +1191,7 @@ export default function Analises() {
               <p className="text-muted-foreground text-sm">
                 DRE detalhada com breakdown de receitas, custos e investimentos
               </p>
+              <p className="text-xs text-muted-foreground mt-1">Explicação das linhas: Manual do Aluno, seção 10.2 e Apêndice A (A.7 e A.11).</p>
             </div>
             <Button onClick={exportToExcel} variant="outline" data-testid="button-export-excel">
               <FileSpreadsheet className="h-4 w-4 mr-2" />

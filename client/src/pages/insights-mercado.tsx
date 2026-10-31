@@ -254,6 +254,7 @@ export default function InsightsMercado() {
         <p className="text-muted-foreground">
           Análise do setor {insights.sectorInfo.name} e indicadores da equipe
         </p>
+        <p className="text-xs text-muted-foreground mt-1">Explicação desta tela: Manual do Aluno, seção 10.3; fórmulas no Apêndice A.</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

@@ -24,9 +24,11 @@ interface KPICardProps {
   description?: string;
   testId?: string;
   color?: KPICardColor;
+  /** Grupo B (nov/2026): seção do Manual do Aluno que explica o número. */
+  fonte?: string;
 }
 
-export function KPICard({ title, value, trend, icon: Icon, description, testId, color = "indigo" }: KPICardProps) {
+export function KPICard({ title, value, trend, icon: Icon, description, testId, color = "indigo", fonte }: KPICardProps) {
   const { bg, shadow } = COLOR_MAP[color];
   // O dourado é claro demais para texto branco continuar legível; usa texto navy nesse caso.
   const textColor = color === "gold" ? "#3a2c00" : "#ffffff";
@@ -58,6 +60,11 @@ export function KPICard({ title, value, trend, icon: Icon, description, testId, 
           )}
           {description && !trend && (
             <p className="text-xs mt-2" style={{ color: mutedTextColor }}>{description}</p>
+          )}
+          {fonte && (
+            <p className="text-[11px] mt-2" style={{ color: mutedTextColor }} data-testid={testId ? `${testId}-fonte` : undefined}>
+              Manual do Aluno, {fonte}
+            </p>
           )}
         </div>
         <div className="p-3 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>

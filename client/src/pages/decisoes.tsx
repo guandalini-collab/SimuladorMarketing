@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatarNumeroBR } from "@/lib/formatters";
+import { fichaDaCategoria, custoUnitarioEstimado } from "@shared/fichaProduto";
 import { ChoiceCards, ScaleSelector, ToggleTiles, PriceSlider, MediaTile, BudgetMeter, mediaQuantityStep, type ChoiceOption } from "@/components/decision-choices";
 import {
   Award, Tag, Lightbulb, ShoppingCart, Boxes, Warehouse, Network, Handshake,
@@ -674,6 +675,20 @@ export default function Decisoes() {
     (c.name && selectedProduct?.name && semAcento(c.name) === semAcento(String(selectedProduct.name)))
   ) ?? marketSector?.categories?.[0];
 
+  // Grupo G (nov/2026): ficha do produto. Descreve, para a categoria do
+  // produto, o que cada nível de qualidade e de características representa
+  // (exemplos de mercado) e o custo unitário que o motor usa. Só dados.
+  const ficha = fichaDaCategoria(marketSector?.id, productCategory?.id);
+  const qualityOptions: ChoiceOption[] = ficha
+    ? QUALITY_OPTIONS.map((o) => ({ ...o, description: ficha.qualidade[o.value as keyof typeof ficha.qualidade] ?? o.description }))
+    : QUALITY_OPTIONS;
+  const featuresOptions: ChoiceOption[] = ficha
+    ? FEATURES_OPTIONS.map((o) => ({ ...o, description: ficha.recursos[o.value as keyof typeof ficha.recursos] ?? o.description }))
+    : FEATURES_OPTIONS;
+  const custoUnitarioFicha = ficha && productCategory?.averagePrice && marketSector?.margemBruta != null
+    ? custoUnitarioEstimado(productCategory.averagePrice, marketSector.margemBruta, productQuality, productFeatures)
+    : null;
+
   // Out/2026 (Grupo B): conferência de digitação do preço. Antes de enviar,
   // a confirmação lista os produtos com preço abaixo da metade ou acima do
   // dobro do preço médio de referência da categoria (ex.: "2.557" digitado
@@ -951,7 +966,7 @@ export default function Decisoes() {
                   value={productQuality}
                   onValueChange={setProductQuality}
                   disabled={!canEdit}
-                  options={QUALITY_OPTIONS}
+                  options={qualityOptions}
                   columns={3}
                   ariaLabel="Qualidade do produto"
                 />
@@ -975,10 +990,19 @@ export default function Decisoes() {
                   value={productFeatures}
                   onValueChange={setProductFeatures}
                   disabled={!canEdit}
-                  options={FEATURES_OPTIONS}
+                  options={featuresOptions}
                   columns={3}
                   ariaLabel="Características do produto"
                 />
+                {custoUnitarioFicha != null && (
+                  <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-sm" data-testid="ficha-produto">
+                    <p>
+                      <strong>Ficha do produto ({productCategory?.name}):</strong> preço médio de referência {formatarNumeroBR(productCategory.averagePrice, 'moeda')}
+                      {productCategory?.fontePreco ? ` (${productCategory.fontePreco})` : ""}; custo unitário estimado com a qualidade e as características escolhidas: <strong data-testid="text-custo-unitario">{formatarNumeroBR(custoUnitarioFicha, 'moeda')}</strong>, antes do efeito do dólar e da inflação.
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">As descrições são exemplos de mercado de cada nível. Ficha completa e fórmula: Manual do Aluno, Apêndice C.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
