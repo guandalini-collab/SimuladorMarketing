@@ -20,6 +20,7 @@ import { applyEquityCarryover, calculateEventImpact } from "../calculator";
 import { consolidateKpis, type ResultCoreMetrics } from "../utils/consolidateKpis";
 import { calculateStrategicAlignment } from "./strategicAlignment";
 import { categoriaDoProduto, type MarketBulletin } from "./marketBulletin";
+import { identificarSegmento, midiasPorSegmento, segmentosDaCategoria, SEGMENTOS_ELETRONICOS, type IdentificacaoSegmento } from "@shared/segmentacao";
 import {
   ALIQUOTA_IR_CSLL,
   PARTICIPACAO_RS,
@@ -210,6 +211,24 @@ export function investimentoEmMidias(mix: Pick<MarketingMix, "promotionBudgets" 
   return Object.entries(budgets).reduce((s, [id, v]) => (ativas && !ativas.has(id) ? s : s + (Number(v) || 0)), 0);
 }
 
+/** E1: orçamento só das mídias ativas (id → R$). */
+function orcamentosAtivos(mix: Pick<MarketingMix, "promotionBudgets" | "promotionMix">): Record<string, number> {
+  const budgets = (mix.promotionBudgets as Record<string, number> | null) ?? {};
+  const ativas = Array.isArray(mix.promotionMix) ? new Set(mix.promotionMix as string[]) : null;
+  return Object.fromEntries(Object.entries(budgets).filter(([id]) => !ativas || ativas.has(id)));
+}
+
+/**
+ * E1 (nov/2026, PARÂMETRO DO MODELO): público de cada concorrente, coerente
+ * com o perfil (Alfa premium, Beta popular, Gama intermediário, Delta regional).
+ */
+const ALVO_DOS_CONCORRENTES: Record<string, { id: string; aderencia: number }> = {
+  alfa: { id: "profissional_exigente", aderencia: 0.8 },
+  beta: { id: "economico", aderencia: 0.8 },
+  gama: { id: "jovem_conectado", aderencia: 0.7 },
+  delta: { id: "familia_pratica", aderencia: 0.7 },
+};
+
 /** Custo da decisão no motor competitivo: comunicação (mídias) + distribuição. */
 export function custoDecisaoCompetitiva(mix: Pick<MarketingMix, "promotionBudgets" | "promotionMix" | "distributionChannels" | "distributionCoverage">, receitaRef: number): number {
   const midias = investimentoEmMidias(mix);
@@ -389,7 +408,13 @@ export async function processarMercadoCompetitivo(
   const fatorSemana = (d: DecisaoProduto) => fatorPreferencia(d.posicionamento, preferencia) * (d.qualidade === "premium" ? saz.bonusPremium : 1);
 
   // 1) Decisões enviadas de cada equipe, agrupadas por categoria
-  interface ItemEquipe { team: Team; mix: MarketingMix; categoriaId: string; alinhamento: ReturnType<typeof calculateStrategicAlignment>; alinhamentoNeutro?: boolean }
+  interface ItemEquipe { team: Team; mix: MarketingMix; categoriaId: string; alinhamento: ReturnType<typeof calculateStrategicAlignment>; alinhamentoNeutro?: boolean; segmentacao?: IdentificacaoSegmento | null }
+  // E1 (nov/2026): segmentação por produto só nas turmas com consumidor (B2C/híbrida)
+  // de setores que têm segmentos definidos (por enquanto, Eletrônicos).
+  const usaSegmentos = classData.businessType !== "b2b" && segmentosDaCategoria(setor.id, setor.categories[0]?.id ?? "") !== null;
+  const nomesDasMidias: Record<string, string> = usaSegmentos
+    ? Object.fromEntries((await storage.getAllMidias()).map((m: any) => [m.id, m.nome]))
+    : {};
   const porCategoria = new Map<string, ItemEquipe[]>();
   const enviaram = new Set<string>();
   // Out/2026: com análises prontas da rodada, se alguma delas faltar (falha
@@ -415,7 +440,9 @@ export async function processarMercadoCompetitivo(
         porter: porter ?? null,
         bcg: bcgDoProduto ?? null,
         pestel: pestel ?? null,
-        segmentation,
+        // E1: linhas por produto (tópicos) não entram na avaliação antiga de
+        // alinhamento, que continua usando só a segmentação geral da equipe.
+        segmentation: segmentation.filter((s) => !s.productId),
         businessType: classData.businessType,
         marketingMix: mix,
         aiAssistanceLevel: round.aiAssistanceLevel ?? 1,
@@ -427,7 +454,11 @@ export async function processarMercadoCompetitivo(
       });
       const alinhamentoNeutro = analisesProntas && (!swot || !porter || !pestel || !bcgDoProduto);
       const lista = porCategoria.get(categoria.id) ?? [];
-      lista.push({ team, mix, categoriaId: categoria.id, alinhamento, alinhamentoNeutro });
+      const linhaDoProduto = usaSegmentos && mix.productId
+        ? segmentation.find((s) => s.segmentType === "b2c" && s.productId === mix.productId)
+        : undefined;
+      const segmentacao = usaSegmentos ? identificarSegmento(linhaDoProduto ?? null) : null;
+      lista.push({ team, mix, categoriaId: categoria.id, alinhamento, alinhamentoNeutro, segmentacao });
       porCategoria.set(categoria.id, lista);
     }
   }
@@ -445,7 +476,7 @@ export async function processarMercadoCompetitivo(
   }
 
   // 2) Mercado de cada categoria em que há ofertas de equipes
-  const kpisPorEquipe = new Map<string, { kpis: ResultCoreMetrics; mix: MarketingMix; alinhamento: ItemEquipe["alinhamento"]; alinhamentoNeutro?: boolean }[]>();
+  const kpisPorEquipe = new Map<string, { kpis: ResultCoreMetrics; mix: MarketingMix; alinhamento: ItemEquipe["alinhamento"]; alinhamentoNeutro?: boolean; segmentacao?: IdentificacaoSegmento | null }[]>();
   for (const [categoriaId, itens] of Array.from(porCategoria.entries())) {
     const categoria = setor.categories.find((c) => c.id === categoriaId)!;
     const ctx: ContextoCategoria = {
@@ -461,6 +492,7 @@ export async function processarMercadoCompetitivo(
       multiplicadorDemanda: multDemanda,
       multiplicadorSensibilidade: multSensibilidade,
       multiplicadorCusto,
+      segmentos: usaSegmentos ? segmentosDaCategoria(setor.id, categoriaId) ?? undefined : undefined,
     };
     const decisoesEquipes = itens.map((i) => decisaoDaEquipe(i.mix));
     const desgaste = new Map<string, { midias: string[]; semanas: number }>();
@@ -483,6 +515,13 @@ export async function processarMercadoCompetitivo(
         lembrancaAnterior: prev?.lembranca ?? 0.25,
         fidelidadeAnterior: prev?.fidelidade ?? 50,
         eficaciaComunicacao: eficaciaPorRepeticao(semanas),
+        // E1: público-alvo do produto e mídias usadas por segmento.
+        segmentoAlvo: i.segmentacao?.segmentoId && i.segmentacao.aderencia > 0
+          ? { id: i.segmentacao.segmentoId, aderencia: i.segmentacao.aderencia }
+          : undefined,
+        midiasPorSegmento: ctx.segmentos
+          ? midiasPorSegmento(orcamentosAtivos(i.mix), nomesDasMidias)
+          : undefined,
       };
     });
     const estadoConc = anterior?.concorrentes?.[categoriaId] ?? {};
@@ -496,6 +535,7 @@ export async function processarMercadoCompetitivo(
         decisao: d,
         lembrancaAnterior: estadoConc[p.id]?.lembranca ?? p.lembrancaInicial,
         fidelidadeAnterior: estadoConc[p.id]?.fidelidade ?? p.fidelidadeInicial,
+        segmentoAlvo: ctx.segmentos ? ALVO_DOS_CONCORRENTES[p.id] : undefined,
       });
     }
 
@@ -520,7 +560,7 @@ export async function processarMercadoCompetitivo(
         novoEstado.equipes[o.equipeId].produtos[categoriaId] = { lembranca: o.lembranca, fidelidade: o.fidelidade, midias: dg?.midias ?? [], semanasMesmasMidias: dg?.semanas ?? 0 };
         const item = itens.find((i) => `${i.team.id}:${i.mix.id}` === o.id)!;
         const lista = kpisPorEquipe.get(o.equipeId) ?? [];
-        lista.push({ kpis: kpisDaOferta(o, resultado), mix: item.mix, alinhamento: item.alinhamento, alinhamentoNeutro: item.alinhamentoNeutro });
+        lista.push({ kpis: kpisDaOferta(o, resultado), mix: item.mix, alinhamento: item.alinhamento, alinhamentoNeutro: item.alinhamentoNeutro, segmentacao: item.segmentacao });
         kpisPorEquipe.set(o.equipeId, lista);
       }
     }
@@ -602,7 +642,21 @@ export async function processarMercadoCompetitivo(
         praca: "Rio Grande do Sul",
         verbaInicial: verbaIni,
         proximaVerba: budgetAfter,
-        produtos: lista.map((l) => ({ productId: l.mix.productId, receita: l.kpis.revenue, lucro: l.kpis.profit })),
+        produtos: lista.map((l) => ({
+          productId: l.mix.productId,
+          receita: l.kpis.revenue,
+          lucro: l.kpis.profit,
+          // E1 (nov/2026): público identificado na segmentação do produto.
+          ...(l.segmentacao ? {
+            segmentacao: {
+              segmentoId: l.segmentacao.segmentoId,
+              segmento: SEGMENTOS_ELETRONICOS.find((s) => s.id === l.segmentacao!.segmentoId)?.nome ?? null,
+              aderencia: l.segmentacao.aderencia,
+              contradicoes: l.segmentacao.contradicoes,
+              topicosPorCriterio: l.segmentacao.topicosPorCriterio,
+            },
+          } : {}),
+        })),
         multiplicadorDemanda: multDemanda,
         multiplicadorSensibilidade: multSensibilidade,
         // Nov/2026 (H2 e H4): registro do que pesou na semana.

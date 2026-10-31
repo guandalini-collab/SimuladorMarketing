@@ -1531,7 +1531,7 @@ export class MemStorage implements IStorage {
   async getMarketSegmentation(teamId: string, roundId: string, segmentType: string, productId?: string): Promise<MarketSegmentation | undefined> {
     const matches = Array.from(this.marketSegmentations.values()).filter(
       seg => seg.teamId === teamId && seg.roundId === roundId && seg.segmentType === segmentType &&
-             (productId !== undefined ? seg.productId === productId : true)
+             (productId !== undefined ? seg.productId === productId : seg.productId == null)
     );
     return matches[0];
   }

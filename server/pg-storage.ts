@@ -1,7 +1,7 @@
 import { classificarBcg } from "@shared/bcg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { eq, and, desc, inArray, asc, sql } from "drizzle-orm";
+import { eq, and, desc, inArray, asc, sql, isNull } from "drizzle-orm";
 import {
   type User,
   type InsertUser,
@@ -1132,9 +1132,11 @@ export class PgStorage implements IStorage {
       eq(marketSegmentation.roundId, roundId),
       eq(marketSegmentation.segmentType, segmentType),
     ];
+    // E1 (nov/2026): sem productId, busca a linha geral da equipe (productId
+    // nulo). Antes podia devolver uma linha de produto (tópicos por produto).
     const conditions = productId !== undefined
       ? [...baseConditions, eq(marketSegmentation.productId, productId)]
-      : baseConditions;
+      : [...baseConditions, isNull(marketSegmentation.productId)];
     const result = await db.select().from(marketSegmentation)
       .where(and(...conditions))
       .limit(1);

@@ -16,6 +16,7 @@ import BcgMatrixChart from "@/components/BcgMatrixChart";
 import { CORES_BCG } from "@/components/bcg-matriz";
 import { classificarBcg, participacaoRelativa } from "@shared/bcg";
 import { SwotSomenteLeitura, PorterSomenteLeitura, BcgSomenteLeitura, PestelSomenteLeitura } from "@/components/analises-prontas";
+import { SegmentacaoPorProduto } from "@/components/segmentacao-por-produto";
 
 export default function Estrategia() {
   const { toast } = useToast();
@@ -52,7 +53,7 @@ export default function Estrategia() {
     porter?: any;
     bcg?: any[];
     pestel?: any;
-    segmentation?: { b2c?: any; b2b?: any };
+    segmentation?: { b2c?: any; b2b?: any; porProduto?: any[] };
     analisesDaIA?: boolean;
   }>({
     queryKey: ["/api/strategy", currentRound?.id],
@@ -202,6 +203,9 @@ export default function Estrategia() {
             b2cData={strategy?.segmentation?.b2c}
             b2bData={strategy?.segmentation?.b2b}
             analisesProntas={!!strategy?.analisesDaIA}
+            classId={currentClass?.id}
+            sector={currentClass?.sector}
+            porProduto={strategy?.segmentation?.porProduto ?? []}
           />
         </TabsContent>
       </Tabs>
@@ -897,6 +901,9 @@ function SegmentacaoTab({
   b2cData,
   b2bData,
   analisesProntas = false,
+  classId,
+  sector,
+  porProduto = [],
 }: {
   roundId: string;
   roundNumber: number;
@@ -905,16 +912,24 @@ function SegmentacaoTab({
   b2cData?: any;
   b2bData?: any;
   analisesProntas?: boolean;
+  classId?: string;
+  sector?: string;
+  porProduto?: any[];
 }) {
   const requiredTypes: Array<"b2c" | "b2b"> = businessType === "hibrido" ? ["b2c", "b2b"] : businessType === "b2b" ? ["b2b"] : ["b2c"];
+  // E1 (nov/2026): público-alvo por produto, com tópicos (por enquanto, Eletrônicos).
+  const porProdutoAtivo = requiredTypes.includes("b2c") && sector === "eletronicos" && !!classId;
 
   return (
     <div className="space-y-6">
+      {porProdutoAtivo && (
+        <SegmentacaoPorProduto roundId={roundId} roundStatus={roundStatus} classId={classId!} linhas={porProduto} />
+      )}
       {requiredTypes.includes("b2c") && (
         <SegmentationSection
           segmentType="b2c"
-          title="Segmentação de Mercado — Consumidor (B2C)"
-          description="Defina os segmentos de pessoas físicas que sua empresa vai atender"
+          title={porProdutoAtivo ? "Visão geral da equipe — Consumidor (B2C)" : "Segmentação de Mercado — Consumidor (B2C)"}
+          description={porProdutoAtivo ? "Anotações gerais da equipe em texto livre. O público-alvo de cada produto é definido acima, pelos critérios." : "Defina os segmentos de pessoas físicas que sua empresa vai atender"}
           color="#c026d3"
           categories={B2C_CATEGORIES}
           roundId={roundId}

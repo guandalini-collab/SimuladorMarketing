@@ -178,10 +178,13 @@ export async function carryForwardStrategyAnalyses(
       // (mesmo segmentType) na rodada atual.
       const existingSegmentations = await storage.getMarketSegmentationsByTeamAndRound(team.id, round.id);
       const prevSegmentations = await storage.getMarketSegmentationsByTeamAndRound(team.id, previousRound.id);
-      const existingSegmentTypes = new Set(existingSegmentations.map(s => s.segmentType));
+      // E1 (nov/2026): a chave inclui o produto, para herdar também as
+      // segmentações por produto (tópicos) ao lado da linha geral.
+      const chaveSeg = (s: { segmentType: string; productId?: string | null }) => `${s.segmentType}:${s.productId ?? ""}`;
+      const existingSegmentTypes = new Set(existingSegmentations.map(chaveSeg));
 
       for (const prevSeg of prevSegmentations) {
-        if (existingSegmentTypes.has(prevSeg.segmentType)) continue;
+        if (existingSegmentTypes.has(chaveSeg(prevSeg))) continue;
         await storage.createMarketSegmentation({
           teamId: team.id,
           roundId: round.id,

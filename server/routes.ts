@@ -205,10 +205,10 @@ function isSegmentationComplete(
   businessType: string | null | undefined
 ): boolean {
   const requiredTypes = getRequiredSegmentTypes(businessType);
-  return requiredTypes.every(type => {
-    const row = segmentations.find(s => s.segmentType === type);
-    return !!row && isSegmentationRowComplete(row);
-  });
+  // E1 (nov/2026): vale a linha geral ou qualquer segmentação por produto.
+  return requiredTypes.every(type =>
+    segmentations.some(s => s.segmentType === type && isSegmentationRowComplete(s))
+  );
 }
 
 declare module "express-session" {
@@ -5308,8 +5308,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ]);
 
     const segmentation = {
-      b2c: segmentationList.find(s => s.segmentType === "b2c"),
-      b2b: segmentationList.find(s => s.segmentType === "b2b"),
+      b2c: segmentationList.find(s => s.segmentType === "b2c" && !s.productId),
+      b2b: segmentationList.find(s => s.segmentType === "b2b" && !s.productId),
+      // E1 (nov/2026): segmentação por produto (tópicos).
+      porProduto: segmentationList.filter(s => !!s.productId),
     };
 
     // Out/2026: indica à tela que SWOT, Porter, BCG e PESTEL são entregues
@@ -5352,8 +5354,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ]);
 
     const segmentation = {
-      b2c: segmentationList.find(s => s.segmentType === "b2c"),
-      b2b: segmentationList.find(s => s.segmentType === "b2b"),
+      b2c: segmentationList.find(s => s.segmentType === "b2c" && !s.productId),
+      b2b: segmentationList.find(s => s.segmentType === "b2b" && !s.productId),
+      // E1 (nov/2026): segmentação por produto (tópicos).
+      porProduto: segmentationList.filter(s => !!s.productId),
     };
 
     // Out/2026: indica à tela que SWOT, Porter, BCG e PESTEL são entregues
@@ -5699,7 +5703,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
       }
 
-      const existing = await storage.getMarketSegmentation(team.id, data.roundId, data.segmentType);
+      // E1 (nov/2026): segmentação por produto (tópicos). Só aceita códigos
+      // do catálogo, no máximo 2 opções por tópico, e produto do setor da turma.
+      if (data.productId) {
+        const produto = await storage.getProduct(data.productId);
+        const turma = await storage.getClass(team.classId);
+        if (!produto || !turma || produto.sector !== turma.sector) {
+          return res.status(400).json({ error: "Produto inválido para esta turma" });
+        }
+        if (data.segmentType !== "b2c") {
+          return res.status(400).json({ error: "A segmentação por produto vale para consumidor (B2C)" });
+        }
+        const { sanearCodigos } = await import("@shared/segmentacao");
+        data.demographic = sanearCodigos("demographic", data.demographic);
+        data.geographic = sanearCodigos("geographic", data.geographic);
+        data.psychographic = sanearCodigos("psychographic", data.psychographic);
+        data.behavioral = sanearCodigos("behavioral", data.behavioral);
+        data.firmographic = [];
+        data.buyingCenter = [];
+      }
+
+      const existing = await storage.getMarketSegmentation(team.id, data.roundId, data.segmentType, data.productId ?? undefined);
 
       let segmentation;
       if (existing) {

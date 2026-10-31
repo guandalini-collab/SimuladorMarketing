@@ -66,7 +66,7 @@ export async function autoGenerateMinimalAnalysesForAllTeams(
           ? ["b2c", "b2b"]
           : [classData.businessType === "b2b" ? "b2b" : "b2c"];
         const hasAllRequiredSegmentations = requiredSegmentTypes.every(
-          type => existingSegmentations.some(s => s.segmentType === type)
+          type => existingSegmentations.some(s => s.segmentType === type && !s.productId)
         );
 
         // Se já tem análises completas, pular (não conta como sucesso de geração)
@@ -195,7 +195,7 @@ export async function autoGenerateMinimalAnalysesForAllTeams(
         // Salvar Segmentação de Mercado — só o(s) segmentType exigido(s)
         // pelo businessType da turma (ver requiredSegmentTypes acima).
         for (const segmentType of requiredSegmentTypes) {
-          const alreadyHasType = existingSegmentations.some(s => s.segmentType === segmentType);
+          const alreadyHasType = existingSegmentations.some(s => s.segmentType === segmentType && !s.productId);
           if (alreadyHasType) continue;
 
           const segData = segmentType === "b2b" ? analyses.segmentation.b2b : analyses.segmentation.b2c;

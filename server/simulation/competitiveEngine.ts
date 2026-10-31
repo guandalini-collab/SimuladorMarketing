@@ -1,3 +1,5 @@
+import type { SegmentoConsumidor } from "@shared/segmentacao";
+
 /**
  * Motor de mercado competitivo do Simula+ (v3, out/2026).
  *
@@ -128,6 +130,10 @@ export interface Oferta {
    * lembrança gerada; o custo das mídias continua o valor investido.
    */
   eficaciaComunicacao?: number;
+  /** E1 (nov/2026): segmento que a oferta mira e a aderência da segmentação (0..1). */
+  segmentoAlvo?: { id: string; aderencia: number };
+  /** E1: parcela da verba de mídias nas mídias preferidas de cada segmento (0..1). */
+  midiasPorSegmento?: Record<string, number>;
 }
 
 /**
@@ -166,6 +172,38 @@ export interface ContextoCategoria {
   multiplicadorSensibilidade: number; // boletim: sensibilidade a preço
   /** H4 (nov/2026): custo do produto conforme dólar e inflação reais (1 = custo da semana-base). */
   multiplicadorCusto?: number;
+  /**
+   * E1 (nov/2026): segmentos de consumidores da categoria (peso 0..1). Sem
+   * segmentos, a categoria tem um único consumidor médio, como antes.
+   */
+  segmentos?: { segmento: SegmentoConsumidor; peso: number }[];
+}
+
+/**
+ * E1 (nov/2026, PARÂMETROS DO MODELO): resposta de cada segmento à oferta.
+ * - BONUS_ALVO: vantagem no segmento que a equipe mirou, proporcional à
+ *   aderência da segmentação (0..1);
+ * - PERDA_FORA_DO_ALVO: quem mira um público perde um pouco de apelo nos outros;
+ * - canais e mídias: quanto a oferta está onde o segmento compra e se informa.
+ */
+const BONUS_ALVO = 0.45;
+const PERDA_FORA_DO_ALVO = 0.1;
+function limitarFator(x: number, min: number, max: number) { return Math.min(max, Math.max(min, Number.isFinite(x) ? x : 1)); }
+
+function fatorDoSegmento(o: Oferta, seg: SegmentoConsumidor, precoEfetivoRelativo: number, elasticidade: number): number {
+  // Preço: o segmento reage mais (ou menos) ao preço do que a média do setor.
+  const preco = limitarFator(Math.pow(Math.max(0.05, precoEfetivoRelativo), -elasticidade * (seg.sensibilidadePreco - 1)), 0.4, 2.5);
+  const qualidade = seg.preferenciaQualidade[o.decisao.qualidade] ?? 1;
+  const presenca = o.decisao.canais.reduce((s, c) => s + (seg.canais[c] ?? 0), 0);
+  const canais = 0.6 + 0.8 * Math.min(1, presenca);
+  const parteMidias = o.midiasPorSegmento?.[seg.id];
+  const midias = parteMidias === undefined ? 1 : 0.85 + 0.3 * parteMidias;
+  const alvo = o.segmentoAlvo
+    ? o.segmentoAlvo.id === seg.id
+      ? 1 + BONUS_ALVO * o.segmentoAlvo.aderencia
+      : 1 - PERDA_FORA_DO_ALVO * o.segmentoAlvo.aderencia
+    : 1;
+  return preco * qualidade * canais * midias * alvo;
 }
 
 /**
@@ -309,7 +347,26 @@ export function calcularCategoria(ctx: ContextoCategoria, ofertas: Oferta[], fat
   // antes desfazia a normalização das fatias. Sem efeito para valores válidos.
   const somaBruta = atratividades.reduce((a, b) => a + (Number.isFinite(b) ? b : 0), 0);
   const somaA = Number.isFinite(somaBruta) && somaBruta > 0 ? somaBruta : 1;
-  const fatias = atratividades.map((a) => (Number.isFinite(a) ? a : 0) / somaA);
+  let fatias = atratividades.map((a) => (Number.isFinite(a) ? a : 0) / somaA);
+
+  // E1 (nov/2026): com segmentos, a demanda se divide entre eles e cada
+  // segmento escolhe entre as ofertas conforme o próprio perfil. A fatia
+  // final é a soma ponderada das fatias em cada segmento.
+  if (ctx.segmentos && ctx.segmentos.length > 0) {
+    const pesoTotal = ctx.segmentos.reduce((s, x) => s + x.peso, 0) || 1;
+    const acumulado = ofertas.map(() => 0);
+    for (const { segmento, peso } of ctx.segmentos) {
+      const noSegmento = atratividades.map((a, i) => {
+        const v = (Number.isFinite(a) ? a : 0) * fatorDoSegmento(ofertas[i], segmento, (ofertas[i].decisao.preco / valorPercebido(ofertas[i].decisao)) / ref, elasticidade);
+        return Number.isFinite(v) ? v : 0;
+      });
+      const soma = noSegmento.reduce((a, b) => a + b, 0);
+      if (soma <= 0) continue;
+      noSegmento.forEach((v, i) => { acumulado[i] += (peso / pesoTotal) * (v / soma); });
+    }
+    const somaAcum = acumulado.reduce((a, b) => a + b, 0);
+    if (somaAcum > 0) fatias = acumulado.map((v) => v / somaAcum);
+  }
 
   // 3) Demanda total da categoria: base real × sazonalidade/eventos × nível de preço
   const precoMedio = ofertas.reduce((s, o, i) => s + fatias[i] * o.decisao.preco, 0) || ref;
