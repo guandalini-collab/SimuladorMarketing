@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Rodadas semanais (pedido do professor, out/2026 — regras em
 // shared/rodadaSemanal.ts). Horário de Brasília. O professor escolhe no
@@ -139,6 +140,24 @@ export function SeloRodadaTeste() {
 }
 
 /** Opção "Rodada de teste" dos diálogos de datas e de início. */
+function CampoProdutos({ valor, maximo, onChange }: { valor: number; maximo: number; onChange: (n: number) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3" data-testid="campo-produtos-rodada">
+      <Label htmlFor="produtos-rodada" className="text-sm">Produtos nesta rodada</Label>
+      <Select value={String(valor)} onValueChange={(v) => onChange(Number(v))}>
+        <SelectTrigger id="produtos-rodada" className="w-[90px]" data-testid="select-produtos-rodada">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {Array.from({ length: maximo }, (_, i) => i + 1).map((n) => (
+            <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 function CampoRodadaTeste({ marcado, onChange }: { marcado: boolean; onChange: (v: boolean) => void }) {
   return (
     <label className="flex cursor-pointer items-start gap-2 rounded-md border p-2 text-sm" data-testid="campo-rodada-teste">
@@ -203,6 +222,7 @@ export function DialogoDatasRodada({
   pending,
   onSalvar,
   onRemover,
+  maxProdutos,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -210,8 +230,10 @@ export function DialogoDatasRodada({
   rodadas: Round[];
   pending: boolean;
   /** Instantes ISO (com fuso de Brasília) escolhidos pelo professor. */
-  onSalvar: (datas: { inicio?: string; fim: string; isPractice?: boolean }) => void;
+  onSalvar: (datas: { inicio?: string; fim: string; isPractice?: boolean; productCount?: number }) => void;
   onRemover: () => void;
+  /** Quantidade de produtos do setor da turma (limite do campo "Produtos nesta rodada"). */
+  maxProdutos?: number;
 }) {
   const aberta = round?.status === "active";
   const [faixa, setFaixa] = useState<DateRange | undefined>();
@@ -220,6 +242,7 @@ export function DialogoDatasRodada({
   const [horaFim, setHoraFim] = useState("22:50");
   const [fimEditado, setFimEditado] = useState(false);
   const [teste, setTeste] = useState(false);
+  const [produtos, setProdutos] = useState(1);
   // Out/2026 (regra unificada): só a rodada de teste pode durar vários dias;
   // todas as rodadas que valem nota, inclusive a Rodada 1, duram a aula.
   const adaptacao = rodadaDeAdaptacao(round?.roundNumber ?? 1, aberta ? round?.isPractice : teste);
@@ -235,6 +258,7 @@ export function DialogoDatasRodada({
     setHoraFim(round.scheduledEndAt ? horaBrasilia(round.scheduledEndAt) : round.isPractice ? "23:59" : somarMinutos(hIni, DURACAO_AULA_MINUTOS));
     setFimEditado(!!round.scheduledEndAt);
     setTeste(round.isPractice === true);
+    setProdutos(round.productCount ?? 1);
   }, [open, round?.id]);
 
   // Rodadas 2+: enquanto o professor não mexer no fechamento, ele acompanha
@@ -274,7 +298,7 @@ export function DialogoDatasRodada({
 
   const salvar = () => {
     if (!fim || !podeSalvar) return;
-    onSalvar({ inicio: aberta || !inicio ? undefined : iso(inicio, horaInicio), fim: iso(fim, horaFim), isPractice: aberta ? undefined : teste });
+    onSalvar({ inicio: aberta || !inicio ? undefined : iso(inicio, horaInicio), fim: iso(fim, horaFim), isPractice: aberta ? undefined : teste, productCount: aberta ? undefined : produtos });
   };
 
   const titulo = aberta ? `Fechamento da Rodada ${round?.roundNumber}` : `Datas da Rodada ${round?.roundNumber ?? ""}`;
@@ -301,6 +325,7 @@ export function DialogoDatasRodada({
         <div className="space-y-2">
           {!aberta && <CampoHora id="hora-abertura" rotulo="Horário de abertura" valor={horaInicio} onChange={mudarHoraInicio} />}
           <CampoHora id="hora-fechamento" rotulo="Horário de fechamento" valor={horaFim} onChange={mudarHoraFim} />
+          {!aberta && (maxProdutos ?? 1) > 1 && <CampoProdutos valor={Math.min(produtos, maxProdutos ?? 1)} maximo={maxProdutos ?? 1} onChange={setProdutos} />}
           {!aberta && <CampoRodadaTeste marcado={teste} onChange={setTeste} />}
         </div>
         <AvisoFeriado dias={[inicio, fim]} />

@@ -3108,7 +3108,7 @@ export default function Professor() {
   }, [selectedClass, previousRoundProductCount]);
 
   const scheduleRoundMutation = useMutation({
-    mutationFn: async (data: { roundId: string; inicio?: string; fim?: string; clear?: boolean; isPractice?: boolean }) => {
+    mutationFn: async (data: { roundId: string; inicio?: string; fim?: string; clear?: boolean; isPractice?: boolean; productCount?: number }) => {
       // Rodadas semanais (out/2026): o diálogo envia o dia e o horário de
       // abertura e de fechamento escolhidos pelo professor, como instantes
       // ISO com fuso de Brasília (shared/rodadaSemanal.ts).
@@ -3117,6 +3117,7 @@ export default function Professor() {
         scheduledEndAt: data.fim ?? null,
         clear: data.clear ?? false,
         ...(typeof data.isPractice === "boolean" ? { isPractice: data.isPractice } : {}),
+        ...(typeof data.productCount === "number" ? { productCount: data.productCount } : {}),
       });
       return res.json();
     },
@@ -4941,7 +4942,8 @@ export default function Professor() {
         round={rounds.find((r) => r.id === roundBeingScheduled) ?? null}
         rodadas={rounds}
         pending={scheduleRoundMutation.isPending}
-        onSalvar={({ inicio, fim, isPractice }) => { if (roundBeingScheduled) scheduleRoundMutation.mutate({ roundId: roundBeingScheduled, inicio, fim, isPractice }); }}
+        onSalvar={({ inicio, fim, isPractice, productCount }) => { if (roundBeingScheduled) scheduleRoundMutation.mutate({ roundId: roundBeingScheduled, inicio, fim, isPractice, productCount }); }}
+        maxProdutos={maxRoundProducts}
         onRemover={() => { if (roundBeingScheduled) scheduleRoundMutation.mutate({ roundId: roundBeingScheduled, clear: true }); }}
       />
 

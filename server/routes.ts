@@ -1938,10 +1938,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Create new locked round
     let round;
     try {
+      // Nov/2026: herda a quantidade de produtos da última rodada da turma
+      // (antes nascia sempre com 1).
+      const ultimaRodada = [...existingRounds].sort((a, b) => b.roundNumber - a.roundNumber)[0];
       round = await storage.createRound({
         classId: req.params.classId,
         roundNumber: newRoundNumber,
         status: "locked",
+        productCount: ultimaRodada?.productCount ?? 1,
       });
     } catch (error: any) {
       // Grupo D (auditoria de 2026-09): mesma corrida de "ler depois criar"
@@ -2494,6 +2498,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (startDate) updates.scheduledStartAt = startDate;
       if (endDate) updates.scheduledEndAt = endDate;
       if (isPractice !== undefined) updates.isPractice = isPractice;
+      // Nov/2026: a quantidade de produtos é escolhida junto com as datas.
+      // Antes, a rodada agendada abria com o número gravado ao ser criada
+      // (1), e o professor precisava abrir na mão para jogar com mais.
+      if (req.body?.productCount !== undefined && req.body?.productCount !== null && round.status === "locked") {
+        const n = Number(req.body.productCount);
+        const produtosDoSetor = classForRound.sector ? await storage.getProductsBySector(classForRound.sector) : [];
+        const maximo = Math.max(1, produtosDoSetor.length);
+        if (!Number.isInteger(n) || n < 1 || n > maximo) {
+          return res.status(400).json({ error: `Quantidade de produtos inválida: escolha de 1 a ${maximo}.` });
+        }
+        updates.productCount = n;
+      }
 
       const updated = await storage.updateRound(req.params.roundId, updates);
       res.json(updated);
