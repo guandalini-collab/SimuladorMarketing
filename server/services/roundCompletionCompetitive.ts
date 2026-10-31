@@ -519,8 +519,9 @@ export async function processarMercadoCompetitivo(
         segmentoAlvo: i.segmentacao?.segmentoId && i.segmentacao.aderencia > 0
           ? { id: i.segmentacao.segmentoId, aderencia: i.segmentacao.aderencia }
           : undefined,
+        // Sem investimento em mídias, nenhuma parcela chega às mídias dos segmentos.
         midiasPorSegmento: ctx.segmentos
-          ? midiasPorSegmento(orcamentosAtivos(i.mix), nomesDasMidias)
+          ? midiasPorSegmento(orcamentosAtivos(i.mix), nomesDasMidias) ?? Object.fromEntries(SEGMENTOS_ELETRONICOS.map((s) => [s.id, 0]))
           : undefined,
       };
     });

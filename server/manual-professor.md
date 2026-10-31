@@ -260,7 +260,9 @@ Para definir as datas, crie as rodadas com o botão **Adicionar** (Seção 7.1) 
 - **Fechamento editável:** se a aula tiver outra duração, mude o horário de fechamento. Exemplo: abertura às 20h50, fechamento às 22h30. Depois que você altera o fechamento, ele não acompanha mais a abertura.
 - **Regra única (out/2026):** desde a Rodada 1, a decisão é tomada durante a aula. A semana para conhecer o sistema, ler os manuais e treinar é a **rodada de teste**, que não vale nota.
 
-A **semana simulada** é a semana de segunda a domingo que contém o dia de abertura: uma aula em 26/10/2026 simula a semana de 26/10 a 01/11/2026.
+A **semana simulada** é a semana de segunda a domingo que contém o dia de abertura: uma aula em 26/10/2026 simula a semana de 26/10 a 01/11/2026. O card da rodada mostra essa semana com o rótulo **Semana simulada no jogo** (por exemplo, "Semana simulada no jogo: 09 a 15/11/2026"); ele indica o período que a rodada representa no mercado, e não o período em que a rodada fica aberta, que é o dia e os horários escolhidos no calendário.
+
+**Produtos nesta rodada:** o diálogo de datas tem o campo **Produtos nesta rodada** (de 1 até o número de produtos do setor). A rodada abre com essa quantidade de produtos, inclusive quando é aberta pelo agendamento. Uma rodada nova criada com **Adicionar** já vem com a quantidade da rodada anterior.
 
 **Preparação 30 minutos antes:** a IA gera os eventos de mercado, o boletim e as análises da rodada sempre 30 minutos antes do horário de abertura — às 18h30 para uma abertura às 19h. O diálogo mostra esse horário. Assim, na abertura os alunos encontram tudo pronto.
 
@@ -307,7 +309,8 @@ A partir da Rodada 1, as equipes da turma disputam **o mesmo mercado**, ao mesmo
 
 - **Praça:** Rio Grande do Sul. O mercado semanal de cada categoria é o tamanho anual do setor (campo **Tamanho do Mercado** da turma ou, se vazio, o dado real do setor) × 5,26% (participação do RS na população, IBGE 2025) ÷ 52 ÷ número de categorias do setor.
 - **Participação de mercado:** modelo de atratividade (Cooper e Nakanishi, 1988). Pesam o preço em relação ao valor percebido do produto, a lembrança de marca construída pela comunicação, a distribuição, a fidelidade e o alinhamento estratégico. As fatias de equipes e concorrentes somam 100%.
-- **Concorrentes simulados:** quatro perfis fictícios (Alfa, líder premium; Beta, popular de volume; Gama, intermediário; Delta, regional), que reagem a cortes de preço e a aumentos de comunicação das equipes. O campo **Número de Concorrentes** da turma define quantos entram (de 1 a 12; acima de 4, os perfis se repetem com numeração).
+- **Concorrentes simulados:** quatro perfis fictícios (Alfa, líder premium; Beta, popular de volume; Gama, intermediário; Delta, regional), que reagem a cortes de preço e a aumentos de comunicação das equipes e, desde novembro de 2026, também à equipe que lidera a categoria (Seção 10.4). O campo **Número de Concorrentes** da turma define quantos entram (de 1 a 12; acima de 4, os perfis se repetem com numeração).
+- **Distribuição:** custo semanal = receita de referência × (custo da cobertura + soma do custo de cada canal ativo). Cobertura: local 0,5%, regional 1%, nacional 1,5%, internacional 2%. Canais (desde novembro de 2026): atacado 0,3%, e-commerce próprio 0,4%, marketplaces 0,5%, franquias 0,6%, varejo físico 0,7% e venda direta 0,7%; sem canal marcado, cobra-se 0,5% (mínimo de um canal). Na aba **Praça**, cada canal e cada cobertura mostram o próprio custo em reais por rodada, e um quadro soma o custo de distribuição do produto. Na aba **Promoção**, o painel separa **Comunicação (mídias)** e **Distribuição (definida na aba Praça)**. Os percentuais são parâmetros do modelo: as fontes (comissões de marketplaces, margem do varejo, comissão da venda direta, alcance do atacado) sustentam apenas a ordem entre os canais, não o nível absoluto; o detalhamento está no Apêndice B do Manual do Aluno.
 - **Verba de marketing:** método da porcentagem sobre as vendas (Kotler e Keller). Na Rodada 1, percentual de marketing do setor × receita de referência × número de produtos; nas seguintes, o mesmo percentual × receita obtida na rodada anterior, com piso de 30% da verba inicial. A verba não acumula. Comunicação **e distribuição** saem dela, e o envio final acima da verba não é aceito. O campo **Orçamento Padrão** deixa de ser usado nas rodadas valendo: antes da 1ª rodada, as equipes veem esse valor com o aviso **Verba provisória**, e na abertura da 1ª rodada o motor calcula a verba de todas. Equipe criada depois que o jogo começou (entre rodadas ou com rodada aberta) recebe a verba inicial do motor já ao ser criada, e não o Orçamento Padrão.
 - **Custos:** custo dos produtos pela margem bruta real do setor; despesas administrativas calibradas para que uma empresa “média” obtenha a margem líquida real do setor (Damodaran, 2026; Apêndice B.2); tributos sobre vendas de 12% e IR/CSLL de 34% sobre lucro positivo.
 - **Campos sem efeito no novo motor:** Nível de Concorrência, Estrutura de Mercado e Força dos Concorrentes continuam visíveis na configuração, mas não entram no cálculo das rodadas valendo.
@@ -334,6 +337,25 @@ O botão **Gerar Análises**, no cartão **Análises Estratégicas Automáticas*
 :::alerta Rodada de teste e Segmentação
 A rodada de teste também recebe as análises prontas. A Segmentação feita nela é apagada em **Iniciar o jogo**; na Rodada 1, cada equipe registra a sua de novo.
 :::
+
+### 10.4 Regras de mercado acrescentadas em novembro de 2026
+
+Estas regras foram incluídas para aumentar a dificuldade do jogo: repetir a decisão que funcionou numa semana deixa de garantir o mesmo resultado nas seguintes. Valem para as rodadas abertas a partir da publicação; rodadas já encerradas não são recalculadas. Todas estão descritas, com fórmulas, no Manual do Aluno (Apêndices A e B), sem indicar decisões. O Apêndice A do Manual do Aluno foi renumerado: segmentos em A.3, demanda e calendário em A.4, lembrança e desgaste em A.5, custos em A.7 e concorrentes em A.9.
+
+- **Reação ao líder (H1):** O concorrente que disputa o mesmo território de preço da equipe líder da categoria na semana anterior (até 30% de distância, em relação ao preço de referência) reage com força crescente (1/3, 2/3 e total a partir da 3ª semana seguida de liderança): corta o preço em direção a 97% do preço do líder (nunca abaixo de 80% do preço do próprio perfil), acompanha a comunicação do líder (até 1,6 vez a comunicação-base do perfil) e, a partir da 2ª semana seguida, iguala a qualidade quando a do líder é maior. A guerra de preço também ficou mais firme: o perfil de volume acompanha cortes de 7% por semana, até 75% do preço do perfil. No Manual do Aluno: A.9.
+- **Calendário e preferência do consumidor (H2):** Semana da Black Friday (quarta sexta-feira de novembro): demanda ×1,30 e sensibilidade a preço ×1,25. Semanas de Natal (segundas de 1º a 21/12): demanda ×1,10, ×1,20 e ×1,30, sensibilidade ×0,92 e produtos premium ×1,06. A cada semana o consumidor tem uma preferência (preço, qualidade, inovação ou equilibrada), sorteada de forma estável por turma e rodada e publicada no Simula+ News como notícia: o posicionamento alinhado ganha 8% de atratividade e os demais perdem 4%. Na Black Friday, a preferência é sempre preço. No Simula+ News e no Manual do Aluno: A.4.
+- **Desgaste da propaganda (H3):** Repetir a mesma combinação de mídias (75% ou mais das mídias em comum) reduz a eficácia da comunicação em 15 pontos percentuais por semana seguida, até o mínimo de 55%. O custo das mídias não muda. No Manual do Aluno: A.5.
+- **Custo com dólar e inflação (H4):** O custo unitário dos produtos acompanha o dólar (PTAX) e o IPCA reais: multiplicador = [1 + repasse × (dólar atual ÷ dólar da 1ª rodada − 1)] × (1 + IPCA 12 meses)^(semanas ÷ 52), limitado entre 0,7 e 1,5. Repasse cambial: 0,6 em Eletrônicos e 0,25 nos demais setores (parâmetro do modelo). No Manual do Aluno: A.7.
+- **Custo por canal (D):** Cada canal de distribuição tem custo próprio (Seção 10.2). No Manual do Aluno: 7.3 e Apêndice B.
+- **Segmentação por produto (E1):** Nas turmas B2C e híbridas do setor Eletrônicos, a equipe define o público-alvo de cada produto marcando opções prontas em tópicos dos quatro critérios (até 2 opções por tópico; pelo menos 3 tópicos por critério). A demanda de cada produto se divide entre cinco segmentos de consumidores (Jovem conectado, Profissional exigente, Família prática, Econômico e Sênior), com pesos próprios por categoria. Cada segmento reage de modo diferente ao preço, à qualidade, aos canais e às mídias; a oferta ganha atratividade no segmento que a equipe mirou, na proporção da aderência da segmentação (coerência interna, completude e nitidez do público), e perde um pouco nos demais. Os concorrentes também têm público: Alfa, Profissional exigente; Beta, Econômico; Gama, Jovem conectado; Delta, Família prática. Nos demais setores e nas turmas B2B, a segmentação continua em texto livre e nada muda no cálculo. No Manual do Aluno: 6.5, A.3 e Apêndice B.
+
+Pontos de condução:
+
+- **O que o relatório registra:** o resultado da rodada guarda, por produto, o segmento identificado, a aderência (0 a 1), as combinações contraditórias encontradas e o número de tópicos preenchidos por critério (registro técnico do resultado, em simulationBreakdown). Esse registro serve ao professor; a tela do aluno não interpreta a segmentação.
+- **O quadro de texto livre continua:** abaixo do público-alvo por produto fica a **Visão geral da equipe**, em texto livre, que segue alimentando o relatório de alinhamento estratégico como antes. O envio da decisão aceita a visão geral completa ou a segmentação de algum produto completa.
+- **Público-alvo da Identidade:** a classe, a faixa etária e o perfil registrados na Identidade da Empresa continuam servindo às análises da IA; o mercado do jogo usa a segmentação por produto.
+- **Efeito medido em teste interno:** com quatro equipes de mix idêntico, a equipe com segmentação coerente e 4Ps alinhados ao público vendeu cerca de 9% mais do que a equipe sem segmentação; a segmentação contraditória ficou igual a não segmentar; e mirar um público com 4Ps de outro ficou levemente abaixo. São números de um cenário de teste, não uma garantia de resultado.
+- **Dados de mercado dos segmentos:** os perfis e os pesos são parâmetros do modelo, construídos a partir de dados reais que indicam a direção dos números (ABEP, Critério Brasil 2026; Cetic.br, TIC Domicílios 2025; NielsenIQ, 1º trimestre de 2026; Bain & Company, citada pela Mobile Time, 2025). A distribuição de compradores por segmento dentro de cada categoria não foi encontrada em fonte aberta; os pesos de tablet e smartwatch são estimativas do autor.
 
 ## 11. Analisar Resultados
 
@@ -635,6 +657,12 @@ CHIAVENATO, Idalberto; SAPIRO, Arão. **Planejamento Estratégico: Fundamentos e
 
 BELL, David E.; KEENEY, Ralph L.; LITTLE, John D. C. A market share theorem. **Journal of Marketing Research**, v. 12, n. 2, p. 136-141, 1975.
 
+ABEP – ASSOCIAÇÃO BRASILEIRA DE EMPRESAS DE PESQUISA. **Evolução das classes econômicas no Brasil**. São Paulo: ABEP, 2026. Disponível em: https://abep.org. Acesso em: 31 out. 2026.
+
+ABAD – ASSOCIAÇÃO BRASILEIRA DE ATACADISTAS E DISTRIBUIDORES. Faturamento do atacado distribuidor chega a R$ 616,6 bilhões em 2025. São Paulo: ABAD, 13 maio 2026. Disponível em: https://abad.com.br. Acesso em: 31 out. 2026.
+
+CETIC.BR – CENTRO REGIONAL DE ESTUDOS PARA O DESENVOLVIMENTO DA SOCIEDADE DA INFORMAÇÃO. **TIC Domicílios 2025: principais resultados**. São Paulo: Comitê Gestor da Internet no Brasil, 2025. Disponível em: https://cetic.br. Acesso em: 31 out. 2026.
+
 BROADBENT, Simon. One way TV advertisements work. **Journal of the Market Research Society**, v. 21, n. 3, p. 139-166, 1979.
 
 CHRISTENSEN, Clayton M. **The Innovator's Dilemma: When New Technologies Cause Great Firms to Fail**. Boston: Harvard Business School Press, 1997.
@@ -685,6 +713,8 @@ PRIDE, William M.; FERRELL, O. C. **Fundamentos de Marketing: Conceitos e Estrat
 
 REICHHELD, Frederick F. **The Ultimate Question: Driving Good Profits and True Growth**. Boston: Harvard Business School Press, 2006.
 
+ROGERS, Everett M. **Diffusion of Innovations**. 5. ed. New York: Free Press, 2003.
+
 RIES, Al; TROUT, Jack. **Posicionamento: A Batalha por sua Mente**. São Paulo: Pearson Makron Books, 2009.
 
 TELLIS, Gerard J. Effective frequency: One exposure or three factors? **Journal of Advertising Research**, v. 37, n. 4, 1997.
@@ -701,6 +731,6 @@ WEDEL, Michel; KAMAKURA, Wagner A. **Market Segmentation: Conceptual and Methodo
 
 ---
 
-**Versão**: 2.3
-**Última Atualização**: Setembro 2026
+**Versão**: 2.4
+**Última Atualização**: Novembro 2026
 **Simula+ | Simulador de Marketing no Mercado**
