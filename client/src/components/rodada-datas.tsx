@@ -131,6 +131,46 @@ export function SemanaDaRodada({ round }: { round: Round }) {
   );
 }
 
+/**
+ * Nov/2026 (pedido do professor): aviso no painel "Situação da Aula" com a
+ * próxima abertura automática — dia, horário de abertura e de fechamento,
+ * hora em que a IA prepara o conteúdo e quantidade de produtos. Só leitura:
+ * usa os mesmos campos que o agendador (scheduledStartAt/scheduledEndAt).
+ */
+export function AvisoProximaRodada({ rounds }: { rounds: Round[] }) {
+  const ordenadas = [...rounds].sort((a, b) => a.roundNumber - b.roundNumber);
+  const ativa = ordenadas.find((r) => r.status === "active");
+  const rodada = ativa ?? ordenadas.find((r) => r.status === "locked");
+  if (!rodada) return null;
+  const agora = new Date();
+  const data = (v: string | Date) => paraDate(dataBrasilia(v)).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const ini = ativa ? (ativa.startedAt ?? ativa.scheduledStartAt) : rodada.scheduledStartAt;
+  const fim = rodada.scheduledEndAt;
+  const atrasada = !ativa && fim && new Date(fim) <= agora;
+  const titulo = ativa
+    ? `Rodada ${rodada.roundNumber} aberta`
+    : ini
+      ? `Próxima rodada: Rodada ${rodada.roundNumber} (abertura automática)`
+      : `Próxima rodada: Rodada ${rodada.roundNumber} (sem data definida)`;
+  return (
+    <div className="rounded-lg bg-white/15 px-3 py-2 text-sm" data-testid="aviso-proxima-rodada">
+      <p className="flex items-center gap-1.5 font-semibold">
+        <CalendarDays className="h-4 w-4" />
+        {titulo}
+      </p>
+      {ini && <p data-testid="aviso-abre">{ativa ? "Abriu" : "Abre"} {data(ini)} horário: {horaBrasilia(ini)}</p>}
+      {fim && <p data-testid="aviso-fecha">Fecha {data(fim)} horário: {horaBrasilia(fim)}</p>}
+      {!ini && !ativa && <p className="text-[#ffe28a]">Ela só abre se você definir as datas ou iniciá-la manualmente.</p>}
+      {atrasada && <p className="text-[#ffe28a]">O horário agendado passou e a rodada não foi aberta. Reagende as datas no card da rodada.</p>}
+      {!ativa && ini && !atrasada && (
+        <p className="text-xs text-white/75">
+          {rodada.productCount ?? 1} produto{(rodada.productCount ?? 1) > 1 ? "s" : ""} por equipe · a IA prepara o conteúdo às {horaBrasilia(new Date(new Date(ini).getTime() - MINUTOS_PREPARACAO_IA * 60000))} · horário de Brasília
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function SeloRodadaTeste() {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-[#eef2ff] px-2 py-0.5 text-[11px] font-semibold text-[#1447e6]" data-testid="selo-rodada-teste">

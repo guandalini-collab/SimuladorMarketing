@@ -91,7 +91,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { FormattedMoneyInput, FormattedNumberInput } from "@/components/formatted-input";
 import { RoundCountdown } from "@/components/round-countdown";
-import { DialogoDatasRodada, DialogoIniciarRodada, SemanaDaRodada, SeloRodadaTeste, SeloUltimaRodada } from "@/components/rodada-datas";
+import { AvisoProximaRodada, DialogoDatasRodada, DialogoIniciarRodada, SemanaDaRodada, SeloRodadaTeste, SeloUltimaRodada } from "@/components/rodada-datas";
 import { anoLetivoEncerrado } from "@shared/rodadaSemanal";
 
 const eventFormSchema = insertMarketEventSchema.extend({
@@ -3639,6 +3639,9 @@ export default function Professor() {
                         <span>{submissionStats.pending.length} equipes ainda não enviaram</span>
                       </div>
                     )}
+
+                    {/* Nov/2026: próxima abertura automática (dia, horários, produtos). */}
+                    <AvisoProximaRodada rounds={rounds} />
 
                     {/* Item 4 (2026-09): agendamento de abertura/encerramento
                         automático de rodada. Antes este atalho só trocava para
