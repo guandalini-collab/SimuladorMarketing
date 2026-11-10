@@ -5104,6 +5104,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(insights);
   });
 
+  // Nov/2026 (correções da Rodada 3): relatório didático do professor, por
+  // equipe, de uma rodada encerrada. Calculado na hora a partir do que já está
+  // gravado; só leitura (não grava nem altera resultados).
+  app.get("/api/professor/relatorio/:classId/:roundId", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "professor") {
+      return res.status(403).json({ error: "Acesso negado - apenas professores" });
+    }
+    const classData = await storage.getClass(req.params.classId);
+    if (!classData) {
+      return res.status(404).json({ error: "Turma não encontrada" });
+    }
+    if (classData.professorId !== user.id) {
+      return res.status(403).json({ error: "Você não tem permissão para acessar esta turma" });
+    }
+    const round = await storage.getRound(req.params.roundId);
+    if (!round || round.classId !== classData.id) {
+      return res.status(404).json({ error: "Rodada não encontrada" });
+    }
+    if (round.status !== "completed") {
+      return res.status(409).json({ error: "O relatório fica disponível depois que a rodada é encerrada." });
+    }
+    try {
+      const { montarRelatorioDaRodada } = await import("./services/relatorioProfessor");
+      res.json(await montarRelatorioDaRodada(storage, classData, round));
+    } catch (error: any) {
+      console.error("Erro ao montar o relatório do professor:", error);
+      res.status(500).json({ error: "Não foi possível montar o relatório desta rodada." });
+    }
+  });
+
   app.get("/api/professor/analytics/:classId", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });

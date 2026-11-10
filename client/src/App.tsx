@@ -40,6 +40,7 @@ import NotFound from "@/pages/not-found";
 import FechamentoAnual from "@/pages/fechamento-anual";
 import RodadasAnteriores from "@/pages/rodadas-anteriores";
 import ProfessorFechamento from "@/pages/professor-fechamento";
+import ProfessorRelatorio from "@/pages/professor-relatorio";
 
 interface User {
   id: string;
@@ -108,6 +109,9 @@ function AuthenticatedApp() {
           </Route>
           <Route path="/professor/fechamento/:classId">
             {(params) => <ProfessorFechamento classId={params.classId} />}
+          </Route>
+          <Route path="/professor/relatorio/:classId">
+            {(params) => <ProfessorRelatorio classId={params.classId} />}
           </Route>
           <Route path="/aprovacoes" component={Aprovacoes} />
           <Route path="/" component={Professor} />

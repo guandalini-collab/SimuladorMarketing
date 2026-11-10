@@ -421,6 +421,18 @@ A penalidade automática por conteúdo da IA foi **desativada** (out/2026), em t
 
 Valores a partir de 70% aparecem em vermelho e merecem leitura atenta; de 40% a 69%, em laranja. São indícios, não prova de cópia, e o relatório **não identifica textos produzidos com ferramentas externas de IA**.
 
+### 11.5 Relatório da rodada (por que cada equipe teve o resultado que teve)
+
+No painel, o botão **Relatório da rodada** abre, para cada rodada encerrada, uma aba por equipe. Só você vê esse relatório; ele não altera nota, ranking nem resultado. Cada aba traz:
+
+- **Resultado em poucas palavras:** lucro ou prejuízo antes do imposto (o mesmo do ranking), receita, participação média, produtos com lucro e com prejuízo, e a variação da verba.
+- **Para onde foi cada R$ 100 vendidos:** tributos, custo de produção, comunicação, distribuição, despesas administrativas e resultado, em reais e em percentual da receita bruta.
+- **Produto a produto:** preço praticado e de referência, quanto a empresa recebe por unidade, custo de produção por unidade, sobra por unidade, unidades vendidas, participação (com a média da categoria), despesas e resultado.
+- **O que explica o resultado:** pontos de atenção encontrados pelo sistema, cada um com a conta feita com os números da equipe. São verificados: preço abaixo do custo de produção; sobra por unidade menor que 10% do que a empresa recebe; despesas maiores que o lucro bruto; preço mínimo sem prejuízo para o volume vendido; comunicação zerada ou abaixo de 1% da receita do produto; preço mais de 10% abaixo da referência com participação abaixo da média da categoria; segmentação com contradições ou aderência abaixo de 0,5; verba usada abaixo de 70%; efeito do dólar e da inflação; e os alertas do alinhamento estratégico.
+- **Para conversar com a equipe:** um parágrafo sobre o produto com o pior resultado, com a conta do preço mínimo, sem dizer o que a equipe deve decidir.
+
+Os números são recalculados, na hora, a partir do que ficou gravado no fechamento, com as fórmulas do motor (Manual do Aluno, A.7 e C.5). A distribuição e as despesas administrativas de cada produto são obtidas por diferença entre os valores gravados. As frases são fixas e preenchidas com os números; não há texto livre da IA. Os limites (10%, 1%, 0,5 e 70%) são parâmetros do relatório, escolhidos para destacar casos claros, e não regras do jogo.
+
 ## 12. A Aba Configurar
 
 ![Aba Configurar, com as quatro seções de configuração pouco frequente.](09-configurar-tab.jpg)

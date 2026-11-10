@@ -63,7 +63,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Eye, Zap, AlertTriangle, Key, CalendarCheck, CalendarDays, Flag } from "lucide-react";
+import { Eye, Zap, AlertTriangle, Key, CalendarCheck, CalendarDays, Flag, FileText } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { insertMarketEventSchema } from "@shared/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -3517,6 +3517,21 @@ export default function Professor() {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Analytics da Turma</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => setLocation(`/professor/relatorio/${selectedClass}`)}
+                      data-testid="button-quick-relatorio"
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span className="hidden sm:inline">Relatório da rodada</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Por que cada equipe teve o resultado que teve</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
