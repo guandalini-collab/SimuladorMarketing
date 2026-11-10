@@ -79,10 +79,25 @@ export function BcgMatriz({ produtos }: { produtos: ProdutoBcg[] }) {
     { q: "Abacaxi", x: xCorte, y: yCorte, w: M.left + PW - xCorte, h: M.top + PH - yCorte, lx: M.left + PW - 8, ly: M.top + PH - 8, anchor: "end" },
   ];
 
+  // Nov/2026 (pedido do professor): cada produto recebe um número, mostrado
+  // dentro do gráfico, e a tabela abaixo liga o número ao produto. Produtos
+  // na mesma posição (ex.: mesmo crescimento e participação) dividem um só
+  // rótulo ("1, 2, 3") em vez de nomes sobrepostos. Só exibição: posições e
+  // quadrantes continuam os mesmos.
+  const numerados = produtos.map((p, i) => ({ p, n: i + 1 }));
   // Maiores atrás, menores na frente.
-  const ordenados = [...produtos].sort((a, b) => raio(b) - raio(a));
+  const ordenados = [...numerados].sort((a, b) => raio(b.p) - raio(a.p));
+  const pos = (p: ProdutoBcg) => ({ cx: sx(Number(p.relativeMarketShare) || BCG_PARTICIPACAO_MIN), cy: sy(Number(p.marketGrowth) || 0) });
+  const grupos: { cx: number; cy: number; nums: number[] }[] = [];
+  for (const { p, n } of numerados) {
+    const { cx, cy } = pos(p);
+    const g = grupos.find((x) => Math.abs(x.cx - cx) < 14 && Math.abs(x.cy - cy) < 14);
+    if (g) g.nums.push(n);
+    else grupos.push({ cx, cy, nums: [n] });
+  }
 
   return (
+    <div className="space-y-4">
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Matriz BCG" data-testid="bcg-matriz">
       {quadrantes.map((r) => (
         <g key={r.q}>
@@ -124,25 +139,74 @@ export function BcgMatriz({ produtos }: { produtos: ProdutoBcg[] }) {
         Crescimento do mercado (% ao ano) · corte em {BCG_LIMIAR_CRESCIMENTO}%
       </text>
 
-      {ordenados.map((p, i) => {
+      {ordenados.map(({ p, n }) => {
         const q = classificarBcg(Number(p.marketGrowth) || 0, Number(p.relativeMarketShare) || 0);
-        const cx = sx(Number(p.relativeMarketShare) || BCG_PARTICIPACAO_MIN);
-        const cy = sy(Number(p.marketGrowth) || 0);
+        const { cx, cy } = pos(p);
         const r = raio(p);
-        const direita = cx < M.left + PW - 120;
         return (
-          <g key={p.id ?? `${p.productName}-${i}`} data-testid="bcg-bolha">
+          <g key={p.id ?? `${p.productName}-${n}`} data-testid="bcg-bolha">
             <title>
-              {`${p.productName} — ${q}\nCrescimento do mercado: ${Number(p.marketGrowth).toLocaleString("pt-BR")}%\nParticipação relativa: ${fmtX(Number(p.relativeMarketShare))}${p.revenue ? `\nReceita: ${moeda(Number(p.revenue))}` : ""}`}
+              {`${n}. ${p.productName} — ${q}\nCrescimento do mercado: ${Number(p.marketGrowth).toLocaleString("pt-BR")}%\nParticipação relativa: ${fmtX(Number(p.relativeMarketShare))}${p.revenue ? `\nReceita: ${moeda(Number(p.revenue))}` : ""}`}
             </title>
-            <circle cx={cx} cy={cy} r={r} fill={CORES_BCG[q]} fillOpacity={0.55} stroke={CORES_BCG[q]} strokeWidth={2} />
-            <text x={direita ? cx + r + 4 : cx - r - 4} y={cy + 4} textAnchor={direita ? "start" : "end"} fontSize={11.5} fontWeight={600} fill="currentColor">
-              {p.productName}
+            <circle cx={cx} cy={cy} r={r} fill={CORES_BCG[q]} fillOpacity={0.45} stroke={CORES_BCG[q]} strokeWidth={2} />
+          </g>
+        );
+      })}
+
+      {grupos.map((g) => {
+        const rotulo = g.nums.join(", ");
+        const larg = 10 + rotulo.length * 7.2;
+        // Mantém o rótulo dentro da área do gráfico (bolhas na borda, ex.: 0,1×).
+        const bx = limitar(g.cx, M.left + larg / 2 + 2, M.left + PW - larg / 2 - 2);
+        const by = limitar(g.cy, M.top + 12, M.top + PH - 12);
+        return (
+          <g key={`rot-${g.nums.join("-")}`} data-testid="bcg-numero">
+            <rect x={bx - larg / 2} y={by - 10} width={larg} height={20} rx={10} fill="white" stroke="#334155" strokeWidth={1.2} />
+            <text x={bx} y={by + 4.5} textAnchor="middle" fontSize={12.5} fontWeight={700} fill="#0f172a">
+              {rotulo}
             </text>
           </g>
         );
       })}
     </svg>
+    <BcgTabela numerados={numerados} />
+    </div>
+  );
+}
+
+/** Tabela abaixo da matriz: número do gráfico → produto e seus valores. */
+function BcgTabela({ numerados }: { numerados: { p: ProdutoBcg; n: number }[] }) {
+  const temReceita = numerados.some(({ p }) => !!p.revenue);
+  return (
+    <div className="overflow-x-auto rounded-lg border" data-testid="bcg-tabela">
+      <table className="w-full text-sm">
+        <thead className="bg-muted/40 text-left">
+          <tr>
+            <th className="px-3 py-2 font-semibold">Nº</th>
+            <th className="px-3 py-2 font-semibold">Produto</th>
+            <th className="px-3 py-2 font-semibold">Quadrante</th>
+            <th className="px-3 py-2 text-right font-semibold">Crescimento do mercado</th>
+            <th className="px-3 py-2 text-right font-semibold">Participação relativa</th>
+            {temReceita && <th className="px-3 py-2 text-right font-semibold">Receita</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {numerados.map(({ p, n }) => {
+            const q = classificarBcg(Number(p.marketGrowth) || 0, Number(p.relativeMarketShare) || 0);
+            return (
+              <tr key={p.id ?? `${p.productName}-${n}`} className="border-t">
+                <td className="px-3 py-2 font-bold">{n}</td>
+                <td className="px-3 py-2">{p.productName}</td>
+                <td className="px-3 py-2 font-medium" style={{ color: CORES_BCG[q] }}>{q}</td>
+                <td className="px-3 py-2 text-right">{Number(p.marketGrowth).toLocaleString("pt-BR")}%</td>
+                <td className="px-3 py-2 text-right">{(Number(p.relativeMarketShare) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}×</td>
+                {temReceita && <td className="px-3 py-2 text-right">{p.revenue ? moeda(Number(p.revenue)) : "—"}</td>}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

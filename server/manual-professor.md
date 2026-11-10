@@ -328,7 +328,7 @@ Nas turmas do motor competitivo, SWOT, 5 Forças de Porter, Matriz BCG e PESTEL 
 | **PESTEL** | Pela IA, uma para a turma, com os indicadores oficiais (IBGE e Banco Central), a Conjuntura Brasil, os dados reais do setor, os eventos e o boletim da semana |
 | **5 Forças de Porter** | Pela IA, uma para a turma, com os dados reais do setor e a estrutura do mercado do jogo (número de empresas e participações da rodada anterior) |
 | **SWOT** | Pela IA, uma por equipe: forças e fraquezas a partir dos números da equipe (resultado, participação, preço, lembrança de marca, satisfação); oportunidades e ameaças a partir da PESTEL e de Porter |
-| **Matriz BCG** | Calculada, sem IA: participação relativa de cada produto na rodada anterior (equipe ÷ maior concorrente) e crescimento real do setor (fonte setorial). Na Rodada 1, a participação relativa é zero |
+| **Matriz BCG** | Calculada, sem IA: participação relativa de cada produto na rodada anterior (equipe ÷ maior concorrente) e crescimento real do setor (fonte setorial). Na Rodada 1, a participação relativa é zero. Na tela, cada produto aparece na matriz com um número, e a tabela abaixo dela liga o número ao produto e mostra crescimento, participação relativa e receita; produtos na mesma posição dividem um só rótulo (ex.: "1, 2, 3") |
 
 As instruções dadas à IA proíbem recomendar decisões e inventar números: os textos são diagnóstico, com os dados fornecidos pelo sistema. As análises ficam gravadas por rodada; reabrir a tela não gera conteúdo novo.
 

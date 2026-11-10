@@ -947,10 +947,10 @@ export default function Analises() {
               <CardContent>
                 {evolutionData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={evolutionData}>
+                    <LineChart data={evolutionData} margin={{ top: 20, right: 10, left: 10, bottom: 0 }}>
                       {rotuloRodadaEscolhida && <ReferenceLine x={rotuloRodadaEscolhida} stroke="#c026d3" strokeDasharray="4 4" label={{ value: "rodada exibida", position: "top", fontSize: 11 }} />}
                       <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis dataKey="rodada" />
+                      <XAxis dataKey="rodada" padding={{ left: 40, right: 40 }} />
                       <YAxis />
                       <Tooltip formatter={(value: number) => `R$ ${num(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
                       <Legend />

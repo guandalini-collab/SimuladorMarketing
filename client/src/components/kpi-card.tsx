@@ -33,6 +33,10 @@ export function KPICard({ title, value, trend, icon: Icon, description, testId, 
   // O dourado é claro demais para texto branco continuar legível; usa texto navy nesse caso.
   const textColor = color === "gold" ? "#3a2c00" : "#ffffff";
   const mutedTextColor = color === "gold" ? "rgba(58,44,0,0.7)" : "rgba(255,255,255,0.75)";
+  // Nov/2026: valores longos (ex.: "R$ 1.234.567,89") eram cortados nos
+  // cartões estreitos; a letra diminui conforme o tamanho do texto.
+  const tamanho = String(value).length;
+  const classeValor = tamanho >= 15 ? "text-lg" : tamanho >= 12 ? "text-xl" : tamanho >= 9 ? "text-2xl" : "text-3xl";
 
   return (
     <Card
@@ -40,9 +44,9 @@ export function KPICard({ title, value, trend, icon: Icon, description, testId, 
       style={{ backgroundColor: bg, color: textColor, boxShadow: `0 4px 14px ${shadow}` }}
     >
       <div className="flex items-center justify-between gap-4">
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-medium mb-2" style={{ color: mutedTextColor }}>{title}</p>
-          <p className="text-3xl font-bold" data-testid={testId} style={{ color: textColor }}>
+          <p className={`${classeValor} font-bold leading-tight break-words`} data-testid={testId} style={{ color: textColor }}>
             {value}
           </p>
           {trend && (
@@ -67,7 +71,7 @@ export function KPICard({ title, value, trend, icon: Icon, description, testId, 
             </p>
           )}
         </div>
-        <div className="p-3 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>
+        <div className="shrink-0 p-3 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>
           <Icon className="h-6 w-6" style={{ color: textColor }} />
         </div>
       </div>
