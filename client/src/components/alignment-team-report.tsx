@@ -92,6 +92,9 @@ export function AlignmentTeamReport({ classId, lastCompletedRound }: AlignmentTe
             <CardDescription>
               Rodada {lastCompletedRound.roundNumber} - {totalTeams} equipes ({teamsWithIssues} precisam de atenção)
             </CardDescription>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Mede a coerência entre as decisões do mix e as análises da rodada, não o resultado: uma equipe pode ter coerência alta e prejuízo. Na nota, o alinhamento pesa 10% e é comparado entre as equipes da rodada (a maior pontuação vale 100 e a menor vale 0).
+            </p>
           </div>
         </div>
       </CardHeader>
@@ -103,7 +106,7 @@ export function AlignmentTeamReport({ classId, lastCompletedRound }: AlignmentTe
               <div className="p-3 rounded-lg bg-[#fde8e6] dark:bg-red-900/20 border border-[#a3241c]/20 dark:border-red-800 hover-elevate cursor-help">
                 <div className="flex items-center gap-2">
                   <XCircle className="h-4 w-4 text-[#a3241c] dark:text-red-400" />
-                  <span className="text-sm font-medium text-[#a3241c] dark:text-red-400">Crítico</span>
+                  <span className="text-sm font-medium text-[#a3241c] dark:text-red-400">Coerência crítica</span>
                 </div>
                 <p className="text-2xl font-bold text-[#a3241c] dark:text-red-400 mt-1">{criticalTeams.length}</p>
               </div>
@@ -115,7 +118,7 @@ export function AlignmentTeamReport({ classId, lastCompletedRound }: AlignmentTe
               <div className="p-3 rounded-lg bg-[#ff8c1a]/10 border border-[#ff8c1a]/30 hover-elevate cursor-help">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="h-4 w-4 text-[#ff8c1a]" />
-                  <span className="text-sm font-medium text-[#ff8c1a]">Fraco</span>
+                  <span className="text-sm font-medium text-[#ff8c1a]">Coerência baixa</span>
                 </div>
                 <p className="text-2xl font-bold text-[#ff8c1a] mt-1">{weakTeams.length}</p>
               </div>
@@ -264,23 +267,23 @@ export function AlignmentTeamReport({ classId, lastCompletedRound }: AlignmentTe
         {/* Legenda */}
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground pt-2 border-t">
           <div className="flex items-center gap-2">
-            <Badge variant="default">Excelente</Badge>
+            <Badge variant="default">Coerência alta</Badge>
             <span>90-100</span>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="default">Bom</Badge>
+            <Badge variant="default">Coerência boa</Badge>
             <span>70-89</span>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline">Médio</Badge>
+            <Badge variant="outline">Coerência média</Badge>
             <span>50-69</span>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary">Fraco</Badge>
+            <Badge variant="secondary">Coerência baixa</Badge>
             <span>30-49</span>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="destructive">Crítico</Badge>
+            <Badge variant="destructive">Coerência crítica</Badge>
             <span>&lt;30</span>
           </div>
         </div>

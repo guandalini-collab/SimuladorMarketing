@@ -87,7 +87,7 @@ export function AlignmentScoreCard({ teamId, roundId }: AlignmentScoreCardProps)
           <div className="flex-1">
             <CardTitle className="text-xl">Alinhamento Estratégico</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Coerência entre análises estratégicas e decisões de marketing
+              Coerência entre as decisões do mix e as análises da rodada. Não mede lucro nem resultado no mercado: uma equipe pode ter coerência alta e prejuízo (Manual do Aluno, A.2).
             </p>
           </div>
           <Badge variant={scoreLevel.variant} className="text-base px-3 py-1">

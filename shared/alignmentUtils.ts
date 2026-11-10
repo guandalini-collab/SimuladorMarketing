@@ -4,37 +4,42 @@ export interface AlignmentScoreLevel {
   variant: "destructive" | "default" | "secondary" | "outline";
 }
 
+// Nov/2026: rótulos trocados de "Excelente/Bom/Médio/Fraco/Crítico" para
+// "Coerência alta/boa/média/baixa/crítica". O alinhamento mede a coerência
+// entre as decisões e as análises da rodada, não o resultado no mercado; o
+// rótulo antigo dava a impressão de que a equipe ia bem no jogo. Só exibição:
+// as faixas de pontuação e o cálculo não mudaram.
 export function getAlignmentScoreLevel(score: number): AlignmentScoreLevel {
   if (score < 30) {
     return {
-      label: "Crítico",
+      label: "Coerência crítica",
       color: "text-red-600 dark:text-red-400",
       variant: "destructive",
     };
   }
   if (score < 50) {
     return {
-      label: "Fraco",
+      label: "Coerência baixa",
       color: "text-orange-600 dark:text-orange-400",
       variant: "secondary",
     };
   }
   if (score < 70) {
     return {
-      label: "Médio",
+      label: "Coerência média",
       color: "text-yellow-600 dark:text-yellow-400",
       variant: "outline",
     };
   }
   if (score < 90) {
     return {
-      label: "Bom",
+      label: "Coerência boa",
       color: "text-green-600 dark:text-green-400",
       variant: "default",
     };
   }
   return {
-    label: "Excelente",
+    label: "Coerência alta",
     color: "text-green-700 dark:text-green-300",
     variant: "default",
   };
