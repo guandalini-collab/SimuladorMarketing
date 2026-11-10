@@ -64,15 +64,26 @@ export function consolidateKpis(productKpisList: ResultCoreMetrics[]): ResultCor
   const consolidatedEbitda = sumMonetary('ebitda');
   const consolidatedDepreciacao = sumMonetary('depreciacao');
   const consolidatedLair = sumMonetary('lair');
-  const consolidatedIrCsll = sumMonetary('irCsll');
-  const consolidatedLucroLiquido = sumMonetary('lucroLiquido');
+  // Nov/2026 (caso Vincit, Rodada 1): o IR e a CSLL eram somados produto a
+  // produto, sem compensar o prejuízo de um produto com o lucro dos outros.
+  // Uma empresa com LAIR total negativo pagava imposto (R$ 434 mil no caso),
+  // e o lucro líquido do DRE ficava pior do que o real. No lucro real, o
+  // imposto incide sobre o resultado da empresa: aplica-se a mesma alíquota
+  // efetiva dos produtos ao LAIR consolidado, e zero quando ele é negativo.
+  const somaIrProdutos = sumMonetary('irCsll');
+  const lairPositivoProdutos = productKpisList.reduce((s, k) => s + Math.max(0, (k.lair as number) || 0), 0);
+  const aliquotaEfetiva = lairPositivoProdutos > 0 ? somaIrProdutos / lairPositivoProdutos : 0;
+  const consolidatedIrCsll = lairPositivoProdutos > 0
+    ? Math.max(0, consolidatedLair) * aliquotaEfetiva
+    : somaIrProdutos;
+  const consolidatedLucroLiquido = consolidatedLair - consolidatedIrCsll;
   const consolidatedCaixa = sumMonetary('caixa');
   const consolidatedContasReceber = sumMonetary('contasReceber');
   const consolidatedEstoques = sumMonetary('estoques');
   const consolidatedImobilizado = sumMonetary('imobilizado');
   const consolidatedIntangivel = sumMonetary('intangivel');
   const consolidatedFornecedores = sumMonetary('fornecedores');
-  const consolidatedObrigFiscais = sumMonetary('obrigFiscais');
+  const consolidatedObrigFiscais = sumMonetary('obrigFiscais') - somaIrProdutos + consolidatedIrCsll;
   const consolidatedOutrasObrig = sumMonetary('outrasObrig');
   const consolidatedFinanciamentosLP = sumMonetary('financiamentosLP');
   const consolidatedCapitalSocial = sumMonetary('capitalSocial');
@@ -107,7 +118,9 @@ export function consolidateKpis(productKpisList: ResultCoreMetrics[]): ResultCor
   const consolidatedMargin = safeDiv(consolidatedProfit, consolidatedRevenue, 0) * 100;
   const consolidatedRoi = safeDiv(consolidatedProfit, consolidatedCosts, 0) * 100;
   const consolidatedRazaoLtvCac = safeDiv(consolidatedLtv, consolidatedCac, 0);
-  const consolidatedMargemContribuicao = weightedAvgByRevenue('margemContribuicao');
+  // Nov/2026: margem de contribuição é valor em reais; soma-se entre os
+  // produtos (antes era média ponderada pela receita, o que distorcia o total).
+  const consolidatedMargemContribuicao = sumMonetary('margemContribuicao');
 
   const consolidatedAtivoCirculante = consolidatedCaixa + consolidatedContasReceber + consolidatedEstoques;
   const consolidatedAtivoNaoCirculante = consolidatedImobilizado + consolidatedIntangivel;
