@@ -218,6 +218,8 @@ declare module "express-session" {
     // obrigatória pendente. Enquanto true, o servidor só libera as rotas de
     // autenticação (a troca deixou de ser exigida só na tela).
     trocaDeSenhaPendente?: boolean;
+    // Nov/2026: modo "Ver como equipe" do professor (somente leitura).
+    verComoEquipe?: { teamId: string; classId: string; professorId: string };
   }
 }
 
@@ -303,6 +305,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
       error: "Troca de senha obrigatória: defina sua nova senha antes de continuar.",
       trocaDeSenhaPendente: true,
     });
+  });
+
+  // Nov/2026: modo "Ver como equipe" (pedido do professor, para conferir as
+  // telas do aluno sem entrar em nenhuma equipe). O professor dono da turma
+  // escolhe uma equipe; durante o modo, cada requisição GET da API é atendida
+  // como se viesse do líder da equipe (ou do primeiro membro), e QUALQUER
+  // gravação é recusada (403). A troca vale só dentro da requisição: o
+  // usuário real é devolvido à sessão antes de ela ser gravada (res.end), de
+  // modo que nada muda na conta do aluno nem na do professor. Nenhuma conta é
+  // criada, nenhuma equipe é alterada e o professor não aparece como membro.
+  const ROTAS_DO_MODO_VER_COMO = new Set([
+    "/api/ver-como-equipe/status",
+    "/api/ver-como-equipe/sair",
+    "/api/auth/logout",
+  ]);
+  app.use(async (req, res, next) => {
+    const modo = req.session?.verComoEquipe;
+    if (!modo || !req.path.startsWith("/api/")) return next();
+    if (req.session.userId !== modo.professorId) {
+      delete req.session.verComoEquipe;
+      return next();
+    }
+    if (ROTAS_DO_MODO_VER_COMO.has(req.path)) return next();
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      return res.status(403).json({ error: "Modo Ver como equipe: somente leitura. Nada foi salvo." });
+    }
+    try {
+      const team = await storage.getTeam(modo.teamId);
+      const turma = team ? await storage.getClass(team.classId) : undefined;
+      if (!team || !turma || turma.professorId !== modo.professorId) {
+        delete req.session.verComoEquipe;
+        return next();
+      }
+      const membro = team.leaderId || team.memberIds?.[0];
+      if (!membro) {
+        return res.status(409).json({ error: "A equipe escolhida não tem membros." });
+      }
+      const usuarioReal = req.session.userId;
+      req.session.userId = membro;
+      let restaurado = false;
+      const restaurar = () => {
+        if (!restaurado) {
+          restaurado = true;
+          req.session.userId = usuarioReal;
+        }
+      };
+      const endOriginal = res.end;
+      (res as any).end = function (this: any, ...args: any[]) {
+        restaurar();
+        return (endOriginal as any).apply(this, args);
+      };
+      res.on("close", restaurar);
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  app.get("/api/ver-como-equipe/status", async (req, res) => {
+    const modo = req.session?.verComoEquipe;
+    if (!req.session.userId || !modo || req.session.userId !== modo.professorId) {
+      return res.json({ ativo: false });
+    }
+    const team = await storage.getTeam(modo.teamId);
+    res.json({ ativo: true, equipe: team ? (team.companyName || team.name) : null });
+  });
+
+  app.post("/api/ver-como-equipe", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "professor") {
+      return res.status(403).json({ error: "Acesso negado - apenas professores" });
+    }
+    const teamId = typeof req.body?.teamId === "string" ? req.body.teamId : "";
+    const team = teamId ? await storage.getTeam(teamId) : undefined;
+    const turma = team ? await storage.getClass(team.classId) : undefined;
+    if (!team || !turma || turma.professorId !== user.id) {
+      return res.status(404).json({ error: "Equipe não encontrada nas suas turmas" });
+    }
+    if (!team.leaderId && !(team.memberIds?.length)) {
+      return res.status(409).json({ error: "A equipe escolhida não tem membros." });
+    }
+    req.session.verComoEquipe = { teamId: team.id, classId: team.classId, professorId: user.id };
+    req.session.save((err) => {
+      if (err) return res.status(500).json({ error: "Não foi possível ativar o modo." });
+      res.json({ ok: true });
+    });
+  });
+
+  app.post("/api/ver-como-equipe/sair", (req, res) => {
+    delete req.session.verComoEquipe;
+    req.session.save(() => res.json({ ok: true }));
   });
 
   // Configuração do multer para upload de logomarcas.

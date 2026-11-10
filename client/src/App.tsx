@@ -39,6 +39,7 @@ import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
 import FechamentoAnual from "@/pages/fechamento-anual";
 import RodadasAnteriores from "@/pages/rodadas-anteriores";
+import { FaixaVerComoEquipe } from "@/components/ver-como-equipe";
 import AnaliseConcorrentes from "@/pages/analise-concorrentes";
 import ProfessorFechamento from "@/pages/professor-fechamento";
 import ProfessorRelatorio from "@/pages/professor-relatorio";
@@ -140,6 +141,7 @@ function AuthenticatedApp() {
       <div className="flex h-screen w-full">
         <AppSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
+          <FaixaVerComoEquipe />
           <header className="flex items-center justify-between gap-2 p-4 border-b">
             <SidebarTrigger className="shrink-0" data-testid="button-sidebar-toggle" />
             <div className="flex items-center gap-2 sm:gap-4 min-w-0">

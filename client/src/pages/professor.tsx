@@ -64,6 +64,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Eye, Zap, AlertTriangle, Key, CalendarCheck, CalendarDays, Flag, FileText } from "lucide-react";
+import { BotaoVerComoEquipe } from "@/components/ver-como-equipe";
 import { Textarea } from "@/components/ui/textarea";
 import { insertMarketEventSchema } from "@shared/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -3533,6 +3534,7 @@ export default function Professor() {
                   </TooltipTrigger>
                   <TooltipContent>Por que cada equipe teve o resultado que teve</TooltipContent>
                 </Tooltip>
+                <BotaoVerComoEquipe classId={selectedClass ?? ""} />
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button

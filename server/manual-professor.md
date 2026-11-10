@@ -436,6 +436,15 @@ No painel, o botão **Relatório da rodada** abre, para cada rodada encerrada, u
 Os números são recalculados, na hora, a partir do que ficou gravado no fechamento, com as fórmulas do motor (Manual do Aluno, A.7 e C.5). A distribuição e as despesas administrativas de cada produto são obtidas por diferença entre os valores gravados. As frases são fixas e preenchidas com os números; não há texto livre da IA. Os limites (10%, 1%, 0,5 e 70%) são parâmetros do relatório, escolhidos para destacar casos claros, e não regras do jogo.
 
 
+### 11.7 Ver como equipe (somente leitura)
+
+No painel, o botão verde **Ver como equipe** abre as telas do aluno exatamente como a equipe escolhida vê (Resultados, Rodadas anteriores, Análise de concorrentes, Mix de Marketing e as demais). Serve para conferir o que os alunos estão vendo e para explicar um resultado com a tela deles aberta.
+
+- **Somente leitura:** enquanto o modo está ativo, o servidor recusa qualquer gravação; botões de salvar ou enviar mostram a mensagem "Modo Ver como equipe: somente leitura. Nada foi salvo."
+- **Não deixa rastro na turma:** nenhuma conta é criada, nenhuma equipe é alterada e você não aparece como membro. As telas são abertas com os dados do líder da equipe (ou do primeiro membro, se não houver líder).
+- **Para voltar:** use o botão "Voltar ao painel do professor" na faixa verde do topo. O botão "Sair" das telas do aluno encerra a sua sessão de professor.
+- **Observação:** algumas telas do aluno geram conteúdo na primeira vez em que são abertas na rodada (por exemplo, o feedback e os insights de mercado); se você abrir antes da equipe, esse conteúdo é gerado nesse momento, igual ao que a equipe veria.
+
 ### 11.6 De onde vem cada número do relatório
 
 Em cada linha da tabela "Produto a produto" e no quadro "Para onde foi cada R$ 100", o relatório mostra **onde o aluno encontra o número** e **a fórmula**. O mesmo guia está no Manual do Aluno, Apêndice E, para que a equipe possa refazer as contas sozinha.
