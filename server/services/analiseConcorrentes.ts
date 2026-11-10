@@ -200,7 +200,7 @@ export async function montarAnaliseConcorrentes(storage: IStorage, classData: Cl
     }
     const lider = estado.lideranca?.[cat.id];
     if (lider && lider.equipeId === team.id) {
-      ameacas.push({ texto: `A equipe liderou a categoria ${cat.name} por ${lider.rodadas} rodada(s) seguida(s). Os concorrentes simulados do mesmo território de preço reagem à empresa líder.`, criterio: "Registro de liderança da categoria e regra de reação ao líder (Manual do Aluno, A.9)." });
+      ameacas.push({ texto: `Entre as equipes da turma, a sua teve a maior participação na categoria ${cat.name} na rodada anterior (${lider.rodadas} ${lider.rodadas === 1 ? "rodada" : "rodadas seguidas"} nessa posição). O concorrente simulado do mesmo território de preço reage à equipe líder.`, criterio: "Equipe com maior participação entre as equipes da turma (os concorrentes simulados não contam) e regra de reação ao líder (Manual do Aluno, A.9)." });
     }
     if (minha) {
       const ordem = (q: string) => QUALIDADES.indexOf(q as any);
