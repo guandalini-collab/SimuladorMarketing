@@ -5138,6 +5138,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Nov/2026 (correções da Rodada 3): análise de concorrentes da equipe,
+  // calculada a partir do mercado da rodada anterior e de marcas reais com
+  // fonte. Só leitura.
+  app.get("/api/team/analise-concorrentes", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Não autenticado" });
+    }
+    const team = await storage.getTeamByUser(req.session.userId);
+    if (!team) {
+      return res.status(404).json({ error: "Equipe não encontrada" });
+    }
+    const classData = await storage.getClass(team.classId);
+    if (!classData) {
+      return res.status(404).json({ error: "Turma não encontrada" });
+    }
+    try {
+      const { montarAnaliseConcorrentes } = await import("./services/analiseConcorrentes");
+      res.json(await montarAnaliseConcorrentes(storage, classData, team));
+    } catch (error: any) {
+      console.error("Erro ao montar a análise de concorrentes:", error);
+      res.status(500).json({ error: "Não foi possível montar a análise de concorrentes." });
+    }
+  });
+
   app.get("/api/professor/analytics/:classId", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });

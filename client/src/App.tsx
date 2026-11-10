@@ -39,6 +39,7 @@ import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
 import FechamentoAnual from "@/pages/fechamento-anual";
 import RodadasAnteriores from "@/pages/rodadas-anteriores";
+import AnaliseConcorrentes from "@/pages/analise-concorrentes";
 import ProfessorFechamento from "@/pages/professor-fechamento";
 import ProfessorRelatorio from "@/pages/professor-relatorio";
 
@@ -181,6 +182,7 @@ function AuthenticatedApp() {
               <Route path="/perfil" component={Perfil} />
               <Route path="/fechamento-anual" component={FechamentoAnual} />
               <Route path="/rodadas-anteriores" component={RodadasAnteriores} />
+              <Route path="/analise-concorrentes" component={AnaliseConcorrentes} />
               <Route component={NotFound} />
             </Switch>
             </ErrorBoundary>

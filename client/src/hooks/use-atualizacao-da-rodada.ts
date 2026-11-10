@@ -16,6 +16,7 @@ import { queryClient } from "@/lib/queryClient";
 const PREFIXOS_DA_RODADA = [
   "/api/rounds",
   "/api/team/current",
+  "/api/team/analise-concorrentes",
   "/api/results/team",
   "/api/feedback",
   "/api/deterministic-feedback",
