@@ -16,7 +16,7 @@ import { sendTeamEmail } from "./email-service";
 import { randomUUID, randomInt } from "crypto";
 import { limiteLogin, limiteCadastro, limiteEsqueciSenha, limiteRecuperacao, limiteRedefinir, zerarTentativas } from "./limiteDeTentativas";
 import { getAlignmentScoreLevel } from "@shared/alignmentUtils";
-import { semelhancaTextual } from "@shared/semelhanca";
+import { semelhancaTextual, semelhancaDeOpcoes, SEMELHANCA_POR_PRODUTO_DESDE } from "@shared/semelhanca";
 import { MAX_ALUNOS_POR_EQUIPE, equipesForaDoTamanho, mensagemEquipesForaDoTamanho } from "@shared/tamanhoEquipe";
 import { getProductCountBudgetMultiplier } from "@shared/budgetUtils";
 import { aberturaDaRodada, fechamentoDaRodada, fechamentoPadrao, formatarSemanaDaRodada, anoLetivoEncerrado, rodadaDeAdaptacao } from "@shared/rodadaSemanal";
@@ -202,9 +202,22 @@ function isSegmentationRowComplete(segmentation: MarketSegmentation): boolean {
 // em turma híbrida) e se cada uma delas está de fato preenchida.
 function isSegmentationComplete(
   segmentations: MarketSegmentation[],
-  businessType: string | null | undefined
+  businessType: string | null | undefined,
+  produtosExigidos?: string[] | null,
 ): boolean {
   const requiredTypes = getRequiredSegmentTypes(businessType);
+  // Nov/2026 (a partir da R3): nas turmas com segmentação por produto
+  // (ver services/segmentacaoObrigatoria.ts), a parte B2C só está completa
+  // quando cada produto liberado na rodada tem a sua segmentação.
+  if (produtosExigidos && produtosExigidos.length > 0) {
+    return requiredTypes.every(type =>
+      type === "b2c"
+        ? produtosExigidos.every(pid =>
+            segmentations.some(s => s.segmentType === "b2c" && s.productId === pid && isSegmentationRowComplete(s))
+          )
+        : segmentations.some(s => s.segmentType === type && isSegmentationRowComplete(s))
+    );
+  }
   // E1 (nov/2026): vale a linha geral ou qualquer segmentação por produto.
   return requiredTypes.every(type =>
     segmentations.some(s => s.segmentType === type && isSegmentationRowComplete(s))
@@ -3072,7 +3085,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const hasPorter = porterList.some(isPorterComplete);
     const hasBcg = bcgList.some(isBcgComplete);
     const hasPestel = pestelList.some(isPestelComplete);
-    const hasSegmentation = isSegmentationComplete(segmentationList, classData?.businessType);
+    const { produtosComSegmentacaoObrigatoria } = await import("./services/segmentacaoObrigatoria");
+    const produtosSegChecklist = await produtosComSegmentacaoObrigatoria(storage, classData, currentRound);
+    const hasSegmentation = isSegmentationComplete(segmentationList, classData?.businessType, produtosSegChecklist);
     const hasMarketingMixDraft = mixList.length > 0;
     const isSubmitted = mixList.some(m => m.submittedAt !== null);
     const hasResults = result !== undefined;
@@ -4004,7 +4019,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!porter) missingAnalyses.push("5 Forças de Porter");
     if (!bcgList || bcgList.length === 0) missingAnalyses.push("Matriz BCG");
     if (!pestel) missingAnalyses.push("Análise PESTEL");
-    if (!isSegmentationComplete(segmentationList, classDataForGate?.businessType)) missingAnalyses.push("Segmentação de Mercado");
+    const { produtosComSegmentacaoObrigatoria } = await import("./services/segmentacaoObrigatoria");
+    const produtosSegRascunho = await produtosComSegmentacaoObrigatoria(storage, classDataForGate, activeRound);
+    if (!isSegmentationComplete(segmentationList, classDataForGate?.businessType, produtosSegRascunho)) {
+      missingAnalyses.push(produtosSegRascunho ? "Segmentação de Mercado de todos os produtos" : "Segmentação de Mercado");
+    }
 
     if (missingAnalyses.length > 0) {
       return res.status(400).json({
@@ -4204,8 +4223,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Segmentação de Mercado: exige a(s) linha(s) correspondente(s) ao
       // businessType da turma (as duas, em turma híbrida), cada uma com
       // pelo menos 1 item válido em cada categoria do seu formulário.
-      if (!isSegmentationComplete(segmentationList, classData?.businessType)) {
-        missingTools.push("Segmentação de Mercado (mínimo 1 item válido em cada categoria)");
+      const { produtosComSegmentacaoObrigatoria } = await import("./services/segmentacaoObrigatoria");
+      const produtosSegSubmit = await produtosComSegmentacaoObrigatoria(storage, classData, activeRound);
+      if (!isSegmentationComplete(segmentationList, classData?.businessType, produtosSegSubmit)) {
+        missingTools.push(produtosSegSubmit
+          ? "Segmentação de Mercado de cada produto (mínimo 1 opção em cada critério)"
+          : "Segmentação de Mercado (mínimo 1 item válido em cada categoria)");
       }
 
       if (missingTools.length > 0) {
@@ -4862,9 +4885,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const segs = new Map<string, string>();
       for (const t of teams) segs.set(t.id, textoSeg(await storage.getMarketSegmentationsByTeamAndRound(t.id, round.id)));
 
+      // Nov/2026 (a partir da R3): nas turmas com segmentação por produto, as
+      // rodadas iniciadas desde SEMELHANCA_POR_PRODUTO_DESDE comparam as
+      // opções marcadas produto a produto (mesmo produto entre equipes e com
+      // a rodada anterior). Rodadas antigas seguem comparando o texto.
+      const { produtosComSegmentacaoObrigatoria } = await import("./services/segmentacaoObrigatoria");
+      const produtosSeg = await produtosComSegmentacaoObrigatoria(storage, classData, round);
+      const modoPorProduto = !!produtosSeg && (!round.startedAt || new Date(round.startedAt) >= SEMELHANCA_POR_PRODUTO_DESDE);
+      const nomesProdutos = new Map<string, string>();
+      if (modoPorProduto && classData.sector) {
+        for (const p of await storage.getProductsBySector(classData.sector)) nomesProdutos.set(p.id, p.name);
+      }
+      const opcoesDoProduto = (lista: any[], productId: string): string[] => {
+        const linha = lista.find((s) => s.segmentType === "b2c" && s.productId === productId);
+        return linha ? [linha.demographic, linha.geographic, linha.psychographic, linha.behavioral].flat().filter(Boolean) : [];
+      };
+      const segsRodada = new Map<string, any[]>();
+      const segsAnterior = new Map<string, any[]>();
+      if (modoPorProduto) {
+        for (const t of teams) {
+          segsRodada.set(t.id, await storage.getMarketSegmentationsByTeamAndRound(t.id, round.id));
+          segsAnterior.set(t.id, anterior ? await storage.getMarketSegmentationsByTeamAndRound(t.id, anterior.id) : []);
+        }
+      }
+
       const linhas = [];
       for (const t of teams) {
         const meu = segs.get(t.id) ?? "";
+        let porProduto: { produto: string; maior: number; equipe: string | null; anterior: number | null }[] | undefined;
+        if (modoPorProduto && produtosSeg) {
+          porProduto = [];
+          for (const pid of produtosSeg) {
+            const minhas = opcoesDoProduto(segsRodada.get(t.id) ?? [], pid);
+            if (minhas.length === 0) continue;
+            let maiorP = { valor: 0, equipe: null as string | null };
+            for (const outra of teams) {
+              if (outra.id === t.id) continue;
+              const v = semelhancaDeOpcoes(minhas, opcoesDoProduto(segsRodada.get(outra.id) ?? [], pid));
+              if (v > maiorP.valor) maiorP = { valor: v, equipe: outra.companyName || outra.name };
+            }
+            const antes = opcoesDoProduto(segsAnterior.get(t.id) ?? [], pid);
+            porProduto.push({
+              produto: nomesProdutos.get(pid) ?? "Produto",
+              maior: maiorP.valor,
+              equipe: maiorP.valor > 0 ? maiorP.equipe : null,
+              anterior: anterior && antes.length ? semelhancaDeOpcoes(minhas, antes) : null,
+            });
+          }
+        }
         let maior = { valor: 0, equipe: null as string | null };
         for (const outra of teams) {
           if (outra.id === t.id) continue;
@@ -4893,14 +4961,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         linhas.push({
           teamId: t.id,
           equipe: t.companyName || t.name,
-          segmentacaoPreenchida: meu.length > 0,
+          segmentacaoPreenchida: porProduto ? porProduto.length > 0 : meu.length > 0,
+          porProduto,
           maiorSemelhancaOutraEquipe: maior.valor,
           equipeMaisSemelhante: maior.equipe,
           semelhancaRodadaAnterior: anterior && meu && textoAnterior ? semelhancaTextual(meu, textoAnterior) : null,
           ferramentas,
         });
       }
-      res.json({ roundId: round.id, roundNumber: round.roundNumber, analisesProntas, linhas });
+      res.json({ roundId: round.id, roundNumber: round.roundNumber, analisesProntas, modoPorProduto, linhas });
     } catch (error: any) {
       console.error("Erro no relatório de semelhança:", error);
       res.status(500).json({ error: "Erro ao montar o relatório de semelhança" });
@@ -7194,7 +7263,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!analisesProntas && !porter) missingAnalyses.push("5 Forças de Porter");
         if (!analisesProntas && (!bcgList || bcgList.length === 0)) missingAnalyses.push("Matriz BCG");
         if (!analisesProntas && !pestel) missingAnalyses.push("Análise PESTEL");
-        if (!isSegmentationComplete(segmentationList, classDataForGate?.businessType)) missingAnalyses.push("Segmentação de Mercado");
+        const { produtosComSegmentacaoObrigatoria } = await import("./services/segmentacaoObrigatoria");
+        const produtosSegEnvio = await produtosComSegmentacaoObrigatoria(storage, classDataForGate, round);
+        if (!isSegmentationComplete(segmentationList, classDataForGate?.businessType, produtosSegEnvio)) {
+          missingAnalyses.push(produtosSegEnvio ? "Segmentação de Mercado de todos os produtos" : "Segmentação de Mercado");
+        }
 
         if (missingAnalyses.length > 0) {
           return res.status(400).json({

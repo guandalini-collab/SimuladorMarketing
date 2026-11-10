@@ -19,6 +19,8 @@ interface LinhaSemelhanca {
   equipeMaisSemelhante: string | null;
   semelhancaRodadaAnterior: number | null;
   ferramentas: { ferramenta: string; percentualSugestaoNaoEditada: number }[];
+  // Nov/2026 (a partir da R3): comparação das opções marcadas, produto a produto.
+  porProduto?: { produto: string; maior: number; equipe: string | null; anterior: number | null }[];
 }
 
 const COR_FAIXA: Record<string, string> = {
@@ -44,7 +46,7 @@ export function RelatorioSemelhanca({ classId, rounds }: { classId: string; roun
     if (!roundId || !disponiveis.some((r) => r.id === roundId)) setRoundId(disponiveis[0].id);
   }, [idsDisponiveis, roundId]);
 
-  const { data, isLoading, isError } = useQuery<{ roundNumber: number; analisesProntas: boolean; linhas: LinhaSemelhanca[] }>({
+  const { data, isLoading, isError } = useQuery<{ roundNumber: number; analisesProntas: boolean; modoPorProduto?: boolean; linhas: LinhaSemelhanca[] }>({
     queryKey: [`/api/classes/${classId}/relatorio-semelhanca?roundId=${roundId}`],
     enabled: !!classId && !!roundId,
   });
@@ -75,9 +77,15 @@ export function RelatorioSemelhanca({ classId, rounds }: { classId: string; roun
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pt-4">
-        <p className="text-sm text-muted-foreground">
-          Mede quantas palavras da Segmentação de Mercado de cada equipe coincidem com as das outras equipes e com a da própria equipe na rodada anterior. Valores a partir de 70% merecem uma leitura atenta; são um indício, não uma prova de cópia, e o relatório não identifica textos produzidos com ferramentas externas.
-        </p>
+        {data?.modoPorProduto ? (
+          <p className="text-sm text-muted-foreground" data-testid="text-semelhanca-por-produto">
+            Nesta rodada, a Segmentação é feita por produto, com opções prontas. O relatório compara, produto a produto, quantas opções marcadas coincidem com as de outra equipe no mesmo produto e com as da própria equipe na rodada anterior. Como as opções são as mesmas para todos, coincidências são esperadas: o número mostra escolhas iguais, não cópia. 100% em "igual à rodada anterior" indica que a segmentação do produto não foi revista.
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Mede quantas palavras da Segmentação de Mercado de cada equipe coincidem com as das outras equipes e com a da própria equipe na rodada anterior. Valores a partir de 70% merecem uma leitura atenta; são um indício, não uma prova de cópia, e o relatório não identifica textos produzidos com ferramentas externas.
+          </p>
+        )}
         {isError ? (
           <p className="py-6 text-center text-sm text-muted-foreground">Não foi possível carregar o relatório. Recarregue a página.</p>
         ) : isLoading || !data ? (
@@ -100,14 +108,34 @@ export function RelatorioSemelhanca({ classId, rounds }: { classId: string; roun
                 {data.linhas.map((l) => (
                   <TableRow key={l.teamId}>
                     <TableCell className="font-medium">{l.equipe}</TableCell>
-                    {l.segmentacaoPreenchida ? (
+                    {l.segmentacaoPreenchida && l.porProduto ? (
+                      <>
+                        <TableCell className="text-right align-top">
+                          {l.porProduto.map((p) => (
+                            <div key={p.produto} className="flex items-center justify-end gap-2 py-0.5 text-sm">
+                              <span className="text-muted-foreground">{p.produto}</span> <Valor v={p.maior} />
+                            </div>
+                          ))}
+                        </TableCell>
+                        <TableCell className="align-top text-sm text-muted-foreground">
+                          {l.porProduto.map((p) => <div key={p.produto} className="py-1">{p.equipe ?? "—"}</div>)}
+                        </TableCell>
+                        <TableCell className="text-right align-top">
+                          {l.porProduto.map((p) => (
+                            <div key={p.produto} className="flex items-center justify-end gap-2 py-0.5 text-sm">
+                              <span className="text-muted-foreground">{p.produto}</span> <Valor v={p.anterior} />
+                            </div>
+                          ))}
+                        </TableCell>
+                      </>
+                    ) : l.segmentacaoPreenchida ? (
                       <>
                         <TableCell className="text-right"><Valor v={l.maiorSemelhancaOutraEquipe} /></TableCell>
                         <TableCell className="text-sm text-muted-foreground">{l.maiorSemelhancaOutraEquipe > 0 ? l.equipeMaisSemelhante : "—"}</TableCell>
                         <TableCell className="text-right"><Valor v={l.semelhancaRodadaAnterior} /></TableCell>
                       </>
                     ) : (
-                      <TableCell colSpan={3} className="text-sm text-muted-foreground">Segmentação ainda não preenchida</TableCell>
+                      <TableCell colSpan={3} className="text-sm text-muted-foreground">{data.modoPorProduto ? "Segmentação por produto ainda não preenchida" : "Segmentação ainda não preenchida"}</TableCell>
                     )}
                     <TableCell className="text-sm">
                       {l.ferramentas.length

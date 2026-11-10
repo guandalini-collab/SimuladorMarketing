@@ -59,7 +59,7 @@ export async function computeJourney(
   storage: IStorage,
   team: Team,
   round: Round,
-  segmentationComplete: (list: any[], businessType?: string | null) => boolean,
+  segmentationComplete: (list: any[], businessType?: string | null, produtosExigidos?: string[] | null) => boolean,
 ): Promise<Journey> {
   const [acks, swot, porter, bcg, pestel, segs, mixes, classData, allRounds] = await Promise.all([
     getAcks(team.id, round.id),
@@ -83,13 +83,17 @@ export async function computeJourney(
   // e PESTEL feitas pelo sistema), a equipe só responde pela Segmentação.
   const { turmaComAnalisesDaIA } = await import("./analisesDaIA");
   const analisesProntas = await turmaComAnalisesDaIA(storage, team.classId);
+  // Nov/2026 (a partir da R3): segmentação de cada produto, quando a turma
+  // usa segmentação por produto (ver segmentacaoObrigatoria.ts).
+  const { produtosComSegmentacaoObrigatoria } = await import("./segmentacaoObrigatoria");
+  const produtosSeg = await produtosComSegmentacaoObrigatoria(storage, classData, round);
   const ferramentas = analisesProntas
-    ? segmentationComplete(segs, classData?.businessType)
+    ? segmentationComplete(segs, classData?.businessType, produtosSeg)
     : swot.some(isSwotComplete) &&
       porter.some(isPorterComplete) &&
       bcg.some(isBcgComplete) &&
       pestel.some(isPestelComplete) &&
-      segmentationComplete(segs, classData?.businessType);
+      segmentationComplete(segs, classData?.businessType, produtosSeg);
   const identidade = !!team.companyName?.trim() && !!team.slogan?.trim();
 
   // No primeiro mês de um ano novo, a etapa 1 também exige a reflexão do

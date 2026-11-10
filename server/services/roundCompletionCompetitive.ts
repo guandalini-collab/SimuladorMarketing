@@ -435,14 +435,21 @@ export async function processarMercadoCompetitivo(
       const produto = mix.productId ? await storage.getProduct(mix.productId) : undefined;
       const categoria = categoriaDoProduto(classData.sector, produto ?? null) ?? setor.categories[0];
       const bcgDoProduto = bcg.find((b) => b.productId && b.productId === mix.productId) ?? bcg[0];
+      // Nov/2026 (a partir da R3): o alinhamento lê a segmentação do próprio
+      // produto. Sem ela (rodadas antigas), continua valendo a visão geral da
+      // equipe, como antes — por isso recalcular R1/R2 dá o mesmo resultado.
+      const segDoProduto = mix.productId
+        ? segmentation.find((s) => s.segmentType === "b2c" && s.productId === mix.productId)
+        : undefined;
+      const segParaAlinhamento = segDoProduto
+        ? [segDoProduto, ...segmentation.filter((s) => !s.productId && s.segmentType !== "b2c")]
+        : segmentation.filter((s) => !s.productId);
       const alinhamento = calculateStrategicAlignment({
         swot: swot ?? null,
         porter: porter ?? null,
         bcg: bcgDoProduto ?? null,
         pestel: pestel ?? null,
-        // E1: linhas por produto (tópicos) não entram na avaliação antiga de
-        // alinhamento, que continua usando só a segmentação geral da equipe.
-        segmentation: segmentation.filter((s) => !s.productId),
+        segmentation: segParaAlinhamento,
         businessType: classData.businessType,
         marketingMix: mix,
         // Nov/2026: régua de preço e investimento do mercado (ver strategicAlignment.ts).

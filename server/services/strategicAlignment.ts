@@ -1,5 +1,6 @@
 import type { SwotAnalysis, PorterAnalysis, BcgAnalysis, PestelAnalysis, MarketSegmentation, MarketingMix } from "@shared/schema";
 import { calculateKPIModifiers } from "@shared/alignmentUtils";
+import { CONSUMIDOR_DIGITAL_CODIGOS, PUBLICO_POPULAR_CODIGOS, PUBLICO_PREMIUM_CODIGOS } from "@shared/segmentacao";
 
 export interface AlignmentScore {
   score: number;
@@ -624,12 +625,25 @@ function analyzeSegmentationAlignment(
   );
 
   if (requiredTypes.includes("b2c") && b2c) {
-    const hasPremiumSegment = matchesKeyword(b2c.demographic, ["alta renda", "classe a", "alto padrão", "premium"]) ||
-      matchesKeyword(b2c.psychographic, ["premium", "sofisticado", "exclusividade"]);
-    const hasPopularSegment = matchesKeyword(b2c.demographic, ["classe c", "classe d", "baixa renda", "popular"]) ||
-      matchesKeyword(b2c.behavioral, ["econômico", "sensível a preço", "promoção"]);
-    const hasDigitalBehavior = matchesKeyword(b2c.behavioral, ["digital", "online", "redes sociais", "aplicativo"]) ||
-      matchesKeyword(b2c.psychographic, ["digital", "conectado"]);
+    // Nov/2026: na segmentação por produto (linha com productId), o público
+    // vem das opções marcadas (códigos "topico:opcao", ver
+    // shared/segmentacao.ts); na visão geral antiga, das palavras do texto.
+    // As três regras abaixo e as pontuações são as mesmas nos dois casos.
+    const porProduto = !!b2c.productId;
+    const temCodigo = (codigos: string[]) =>
+      [b2c.demographic, b2c.geographic, b2c.psychographic, b2c.behavioral].some((lista) => (lista ?? []).some((c) => codigos.includes(c)));
+    const hasPremiumSegment = porProduto
+      ? temCodigo(PUBLICO_PREMIUM_CODIGOS)
+      : matchesKeyword(b2c.demographic, ["alta renda", "classe a", "alto padrão", "premium"]) ||
+        matchesKeyword(b2c.psychographic, ["premium", "sofisticado", "exclusividade"]);
+    const hasPopularSegment = porProduto
+      ? temCodigo(PUBLICO_POPULAR_CODIGOS)
+      : matchesKeyword(b2c.demographic, ["classe c", "classe d", "baixa renda", "popular"]) ||
+        matchesKeyword(b2c.behavioral, ["econômico", "sensível a preço", "promoção"]);
+    const hasDigitalBehavior = porProduto
+      ? temCodigo(CONSUMIDOR_DIGITAL_CODIGOS)
+      : matchesKeyword(b2c.behavioral, ["digital", "online", "redes sociais", "aplicativo"]) ||
+        matchesKeyword(b2c.psychographic, ["digital", "conectado"]);
 
     if (hasPremiumSegment && mix.priceValue && mix.priceValue < 15) {
       issues.push("Segmentação B2C indica público de alta renda/premium, mas o preço está muito baixo");

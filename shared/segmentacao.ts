@@ -26,6 +26,28 @@
  *   Diffusion of Innovations (categorias de adotantes).
  */
 
+/**
+ * Nov/2026 (a partir da Rodada 3 da turma Marketing II): nos setores com
+ * segmentação por produto, a segmentação B2C vale só por produto — cada
+ * produto liberado na rodada precisa da sua, e o alinhamento estratégico lê
+ * a segmentação do próprio produto. A "Visão geral da equipe" (texto livre)
+ * deixa de ser pedida; as linhas antigas continuam guardadas e visíveis nas
+ * rodadas em que foram feitas.
+ */
+export function setorComSegmentacaoPorProduto(setorId: string | null | undefined): boolean {
+  return setorId === "eletronicos";
+}
+
+/**
+ * Correspondência das opções da segmentação por produto com os três
+ * públicos que as regras de alinhamento já verificavam no texto livre
+ * (aprovada pelo professor em 10/11/2026). As regras e as pontuações não
+ * mudam; muda só de onde vem a informação.
+ */
+export const PUBLICO_PREMIUM_CODIGOS = ["classe:a", "classe:b1", "valores:status", "beneficio:design_marca"];
+export const PUBLICO_POPULAR_CODIGOS = ["classe:c2", "classe:de", "beneficio:preco", "valores:economia", "fidelidade:promocao"];
+export const CONSUMIDOR_DIGITAL_CODIGOS = ["estilo:conectado", "interesses:redes_sociais"];
+
 export type CriterioSegmentacao = "geographic" | "demographic" | "psychographic" | "behavioral";
 
 export interface OpcaoTopico { id: string; label: string }

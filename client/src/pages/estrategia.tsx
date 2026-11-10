@@ -919,17 +919,22 @@ function SegmentacaoTab({
   const requiredTypes: Array<"b2c" | "b2b"> = businessType === "hibrido" ? ["b2c", "b2b"] : businessType === "b2b" ? ["b2b"] : ["b2c"];
   // E1 (nov/2026): público-alvo por produto, com tópicos (por enquanto, Eletrônicos).
   const porProdutoAtivo = requiredTypes.includes("b2c") && sector === "eletronicos" && !!classId;
+  // Nov/2026 (a partir da R3): com segmentação por produto, a "Visão geral
+  // da equipe" não é mais pedida nem entra no cálculo; só aparece, para
+  // consulta, quando a equipe tem uma (preenchida até a R2, copiada de
+  // rodada em rodada ou gerada pelo sistema na abertura da rodada).
+  const mostrarVisaoGeralB2c = requiredTypes.includes("b2c") && (!porProdutoAtivo || !!b2cData);
 
   return (
     <div className="space-y-6">
       {porProdutoAtivo && (
         <SegmentacaoPorProduto roundId={roundId} roundStatus={roundStatus} classId={classId!} linhas={porProduto} />
       )}
-      {requiredTypes.includes("b2c") && (
+      {mostrarVisaoGeralB2c && (
         <SegmentationSection
           segmentType="b2c"
           title={porProdutoAtivo ? "Visão geral da equipe — Consumidor (B2C)" : "Segmentação de Mercado — Consumidor (B2C)"}
-          description={porProdutoAtivo ? "Anotações gerais da equipe em texto livre. O público-alvo de cada produto é definido acima, pelos critérios." : "Defina os segmentos de pessoas físicas que sua empresa vai atender"}
+          description={porProdutoAtivo ? "Anotações gerais da equipe em texto livre, guardadas para consulta. Não entram no cálculo: vale a segmentação de cada produto, acima." : "Defina os segmentos de pessoas físicas que sua empresa vai atender"}
           color="#c026d3"
           categories={B2C_CATEGORIES}
           roundId={roundId}
