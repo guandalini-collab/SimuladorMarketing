@@ -15,7 +15,7 @@
  * investido em comunicação (decisão do professor, 10/11/2026). Sem
  * recomendações: a análise descreve, a equipe decide. Só leitura.
  *
- * SWOT conforme a literatura (KOTLER; KELLER, 2012): forças e fraquezas são
+ * SWOT conforme a literatura (KOTLER; KELLER, 2019, p. 52-55): forças e fraquezas são
  * fatores internos, avaliados em comparação com os concorrentes;
  * oportunidades e ameaças são fatores do ambiente externo.
  */
@@ -80,7 +80,7 @@ export interface AnaliseConcorrentes {
   referenciaSwot: string;
 }
 
-const REFERENCIA_SWOT = "KOTLER, P.; KELLER, K. L. Administração de marketing. 14. ed. São Paulo: Pearson Education do Brasil, 2012 (análise SWOT: ambiente interno — forças e fraquezas, avaliadas em relação aos concorrentes; ambiente externo — oportunidades e ameaças).";
+const REFERENCIA_SWOT = "KOTLER, P.; KELLER, K. L. Administração de marketing. 15. ed. São Paulo: Pearson Education do Brasil, 2019, p. 52-55 (análise SWOT: oportunidades e ameaças no ambiente externo; forças e fraquezas no ambiente interno, com checklist que inclui participação de mercado, satisfação do cliente, preço, distribuição e cobertura geográfica). Na tela, forças e fraquezas são comparadas com os concorrentes da categoria; a lembrança de marca é critério do simulador (Manual do Aluno, A.5).";
 
 export async function montarAnaliseConcorrentes(storage: IStorage, classData: Class, team: Team): Promise<AnaliseConcorrentes> {
   const setor: any = setorDaTurma(classData);

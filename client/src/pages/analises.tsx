@@ -1022,7 +1022,7 @@ export default function Analises() {
               {evolutionData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={evolutionData}>
-                    {rotuloRodadaEscolhida && <ReferenceLine x={rotuloRodadaEscolhida} stroke="#c026d3" strokeDasharray="4 4" label={{ value: "rodada exibida", position: "top", fontSize: 11 }} />}
+                    {rotuloRodadaEscolhida && <ReferenceLine x={rotuloRodadaEscolhida} yAxisId="left" stroke="#c026d3" strokeDasharray="4 4" label={{ value: "rodada exibida", position: "top", fontSize: 11 }} />}
                     <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                     <XAxis dataKey="rodada" />
                     <YAxis yAxisId="left" />
