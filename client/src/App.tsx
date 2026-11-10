@@ -38,6 +38,7 @@ import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
 import FechamentoAnual from "@/pages/fechamento-anual";
+import RodadasAnteriores from "@/pages/rodadas-anteriores";
 import ProfessorFechamento from "@/pages/professor-fechamento";
 
 interface User {
@@ -175,6 +176,7 @@ function AuthenticatedApp() {
               <Route path="/guia-midias" component={GuiaMidias} />
               <Route path="/perfil" component={Perfil} />
               <Route path="/fechamento-anual" component={FechamentoAnual} />
+              <Route path="/rodadas-anteriores" component={RodadasAnteriores} />
               <Route component={NotFound} />
             </Switch>
             </ErrorBoundary>

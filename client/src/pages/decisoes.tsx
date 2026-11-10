@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { formatarNumeroBR } from "@/lib/formatters";
 import { fichaDaCategoria, custoUnitarioEstimado } from "@shared/fichaProduto";
+import { useRodadasEncerradas, useDadosDaRodada, custoUnitarioDaRodada, unidadesVendidas } from "@/hooks/use-rodadas-encerradas";
 import { ChoiceCards, ScaleSelector, ToggleTiles, PriceSlider, MediaTile, BudgetMeter, mediaQuantityStep, type ChoiceOption } from "@/components/decision-choices";
 import {
   Award, Tag, Lightbulb, ShoppingCart, Boxes, Warehouse, Network, Handshake,
@@ -689,6 +690,17 @@ export default function Decisoes() {
     ? custoUnitarioEstimado(productCategory.averagePrice, marketSector.margemBruta, productQuality, productFeatures)
     : null;
 
+  // Nov/2026 (correções da Rodada 3): o que a equipe praticou na rodada
+  // encerrada mais recente (antes da atual) para este produto — preço, custo
+  // de produção por unidade (com o fator de dólar e inflação daquela semana)
+  // e unidades vendidas. Só dados, sem orientação.
+  const rodadaAnterior = useRodadasEncerradas(team?.classId).find((r) => !activeRound || r.roundNumber < activeRound.roundNumber);
+  const dadosAnteriores = useDadosDaRodada(team?.id, rodadaAnterior?.id);
+  const mixAnterior = selectedProductId ? dadosAnteriores.mixPorProduto.get(selectedProductId) : undefined;
+  const resultadoAnterior = selectedProductId ? dadosAnteriores.resultadoPorProduto.get(selectedProductId) : undefined;
+  const custoAnterior = custoUnitarioDaRodada(mixAnterior, productCategory?.averagePrice, marketSector?.margemBruta, dadosAnteriores.multiplicadorCusto);
+  const unidadesAnteriores = unidadesVendidas(resultadoAnterior, mixAnterior);
+
   // Out/2026 (Grupo B): conferência de digitação do preço. Antes de enviar,
   // a confirmação lista os produtos com preço abaixo da metade ou acima do
   // dobro do preço médio de referência da categoria (ex.: "2.557" digitado
@@ -998,9 +1010,38 @@ export default function Decisoes() {
                   <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-sm" data-testid="ficha-produto">
                     <p>
                       <strong>Ficha do produto ({productCategory?.name}):</strong> preço médio de referência {formatarNumeroBR(productCategory.averagePrice, 'moeda')}
-                      {productCategory?.fontePreco ? ` (${productCategory.fontePreco})` : ""}; custo unitário estimado com a qualidade e as características escolhidas: <strong data-testid="text-custo-unitario">{formatarNumeroBR(custoUnitarioFicha, 'moeda')}</strong>, antes do efeito do dólar e da inflação.
+                      {productCategory?.fontePreco ? ` (${productCategory.fontePreco})` : ""}.
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">As descrições são exemplos de mercado de cada nível. Ficha completa e fórmula: Manual do Aluno, Apêndice C.</p>
+                  </div>
+                )}
+                {custoUnitarioFicha != null && (
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2" data-testid="quadro-custo-producao">
+                    <div className="rounded-lg border-2 border-[#ff8c1a]/60 p-3">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Custo de produção por unidade</p>
+                      <p className="mt-1 text-2xl font-semibold tabular-nums" data-testid="text-custo-producao">{formatarNumeroBR(custoUnitarioFicha, 'moeda')}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Com a qualidade e as características escolhidas, antes do efeito do dólar e da inflação desta semana.</p>
+                    </div>
+                    <div className="rounded-lg border p-3">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        {rodadaAnterior ? `Na Rodada ${rodadaAnterior.roundNumber}` : "Rodada anterior"}
+                      </p>
+                      {custoAnterior != null ? (
+                        <>
+                          <p className="mt-1 text-2xl font-semibold tabular-nums" data-testid="text-custo-anterior">{formatarNumeroBR(custoAnterior, 'moeda')}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Custo de produção por unidade efetivamente cobrado, com dólar e inflação
+                            ({mixAnterior?.productQuality === "premium" ? "qualidade premium" : mixAnterior?.productQuality === "basico" ? "qualidade básica" : "qualidade média"},{" "}
+                            {mixAnterior?.productFeatures === "completo" ? "características completas" : mixAnterior?.productFeatures === "basico" ? "características básicas" : "características intermediárias"})
+                            {unidadesAnteriores != null ? ` · ${unidadesAnteriores.toLocaleString('pt-BR')} unidades vendidas` : ""}.
+                          </p>
+                        </>
+                      ) : (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {rodadaAnterior ? "A equipe não teve este produto na rodada anterior." : "Ainda não há rodada encerrada."}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -1097,6 +1138,15 @@ export default function Decisoes() {
                   reference={productCategory?.averagePrice}
                   inputId="price-input"
                 />
+                {rodadaAnterior && (
+                  <p className="text-sm text-muted-foreground" data-testid="text-preco-anterior">
+                    Preço praticado na Rodada {rodadaAnterior.roundNumber}:{" "}
+                    {Number(mixAnterior?.priceValue) > 0
+                      ? <strong className="text-foreground">{formatarNumeroBR(Number(mixAnterior.priceValue), 'moeda')}</strong>
+                      : "a equipe não teve este produto nessa rodada"}
+                    {Number(mixAnterior?.priceValue) > 0 && unidadesAnteriores != null ? ` · ${unidadesAnteriores.toLocaleString('pt-BR')} unidades vendidas` : ""}.
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>

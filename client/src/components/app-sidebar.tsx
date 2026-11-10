@@ -14,6 +14,7 @@ import {
   Lock,
   CheckCircle2,
   CalendarCheck,
+  History,
 } from "lucide-react";
 import {
   Sidebar,
@@ -44,6 +45,7 @@ const roundItems = [
 ];
 
 const consultItems = [
+  { title: "Rodadas anteriores", url: "/rodadas-anteriores", icon: History },
   { title: "Fechamento anual", url: "/fechamento-anual", icon: CalendarCheck },
   { title: "Insights de Mercado", url: "/insights", icon: Sparkles },
   { title: "Orçamento", url: "/orcamento", icon: Wallet },
