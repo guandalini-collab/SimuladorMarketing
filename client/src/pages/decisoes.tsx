@@ -74,7 +74,7 @@ const COVERAGE_OPTIONS: ChoiceOption[] = [
 const PRICE_STRATEGY_OPTIONS: ChoiceOption[] = [
   { value: "penetracao", label: "Penetração", description: "Preço baixo para ganhar mercado rapidamente", icon: TrendingDown, testId: "radio-preco-pen" },
   { value: "competitivo", label: "Competitivo", description: "Preço similar aos concorrentes", icon: Scale, testId: "radio-preco-comp" },
-  { value: "skimming", label: "Desnatamento (Skimming)", description: "Preço alto para maximizar margem", icon: Crown, testId: "radio-preco-skim" },
+  { value: "skimming", label: "Desnatamento (Skimming)", description: "Preço começa alto e é reduzido aos poucos", icon: Crown, testId: "radio-preco-skim" },
   { value: "valor", label: "Baseado em Valor", description: "Preço baseado no valor percebido", icon: Gem, testId: "radio-preco-valor" },
 ];
 

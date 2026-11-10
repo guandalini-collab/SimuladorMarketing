@@ -24,7 +24,7 @@ const num = (v: number) => Math.round(v).toLocaleString("pt-BR");
 
 const QUALIDADE: Record<string, string> = { basico: "básica", medio: "média", premium: "premium" };
 const RECURSOS: Record<string, string> = { basico: "básicas", intermediario: "intermediárias", completo: "completas" };
-const ESTRATEGIA: Record<string, string> = { penetracao: "penetração (preço baixo para ganhar mercado)", competitivo: "competitivo (preço parecido com o dos concorrentes)", skimming: "desnatamento (preço alto para margem maior)", valor: "baseado em valor" };
+const ESTRATEGIA: Record<string, string> = { penetracao: "penetração (preço baixo para ganhar mercado)", competitivo: "competitivo (preço parecido com o dos concorrentes)", skimming: "desnatamento (preço que começa alto e é reduzido aos poucos)", valor: "baseado em valor" };
 
 export interface Diagnostico {
   /** "alerta" pesa contra o resultado; "ok" é um ponto que não explica o problema. */
