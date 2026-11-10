@@ -55,19 +55,20 @@ function CartaoDiagnostico({ d }: { d: Diagnostico }) {
 
 function AbaDaEquipe({ e }: { e: Equipe }) {
   if (!e.enviou) return <Alert><AlertDescription>{e.resumo}</AlertDescription></Alert>;
-  const linhas: { rotulo: string; valor: (p: Produto) => string }[] = [
-    { rotulo: "Qualidade · características", valor: (p) => `${p.qualidade} · ${p.caracteristicas}` },
-    { rotulo: "Preço praticado", valor: (p) => brl(p.preco) },
-    { rotulo: "Preço de referência do mercado", valor: (p) => `${brl(p.precoReferencia)} (${p.diferencaReferenciaPct >= 0 ? "+" : ""}${pct(p.diferencaReferenciaPct, 0)})` },
-    { rotulo: "Quanto a empresa recebe por unidade (preço − 12% de tributos)", valor: (p) => brl2(p.receitaLiquidaUnidade) },
-    { rotulo: "Custo de produção por unidade", valor: (p) => brl2(p.custoProducaoUnidade) },
-    { rotulo: "Sobra por unidade antes das despesas", valor: (p) => `${brl2(p.sobraUnidade)} (${pct(p.sobraPct, 0)})` },
-    { rotulo: "Unidades vendidas", valor: (p) => p.unidades.toLocaleString("pt-BR") },
-    { rotulo: "Participação de mercado", valor: (p) => pct(p.participacao) + (p.mediaCategoria != null ? ` (média ${pct(p.mediaCategoria)})` : "") },
-    { rotulo: "Comunicação (mídias)", valor: (p) => brl(p.comunicacao) },
-    { rotulo: "Distribuição (canais e cobertura)", valor: (p) => brl(p.distribuicao) },
-    { rotulo: "Despesas administrativas", valor: (p) => brl(p.administrativas) },
-    { rotulo: "Resultado do produto", valor: (p) => brl(p.resultado) },
+  // Nov/2026: "onde ver" e "fórmula" de cada número (Manual do Aluno, Apêndice E).
+  const linhas: { rotulo: string; onde: string; formula: string; valor: (p: Produto) => string }[] = [
+    { rotulo: "Qualidade · características", onde: "Mix de Marketing, aba Produto; tela Rodadas anteriores", formula: "Decisão da equipe", valor: (p) => `${p.qualidade} · ${p.caracteristicas}` },
+    { rotulo: "Preço praticado", onde: "Mix de Marketing, aba Preço; tela Rodadas anteriores", formula: "Decisão da equipe", valor: (p) => brl(p.preco) },
+    { rotulo: "Preço de referência do mercado", onde: "Mix de Marketing, abas Produto e Preço (ficha do produto)", formula: "Dado de mercado (Apêndice C); diferença = preço ÷ referência − 1", valor: (p) => `${brl(p.precoReferencia)} (${p.diferencaReferenciaPct >= 0 ? "+" : ""}${pct(p.diferencaReferenciaPct, 0)})` },
+    { rotulo: "Quanto a empresa recebe por unidade (preço − 12% de tributos)", onde: "Não aparece pronto; calculado", formula: "Preço × 0,88 (C.5, passo 3)", valor: (p) => brl2(p.receitaLiquidaUnidade) },
+    { rotulo: "Custo de produção por unidade", onde: "Mix de Marketing, aba Produto (quadro de custo); tela Rodadas anteriores", formula: "Referência × 0,88 × (1 − margem bruta) × fatores de qualidade e características × multiplicador de custo (A.7; C.5, passos 1 e 2)", valor: (p) => brl2(p.custoProducaoUnidade) },
+    { rotulo: "Sobra por unidade antes das despesas", onde: "Não aparece pronto; calculado", formula: "Recebe por unidade − custo de produção (C.5, passo 4)", valor: (p) => `${brl2(p.sobraUnidade)} (${pct(p.sobraPct, 0)})` },
+    { rotulo: "Unidades vendidas", onde: "Tela Rodadas anteriores; aba Preço; tela Análise de concorrentes", formula: "Receita bruta ÷ preço", valor: (p) => p.unidades.toLocaleString("pt-BR") },
+    { rotulo: "Participação de mercado", onde: "Tela Análise de concorrentes (por produto); Resultados, aba KPIs (total)", formula: "Receita do produto ÷ receita da categoria (A.2)", valor: (p) => pct(p.participacao) + (p.mediaCategoria != null ? ` (média ${pct(p.mediaCategoria)})` : "") },
+    { rotulo: "Comunicação (mídias)", onde: "Mix de Marketing, aba Promoção; tela Rodadas anteriores", formula: "Soma das verbas das mídias (A.7)", valor: (p) => brl(p.comunicacao) },
+    { rotulo: "Distribuição (canais e cobertura)", onde: "Mix de Marketing, aba Praça (custo em R$ de canais e cobertura)", formula: "Receita de referência × (% da cobertura + % dos canais) (A.7 e B.1)", valor: (p) => brl(p.distribuicao) },
+    { rotulo: "Despesas administrativas", onde: "Só o total da empresa, no DRE (Resultados, Demonstrativo Financeiro)", formula: "(0,5 × receita de referência + 0,5 × receita da empresa) × 0,88 × % administrativo do setor (A.7)", valor: (p) => brl(p.administrativas) },
+    { rotulo: "Resultado do produto", onde: "Resultados, aba KPIs (card do produto, “Lucro”); tela Rodadas anteriores", formula: "Receita bruta − custos totais", valor: (p) => brl(p.resultado) },
   ];
   return (
     <div className="space-y-6">
@@ -80,7 +81,7 @@ function AbaDaEquipe({ e }: { e: Equipe }) {
         <Card>
           <CardHeader>
             <CardTitle>Para onde foi cada R$ 100 vendidos</CardTitle>
-            <CardDescription>Cada linha dividida pela receita bruta da equipe.</CardDescription>
+            <CardDescription>Cada linha dividida pela receita bruta da equipe. Onde ver: Resultados, aba Demonstrativo Financeiro (DRE; comunicação e distribuição aparecem juntas em “Despesas com vendas”). Fórmula: valor da linha ÷ receita bruta × 100.</CardDescription>
           </CardHeader>
           <CardContent>
             <table className="w-full text-sm">
@@ -111,7 +112,10 @@ function AbaDaEquipe({ e }: { e: Equipe }) {
             <tbody>
               {linhas.map((l) => (
                 <tr key={l.rotulo} className="border-b last:border-b-0">
-                  <td className="py-1.5 pr-3">{l.rotulo}</td>
+                  <td className="py-1.5 pr-3">
+                    <span>{l.rotulo}</span>
+                    <span className="block text-xs text-muted-foreground">Onde ver: {l.onde}. Fórmula: {l.formula}.</span>
+                  </td>
                   {e.produtos.map((p) => <td key={p.produtoId} className="py-1.5 text-right tabular-nums">{l.valor(p)}</td>)}
                 </tr>
               ))}

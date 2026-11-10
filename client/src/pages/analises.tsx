@@ -15,6 +15,7 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
+  ReferenceLine,
 } from "recharts";
 import { TrendingUp, DollarSign, TrendingDown, Award, Users, Heart, Target, Sparkles, Percent, ShoppingCart, TrendingUpDown, Star, Clock, BarChart3, Coins, Download, FileSpreadsheet, Building2, ChevronDown, Wallet, Receipt, Scale } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -160,7 +161,17 @@ export default function Analises() {
   });
 
   const completedRounds = rounds?.filter(r => r.status === "completed") || [];
-  const lastCompletedRound = completedRounds[completedRounds.length - 1];
+  const ultimaRodadaEncerrada = completedRounds[completedRounds.length - 1];
+  // Nov/2026 (correções da Rodada 3): a equipe escolhe qual rodada encerrada
+  // quer ver (KPIs, produtos, DRE e balanço), para comparar uma com a outra.
+  // Padrão: a última encerrada, como antes. Só exibição; nada é recalculado.
+  // Os botões listam só as rodadas valendo (sem a de teste) com resultado.
+  const [rodadaEscolhidaId, setRodadaEscolhidaId] = useState<string | null>(null);
+  const rodadasComResultado = [...completedRounds]
+    .filter((r) => !r.isPractice && (teamResults ?? []).some((res) => res.roundId === r.id))
+    .sort((a, b) => a.roundNumber - b.roundNumber);
+  const lastCompletedRound = (rodadaEscolhidaId ? completedRounds.find((r) => r.id === rodadaEscolhidaId) : undefined) ?? ultimaRodadaEncerrada;
+  const rotuloRodadaEscolhida = lastCompletedRound ? (lastCompletedRound.isPractice ? "Teste" : `R${lastCompletedRound.roundNumber}`) : undefined;
 
   const currentResult = teamResults?.find(r => r.roundId === lastCompletedRound?.id);
 
@@ -420,6 +431,23 @@ export default function Analises() {
               </p>
             </div>
           </div>
+          {rodadasComResultado.length > 1 && (
+            <div className="mt-4 flex flex-wrap items-center gap-2" role="tablist" aria-label="Rodada exibida">
+              <span className="text-sm text-white/80">Ver rodada:</span>
+              {rodadasComResultado.map((r) => (
+                <Button
+                  key={r.id}
+                  size="sm"
+                  variant={r.id === lastCompletedRound?.id ? "secondary" : "outline"}
+                  className={r.id === lastCompletedRound?.id ? "" : "bg-transparent text-white border-white/50 hover:bg-white/10 hover:text-white"}
+                  onClick={() => setRodadaEscolhidaId(r.id)}
+                  data-testid={`resultados-rodada-${r.roundNumber}`}
+                >
+                  Rodada {r.roundNumber}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -920,6 +948,7 @@ export default function Analises() {
                 {evolutionData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={evolutionData}>
+                      {rotuloRodadaEscolhida && <ReferenceLine x={rotuloRodadaEscolhida} stroke="#c026d3" strokeDasharray="4 4" label={{ value: "rodada exibida", position: "top", fontSize: 11 }} />}
                       <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                       <XAxis dataKey="rodada" />
                       <YAxis />
@@ -993,6 +1022,7 @@ export default function Analises() {
               {evolutionData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={evolutionData}>
+                    {rotuloRodadaEscolhida && <ReferenceLine x={rotuloRodadaEscolhida} stroke="#c026d3" strokeDasharray="4 4" label={{ value: "rodada exibida", position: "top", fontSize: 11 }} />}
                     <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                     <XAxis dataKey="rodada" />
                     <YAxis yAxisId="left" />
