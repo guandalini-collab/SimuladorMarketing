@@ -134,9 +134,11 @@ export async function montarAnaliseConcorrentes(storage: IStorage, classData: Cl
     }
   }
   // Crescimento do mercado de cada produto: o mesmo da Matriz BCG da rodada.
+  // Antes da abertura, a BCG da rodada ainda não existe: usa a da rodada-base.
   let bcgsDaRodada: any[] = [];
   try {
-    bcgsDaRodada = await storage.getBcgAnalyses(team.id, (atual && atual.status !== "completed" ? atual : base).id);
+    if (atual && atual.status !== "completed") bcgsDaRodada = await storage.getBcgAnalyses(team.id, atual.id);
+    if (!bcgsDaRodada.length) bcgsDaRodada = await storage.getBcgAnalyses(team.id, base.id);
   } catch {
     bcgsDaRodada = [];
   }
