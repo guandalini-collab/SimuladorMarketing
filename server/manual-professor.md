@@ -184,7 +184,7 @@ Uma vez que a rodada é criada/iniciada, a quantidade de produtos por equipe fic
 
 Cada rodada corresponde a **uma semana** real do calendário. Enquanto a rodada está ativa, cada equipe segue um **percurso obrigatório**, na ordem do menu do aluno; cada etapa só abre depois que a anterior foi concluída:
 
-1. **Feedback e Resultados da rodada anterior** — leitura; a equipe confirma com o botão **Li e entendi**.
+1. **Relatório gerencial e resultados da rodada anterior** — leitura; a equipe confirma com o botão **Li e entendi**.
 2. **Simula+ News e Análise de Mercado** — leitura dos eventos da semana, do Boletim da semana e da Conjuntura Brasil; confirmação com **Li e entendi**.
 3. **Ferramentas Estratégicas** — SWOT, 5 Forças de Porter, Matriz BCG e PESTEL são obrigatórias. A **Segmentação de Mercado** não bloqueia o avanço, mas conta na pontuação de Alinhamento Estratégico (Seção 11.2); vale reforçar isso em sala.
 4. **Identidade da Empresa** — nome, slogan e logomarca, definitivos para os alunos depois de salvos (só o professor corrige; Seção 5).
@@ -192,13 +192,13 @@ Cada rodada corresponde a **uma semana** real do calendário. Enquanto a rodada 
 
 Os itens do grupo **Consulta** (Fechamento anual, Insights de Mercado, Orçamento, Manual do Aluno, Guia de Mídias e Meu Perfil) ficam sempre livres.
 
-**O que o sistema faz sozinho.** Na **preparação** (30 minutos antes da abertura) e na **abertura** de cada rodada: entrega as **análises estratégicas prontas** da rodada (Seção 10.3); gera de 2 a 4 eventos de mercado com IA, se a geração automática estiver ligada e a rodada ainda não tiver eventos; e publica o **Boletim da semana** (demanda e sensibilidade a preço). No motor competitivo, ele vale para todas as empresas do mercado (demanda × 0,9/1,0/1,1 e elasticidade × 1,2/1,0/0,85); na rodada de teste, que usa o motor anterior, aplica o ajuste individual de até 12% na receita. No **encerramento**, gera o Feedback Inteligente para cada equipe com resultado.
+**O que o sistema faz sozinho.** Na **preparação** (30 minutos antes da abertura) e na **abertura** de cada rodada: entrega as **análises estratégicas prontas** da rodada (Seção 10.3); gera de 2 a 4 eventos de mercado com IA, se a geração automática estiver ligada e a rodada ainda não tiver eventos; e publica o **Boletim da semana** (demanda e sensibilidade a preço). No motor competitivo, ele vale para todas as empresas do mercado (demanda × 0,9/1,0/1,1 e elasticidade × 1,2/1,0/0,85); na rodada de teste, que usa o motor anterior, aplica o ajuste individual de até 12% na receita. No **encerramento**, o sistema deixou de gerar o Feedback Inteligente (desde 17/11/2026): em seu lugar, cada aluno baixa o relatório gerencial da rodada (Seção 11.8).
 
-**Conjuntura real.** A IA usa, na PESTEL, nos eventos e no boletim, os **indicadores oficiais** (IPCA, PIB e desemprego direto do IBGE — o desemprego é a taxa de desocupação da PNAD Contínua, em trimestre móvel; Selic, dólar e confiança do consumidor do Banco Central; todos atualizados automaticamente) e o texto **Conjuntura Brasil** (fatos econômicos e políticos atuais, com data e fonte; Seção 12). Os alunos veem o mesmo conteúdo na aba Economia e Política da Análise de Mercado. A IA é instruída a não escrever números que não estejam nesses indicadores ou no texto da Conjuntura, e o boletim e os eventos são apresentados como cenário simulado da semana, não como dado oficial (o boletim deixou de mostrar "confiança do consumidor" e "preços do setor", que eram números sem fonte). O Feedback Inteligente cita a obra e o conceito, sem número de capítulo. Nomes e slogans das equipes entram nas instruções da IA apenas como dados, com tamanho limitado, para que um texto digitado por uma equipe não altere as análises da turma.
+**Conjuntura real.** A IA usa, na PESTEL, nos eventos e no boletim, os **indicadores oficiais** (IPCA, PIB e desemprego direto do IBGE — o desemprego é a taxa de desocupação da PNAD Contínua, em trimestre móvel; Selic, dólar e confiança do consumidor do Banco Central; todos atualizados automaticamente) e o texto **Conjuntura Brasil** (fatos econômicos e políticos atuais, com data e fonte; Seção 12). Os alunos veem o mesmo conteúdo na aba Economia e Política da Análise de Mercado. A IA é instruída a não escrever números que não estejam nesses indicadores ou no texto da Conjuntura, e o boletim e os eventos são apresentados como cenário simulado da semana, não como dado oficial (o boletim deixou de mostrar "confiança do consumidor" e "preços do setor", que eram números sem fonte). Nomes e slogans das equipes entram nas instruções da IA apenas como dados, com tamanho limitado, para que um texto digitado por uma equipe não altere as análises da turma.
 
 **Tela de decisões dos alunos.** O preço de cada produto **começa em branco** em toda rodada e é obrigatório: sem ele, o envio é recusado. O envio só é aceito com preço entre **0,2 e 5 vezes** o preço médio de referência da categoria, para barrar erros de digitação (por exemplo, "2.557" no lugar de "25,57"), que no mercado compartilhado afetariam a turma inteira; entre 0,5 e 2 vezes não há aviso, e fora dessa faixa a janela de confirmação pede ao aluno que confira o valor. Depois de enviada, a decisão de um produto não pode mais ser alterada naquela rodada, nem por rascunho. Os valores investidos em cada mídia precisam ser números maiores ou iguais a zero. A tela não traz mais os cartões de “Orientações Estratégicas” gerados pela IA nem textos de recomendação; mostra apenas dados de mercado com fonte (preço médio de referência da categoria, margens do setor e investimento típico em marketing). A equipe decide e descobre as consequências nos resultados.
 
-**Sem dicas aos alunos.** O sistema não diz aos alunos o que fazer. O Feedback Inteligente é só diagnóstico (o que aconteceu, por quê e a literatura relacionada), sem sugestões de ação; o cartão de Recomendações Estratégicas saiu da tela Insights de Mercado; e a linha "Análise de Tendência" dos eventos descreve os efeitos sobre o mercado, sem recomendar decisões. As recomendações por P do feedback determinístico continuam visíveis só para você, na aba Analisar. Na tela Análise de Mercado também saíram os blocos "Implicações Estratégicas" e "Impactos nas Decisões de Marketing"; na tela Insights de Mercado saíram as "metas de referência" fixas (a única comparação que ficou é com a margem média real do setor); e o Feedback Inteligente não exibe número de capítulo nas leituras relacionadas, porque a IA não tem o sumário das obras.
+**Sem dicas aos alunos.** O sistema não diz aos alunos o que fazer. O relatório gerencial da rodada (Seção 11.8) mostra só fatos e contas, sem sugestões de ação; os cartões "Feedback da Rodada" e "Feedback da IA" saíram da tela Análises do aluno; o cartão de Recomendações Estratégicas saiu da tela Insights de Mercado; e a linha "Análise de Tendência" dos eventos descreve os efeitos sobre o mercado, sem recomendar decisões. As recomendações por P do feedback determinístico continuam visíveis só para você, na aba Analisar. Na tela Análise de Mercado também saíram os blocos "Implicações Estratégicas" e "Impactos nas Decisões de Marketing"; na tela Insights de Mercado saíram as "metas de referência" fixas (a única comparação que ficou é com a margem média real do setor).
 
 **Telas do aluno sempre atualizadas.** As telas do aluno se atualizam sozinhas a cada minuto e quando ele volta para a aba do navegador: quando você abre ou encerra uma rodada, os alunos veem a mudança sem recarregar a página. Ao clicar em Sair, o navegador apaga os dados da equipe, para o próximo aluno do laboratório não vê-los. Se uma tela falhar ao carregar, aparece uma mensagem com o botão "Recarregar a página", em vez de uma tela em branco.
 
@@ -462,6 +462,28 @@ Em cada linha da tabela "Produto a produto" e no quadro "Para onde foi cada R$ 1
 - **Números que a equipe calcula (Manual do Aluno, C.5):** quanto recebe por unidade (preço × 0,88); sobra por unidade; despesas por unidade; custo total por unidade; preço mínimo sem prejuízo (custo total ÷ 0,88).
 - **O que não aparece separado na tela do aluno:** despesas administrativas por produto (só o total no DRE; fórmula na A.7); comunicação e distribuição, que o DRE soma em "Despesas com vendas" (separadas nas abas Promoção e Praça). A nota e os alertas do alinhamento estratégico aparecem para o aluno no card "Alinhamento Estratégico" da tela Resultados.
 
+
+### 11.8 Relatório gerencial da rodada (PDF dos alunos)
+
+Desde 17/11/2026, o relatório gerencial substitui o Feedback Inteligente para os alunos. O simulador monta o PDF de cada empresa só com os números gravados no fechamento da rodada, sem texto de IA e sem dizer o que a equipe deve fazer. O layout segue as normas da ABNT no que se aplica (A4; margens de 3 cm à esquerda e em cima e de 2 cm à direita e embaixo; fonte equivalente à Arial, corpo 12 e espaçamento 1,5 no texto; título de tabela e de gráfico acima e fonte abaixo; logomarca só na primeira folha, que conta mas não mostra número; numeração a partir da segunda folha).
+
+**Download obrigatório, aluno por aluno.** Encerrada a rodada, cada aluno, no primeiro acesso, vê a tela "Baixar relatório gerencial (PDF)" e só entra no simulador depois de baixar o seu. Vale só a última rodada encerrada em que a equipe teve resultado. O menu **Relatórios gerenciais** (antiga tela Feedback Inteligente) reúne os PDFs de todas as rodadas encerradas, para baixar de novo. Cada download aparece no **Relatório de Acessos às Rodadas** (aba Configurar) como "Relatório baixado", com o nome do aluno e o horário. No modo **Ver como equipe**, você não é bloqueado e o seu download não é registrado em nome do aluno; é por esse modo que você baixa o PDF de qualquer equipe.
+
+**O que o relatório contém.**
+1. Apresentação.
+2. Painel de indicadores: rodada a rodada, com média e posição na turma; separa resultados financeiros, mercado e clientes, e decisões de marketing (KAPLAN; NORTON, 1996; FARRIS et al., 2016).
+3. O que os números mostram: frases fixas preenchidas com os números, sem interpretação.
+4. Análise de vendas: decomposição preço × volume (KOTLER; KELLER, 2019, p. 756).
+5. Participação de mercado: participação de cada empresa e participação relativa (KOTLER; KELLER, 2019, p. 757).
+6. Despesas de marketing em relação à receita (KOTLER; KELLER, 2019, p. 758).
+7. Lucratividade por produto. O produto que não esteve na rodada aparece como "não vendido", com os valores das rodadas em que foi vendido.
+8. Das análises às decisões: para cada produto, as notas das 5 Forças (com a rodada anterior), o quadrante da BCG, o público marcado na Segmentação, o que a empresa decidiu (preço, comunicação, canais) e se as duas coisas combinam pelas regras do alinhamento. Traz também o quadro que associa os quadrantes da BCG aos estágios do ciclo de vida do produto (KOTLER; KELLER, 2019, p. 45 e 380-381), com a nota de que essa associação é uma aproximação didática da disciplina, não do livro, e com as críticas ao conceito (p. 392). Quando todas as categorias têm o mesmo crescimento de mercado, o relatório avisa que os produtos só aparecem como ponto de interrogação ou estrela.
+9. Alinhamento estratégico: cada alerta explicado em quatro partes (o que a análise diz, o que a empresa decidiu, por que não combina, quanto pesou), com os limites das regras convertidos em reais. As regras completas estão no Apêndice E.4 do Manual do Aluno.
+10. Nota da rodada: a mesma conta do seu painel (Seção 11.3), indicador a indicador.
+11. Fórmulas com os números da própria empresa.
+
+**O que mudou para os alunos.** O feedback da IA deixou de ser gerado no encerramento (você ainda pode gerá-lo pelo botão do Ranking, Seção 11.1). Na tela Análises, saíram os cartões "Feedback da Rodada" e "Feedback da IA". A IA continua nas análises estratégicas da rodada, nos indicadores econômicos, nos eventos e no jornal.
+
 ## 12. A Aba Configurar
 
 ![Aba Configurar, com as quatro seções de configuração pouco frequente.](09-configurar-tab.jpg)
@@ -722,6 +744,8 @@ DRUCKER, Peter F. **The Essential Drucker: The Best of Sixty Years of Peter Druc
 
 FARRIS, Paul W.; BENDLE, Neil T.; PFEIFER, Phillip E.; REIBSTEIN, David J. **Marketing Metrics: The Definitive Guide to Measuring Marketing Performance**. 2. ed. Upper Saddle River: Pearson Education, 2010.
 
+FARRIS, Paul W.; BENDLE, Neil T.; PFEIFER, Phillip E.; REIBSTEIN, David J. **Marketing Metrics: The Manager's Guide to Measuring Marketing Performance**. 3. ed. Upper Saddle River: Pearson, 2016.
+
 GITMAN, Lawrence J. **Princípios de Administração Financeira**. 12. ed. São Paulo: Pearson Prentice Hall, 2010.
 
 HENDERSON, Bruce D. **The Product Portfolio**. Boston: Boston Consulting Group, 1970.
@@ -731,6 +755,8 @@ HOSKISSON, Robert E.; HITT, Michael A.; IRELAND, R. Duane; HARRISON, Jeffrey S. 
 HUTT, Michael D.; SPEH, Thomas W. **Business Marketing Management: B2B**. Mason: Cengage Learning. [Edição consultada não confirmada com segurança.]
 
 JOHNSON, Gerry; SCHOLES, Kevan; WHITTINGTON, Richard. **Explorando a Estratégia Corporativa: Texto e Casos**. 7. ed. Porto Alegre: Bookman, 2007.
+
+KAPLAN, Robert S.; NORTON, David P. **The Balanced Scorecard: Translating Strategy into Action**. Boston: Harvard Business School Press, 1996.
 
 KOTLER, Philip; ARMSTRONG, Gary. **Princípios de Marketing**. 15. ed. São Paulo: Pearson Education do Brasil, 2018.
 

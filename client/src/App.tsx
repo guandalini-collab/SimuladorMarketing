@@ -43,6 +43,7 @@ import { FaixaVerComoEquipe } from "@/components/ver-como-equipe";
 import AnaliseConcorrentes from "@/pages/analise-concorrentes";
 import ProfessorFechamento from "@/pages/professor-fechamento";
 import ProfessorRelatorio from "@/pages/professor-relatorio";
+import { TelaRelatorioPendente, CHAVE_PENDENTE, type RelatorioPendente } from "@/components/relatorio-gerencial";
 
 interface User {
   id: string;
@@ -69,6 +70,12 @@ function AuthenticatedApp() {
   const { data: team } = useQuery<Team>({
     queryKey: ["/api/team/current"],
     enabled: !!user && user.role === "equipe",
+  });
+
+  // Nov/2026 (decisão do professor, 17/11): relatório gerencial pendente.
+  const { data: relatorio } = useQuery<{ pendente: RelatorioPendente | null }>({
+    queryKey: CHAVE_PENDENTE,
+    enabled: !!user && user.role === "equipe" && !!user.onboardingCompletedAt,
   });
 
   // Out/2026 (Grupo G): mantém as telas do aluno em dia com a rodada.
@@ -129,6 +136,12 @@ function AuthenticatedApp() {
   // fica acessível. onboardingCompletedAt vem de /api/auth/me.
   if (user.role === "equipe" && !user.onboardingCompletedAt) {
     return <Onboarding onLogout={() => logoutMutation.mutate()} />;
+  }
+
+  // Nov/2026 (decisão do professor, 17/11): encerrada uma rodada, cada aluno
+  // baixa o relatório gerencial dela antes de entrar no simulador.
+  if (user.role === "equipe" && relatorio?.pendente) {
+    return <TelaRelatorioPendente pendente={relatorio.pendente} onLogout={() => logoutMutation.mutate()} />;
   }
 
   const style = {

@@ -3120,7 +3120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     let nextAction: NextAction;
     if (feedbackRequired && !stepDone("feedback")) {
-      nextAction = { key: "feedback", title: "Feedback e Resultados", description: "Leia o que aconteceu na rodada anterior e confirme em \"Li e entendi\".", href: "/feedback" };
+      nextAction = { key: "feedback", title: "Relatório gerencial", description: "Leia o relatório gerencial da rodada anterior e confirme em \"Li e entendi\".", href: "/feedback" };
     } else if (!stepDone("mercado")) {
       nextAction = { key: "mercado", title: "Mercado do mês", description: "Leia o Simula+ News e a Análise de Mercado e confirme em \"Li e entendi\".", href: "/mercado" };
     } else if (!hasSwot) {
@@ -5340,15 +5340,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/team/relatorio-gerencial/pendente", async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: "Não autenticado" });
+    // No modo "Ver como equipe" o professor nunca é bloqueado.
+    if (req.session.verComoEquipe) return res.json({ pendente: null });
     const team = await storage.getTeamByUser(req.session.userId);
     if (!team) return res.json({ pendente: null });
     try {
-      const { relatorioPendenteDaEquipe } = await import("./services/relatorioGerencial");
-      res.json({ pendente: await relatorioPendenteDaEquipe(storage, team) });
+      const { relatorioPendenteDoAluno } = await import("./services/relatorioGerencial");
+      res.json({ pendente: await relatorioPendenteDoAluno(storage, team, req.session.userId) });
     } catch (error: any) {
       console.error("Erro ao verificar o relatório pendente:", error);
       res.json({ pendente: null });
     }
+  });
+
+  // Lista das rodadas encerradas com relatório disponível para a equipe.
+  app.get("/api/team/relatorios-gerenciais", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: "Não autenticado" });
+    const team = await storage.getTeamByUser(req.session.userId);
+    if (!team) return res.json([]);
+    const rodadas = (await storage.getRoundsByClass(team.classId))
+      .filter((r) => r.status === "completed" && !r.isPractice)
+      .sort((a, b) => b.roundNumber - a.roundNumber);
+    const lista = [];
+    for (const r of rodadas) {
+      const tem = (await storage.getResultsByRound(r.id)).some((x: any) => x.teamId === team.id);
+      if (tem) lista.push({ roundId: r.id, rodada: r.roundNumber, encerradaEm: r.endedAt });
+    }
+    res.json(lista);
   });
 
   app.get("/api/team/relatorio-gerencial/:roundId", async (req, res) => {

@@ -26,8 +26,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { KPICard } from "@/components/kpi-card";
 import { AlignmentScoreCard } from "@/components/alignment-score-card";
 import { BcgMatrixChart } from "@/components/bcg-matrix-chart";
-import { AiFeedbackCard } from "@/components/ai-feedback-card";
-import { DeterministicFeedbackCard } from "@/components/deterministic-feedback-card";
 import { useQuery } from "@tanstack/react-query";
 import { MarketFitCard } from "@/components/market-bulletin";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -924,15 +922,9 @@ export default function Analises() {
             <BcgMatrixChart teamId={team.id} roundId={lastCompletedRound.id} />
           )}
 
-          {/* Feedback Automático Determinístico */}
-          {team && lastCompletedRound && (
-            <DeterministicFeedbackCard teamId={team.id} roundId={lastCompletedRound.id} />
-          )}
-
-          {/* AI Feedback (Gerado por LLM) */}
-          {team && lastCompletedRound && (
-            <AiFeedbackCard teamId={team.id} roundId={lastCompletedRound.id} />
-          )}
+          {/* Nov/2026 (decisão do professor, 17/11): os cartões "Feedback da Rodada"
+              e "Feedback da IA" saíram desta tela. O relatório gerencial em PDF
+              (menu "Relatórios gerenciais") os substitui. */}
 
           <div className="grid gap-6 lg:grid-cols-2">
             <Card className="border-2 border-slate-200 dark:border-slate-800">

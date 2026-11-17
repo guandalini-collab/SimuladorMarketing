@@ -32,6 +32,10 @@ const reais = (v: number) => (Math.round(v) < 0 ? "-" : "") + "R$ " + br(Math.ab
 const POR_EXTENSO = ["zero", "uma", "duas", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez", "onze", "doze"];
 const extenso = (n: number) => POR_EXTENSO[n] ?? String(n);
 const listaE = (l: string[]) => (l.length <= 1 ? l.join("") : l.slice(0, -1).join(", ") + " e " + l[l.length - 1]);
+// Pedido do professor (17/11): produto fora da rodada aparece como "não teve
+// produto nesta rodada"; nas células estreitas, "não vendido" + nota da tabela.
+const NV = "não vendido";
+const NOTA_NV = " Não vendido: não teve produto nesta rodada.";
 const intervalo = (r: number[]) => (r.length === 1 ? `Rodada ${r[0]}` : r.length === 2 ? `Rodadas ${r[0]} e ${r[1]}` : `Rodadas ${r[0]} a ${r[r.length - 1]}`);
 
 interface Coluna { titulo: string; largura: number; alinhar?: "left" | "right" | "center" }
@@ -143,6 +147,37 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
     fonte(textoFonte);
   };
 
+  // ---------- quadro (bordas fechadas, ABNT) ----------
+  const quadro = (titulo: string, larguras: number[], cab: string[], linhas: string[][], textoFonte: string, tam = 10) => {
+    const total = larguras.reduce((a, b) => a + b, 0);
+    const cols = larguras.map((w) => (w * W) / total);
+    const pad = 4;
+    const altura = (cel: string[], negrito: boolean) => {
+      doc.font(negrito ? "Helvetica-Bold" : "Helvetica").fontSize(tam);
+      return Math.max(...cel.map((c, i) => doc.heightOfString(t(c || " "), { width: cols[i] - 2 * pad }))) + 2 * pad;
+    };
+    const desenha = (cel: string[], negrito: boolean) => {
+      const h = altura(cel, negrito);
+      if (doc.y + h > yMax()) { doc.addPage(); if (!negrito) desenha(cab, true); }
+      const y0 = doc.y;
+      let x = M.left;
+      doc.font(negrito ? "Helvetica-Bold" : "Helvetica").fontSize(tam);
+      cel.forEach((c, i) => {
+        doc.rect(x, y0, cols[i], h).lineWidth(0.5).strokeColor(COR.texto).stroke();
+        doc.fillColor(COR.texto).text(t(c), x + pad, y0 + pad, { width: cols[i] - 2 * pad });
+        x += cols[i];
+      });
+      doc.y = y0 + h;
+    };
+    const alturaTotal = 30 + altura(cab, true) + linhas.reduce((a, l) => a + altura(l, false), 0);
+    espaco(alturaTotal <= 300 ? alturaTotal : 30 + altura(cab, true) + (linhas[0] ? altura(linhas[0], false) : 0));
+    nQuadro++;
+    tituloIlustracao(`Quadro ${nQuadro} – ${titulo}`);
+    desenha(cab, true);
+    for (const l of linhas) desenha(l, false);
+    fonte(textoFonte);
+  };
+
   // ---------- gráficos ----------
   const escala = (min: number, max: number) => {
     if (min === max) { max = min + 1; }
@@ -250,7 +285,7 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
   // =================== 1 Apresentação ===================
   secao("1 Apresentação");
   paragrafo("Este relatório reúne os resultados da empresa na rodada, comparados com as rodadas anteriores e com as concorrentes da turma. Ele segue o controle do plano de marketing descrito por Kotler e Keller (2019, p. 746-747): mostrar o que está acontecendo e por que está acontecendo, com análises de vendas, de participação de mercado, das despesas de marketing em relação às vendas e da lucratividade. A decisão sobre o que fazer a seguir cabe à equipe.");
-  paragrafo("Os indicadores estão agrupados em resultados financeiros, mercado e clientes, e decisões de marketing, separando os indicadores de resultado dos indicadores que os antecedem, como recomendam Kaplan e Norton (1996). Todas as fórmulas estão na seção 10 e no Apêndice A do Manual do Aluno.");
+  paragrafo("Os indicadores estão agrupados em resultados financeiros, mercado e clientes, e decisões de marketing, separando os indicadores de resultado dos indicadores que os antecedem, como recomendam Kaplan e Norton (1996). Todas as fórmulas estão na seção 11 e no Apêndice A do Manual do Aluno.");
 
   // =================== 2 Painel ===================
   secao("2 Painel de indicadores");
@@ -342,10 +377,10 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
         { titulo: "Variação total (R$)", largura: 66 },
       ],
       [
-        ...v.linhas.map((l) => [l.produto, num(l.precoAnterior, 2), num(l.precoAtual, 2), num(l.unidadesAnterior), num(l.unidadesAtual), num(l.efeitoPreco), num(l.efeitoVolume), num(l.variacao)]),
+        ...v.linhas.map((l) => [l.produto, l.precoAnterior == null ? NV : num(l.precoAnterior, 2), l.precoAtual == null ? NV : num(l.precoAtual, 2), l.unidadesAnterior == null ? NV : num(l.unidadesAnterior), l.unidadesAtual == null ? NV : num(l.unidadesAtual), num(l.efeitoPreco), num(l.efeitoVolume), num(l.variacao)]),
         { destaque: ["Empresa", "", "", "", "", num(v.efeitoPreco), num(v.efeitoVolume), num(v.variacao)] },
       ],
-      `Fonte: Simula+, resultados das Rodadas ${anterior} e ${r.rodada} (${ano}). Efeito do preço = (preço R${r.rodada} - preço R${anterior}) × unidades R${r.rodada}; efeito do volume = preço R${anterior} × (unidades R${r.rodada} - unidades R${anterior}).`,
+      `Fonte: Simula+, resultados das Rodadas ${anterior} e ${r.rodada} (${ano}). Efeito do preço = (preço R${r.rodada} - preço R${anterior}) × unidades R${r.rodada}; efeito do volume = preço R${anterior} × (unidades R${r.rodada} - unidades R${anterior}).` + (v.linhas.some((l) => l.precoAtual == null || l.precoAnterior == null) ? NOTA_NV : ""),
       9,
     );
   } else {
@@ -377,12 +412,12 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
       ],
       r.participacao.map((p) => [
         p.produto,
-        ...r.rodadas.map((n) => num(p.serie[n] ?? null, 2)),
+        ...r.rodadas.map((n) => (p.serie[n] == null ? NV : num(p.serie[n], 2))),
         p.lider ? `${p.lider.empresa} (${br(p.lider.participacao, 2)}%)` : "–",
         num(p.relativa, 2),
         num(p.mediaPorEmpresa, 2),
       ]),
-      `${fonteRodadas(r.rodadas)}${nEmp ? ` Média por empresa = 100% ÷ ${nEmp} empresas na categoria.` : ""}`,
+      `${fonteRodadas(r.rodadas)}${nEmp ? ` Média por empresa = 100% ÷ ${nEmp} empresas na categoria.` : ""}${r.participacao.some((p) => r.rodadas.some((n) => p.serie[n] == null)) ? NOTA_NV : ""}`,
       r.rodadas.length > 4 ? 8 : 9,
     );
   }
@@ -419,26 +454,135 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
     if (anterior != null) blocos.push({ titulo: `${d.produto} R${anterior}`, dre: d.anterior });
     blocos.push({ titulo: `${d.produto} R${r.rodada}`, dre: d.atual });
   }
+  for (const d of r.dreAusentes ?? []) {
+    blocos.push({ titulo: `${d.produto} R${anterior}`, dre: d.anterior });
+    blocos.push({ titulo: `${d.produto} R${r.rodada}`, dre: null });
+  }
   blocos.push({ titulo: `Empresa R${r.rodada}`, dre: r.dreEmpresa });
   const tamDre = blocos.length > 6 ? 8 : blocos.length > 4 ? 9 : 10;
   tabela(
     `Demonstração do resultado por produto, ${anterior != null ? `Rodadas ${anterior} e ${r.rodada}` : `Rodada ${r.rodada}`} (R$)`,
-    [{ titulo: "Linha", largura: 150, alinhar: "left" }, ...blocos.map((b) => ({ titulo: b.titulo, largura: 62 }))],
+    [{ titulo: "Linha", largura: blocos.length > 5 ? 118 : 150, alinhar: "left" }, ...blocos.map((b) => ({ titulo: b.titulo, largura: 62 }))],
     [
       ...colDre.map((c) => {
-        const linha = [c.nome, ...blocos.map((b) => (b.dre ? num(c.d(b.dre)) : "–"))];
+        const linha = [c.nome, ...blocos.map((b) => (b.dre ? num(c.d(b.dre)) : NV))];
         return c.nome.startsWith("(=) Lucro antes") ? { destaque: linha } : linha;
       }),
-      ["Margem (%)", ...blocos.map((b) => (b.dre ? num(b.dre.margem, 1) : "–"))],
+      ["Margem (%)", ...blocos.map((b) => (b.dre ? num(b.dre.margem, 1) : NV))],
     ],
     `Fonte: Simula+, resultados ${anterior != null ? `das Rodadas ${anterior} e ${r.rodada}` : `da Rodada ${r.rodada}`} (${ano}).` +
-      r.produtosQueSairam.map((x) => ` Na Rodada ${anterior}, o ${x.produto} teve receita de ${reais(x.receitaBruta)} e lucro de ${reais(x.resultado)}.`).join(""),
+      (blocos.some((b) => !b.dre) ? NOTA_NV : ""),
     tamDre,
   );
 
+  // =================== 8 Das análises às decisões ===================
+  // Pedido do professor (17/11/2026): mostrar, em linguagem simples, o que cada
+  // análise da rodada indicou, o que a empresa decidiu e se as duas coisas
+  // combinam pelas regras do alinhamento. Sem conselho de decisão.
+  if (r.decisoes.length) {
+    secao("8 Das análises às decisões");
+    paragrafo(`As análises são refeitas a cada rodada porque o mercado muda: concorrentes, preços, participação e crescimento. Por isso, esta seção mostra o que cada análise indicou nesta rodada${anterior != null ? " e na anterior" : ""}, ao lado das decisões da empresa, e se as duas coisas combinam pelas regras do alinhamento estratégico (seção 9).`);
+
+    subsecao("8.1 Como ler a Matriz BCG e o ciclo de vida do produto");
+    paragrafo("A Matriz BCG classifica cada produto por dois números: o crescimento do mercado e a participação relativa da empresa, que é a participação dela dividida pela participação da maior concorrente (KOTLER; KELLER, 2019, p. 45). Abaixo de 1,0, a empresa é menor que a líder.");
+    paragrafo("O ciclo de vida do produto descreve as vendas ao longo do tempo em quatro fases: na introdução, as vendas crescem pouco e não há lucro, por causa das despesas de lançamento; no crescimento, o mercado aceita o produto rapidamente e os lucros melhoram; na maturidade, as vendas crescem pouco, porque a maioria dos compradores já comprou, e os lucros se estabilizam ou caem com mais concorrência; no declínio, as vendas e os lucros caem (KOTLER; KELLER, 2019, p. 380-381).");
+    quadro(
+      "Quadrantes da Matriz BCG e fase do ciclo de vida mais comum em cada um",
+      [105, 90, 115, 95],
+      ["Quadrante da BCG", "O mercado", "A empresa", "Fase do ciclo de vida mais comum"],
+      [
+        ["Ponto de interrogação", "cresce rápido", "ainda é pequena perto da líder", "Introdução"],
+        ["Estrela", "cresce rápido", "é uma das maiores", "Crescimento"],
+        ["Vaca leiteira", "cresce pouco", "é uma das maiores", "Maturidade"],
+        ["Abacaxi", "cresce pouco", "é pequena", "Declínio"],
+      ],
+      "Fonte: quadrantes, Kotler e Keller (2019, p. 45); fases, Kotler e Keller (2019, p. 380-381). A relação entre quadrante e fase é uma aproximação didática adotada na disciplina, não do livro. Ela não é automática: o quadrante depende da participação da empresa, e o caminho do produto no ciclo de vida depende das decisões de marketing (KOTLER; KELLER, 2019, p. 392).",
+    );
+    const cresc = Array.from(new Set(r.decisoes.map((d) => d.bcg?.crescimento).filter((x): x is number => x != null)));
+    if (cresc.length === 1 && r.decisoes.length > 1) {
+      paragrafo(`Nesta turma, a análise informa o mesmo crescimento de mercado para todas as categorias (${br(cresc[0], 0)}% ao ano). Por isso, os produtos só aparecem como ponto de interrogação ou estrela.`);
+    }
+
+    const combina = (titulos: string[] | undefined) =>
+      !titulos || !titulos.length
+        ? "Pelas regras do simulador, sim: nenhuma regra do alinhamento apontou conflito entre essas decisões e a análise."
+        : `Não. O simulador registrou ${titulos.length === 1 ? "o alerta" : "os alertas"} ${titulos.map((x) => `"${x}"`).join(" e ")}. A explicação está na seção 9.2.`;
+    const pctRef = (preco: number, ref: number) => {
+      if (!(ref > 0)) return "";
+      const d = (preco / ref - 1) * 100;
+      return Math.abs(d) < 0.5 ? ", igual ao preço de referência da categoria" : `, ${br(Math.abs(d), 0)}% ${d > 0 ? "acima" : "abaixo"} do preço de referência da categoria (${reais(ref)})`;
+    };
+    const reais2 = (v: number) => "R$ " + br(v, 2);
+    const ant = anterior;
+    r.decisoes.forEach((d, k) => {
+      subsecao(`8.${k + 2} ${d.produto}`);
+      const precoTxt = `Preço de ${reais2(d.preco)}${pctRef(d.preco, d.precoReferencia)}` +
+        (ant != null && d.precoAnterior != null ? (Math.abs(d.precoAnterior - d.preco) < 0.005 ? `; o mesmo da Rodada ${ant}.` : `; na Rodada ${ant}, ${reais2(d.precoAnterior)}.`) : ".");
+      const comTxt = `Comunicação (mídias) de ${reais(d.comunicacao)}` +
+        (ant != null && d.comunicacaoAnterior != null ? (Math.round(d.comunicacaoAnterior) === Math.round(d.comunicacao) ? `, a mesma da Rodada ${ant}.` : `; na Rodada ${ant}, ${reais(d.comunicacaoAnterior)}.`) : ".") +
+        (r.limiteComunicacao > 0 ? ` As regras consideram pouca comunicação um valor abaixo de ${reais(r.limiteComunicacao)} por produto.` : "");
+
+      // 5 Forças
+      espaco(120);
+      doc.font("Helvetica-Bold").fontSize(12).fillColor(COR.texto).text(t("A concorrência (5 Forças)"), M.left, doc.y, { width: W });
+      doc.moveDown(0.3);
+      quadro(
+        `5 Forças do mercado de ${d.produto}${ant != null ? `, Rodadas ${ant} e ${r.rodada}` : `, Rodada ${r.rodada}`}`,
+        ant != null ? [110, 215, 40, 40] : [110, 255, 40],
+        ["Força", "O que a nota mede", ...(ant != null ? [`R${ant}`] : []), `R${r.rodada}`],
+        d.forcas.map((f) => [f.nome, f.mede, ...(ant != null ? [f.anterior == null ? "–" : String(f.anterior)] : []), f.atual == null ? "–" : String(f.atual)]),
+        `Fonte: Simula+, análise das 5 Forças ${ant != null ? `das Rodadas ${ant} e ${r.rodada}` : `da Rodada ${r.rodada}`} (${ano}). Notas de 1 (baixa) a 10 (alta).`,
+      );
+      rotulado("O que a empresa decidiu:", `${precoTxt} ${comTxt}`);
+      rotulado("Combina?", combina(d.alertasPorFerramenta["5 Forças"]));
+
+      // BCG
+      if (d.bcg) {
+        espaco(90);
+        doc.moveDown(0.3);
+        doc.font("Helvetica-Bold").fontSize(12).fillColor(COR.texto).text(t("A posição do produto (Matriz BCG)"), M.left, doc.y, { width: W });
+        doc.moveDown(0.3);
+        const b = d.bcg;
+        const q = b.quadrante ? `"${b.quadrante.toLowerCase()}"` : "sem quadrante";
+        const qa = ant != null && b.quadranteAnterior ? (b.quadranteAnterior === b.quadrante ? `, o mesmo da Rodada ${ant}` : `; na Rodada ${ant}, "${b.quadranteAnterior.toLowerCase()}"`) : "";
+        let rel = "";
+        if (b.relativa != null) {
+          rel = b.relativa <= 0
+            ? " A participação relativa é zero: na rodada anterior, a empresa ainda não tinha vendas nesta categoria."
+            : b.relativa >= 1
+              ? ` A participação relativa é ${br(b.relativa, 2)}: a empresa é a maior da categoria.`
+              : ` A participação relativa é ${br(b.relativa, 2)}: a líder vende cerca de ${br(1 / b.relativa, 1)} vezes o que a empresa vende.`;
+          if (ant != null && b.relativaAnterior != null) rel += ` Na Rodada ${ant}, era ${br(b.relativaAnterior, 2)}.`;
+        }
+        rotulado("O que a análise mostra:", `O produto está no quadrante ${q}${qa}.${b.crescimento != null ? ` O mercado cresce ${br(b.crescimento, 0)}% ao ano.` : ""}${rel} A BCG de cada rodada usa a participação da rodada anterior.`);
+        rotulado("O que a empresa decidiu:", comTxt);
+        rotulado("Combina?", combina(d.alertasPorFerramenta["Matriz BCG"]));
+      }
+
+      // Segmentação
+      espaco(90);
+      doc.moveDown(0.3);
+      doc.font("Helvetica-Bold").fontSize(12).fillColor(COR.texto).text(t("O público (Segmentação)"), M.left, doc.y, { width: W });
+      doc.moveDown(0.3);
+      rotulado(
+        "O que a análise mostra:",
+        d.publico.length
+          ? "A equipe escolheu como público: " + d.publico.map((x) => `${x.topico.replace(/ \(.*\)$/, "").toLowerCase()}: ${x.opcoes.join(" e ")}`).join("; ") + "."
+          : "A equipe não marcou, para este produto, as opções de público usadas nas regras (classe, benefício, valores, estilo de vida, interesses e fidelidade).",
+      );
+      rotulado("O que a empresa decidiu:", `${precoTxt} Canais de venda: ${d.canais.join(", ") || "nenhum"}${ant != null && d.canaisAnterior ? (d.canaisAnterior.join() === d.canais.join() ? `, os mesmos da Rodada ${ant}.` : `; na Rodada ${ant}: ${d.canaisAnterior.join(", ") || "nenhum"}.`) : "."}`);
+      rotulado(
+        "Combina?",
+        d.publico.length || d.alertasPorFerramenta["Segmentação"]?.length
+          ? combina(d.alertasPorFerramenta["Segmentação"])
+          : "Sem essas opções marcadas, as regras de segmentação não têm o que comparar com o preço e os canais.",
+      );
+    });
+  }
+
   // =================== 8 Alinhamento ===================
-  secao("8 Alinhamento estratégico");
-  subsecao("8.1 O que é");
+  secao("9 Alinhamento estratégico");
+  subsecao("9.1 O que é");
   paragrafo("Em cada rodada, a empresa recebe quatro análises do mercado (SWOT, 5 Forças, Matriz BCG e PESTEL) e faz a sua Segmentação. O alinhamento verifica se as decisões de cada produto (preço, comunicação e canais) combinam com o que essas análises mostram. Quando uma decisão vai na direção contrária do que a própria análise diz sobre o mercado, o simulador registra um alerta e tira pontos.");
   paragrafo("O alinhamento não mede se a empresa ganhou ou perdeu dinheiro. Uma empresa pode ter alinhamento alto e lucro baixo, ou o contrário. Ele pesa de duas formas: vale 10% da nota da rodada e muda a atratividade do produto para os consumidores, conforme a tabela a seguir.");
   const notasProd = r.alinhamento.map((a) => (a.nota == null ? null : Math.round(a.nota)));
@@ -451,7 +595,7 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
       r.alinhamento.map((a, i) => `${a.produto}, ${notasProd[i] ?? "–"}`).join("; ") + ".",
   );
 
-  subsecao("8.2 Os alertas desta rodada");
+  subsecao("9.2 Os alertas desta rodada");
   // agrupa alertas iguais entre produtos
   const grupos = new Map<string, { titulo: string; ferramenta: string; itens: { produto: string; analise: string; decisao: string; porque: string; efeito: number }[] }>();
   for (const a of r.alinhamento) {
@@ -514,7 +658,7 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
 
   // =================== 9 Nota ===================
   if (r.nota) {
-    secao("9 Nota da rodada");
+    secao("10 Nota da rodada");
     paragrafo("Cada indicador vira uma pontuação de 0 a 100 dentro da turma: a melhor equipe da rodada recebe 100, a pior recebe 0 e as demais ficam proporcionalmente entre elas. O alinhamento entra pelo próprio valor.");
     tabela(
       `Composição da nota da ${r.empresa} na Rodada ${r.rodada}`,
@@ -536,30 +680,15 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
   }
 
   // =================== 10 Fórmulas ===================
-  secao(`${r.nota ? 10 : 9} Como cada número foi calculado`, 200);
+  secao(`${r.nota ? 11 : 10} Como cada número foi calculado`, 200);
   if (r.formulas.length) {
-    nQuadro++;
-    espaco(120);
-    tituloIlustracao(`Quadro ${nQuadro} – Fórmulas dos indicadores, com os números ${r.dre[0] ? `do ${r.dre[0].produto} ` : ""}na Rodada ${r.rodada}`);
-    // quadro: bordas fechadas (ABNT)
-    const cols = [{ w: 95 }, { w: W - 95 - 110 }, { w: 110 }];
-    const pad = 4;
-    const desenhaLinha = (cel: string[], negrito: boolean) => {
-      doc.font(negrito ? "Helvetica-Bold" : "Helvetica").fontSize(10);
-      const h = Math.max(...cel.map((c, i) => doc.heightOfString(t(c), { width: cols[i].w - 2 * pad }))) + 2 * pad;
-      if (doc.y + h > yMax()) doc.addPage();
-      const y0 = doc.y;
-      let x = M.left;
-      cel.forEach((c, i) => {
-        doc.rect(x, y0, cols[i].w, h).lineWidth(0.5).strokeColor(COR.texto).stroke();
-        doc.fillColor(COR.texto).text(t(c), x + pad, y0 + pad, { width: cols[i].w - 2 * pad });
-        x += cols[i].w;
-      });
-      doc.y = y0 + h;
-    };
-    desenhaLinha(["Indicador", "Fórmula e conta", "Manual / fonte"], true);
-    for (const f of r.formulas) desenhaLinha([f.indicador, f.conta, f.fonte], false);
-    fonte(`Fonte: Manual do Aluno do Simula+, Apêndice A; Simula+, resultados da Rodada ${r.rodada} (${ano}).`);
+    quadro(
+      `Fórmulas dos indicadores, com os números ${r.dre[0] ? `do ${r.dre[0].produto} ` : ""}na Rodada ${r.rodada}`,
+      [95, W - 205, 110],
+      ["Indicador", "Fórmula e conta", "Manual / fonte"],
+      r.formulas.map((f) => [f.indicador, f.conta, f.fonte]),
+      `Fonte: Manual do Aluno do Simula+, Apêndice A; Simula+, resultados da Rodada ${r.rodada} (${ano}).`,
+    );
   }
 
   // =================== Referências ===================
@@ -571,7 +700,7 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
     ["FARRIS, P. W.; BENDLE, N. T.; PFEIFER, P. E.; REIBSTEIN, D. J. ", "Marketing metrics", ": the manager's guide to measuring marketing performance. 3. ed. Upper Saddle River: Pearson, 2016."],
     ["KAPLAN, R. S.; NORTON, D. P. ", "The balanced scorecard", ": translating strategy into action. Boston: Harvard Business School Press, 1996."],
     ["KOTLER, P.; KELLER, K. L. ", "Administração de marketing", ". 15. ed. São Paulo: Pearson Education do Brasil, 2019."],
-    ["REICHHELD, F. F. ", "A pergunta definitiva", ". Rio de Janeiro: Elsevier, 2006."],
+    ["REICHHELD, F. F. ", "The ultimate question", ": driving good profits and true growth. Boston: Harvard Business School Press, 2006."],
   ];
   for (const [a, b, c] of refs) {
     doc.fontSize(12).fillColor(COR.texto);

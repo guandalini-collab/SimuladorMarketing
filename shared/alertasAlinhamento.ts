@@ -60,7 +60,17 @@ const limitePreco = (c: ContextoAlerta, fracao: number) => (c.precoReferencia > 
 const limiteVerba = (c: ContextoAlerta, fracao: number) => (c.verbaProduto > 0 ? reais(c.verbaProduto * fracao) : "—");
 const comunicacaoTxt = (c: ContextoAlerta) => `Comunicação (mídias) do ${c.produto}: ${reais(c.comunicacao)}.`;
 const verbaRef = (c: ContextoAlerta) => (c.verbaProduto > 0 ? ` (verba de referência do produto: ${reais(c.verbaProduto)})` : "");
-const canaisTxt = (c: ContextoAlerta) => `Canais do ${c.produto}: ${(c.canais ?? []).join(", ") || "nenhum"}.`;
+/** Nomes dos canais como aparecem na tela de Decisões. */
+export const NOME_CANAL: Record<string, string> = {
+  varejo: "varejo físico",
+  ecommerce: "e-commerce próprio",
+  marketplace: "marketplaces",
+  atacado: "atacado",
+  franquias: "franquias",
+  direto: "venda direta",
+};
+export const nomesCanais = (canais: string[] | null | undefined) => (canais ?? []).map((x) => NOME_CANAL[x] ?? x);
+const canaisTxt = (c: ContextoAlerta) => `Canais do ${c.produto}: ${nomesCanais(c.canais).join(", ") || "nenhum"}.`;
 
 type Fabrica = (c: ContextoAlerta) => ExplicacaoAlerta;
 

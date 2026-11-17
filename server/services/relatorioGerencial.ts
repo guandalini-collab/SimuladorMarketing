@@ -17,7 +17,8 @@ import { montarRelatorioDaRodada, type ProdutoRelatorio } from "./relatorioProfe
 import { receitaReferenciaDaTurma, setorDaTurma } from "./roundCompletionCompetitive";
 import { categoriaDoProduto } from "./marketBulletin";
 import { pool } from "../pg-storage";
-import { explicarAlerta, PESO_PONTO_FERRAMENTA, type ExplicacaoAlerta } from "@shared/alertasAlinhamento";
+import { explicarAlerta, nomesCanais, PESO_PONTO_FERRAMENTA, type ExplicacaoAlerta } from "@shared/alertasAlinhamento";
+import { TOPICOS_B2C, sanearCodigos, type CriterioSegmentacao } from "@shared/segmentacao";
 
 const TRIBUTOS = 0.12;
 const PESOS_NOTA = { profit: 0.25, roi: 0.2, marketShare: 0.15, nps: 0.15, margin: 0.15 } as const;
@@ -59,6 +60,8 @@ export interface ParticipacaoProduto {
   mediaPorEmpresa: number | null;
   empresasNaCategoria: number;
   empresas: EmpresaNaCategoria[];
+  /** true quando o produto não foi vendido na rodada do relatório (só aparece pelo histórico) */
+  ausente?: boolean;
 }
 
 export interface DreProduto {
@@ -79,6 +82,23 @@ export interface AlinhamentoProduto {
   notaAnterior: number | null;
   partes: { ferramenta: string; pontos: number }[];
   alertas: AlertaProduto[];
+}
+
+/** Seção "Das análises às decisões" (pedido do professor, 17/11/2026). */
+export interface ForcaPorter { nome: string; mede: string; atual: number | null; anterior: number | null }
+export interface DecisaoProduto {
+  produto: string;
+  forcas: ForcaPorter[];
+  preco: number;
+  precoAnterior: number | null;
+  precoReferencia: number;
+  comunicacao: number;
+  comunicacaoAnterior: number | null;
+  canais: string[];
+  canaisAnterior: string[] | null;
+  bcg: { quadrante: string | null; crescimento: number | null; relativa: number | null; quadranteAnterior: string | null; relativaAnterior: number | null } | null;
+  publico: { topico: string; opcoes: string[] }[];
+  alertasPorFerramenta: Record<string, string[]>;
 }
 
 export interface ItemNota { indicador: string; valor: number; menor: number | null; maior: number | null; pontos: number; peso: number; contribuicao: number; casas: number; moeda?: boolean }
@@ -102,7 +122,12 @@ export interface RelatorioGerencial {
   dre: DreProduto[];
   dreEmpresa: Dre;
   produtosQueSairam: { produto: string; receitaBruta: number; resultado: number }[];
+  /** Produtos vendidos na rodada anterior que não fizeram parte desta (DRE da rodada anterior). */
+  dreAusentes: { produto: string; anterior: Dre }[];
   alinhamento: AlinhamentoProduto[];
+  decisoes: DecisaoProduto[];
+  /** Limite de comunicação usado pelas regras (15% da verba de referência do produto). */
+  limiteComunicacao: number;
   nota: { itens: ItemNota[]; total: number; anterior: number | null; posicao: number | null } | null;
   formulas: { indicador: string; conta: string; fonte: string }[];
 }
@@ -354,6 +379,16 @@ export async function montarRelatorioGerencial(storage: IStorage, classData: Cla
       empresas,
     });
   }
+  // Produtos vendidos em rodadas anteriores e não nesta: entram com o histórico
+  // (pedido do professor, 17/11: "não teve produto nesta rodada").
+  const nomesNoHistorico: string[] = [];
+  for (const n of rodadas) for (const x of detalhe.get(n) ?? []) if (!nomesNoHistorico.includes(x.nome)) nomesNoHistorico.push(x.nome);
+  for (const nome of nomesNoHistorico) {
+    if (prodAtual.some((p) => p.nome === nome)) continue;
+    const serie: Record<number, number | null> = {};
+    for (const n of rodadas) serie[n] = (detalhe.get(n) ?? []).find((x) => x.nome === nome)?.participacao ?? null;
+    participacao.push({ produto: nome, serie, lider: null, relativa: null, mediaPorEmpresa: null, empresasNaCategoria: 0, empresas: [], ausente: true });
+  }
 
   // ---------- Despesas ÷ receita ----------
   const despesas = {
@@ -368,6 +403,7 @@ export async function montarRelatorioGerencial(storage: IStorage, classData: Cla
     return { produto: p.nome, anterior: a ? dreDe(a) : null, atual: dreDe(p) };
   });
   const dreEmpresa = somaDre(dre.map((d) => d.atual));
+  const dreAusentes = prodAnterior.filter((a) => !prodAtual.some((p) => p.nome === a.nome)).map((a) => ({ produto: a.nome, anterior: dreDe(a) }));
 
   // ---------- Alinhamento com números ----------
   const [porters, bcgs, mixes, resProdutos, resProdutosAnt] = await Promise.all([
@@ -415,6 +451,69 @@ export async function montarRelatorioGerencial(storage: IStorage, classData: Cla
       pontos: Math.max(0, 100 - alertas.filter((x) => x.ferramenta === f).reduce((s, x) => s + x.pontos, 0)),
     }));
     alinhamento.push({ produto: p.nome, nota: rp?.alignmentScore ?? null, notaAnterior: rpa?.alignmentScore ?? null, partes, alertas });
+  }
+
+  // ---------- Das análises às decisões ----------
+  const roundAnt = anteriorN != null ? todasRodadas.find((x) => x.roundNumber === anteriorN) ?? null : null;
+  const [porterAnt, bcgsAnt, mixesAnt, segmentacoes] = await Promise.all([
+    roundAnt ? storage.getPorterAnalysis(team.id, roundAnt.id) : Promise.resolve(undefined),
+    roundAnt ? storage.getBcgAnalyses(team.id, roundAnt.id) : Promise.resolve([] as any[]),
+    roundAnt ? storage.getMarketingMixesByTeamAndRound(team.id, roundAnt.id) : Promise.resolve([] as any[]),
+    storage.getMarketSegmentationsByTeamAndRound(team.id, round.id),
+  ]);
+  const somaMidias = (m: any) => (m?.promotionBudgets ? Object.values(m.promotionBudgets as Record<string, number>).reduce((acc, v) => acc + (Number(v) || 0), 0) : 0);
+  const FORCAS: { campo: string; nome: string; mede: string }[] = [
+    { campo: "competitiveRivalry", nome: "Disputa entre concorrentes", mede: "o quanto as empresas brigam pelos mesmos clientes" },
+    { campo: "buyerPower", nome: "Poder dos clientes", mede: "o quanto os clientes conseguem pressionar o preço ou trocar de marca" },
+    { campo: "supplierPower", nome: "Poder dos fornecedores", mede: "o quanto os fornecedores conseguem aumentar os custos" },
+    { campo: "threatOfSubstitutes", nome: "Produtos substitutos", mede: "o quanto outros tipos de produto atendem à mesma necessidade" },
+    { campo: "threatOfNewEntry", nome: "Novas empresas", mede: "o quanto é fácil uma nova empresa entrar neste mercado" },
+  ];
+  const TOPICOS_PUBLICO = ["classe", "beneficio", "valores", "estilo", "interesses", "fidelidade"];
+  const decisoes: DecisaoProduto[] = [];
+  for (const p of prodAtual) {
+    const mix: any = mixes.find((m: any) => m.productId === p.produtoId);
+    const mixA: any = (mixesAnt as any[]).find((m: any) => m.productId === p.produtoId);
+    const pa = prodAnterior.find((x) => x.nome === p.nome);
+    const bcg: any = bcgs.find((b: any) => b.productId && b.productId === p.produtoId) ?? bcgs[0] ?? null;
+    const bcgA: any = (bcgsAnt as any[]).find((b: any) => b.productId && b.productId === p.produtoId) ?? null;
+    const seg: any = (segmentacoes as any[]).find((x: any) => x.segmentType === "b2c" && x.productId === p.produtoId) ?? null;
+    const publico: { topico: string; opcoes: string[] }[] = [];
+    if (seg) {
+      for (const c of Object.keys(TOPICOS_B2C) as CriterioSegmentacao[]) {
+        const cods = sanearCodigos(c, seg[c]);
+        for (const t of TOPICOS_B2C[c]) {
+          if (!TOPICOS_PUBLICO.includes(t.id)) continue;
+          const ops = t.opcoes.filter((op) => cods.includes(`${t.id}:${op.id}`)).map((op) => op.label);
+          if (ops.length) publico.push({ topico: t.label, opcoes: ops });
+        }
+      }
+    }
+    const al = alinhamento.find((a) => a.produto === p.nome);
+    const alertasPorFerramenta: Record<string, string[]> = {};
+    for (const a of al?.alertas ?? []) (alertasPorFerramenta[a.ferramenta] ??= []).push(a.titulo);
+    decisoes.push({
+      produto: p.nome,
+      forcas: FORCAS.map((f) => ({ nome: f.nome, mede: f.mede, atual: porterDaEquipe?.[f.campo] ?? null, anterior: (porterAnt as any)?.[f.campo] ?? null })),
+      preco: p.preco,
+      precoAnterior: pa?.preco ?? null,
+      precoReferencia: p.precoReferencia,
+      comunicacao: somaMidias(mix),
+      comunicacaoAnterior: mixA ? somaMidias(mixA) : null,
+      canais: nomesCanais(mix?.distributionChannels),
+      canaisAnterior: mixA ? nomesCanais(mixA.distributionChannels) : null,
+      bcg: bcg
+        ? {
+            quadrante: bcg.quadrant ?? null,
+            crescimento: bcg.marketGrowth != null ? Number(bcg.marketGrowth) : null,
+            relativa: bcg.relativeMarketShare != null ? Number(bcg.relativeMarketShare) : null,
+            quadranteAnterior: bcgA?.quadrant ?? null,
+            relativaAnterior: bcgA?.relativeMarketShare != null ? Number(bcgA.relativeMarketShare) : null,
+          }
+        : null,
+      publico,
+      alertasPorFerramenta,
+    });
   }
 
   // ---------- Nota ----------
@@ -527,31 +626,32 @@ export async function montarRelatorioGerencial(storage: IStorage, classData: Cla
     dre,
     dreEmpresa,
     produtosQueSairam,
+    dreAusentes,
     alinhamento,
+    decisoes,
+    limiteComunicacao: verbaProduto * 0.15,
     nota,
     formulas,
   };
 }
 
 /**
- * Relatório que a equipe ainda precisa baixar: o da última rodada encerrada
- * (não prática) em que a equipe tem resultado, enquanto nenhum integrante
- * o tiver baixado. Devolve null quando não há pendência.
+ * Relatório que o aluno ainda precisa baixar (decisão do professor, 17/11/2026:
+ * cada aluno baixa o seu). Vale só a última rodada encerrada (não prática):
+ * se a equipe tem resultado nela e este aluno ainda não baixou o relatório,
+ * o acesso ao simulador fica bloqueado até o download. Devolve null quando
+ * não há pendência.
  */
-export async function relatorioPendenteDaEquipe(storage: IStorage, team: Team): Promise<{ roundId: string; rodada: number } | null> {
-  const rodadas = (await storage.getRoundsByClass(team.classId))
+export async function relatorioPendenteDoAluno(storage: IStorage, team: Team, userId: string): Promise<{ roundId: string; rodada: number } | null> {
+  const ultima = (await storage.getRoundsByClass(team.classId))
     .filter((r) => r.status === "completed" && !r.isPractice)
-    .sort((a, b) => b.roundNumber - a.roundNumber);
-  for (const r of rodadas) {
-    const res = (await storage.getResultsByRound(r.id)).some((x: any) => x.teamId === team.id);
-    if (!res) continue;
-    const membros = team.memberIds ?? [];
-    if (!membros.length) return null;
-    const q = await pool.query(
-      `SELECT 1 FROM round_access_logs WHERE round_id = $1 AND action = 'relatorio_baixado' AND user_id = ANY($2::varchar[]) LIMIT 1`,
-      [r.id, membros],
-    );
-    return q.rowCount ? null : { roundId: r.id, rodada: r.roundNumber };
-  }
-  return null;
+    .sort((a, b) => b.roundNumber - a.roundNumber)[0];
+  if (!ultima) return null;
+  const temResultado = (await storage.getResultsByRound(ultima.id)).some((x: any) => x.teamId === team.id);
+  if (!temResultado) return null;
+  const q = await pool.query(
+    `SELECT 1 FROM round_access_logs WHERE round_id = $1 AND action = 'relatorio_baixado' AND user_id = $2 LIMIT 1`,
+    [ultima.id, userId],
+  );
+  return q.rowCount ? null : { roundId: ultima.id, rodada: ultima.roundNumber };
 }

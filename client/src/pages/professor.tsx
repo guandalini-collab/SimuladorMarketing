@@ -176,6 +176,8 @@ function AccessLogsReport({ classId, rounds, teams }: { classId: string; rounds:
         return { label: "Rascunho salvo", description: "Salvou um rascunho das decisões de Mix de Marketing (ainda não enviado)" };
       case "round_submitted":
         return { label: "Rodada enviada", description: "Enviou (finalizou) as decisões da rodada" };
+      case "relatorio_baixado":
+        return { label: "Relatório baixado", description: "Baixou o relatório gerencial (PDF) da rodada" };
       default:
         if (action.startsWith("marketing_mix_product_submitted:")) {
           const productId = action.split(":")[1] || "";

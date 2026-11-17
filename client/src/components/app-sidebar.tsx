@@ -16,6 +16,7 @@ import {
   CalendarCheck,
   History,
   Swords,
+  FileText,
 } from "lucide-react";
 import {
   Sidebar,
@@ -36,7 +37,7 @@ import logoImage from "@assets/brand/simula-logo-compacta.svg";
 // as etapas numeradas abrem uma depois da outra; as de consulta ficam
 // sempre livres.
 const roundItems = [
-  { title: "Feedback Inteligente", url: "/feedback", icon: Sparkles },
+  { title: "Relatórios gerenciais", url: "/feedback", icon: FileText },
   { title: "Resultados", url: "/analises", icon: BarChart3 },
   { title: "Simula+ News", url: "/news", icon: Newspaper },
   { title: "Análise de Mercado", url: "/mercado", icon: TrendingUp },

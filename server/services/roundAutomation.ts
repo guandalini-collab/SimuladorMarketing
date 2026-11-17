@@ -306,9 +306,20 @@ async function gerarFeedbackDaEquipe(storage: IStorage, teamId: string, roundId:
   return "gerado";
 }
 
+// Nov/2026 (decisão do professor, 17/11): o feedback escrito pela IA deixa de
+// ser gerado no encerramento. Em seu lugar, cada aluno baixa o relatório
+// gerencial da rodada (server/services/relatorioGerencial.ts), montado só com
+// os números gravados. A IA continua nas análises da rodada, nos indicadores
+// econômicos e no jornal. O código abaixo fica desligado, para referência.
+const FEEDBACK_IA_NO_ENCERRAMENTO = false;
+
 export async function runRoundClosedAutomation(storage: IStorage, roundId: string): Promise<void> {
   const round = await storage.getRound(roundId);
   if (!round || round.status !== "completed") return;
+  if (!FEEDBACK_IA_NO_ENCERRAMENTO) {
+    console.log("[ROUND-AUTO] Encerramento: feedback da IA desligado; os alunos baixam o relatório gerencial.");
+    return;
+  }
 
   const teams = await storage.getTeamsByClass(round.classId);
   let gerados = 0;

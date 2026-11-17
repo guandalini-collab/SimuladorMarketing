@@ -104,8 +104,8 @@ export async function computeJourney(
 
   const base: Omit<JourneyStep, "number" | "locked">[] = [
     anoPendente
-      ? { key: "feedback", label: "Feedback e Resultados da rodada anterior", href: "/fechamento-anual", paths: ["/feedback", "/analises"], required: true, done: false, note: `Antes de seguir, a equipe precisa responder e enviar a reflexão do Fechamento do Ano ${anoPendente}.` }
-      : { key: "feedback", label: "Feedback e Resultados da rodada anterior", href: "/feedback", paths: ["/feedback", "/analises"], required: temResultadoAnterior, done: !temResultadoAnterior || acks.has("feedback") },
+      ? { key: "feedback", label: "Relatório gerencial e resultados da rodada anterior", href: "/fechamento-anual", paths: ["/feedback", "/analises"], required: true, done: false, note: `Antes de seguir, a equipe precisa responder e enviar a reflexão do Fechamento do Ano ${anoPendente}.` }
+      : { key: "feedback", label: "Relatório gerencial e resultados da rodada anterior", href: "/feedback", paths: ["/feedback", "/analises"], required: temResultadoAnterior, done: !temResultadoAnterior || acks.has("feedback") },
     { key: "mercado", label: "Simula+ News e Análise de Mercado", href: "/mercado", paths: ["/news", "/mercado"], required: true, done: acks.has("mercado") },
     { key: "ferramentas", label: "Ferramentas Estratégicas", href: "/estrategia", paths: ["/estrategia"], required: true, done: ferramentas },
     { key: "identidade", label: "Identidade da Empresa", href: "/empresa", paths: ["/empresa"], required: true, done: identidade },
