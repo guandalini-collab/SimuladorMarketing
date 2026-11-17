@@ -51,6 +51,25 @@ export interface EmpresaNaMatriz {
   unidades: number;
 }
 
+/**
+ * Nov/2026 (pedido do professor, 17/11): comparação com cada concorrente no
+ * formato da Tabela 10.2 de Kotler e Keller (2019, p. 304): empresas nas
+ * colunas, atributos nas linhas. A cor compara a equipe com cada empresa:
+ * "melhor", "pior" ou "parecido" (diferença de até 10% nos números ou mesmo
+ * nível nas escalas). Preço e variação da participação ficam sem cor.
+ */
+export type Comparacao = "melhor" | "pior" | "parecido" | null;
+export interface LinhaBenchmarking { atributo: string; valores: string[]; comparacao: Comparacao[]; detalhe?: string[] }
+export interface Benchmarking { colunas: { empresa: string; tipo: EmpresaNaMatriz["tipo"] }[]; linhas: LinhaBenchmarking[] }
+
+/**
+ * Fatores de cada uma das 5 Forças conforme Porter (Estrategia competitiva,
+ * cap. 1), preenchidos com os dados do jogo; "não simulado" quando o jogo não
+ * tem o dado. A nota de cada força continua a da análise da rodada.
+ */
+export type ForcaPorter = "rivalidade" | "entrantes" | "substitutos" | "compradores" | "fornecedores";
+export interface FatorPorter { forca: ForcaPorter; fator: string; dado: string | null; pagina: string }
+
 export interface AnaliseDoProduto {
   produtoId: string;
   produto: string;
@@ -67,6 +86,8 @@ export interface AnaliseDoProduto {
   swot: { forcas: ItemSwot[]; fraquezas: ItemSwot[]; oportunidades: ItemSwot[]; ameacas: ItemSwot[] };
   pontosCegos: ItemSwot[];
   semDadosDaEquipe: boolean;
+  benchmarking: Benchmarking | null;
+  fatoresPorter: FatorPorter[];
 }
 
 export interface AnaliseConcorrentes {
@@ -100,6 +121,24 @@ export async function montarAnaliseConcorrentes(storage: IStorage, classData: Cl
   }
   if (!estado) {
     return { disponivel: false, mensagem: "O registro do mercado da rodada anterior não foi encontrado.", produtos: [], referenciaSwot: REFERENCIA_SWOT };
+  }
+  // Rodada anterior à base: para a variação da participação de cada empresa.
+  let estadoAnterior: any = null;
+  const antesDaBase = encerradas[encerradas.length - 2];
+  if (antesDaBase) {
+    try {
+      const r = await pool.query(`SELECT estado FROM market_states WHERE round_id = $1 LIMIT 1`, [antesDaBase.id]);
+      estadoAnterior = r.rows[0]?.estado && Array.isArray(r.rows[0].estado.categorias) ? r.rows[0].estado : null;
+    } catch {
+      estadoAnterior = null;
+    }
+  }
+  // Crescimento do mercado de cada produto: o mesmo da Matriz BCG da rodada.
+  let bcgsDaRodada: any[] = [];
+  try {
+    bcgsDaRodada = await storage.getBcgAnalyses(team.id, (atual && atual.status !== "completed" ? atual : base).id);
+  } catch {
+    bcgsDaRodada = [];
   }
 
   // Semana atual: data comercial e preferência do consumidor (as mesmas do Simula+ News).
@@ -227,6 +266,86 @@ export async function montarAnaliseConcorrentes(storage: IStorage, classData: Cl
       oportunidades.push({ texto: `${pontosCegos.length} espaço(s) do mercado não atendido(s) por nenhuma empresa na rodada anterior (lista na etapa 5, Pontos cegos dos concorrentes).`, criterio: "Qualidades, canais e coberturas que nenhuma empresa da categoria usou na rodada anterior." });
     }
 
+    // ---- Comparação com cada concorrente (KOTLER; KELLER, 2019, p. 304, Tabela 10.2)
+    let benchmarking: Benchmarking | null = null;
+    const nomeDe = (o: any) => (o.tipo === "equipe" && o.equipeId ? (nomesEquipes.get(o.equipeId) ?? o.empresa) : o.empresa);
+    const ofertaAnterior = (o: any) => {
+      const cA = estadoAnterior?.categorias?.find((c: any) => c.categoriaId === cat.id);
+      return (cA?.ofertas ?? []).find((x: any) => (o.tipo === "equipe" ? x.tipo === "equipe" && x.equipeId === o.equipeId : x.tipo !== "equipe" && x.empresa === o.empresa));
+    };
+    if (minha && outras.length > 0) {
+      const cols = [minha, ...[...outras].sort((a, b) => b.participacaoValor - a.participacaoValor)];
+      const num = (t: number, c: number): Comparacao => {
+        const ref = Math.max(Math.abs(t), Math.abs(c));
+        if (ref === 0 || Math.abs(t - c) <= 0.1 * ref) return "parecido";
+        return t > c ? "melhor" : "pior";
+      };
+      const ord = (t: number, c: number): Comparacao => (t === c ? "parecido" : t > c ? "melhor" : "pior");
+      const compara = (f: (o: any) => number, tipo: "num" | "ord") => cols.map((o, i) => (i === 0 ? null : tipo === "num" ? num(f(minha), f(o)) : ord(f(minha), f(o))));
+      const sinalPct = (v: number) => (Math.abs(v) < 0.05 ? "igual" : `${v > 0 ? "+" : "−"}${pct(Math.abs(v))}`);
+      const linhas: LinhaBenchmarking[] = [
+        { atributo: "Participação de mercado", valores: cols.map((o) => pct(o.participacaoValor, 2)), comparacao: compara((o) => o.participacaoValor, "num") },
+      ];
+      if (estadoAnterior) {
+        linhas.push({
+          atributo: "Variação da participação (p.p.)",
+          valores: cols.map((o) => { const a = ofertaAnterior(o); if (!a) return "sem dado"; const d = o.participacaoValor - a.participacaoValor; return (d >= 0 ? "+" : "−") + Math.abs(d).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }),
+          comparacao: cols.map(() => null),
+        });
+      }
+      linhas.push(
+        { atributo: "Unidades vendidas", valores: cols.map((o) => Math.round(o.unidades).toLocaleString("pt-BR")), comparacao: compara((o) => o.unidades, "num") },
+        {
+          atributo: "Preço",
+          valores: cols.map((o) => brl(o.preco)),
+          comparacao: cols.map(() => null),
+          detalhe: cols.map((o, i) => (i === 0 ? "sua equipe" : `sua equipe: ${sinalPct(((minha.preco - o.preco) / o.preco) * 100)}`)),
+        },
+        { atributo: "Qualidade do produto", valores: cols.map((o) => NOME_QUALIDADE[o.qualidade] ?? o.qualidade), comparacao: compara((o) => QUALIDADES.indexOf(o.qualidade), "ord") },
+        {
+          atributo: "Canais de venda (número)",
+          valores: cols.map((o) => String(o.canais?.length ?? 0)),
+          comparacao: compara((o) => o.canais?.length ?? 0, "num"),
+          detalhe: cols.map((o) => (o.canais ?? []).map((c: string) => NOME_CANAL[c] ?? c).join(", ")),
+        },
+        { atributo: "Cobertura geográfica", valores: cols.map((o) => NOME_COBERTURA[o.cobertura] ?? o.cobertura), comparacao: compara((o) => COBERTURAS.indexOf(o.cobertura), "ord") },
+      );
+      benchmarking = {
+        colunas: cols.map((o, i) => ({ empresa: nomeDe(o), tipo: (i === 0 ? "sua equipe" : o.tipo === "equipe" ? "equipe" : "concorrente simulado") as EmpresaNaMatriz["tipo"] })),
+        linhas,
+      };
+    }
+
+    // ---- Fatores das 5 Forças (PORTER, 2008, cap. 1), com os dados do jogo
+    const fatoresPorter: FatorPorter[] = [];
+    if (n > 0) {
+      const porPart = [...ofertas].sort((a, b) => b.participacaoValor - a.participacaoValor);
+      const quatro = porPart.slice(0, 4).reduce((acc, o) => acc + o.participacaoValor, 0);
+      const bcg: any = bcgsDaRodada.find((b: any) => b.productId === produto.id) ?? null;
+      const cresc = bcg?.marketGrowth != null ? Number(bcg.marketGrowth) : null;
+      const precos = ofertas.map((o) => o.preco);
+      const contaQual = (q: string) => ofertas.filter((o) => o.qualidade === q).length;
+      const usoCanal = CANAIS.map((c) => ({ c, n: ofertas.filter((o) => (o.canais ?? []).includes(c)).length })).filter((x) => x.n > 0);
+      const lembrancaMedia = ofertas.reduce((acc, o) => acc + (Number(o.lembranca) || 0), 0) / n;
+      const F = (forca: ForcaPorter, fator: string, dado: string | null, pagina: string) => fatoresPorter.push({ forca, fator, dado, pagina });
+      F("rivalidade", "Número de concorrentes", `${n} empresas vendem ${cat.name.toLowerCase()} no jogo (${ofertas.filter((o) => o.tipo === "equipe").length} equipes e ${ofertas.filter((o) => o.tipo !== "equipe").length} concorrentes simulados).`, "p. 33");
+      F("rivalidade", "Equilíbrio entre os concorrentes", `A líder (${nomeDe(porPart[0])}) tem ${pct(porPart[0].participacaoValor)}; as quatro maiores somam ${pct(quatro)}. Se as ${n} empresas fossem do mesmo tamanho, cada uma teria ${pct(100 / n)}.`, "p. 33-34");
+      F("rivalidade", "Crescimento do setor", cresc != null ? `O mercado cresce ${cresc.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% ao ano (o mesmo número da Matriz BCG da rodada).` : null, "p. 34");
+      F("rivalidade", "Diferenciação dos produtos", `Qualidade: ${contaQual("premium")} empresa(s) premium, ${contaQual("medio")} média e ${contaQual("basico")} básica. Preços de ${brl(Math.min(...precos))} a ${brl(Math.max(...precos))} (preço de referência: ${brl(cat.averagePrice)}).`, "p. 34");
+      F("rivalidade", "Custos fixos altos e barreiras de saída", null, "p. 34-36");
+      F("entrantes", "Novas marcas no mercado", (real?.novosEntrantes?.length ?? 0) > 0 ? (real!.novosEntrantes.map((x) => `${x.nome} (fonte: ${x.fonte})`).join("; ") + ".") : "Nenhuma nova marca registrada nas fontes consultadas.", "p. 22-23");
+      F("entrantes", "Acesso aos canais de distribuição", `Canais usados pelas ${n} empresas: ` + usoCanal.map((x) => `${NOME_CANAL[x.c].toLowerCase()} (${x.n})`).join(", ") + ".", "p. 26");
+      F("entrantes", "Diferenciação e marca das empresas instaladas", `Lembrança de marca média das ${n} empresas: ${pct(lembrancaMedia * 100, 0)} (Manual do Aluno, A.5).`, "p. 25");
+      F("entrantes", "Economias de escala, capital necessário, patentes e política do governo", null, "p. 23-29");
+      F("substitutos", "Produtos que cumprem a mesma função", (real?.substitutos?.length ?? 0) > 0 ? real!.substitutos.join("; ") + "." : "Sem levantamento de substitutos para esta categoria.", "p. 39");
+      F("substitutos", "Preço e desempenho dos substitutos", null, "p. 39-40");
+      F("compradores", "Opções de compra para o consumidor", `${n} empresas oferecem o produto` + (minha ? `; ${contaQual(minha.qualidade)} delas (contando a sua equipe) com a mesma qualidade da sua equipe.` : "."), "p. 40-42");
+      F("compradores", "Poder do varejo sobre a escolha do consumidor", `${ofertas.filter((o) => (o.canais ?? []).includes("varejo")).length} das ${n} empresas vendem pelo varejo físico e ${ofertas.filter((o) => (o.canais ?? []).includes("marketplace")).length} por marketplaces.`, "p. 42");
+      F("compradores", "Preço do produto em relação à renda do consumidor", null, "p. 42");
+      F("fornecedores", "Custo dos insumos", multiplicador > 1.0005 ? `O custo de produção estava ${pct((multiplicador - 1) * 100)} acima da semana-base, por causa do dólar e da inflação (Manual do Aluno, A.7).` : multiplicador < 0.9995 ? `O custo de produção estava ${pct((1 - multiplicador) * 100)} abaixo da semana-base, por causa do dólar e da inflação (Manual do Aluno, A.7).` : "O custo de produção ficou igual ao da semana-base.", "p. 43-44");
+      F("fornecedores", "Concentração dos fornecedores e importância do insumo", null, "p. 43-44");
+    }
+
     analises.push({
       produtoId: produto.id,
       produto: produto.name,
@@ -246,6 +365,8 @@ export async function montarAnaliseConcorrentes(storage: IStorage, classData: Cl
       swot: { forcas, fraquezas, oportunidades, ameacas },
       pontosCegos,
       semDadosDaEquipe: !minha,
+      benchmarking,
+      fatoresPorter,
     });
   }
 

@@ -25,6 +25,70 @@ interface Produto {
   marcasReais: Marca[]; lacunas: string[]; fontes: string[];
   swot: { forcas: ItemSwot[]; fraquezas: ItemSwot[]; oportunidades: ItemSwot[]; ameacas: ItemSwot[] };
   pontosCegos: ItemSwot[]; semDadosDaEquipe: boolean;
+  benchmarking?: Benchmarking | null;
+}
+type Comparacao = "melhor" | "pior" | "parecido" | null;
+interface Benchmarking {
+  colunas: { empresa: string; tipo: string }[];
+  linhas: { atributo: string; valores: string[]; comparacao: Comparacao[]; detalhe?: string[] }[];
+}
+
+// Cor e símbolo do ponto de vista da sua equipe (o símbolo garante a leitura
+// também sem cor). Regra: diferença de até 10% nos números, ou o mesmo nível
+// nas escalas, é "parecido".
+const ESTILO: Record<Exclude<Comparacao, null>, { classe: string; simbolo: string; rotulo: string }> = {
+  melhor: { classe: "bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-100", simbolo: "▲", rotulo: "sua equipe está melhor" },
+  pior: { classe: "bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100", simbolo: "▼", rotulo: "sua equipe está pior" },
+  parecido: { classe: "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100", simbolo: "●", rotulo: "parecido" },
+};
+
+function TabelaComparativa({ b }: { b: Benchmarking }) {
+  return (
+    <div className="space-y-3">
+      <table className="w-full min-w-[720px] border-collapse text-sm" data-testid="tabela-comparativa-concorrentes">
+        <thead>
+          <tr className="border-b text-left align-bottom">
+            <th className="py-2 pr-3 font-medium text-muted-foreground">Atributo</th>
+            {b.colunas.map((c, i) => (
+              <th key={c.empresa} className={`px-2 py-2 text-center font-medium ${i === 0 ? "bg-[#c026d3]/10" : ""}`}>
+                {c.empresa}
+                <div className="text-[11px] font-normal text-muted-foreground">{c.tipo === "sua equipe" ? "sua equipe" : c.tipo === "equipe" ? "equipe da turma" : "simulado"}</div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {b.linhas.map((l) => (
+            <tr key={l.atributo} className="border-b">
+              <td className="py-2 pr-3 font-medium">{l.atributo}</td>
+              {l.valores.map((v, i) => {
+                const c = l.comparacao[i];
+                const e = c ? ESTILO[c] : null;
+                return (
+                  <td key={i} className={`px-2 py-2 text-center tabular-nums ${i === 0 ? "bg-[#c026d3]/10 font-semibold" : ""} ${e ? e.classe : ""}`} title={[e?.rotulo, l.detalhe?.[i]].filter(Boolean).join(" · ") || undefined}>
+                    {e && <span aria-label={e.rotulo} className="mr-1">{e.simbolo}</span>}
+                    {v}
+                    {l.detalhe?.[i] && i > 0 && <div className="text-[11px] font-normal opacity-80">{l.detalhe[i]}</div>}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="flex flex-wrap gap-3 text-xs">
+        <span className={`rounded px-2 py-0.5 ${ESTILO.melhor.classe}`}>▲ sua equipe está melhor que esta empresa</span>
+        <span className={`rounded px-2 py-0.5 ${ESTILO.pior.classe}`}>▼ sua equipe está pior</span>
+        <span className={`rounded px-2 py-0.5 ${ESTILO.parecido.classe}`}>● parecido (diferença de até 10% ou mesmo nível)</span>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Formato da classificação de concorrentes por atributos de Kotler e Keller (2019, p. 304, Tabela 10.2) e das áreas de forças e fraquezas
+        dos concorrentes de Porter (2008a, p. 81-82, Figura 3-2). Preço e variação da participação ficam sem cor: um preço mais alto ou mais baixo
+        não é melhor nem pior por si só, depende do posicionamento. Atributos que o jogo não simula (conscientização do cliente, assistência
+        técnica e equipe de vendas) não aparecem. Explicação no Manual do Aluno, Apêndice D.3.
+      </p>
+    </div>
+  );
 }
 interface Analise { disponivel: boolean; mensagem?: string; rodadaBase?: number; rodadaAtual?: number; produtos: Produto[]; referenciaSwot: string }
 
@@ -77,50 +141,16 @@ function AnaliseDoProduto({ p, rodadaBase }: { p: Produto; rodadaBase?: number }
 
       <Card>
         <CardHeader>
-          <CardTitle>2. Comparação com as empresas do jogo (4 Ps)</CardTitle>
+          <CardTitle>2. Comparação com cada concorrente</CardTitle>
           <CardDescription>
             Dados da Rodada {rodadaBase}. Preço de referência da categoria: {formatarNumeroBR(p.precoReferencia, "moeda")}.
             O valor investido em comunicação de cada empresa não é mostrado, como no mercado real.
           </CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead>
-              <tr className="border-b text-left text-muted-foreground">
-                <th className="py-1.5 font-medium">Empresa</th>
-                <th className="py-1.5 text-right font-medium">Preço</th>
-                <th className="py-1.5 font-medium pl-3">Qualidade</th>
-                <th className="py-1.5 font-medium">Canais</th>
-                <th className="py-1.5 font-medium">Cobertura</th>
-                <th className="py-1.5 text-right font-medium">Participação</th>
-                <th className="py-1.5 text-right font-medium">Unidades</th>
-              </tr>
-            </thead>
-            <tbody>
-              {p.matriz.map((e) => (
-                <tr key={e.empresa} className={`border-b ${e.tipo === "sua equipe" ? "bg-[#c026d3]/10 font-medium" : ""}`}>
-                  <td className="py-1.5">{e.empresa}{e.tipo === "sua equipe" && <Badge className="ml-2" variant="secondary">sua equipe</Badge>}{e.tipo === "concorrente simulado" && <span className="ml-1 text-xs text-muted-foreground">(simulado)</span>}</td>
-                  <td className="py-1.5 text-right tabular-nums">{formatarNumeroBR(e.preco, "moeda")}</td>
-                  <td className="py-1.5 pl-3">{e.qualidade}</td>
-                  <td className="py-1.5">{e.canais.join(", ")}</td>
-                  <td className="py-1.5">{e.cobertura}</td>
-                  <td className="py-1.5 text-right tabular-nums">{pct(e.participacao)}</td>
-                  <td className="py-1.5 text-right tabular-nums">{Math.round(e.unidades).toLocaleString("pt-BR")}</td>
-                </tr>
-              ))}
-              {p.media && (
-                <tr className="text-muted-foreground">
-                  <td className="py-1.5">Média da categoria</td>
-                  <td className="py-1.5 text-right tabular-nums">{formatarNumeroBR(p.media.preco, "moeda")}</td>
-                  <td></td>
-                  <td className="py-1.5">{p.media.canais.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} canais</td>
-                  <td></td>
-                  <td className="py-1.5 text-right tabular-nums">{pct(p.media.participacao)}</td>
-                  <td className="py-1.5 text-right tabular-nums">{Math.round(p.media.unidades).toLocaleString("pt-BR")}</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          {p.benchmarking ? <TabelaComparativa b={p.benchmarking} /> : (
+            <p className="text-sm text-muted-foreground">A comparação aparece quando a sua equipe tiver vendido este produto na rodada anterior.</p>
+          )}
         </CardContent>
       </Card>
 

@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -86,14 +87,57 @@ export function SwotSomenteLeitura({ data }: { data?: any }) {
   );
 }
 
+// Nov/2026 (pedido do professor, 17/11): cada força mostra os fatores que a
+// explicam, conforme Porter (2008, cap. 1), com os dados do jogo de cada
+// produto (server/services/analiseConcorrentes.ts). "Não simulado" quando o
+// jogo não tem o dado. A nota continua a da análise da rodada.
+interface FatorPorter { forca: string; fator: string; dado: string | null; pagina: string }
+interface ProdutoFatores { produto: string; categoria: string; fatoresPorter?: FatorPorter[] }
+
+function FatoresDaForca({ forca, produtos, rodadaBase }: { forca: string; produtos: ProdutoFatores[]; rodadaBase?: number }) {
+  const linhas = Array.from(new Set(produtos.flatMap((p) => (p.fatoresPorter ?? []).filter((f) => f.forca === forca).map((f) => f.fator))));
+  if (!linhas.length) return null;
+  return (
+    <div className="overflow-x-auto">
+      <p className="mb-1 text-xs font-medium text-muted-foreground">
+        Fatores desta força (Porter, 2008a){rodadaBase ? `, com os dados do mercado na Rodada ${rodadaBase}` : ""}:
+      </p>
+      <table className="w-full min-w-[560px] border-collapse text-xs">
+        <thead>
+          <tr className="border-b text-left text-muted-foreground">
+            <th className="py-1 pr-2 font-medium">Fator</th>
+            {produtos.map((p) => <th key={p.produto} className="py-1 pr-2 font-medium">{p.produto}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {linhas.map((fator) => {
+            const pag = produtos.flatMap((p) => p.fatoresPorter ?? []).find((f) => f.forca === forca && f.fator === fator)?.pagina;
+            return (
+              <tr key={fator} className="border-b align-top">
+                <td className="py-1 pr-2 font-medium">{fator}<span className="block font-normal text-muted-foreground">Porter, {pag}</span></td>
+                {produtos.map((p) => {
+                  const f = (p.fatoresPorter ?? []).find((x) => x.forca === forca && x.fator === fator);
+                  return <td key={p.produto} className="py-1 pr-2">{f?.dado ?? <span className="italic text-muted-foreground">não simulado no jogo</span>}</td>;
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function PorterSomenteLeitura({ data }: { data?: any }) {
+  const { data: analise } = useQuery<{ disponivel: boolean; rodadaBase?: number; produtos: ProdutoFatores[] }>({ queryKey: ["/api/team/analise-concorrentes"] });
   if (!data) return <EmPreparacao />;
+  const produtos = analise?.disponivel ? analise.produtos : [];
   const forcas = [
-    { nota: "competitiveRivalry", texto: "rivalryNotes", titulo: "Rivalidade entre concorrentes" },
-    { nota: "supplierPower", texto: "supplierNotes", titulo: "Poder de barganha dos fornecedores" },
-    { nota: "buyerPower", texto: "buyerNotes", titulo: "Poder de barganha dos compradores" },
-    { nota: "threatOfSubstitutes", texto: "substitutesNotes", titulo: "Ameaça de produtos substitutos" },
-    { nota: "threatOfNewEntry", texto: "newEntryNotes", titulo: "Ameaça de novos entrantes" },
+    { nota: "competitiveRivalry", texto: "rivalryNotes", titulo: "Rivalidade entre concorrentes", chave: "rivalidade" },
+    { nota: "supplierPower", texto: "supplierNotes", titulo: "Poder de barganha dos fornecedores", chave: "fornecedores" },
+    { nota: "buyerPower", texto: "buyerNotes", titulo: "Poder de barganha dos compradores", chave: "compradores" },
+    { nota: "threatOfSubstitutes", texto: "substitutesNotes", titulo: "Ameaça de produtos substitutos", chave: "substitutos" },
+    { nota: "threatOfNewEntry", texto: "newEntryNotes", titulo: "Ameaça de novos entrantes", chave: "entrantes" },
   ];
   return (
     <div className="space-y-4">
@@ -101,6 +145,10 @@ export function PorterSomenteLeitura({ data }: { data?: any }) {
       <Card className="border-2 border-slate-200 dark:border-slate-800">
         <Cabecalho cor="#0a1830" Icone={Shield} titulo="5 Forças de Porter" descricao="Intensidade de cada força no setor, de 1 (muito fraca) a 10 (muito forte)" />
         <CardContent className="space-y-4 pt-6">
+          <p className="text-sm text-muted-foreground">
+            Porter (2008a, p. 20) explica que cada força depende de fatores da estrutura do setor. Abaixo de cada nota estão esses fatores,
+            com os números do jogo de cada produto. Onde aparece "não simulado no jogo", o simulador não tem esse dado. Explicação no Manual do Aluno, Apêndice D.7.
+          </p>
           {forcas.map((f) => {
             const valor = Number(data[f.nota]) || 0;
             return (
@@ -113,6 +161,7 @@ export function PorterSomenteLeitura({ data }: { data?: any }) {
                   <div className="h-full rounded-full bg-[#1447e6]" style={{ width: `${valor * 10}%` }} />
                 </div>
                 {data[f.texto] ? <p className="text-sm leading-relaxed text-muted-foreground">{data[f.texto]}</p> : null}
+                <FatoresDaForca forca={f.chave} produtos={produtos} rodadaBase={analise?.rodadaBase} />
               </div>
             );
           })}
