@@ -5306,6 +5306,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Nov/2026 (correções da Rodada 3): análise de concorrentes da equipe,
   // calculada a partir do mercado da rodada anterior e de marcas reais com
   // fonte. Só leitura.
+  // Nov/2026: relatório gerencial da rodada em PDF (substitui o feedback da IA).
+  // Montado só com os números gravados no fechamento; nada é alterado.
+  const enviarRelatorioGerencial = async (res: any, classData: any, team: any, round: any) => {
+    const { montarRelatorioGerencial } = await import("./services/relatorioGerencial");
+    const { gerarRelatorioGerencialPDF } = await import("./services/relatorioGerencialPDF");
+    const dados = await montarRelatorioGerencial(storage, classData, team, round);
+    const nome = `Relatorio_gerencial_R${round.roundNumber}_${String(dados.empresa).normalize("NFD").replace(/[^A-Za-z0-9]+/g, "_")}.pdf`;
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${nome}"`);
+    gerarRelatorioGerencialPDF(dados).pipe(res);
+  };
+
+  app.get("/api/professor/relatorio-gerencial/:classId/:roundId/:teamId", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: "Não autenticado" });
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "professor") return res.status(403).json({ error: "Acesso negado - apenas professores" });
+    const classData = await storage.getClass(req.params.classId);
+    if (!classData) return res.status(404).json({ error: "Turma não encontrada" });
+    if (classData.professorId !== user.id) return res.status(403).json({ error: "Você não tem permissão para acessar esta turma" });
+    const round = await storage.getRound(req.params.roundId);
+    if (!round || round.classId !== classData.id) return res.status(404).json({ error: "Rodada não encontrada" });
+    if (round.status !== "completed") return res.status(409).json({ error: "O relatório fica disponível depois que a rodada é encerrada." });
+    const team = await storage.getTeam(req.params.teamId);
+    if (!team || team.classId !== classData.id) return res.status(404).json({ error: "Equipe não encontrada" });
+    try {
+      await enviarRelatorioGerencial(res, classData, team, round);
+    } catch (error: any) {
+      console.error("Erro ao gerar o relatório gerencial (professor):", error);
+      if (!res.headersSent) res.status(500).json({ error: "Não foi possível gerar o relatório desta rodada." });
+    }
+  });
+
+  app.get("/api/team/relatorio-gerencial/pendente", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: "Não autenticado" });
+    const team = await storage.getTeamByUser(req.session.userId);
+    if (!team) return res.json({ pendente: null });
+    try {
+      const { relatorioPendenteDaEquipe } = await import("./services/relatorioGerencial");
+      res.json({ pendente: await relatorioPendenteDaEquipe(storage, team) });
+    } catch (error: any) {
+      console.error("Erro ao verificar o relatório pendente:", error);
+      res.json({ pendente: null });
+    }
+  });
+
+  app.get("/api/team/relatorio-gerencial/:roundId", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: "Não autenticado" });
+    const team = await storage.getTeamByUser(req.session.userId);
+    if (!team) return res.status(404).json({ error: "Equipe não encontrada" });
+    const classData = await storage.getClass(team.classId);
+    if (!classData) return res.status(404).json({ error: "Turma não encontrada" });
+    const round = await storage.getRound(req.params.roundId);
+    if (!round || round.classId !== team.classId) return res.status(404).json({ error: "Rodada não encontrada" });
+    if (round.status !== "completed" || round.isPractice) return res.status(409).json({ error: "O relatório fica disponível depois que a rodada é encerrada." });
+    try {
+      await enviarRelatorioGerencial(res, classData, team, round);
+      // No modo "Ver como equipe" o professor baixa sem registrar em nome do aluno.
+      if (!req.session.verComoEquipe) {
+        await storage.logRoundAccess(round.id, team.classId, req.session.userId, "equipe", "relatorio_baixado");
+      }
+    } catch (error: any) {
+      console.error("Erro ao gerar o relatório gerencial (equipe):", error);
+      if (!res.headersSent) res.status(500).json({ error: "Não foi possível gerar o relatório desta rodada." });
+    }
+  });
+
   app.get("/api/team/analise-concorrentes", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Não autenticado" });
