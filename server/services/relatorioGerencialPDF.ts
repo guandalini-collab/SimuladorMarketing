@@ -522,8 +522,8 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
         (ant != null && d.comunicacaoAnterior != null ? (Math.round(d.comunicacaoAnterior) === Math.round(d.comunicacao) ? `, a mesma da Rodada ${ant}.` : `; na Rodada ${ant}, ${reais(d.comunicacaoAnterior)}.`) : ".") +
         (r.limiteComunicacao > 0 ? ` As regras consideram pouca comunicação um valor abaixo de ${reais(r.limiteComunicacao)} por produto.` : "");
 
-      // 5 Forças
-      espaco(120);
+      // 5 Forças: o título só fica no fim da folha se o quadro couber junto.
+      espaco(250);
       doc.font("Helvetica-Bold").fontSize(12).fillColor(COR.texto).text(t("A concorrência (5 Forças)"), M.left, doc.y, { width: W });
       doc.moveDown(0.3);
       quadro(
