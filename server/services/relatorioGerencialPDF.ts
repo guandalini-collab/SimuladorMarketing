@@ -107,7 +107,10 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
       doc.y = y0 + h;
     };
     const h1 = linhas.length ? alturaLinha(Array.isArray(linhas[0]) ? (linhas[0] as string[]) : ["x"]) : 0;
-    espaco(40 + alturaLinha(cols.map((c) => c.titulo), true) + 2 * h1);
+    const alturaTotal = 40 + alturaLinha(cols.map((c) => c.titulo), true) +
+      linhas.reduce<number>((acc, l) => acc + (Array.isArray(l) ? alturaLinha(l) : alturaLinha("destaque" in l ? l.destaque : ["x"], true)), 0);
+    // Tabelas curtas não são partidas: se não cabem no resto da folha, começam na próxima.
+    espaco(alturaTotal <= 260 ? alturaTotal : 40 + alturaLinha(cols.map((c) => c.titulo), true) + 2 * h1);
     nTabela++;
     tituloIlustracao(`Tabela ${nTabela} – ${titulo}`);
     cab();
@@ -502,7 +505,9 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
     const comAlerta = a.partes.filter((p) => p.pontos < 100);
     paragrafo(
       `Conta da nota de alinhamento ${sujeito}: 30 pontos por ter as análises preenchidas, mais 70 × a média das cinco partes.` +
-        (comAlerta.length ? ` ${listaE(comAlerta.map((p) => `${p.ferramenta === "Matriz BCG" ? "a BCG" : p.ferramenta === "Segmentação" ? "a Segmentação" : p.ferramenta === "PESTEL" ? "a PESTEL" : p.ferramenta === "SWOT" ? "a SWOT" : "as 5 Forças"} ficou com ${br(p.pontos)}`))} e as demais com 100:` : " Todas as partes ficaram com 100:") +
+        (comAlerta.length
+          ? " " + (comAlerta.map((p) => `${p.ferramenta === "Matriz BCG" ? "a BCG ficou" : p.ferramenta === "Segmentação" ? "a Segmentação ficou" : p.ferramenta === "PESTEL" ? "a PESTEL ficou" : p.ferramenta === "SWOT" ? "a SWOT ficou" : "as 5 Forças ficaram"} com ${br(p.pontos)}`).join(", ") + " e as demais com 100:").replace(/^a/, "A")
+          : " Todas as partes ficaram com 100:") +
         ` 30 + 70 × (${a.partes.map((p) => br(p.pontos)).join(" + ")}) ÷ 5 ÷ 100 = 30 + ${br(0.7 * media, 1)} = ${br(estimada, 1)}${Math.abs(estimada - Math.round(estimada)) > 0.001 ? `, arredondado para ${Math.round(estimada)}` : ""}. Cada ponto perdido numa parte vale ${br(PESO_PONTO_FERRAMENTA, 2)} ponto na nota de alinhamento. A regra de cada alerta e a teoria de origem estão no Manual do Aluno, Apêndice E.4.`,
     );
   }

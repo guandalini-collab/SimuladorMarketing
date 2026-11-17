@@ -443,7 +443,8 @@ export async function montarRelatorioGerencial(storage: IStorage, classData: Cla
     const vr = varPct(rbA, rbB);
     if (vr != null) fatos.push(`A receita bruta ${vr >= 0 ? "subiu" : "caiu"} ${dec(Math.abs(vr))}%, de ${reais(rbA)} para ${reais(rbB)}.`);
     if (prodAnterior.length !== prodAtual.length) {
-      fatos.push(`Na Rodada ${anteriorN} a empresa vendeu ${prodAnterior.length} produto${prodAnterior.length === 1 ? "" : "s"}; na Rodada ${round.roundNumber}, ${prodAtual.length}.` +
+      const qtd = (n: number) => (["nenhum", "um", "dois", "três", "quatro", "cinco", "seis"][n] ?? String(n)) + (n === 1 ? " produto" : " produtos");
+      fatos.push(`Na Rodada ${anteriorN} a empresa vendeu ${qtd(prodAnterior.length)}; na Rodada ${round.roundNumber}, ${qtd(prodAtual.length)}.` +
         produtosQueSairam.map((x) => ` O ${x.produto}, que gerou ${reais(x.receitaBruta)} de receita na Rodada ${anteriorN}, não fez parte desta rodada.`).join(""));
     }
     if (vendas) {
@@ -452,13 +453,17 @@ export async function montarRelatorioGerencial(storage: IStorage, classData: Cla
         const base = comuns.reduce((s, l) => s + (l.precoAnterior ?? 0) * (l.unidadesAnterior ?? 0), 0);
         const v = comuns.reduce((s, l) => s + l.variacao, 0);
         const ep = comuns.reduce((s, l) => s + (l.efeitoPreco ?? 0), 0), ev = comuns.reduce((s, l) => s + (l.efeitoVolume ?? 0), 0);
-        if (base > 0) fatos.push(`Nos produtos vendidos nas duas rodadas, a receita ${v >= 0 ? "subiu" : "caiu"} ${reais(Math.abs(v))} (${v >= 0 ? "+" : "−"}${dec(Math.abs(v / base) * 100)}%): ${reais(ep)} vieram da mudança de preço e ${reais(ev)} da mudança no volume vendido (seção 4).`);
+        const precosIguais = comuns.every((l) => l.precoAnterior === l.precoAtual);
+        if (base > 0) fatos.push(`Nos produtos vendidos nas duas rodadas, a receita ${v >= 0 ? "subiu" : "caiu"} ${reais(Math.abs(v))} (${v >= 0 ? "+" : "−"}${dec(Math.abs(v / base) * 100)}%). ` +
+          (precosIguais
+            ? "Como os preços não mudaram, toda a variação veio do volume vendido (seção 4)."
+            : `${reais(ep)} vieram da mudança de preço e ${reais(ev)} da mudança no volume vendido (seção 4).`));
       }
     }
     const la = Number(ra.profit) || 0, lb = Number(atual.profit) || 0;
     const vl = varPct(la, lb);
     if (vl != null) fatos.push(`O lucro antes do IR ${lb >= la ? "subiu" : "caiu"} ${dec(Math.abs(vl))}%, de ${reais(la)} para ${reais(lb)}.` +
-      dre.filter((d) => d.anterior).map((d) => { const x = varPct(d.anterior!.resultado, d.atual.resultado); return x == null ? "" : ` ${d.produto}: ${x >= 0 ? "+" : "−"}${dec(Math.abs(x))}%.`; }).join(""));
+      dre.filter((d) => d.anterior).map((d) => { const x = varPct(d.anterior!.resultado, d.atual.resultado); return x == null ? "" : ` O lucro do ${d.produto} ${x >= 0 ? "subiu" : "caiu"} ${dec(Math.abs(x))}%.`; }).join(""));
     for (const d of dre) {
       if (d.anterior && d.anterior.custoUnidade > 0) {
         const x = varPct(d.anterior.custoUnidade, d.atual.custoUnidade);
