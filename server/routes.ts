@@ -3781,6 +3781,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       bulletins = await getBulletinsByClass(req.params.classId);
     }
 
+    // Nov/2026 (pedido do professor, 18/11): o boletim é gerado 180 minutos
+    // antes da abertura; o aluno só o vê quando a rodada abre. O professor
+    // (inclusive em "Ver como equipe") vê antes, para conferir.
+    if (user.role === "equipe" && !req.session.verComoEquipe) {
+      const liberadas = new Set(rounds.filter((r) => r.status === "active" || r.status === "completed").map((r) => r.id));
+      bulletins = bulletins.filter((b) => liberadas.has(b.roundId));
+    }
+
     res.json(
       bulletins
         .map((b) => ({ ...b, roundNumber: rounds.find((r) => r.id === b.roundId)?.roundNumber ?? null }))
@@ -5671,6 +5679,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // prontas (somente leitura). Campo novo; os demais seguem iguais.
     const { turmaComAnalisesDaIA } = await import("./services/analisesDaIA");
     const analisesDaIA = await turmaComAnalisesDaIA(storage, team.classId);
+
+    // Nov/2026 (pedido do professor, 18/11): as análises prontas são geradas
+    // 180 minutos antes da abertura para o professor conferir; o aluno só as
+    // vê quando a rodada abre. O professor em "Ver como equipe" vê antes.
+    if (analisesDaIA && !req.session.verComoEquipe) {
+      const rodada = await storage.getRound(req.params.roundId);
+      if (rodada && rodada.status !== "active" && rodada.status !== "completed") {
+        return res.json({ swot: undefined, porter: undefined, bcg: [], pestel: undefined, segmentation, analisesDaIA });
+      }
+    }
 
     res.json({ swot, porter, bcg: bcgList, pestel, segmentation, analisesDaIA });
   });

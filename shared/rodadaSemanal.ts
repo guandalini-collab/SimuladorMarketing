@@ -17,7 +17,11 @@
 export const HORA_ABERTURA_PADRAO = "20:50";
 export const DURACAO_AULA_MINUTOS = 120;
 export const HORA_FECHAMENTO_ADAPTACAO = "23:59:59";
-export const MINUTOS_PREPARACAO_IA = 30;
+// Nov/2026 (pedido do professor, 18/11): a preparação passou de 30 para 180
+// minutos antes da abertura, para sobrar tempo de conferir e corrigir o
+// conteúdo gerado antes que a rodada abra. Análises e boletim ficam ocultos
+// para os alunos até a abertura (rotas /api/strategy e /api/market-bulletins).
+export const MINUTOS_PREPARACAO_IA = 180;
 export const FUSO_BRASILIA = "America/Sao_Paulo";
 const OFFSET_BRASILIA = "-03:00";
 
@@ -84,7 +88,7 @@ export function fechamentoDaRodada(valor: string | Date, roundNumber: number, ab
   return fechamentoPadrao(abertura ?? instanteBrasilia(dia, HORA_ABERTURA_PADRAO), roundNumber, undefined, isPractice);
 }
 
-/** Momento em que a IA prepara a rodada (30 min antes da abertura). */
+/** Momento em que a IA prepara a rodada (MINUTOS_PREPARACAO_IA antes da abertura). */
 export function preparacaoDaRodada(abertura: string | Date): Date {
   return new Date(new Date(abertura).getTime() - MINUTOS_PREPARACAO_IA * 60_000);
 }

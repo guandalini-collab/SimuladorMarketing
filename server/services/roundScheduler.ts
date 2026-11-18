@@ -49,8 +49,8 @@ export class RoundScheduler {
     }
   }
 
-  // Rodadas semanais (out/2026): 30 minutos antes da abertura agendada
-  // (20h20 para abertura às 20h50), dispara a preparação do conteúdo em
+  // Rodadas semanais (out/2026): MINUTOS_PREPARACAO_IA antes da abertura agendada
+  // (180 min desde 18/11/2026: 17h50 para abertura às 20h50), dispara a preparação do conteúdo em
   // segundo plano — sem esperar a IA, para não atrasar a abertura.
   private async processScheduledPreparations(now: Date): Promise<void> {
     try {

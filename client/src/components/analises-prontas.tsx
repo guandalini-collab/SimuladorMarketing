@@ -24,7 +24,7 @@ function EmPreparacao() {
   return (
     <Card>
       <CardContent className="py-10 text-center text-muted-foreground">
-        A análise desta rodada ainda está sendo preparada. Volte a esta tela em alguns minutos.
+        A análise desta rodada aparece aqui na abertura da rodada. Se a rodada já abriu, volte a esta tela em alguns minutos.
       </CardContent>
     </Card>
   );

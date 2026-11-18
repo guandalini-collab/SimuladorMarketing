@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 // - Rodadas que valem nota (inclusive a Rodada 1): só o dia da aula; fechamento sugerido 2 horas depois da
 //   abertura (duração da aula), editável;
 // - rodada já aberta: novo dia e horário de fechamento.
-// A IA prepara o conteúdo 30 minutos antes da abertura. A semana simulada é
+// A IA prepara o conteúdo MINUTOS_PREPARACAO_IA (180) minutos antes da abertura. A semana simulada é
 // a semana (segunda a domingo) do dia de abertura.
 
 /** "AAAA-MM-DD" → Date local ao meio-dia (evita troca de dia por fuso). */

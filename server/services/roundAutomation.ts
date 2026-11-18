@@ -108,8 +108,8 @@ export async function runRoundOpenedAutomation(storage: IStorage, roundId: strin
 }
 
 /**
- * Rodadas semanais (out/2026): 30 minutos antes da abertura agendada
- * (20h20), a IA já prepara o conteúdo da rodada ainda bloqueada — eventos
+ * Rodadas semanais (out/2026): MINUTOS_PREPARACAO_IA antes da abertura agendada
+ * (180 min desde 18/11/2026: 17h50), a IA já prepara o conteúdo da rodada ainda bloqueada — eventos
  * de mercado, boletim e, na Rodada 1, as análises iniciais — para que às
  * 20h50 os alunos encontrem tudo pronto. Na abertura, a automação normal
  * roda de novo, mas cada passo pula o que já existe.
