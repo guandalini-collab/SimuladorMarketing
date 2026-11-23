@@ -6298,7 +6298,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // de alinhamento) — regenerá-las depois reescreve o histórico sem
       // recalcular o resultado já fechado, deixando análise e resultado
       // inconsistentes para quem revisar a rodada depois.
-      if (round.status !== "active") {
+      // Nov/2026 (pedido do professor, 23/11): rodada agendada (ainda não
+      // aberta) também pode ter as análises refeitas, para corrigir o
+      // conteúdo preparado antes da abertura. Só a encerrada é protegida.
+      if (round.status === "completed") {
         return res.status(400).json({ error: "Esta rodada já foi encerrada e não pode mais ser editada" });
       }
 
