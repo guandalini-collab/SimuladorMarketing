@@ -6320,6 +6320,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       {
         const { turmaComAnalisesDaIA, prepararAnalisesDaRodada } = await import("./services/analisesDaIA");
         if (await turmaComAnalisesDaIA(storage, round.classId)) {
+          // Nov/2026 (pedido do professor, 23/11): numa rodada agendada, o
+          // boletim da semana também é refeito com os eventos ativos (ex.: um
+          // evento desativado pelo professor sai do boletim), antes das
+          // análises, que usam o boletim como contexto.
+          if (round.status === "locked") {
+            try {
+              await pool.query(`DELETE FROM market_bulletins WHERE round_id = $1`, [round.id]);
+              const eventosDaRodada = await storage.getMarketEventsByRound(round.id);
+              const { ensureBulletinForRound } = await import("./services/marketBulletin");
+              const { semanaSimulada } = await import("@shared/rodadaSemanal");
+              const abertura = round.scheduledStartAt ?? round.startedAt;
+              await ensureBulletinForRound({
+                classId: round.classId,
+                roundId: round.id,
+                roundNumber: round.roundNumber,
+                sectorId: classData.sector,
+                businessType: classData.businessType,
+                events: eventosDaRodada,
+                inicioSemana: abertura ? semanaSimulada(abertura)?.inicio ?? null : null,
+              });
+            } catch (e) {
+              console.error("[ANALISES-IA] Falha ao refazer o boletim da rodada agendada:", e);
+            }
+          }
           const r = await prepararAnalisesDaRodada(storage, round.id, { forcar: true });
           return res.json({
             success: r.pestelPorter !== "falhou",
