@@ -1,5 +1,6 @@
 import { FileText } from "lucide-react";
 import { ListaRelatoriosGerenciais } from "@/components/relatorio-gerencial";
+import { AvisoAntesDeDecidir, IncoerenciasRepetidas } from "@/components/aviso-decisao";
 
 /**
  * Nov/2026 (decisão do professor, 17/11): esta página deixou de mostrar o
@@ -20,6 +21,8 @@ export default function FeedbackPage() {
           <p className="text-muted-foreground mt-1">Resultados de cada rodada encerrada, em PDF</p>
         </div>
       </div>
+      <AvisoAntesDeDecidir />
+      <IncoerenciasRepetidas />
       <ListaRelatoriosGerenciais />
     </div>
   );

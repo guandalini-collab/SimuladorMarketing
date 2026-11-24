@@ -75,7 +75,22 @@ export interface Dre {
   unidades: number; preco: number; receitaLiquidaUnidade: number; custoUnidade: number;
 }
 
-export interface AlertaProduto extends ExplicacaoAlerta { efeitoNaNota: number }
+/** `repetida` (nov/2026): o mesmo alerta já tinha aparecido no produto na rodada anterior. */
+export interface AlertaProduto extends ExplicacaoAlerta { efeitoNaNota: number; repetida: boolean }
+
+/**
+ * Resumo de uma página (aprovado pelo professor em 24/11/2026): cinco números
+ * da rodada ao lado da anterior e as incoerências do alinhamento, marcando as
+ * que se repetem. Só exibição; nenhum cálculo novo.
+ */
+export interface LinhaResumo { indicador: string; anterior: number | null; atual: number | null; casas: number; moeda?: boolean }
+export interface IncoerenciaResumo { produto: string; ferramenta: string; titulo: string; repetida: boolean }
+export interface ResumoRodada {
+  rodadaAnterior: number | null;
+  linhas: LinhaResumo[];
+  incoerencias: IncoerenciaResumo[];
+  repetidas: number;
+}
 export interface AlinhamentoProduto {
   produto: string;
   nota: number | null;
@@ -130,6 +145,7 @@ export interface RelatorioGerencial {
   limiteComunicacao: number;
   nota: { itens: ItemNota[]; total: number; anterior: number | null; posicao: number | null } | null;
   formulas: { indicador: string; conta: string; fonte: string }[];
+  resumo: ResumoRodada;
 }
 
 const reais = (v: number) => (Math.round(v) < 0 ? "−" : "") + "R$ " + Math.abs(Math.round(v)).toLocaleString("pt-BR");
@@ -444,7 +460,8 @@ export async function montarRelatorioGerencial(storage: IStorage, classData: Cla
     };
     const alertas: AlertaProduto[] = ((rp?.alignmentIssues ?? []) as string[]).map((a) => {
       const e = explicarAlerta(a, ctx);
-      return { ...e, efeitoNaNota: e.pontos * PESO_PONTO_FERRAMENTA };
+      const repetida = anteriorN != null && ((rpa?.alignmentIssues ?? []) as string[]).includes(a);
+      return { ...e, efeitoNaNota: e.pontos * PESO_PONTO_FERRAMENTA, repetida };
     });
     const partes = ["SWOT", "5 Forças", "Matriz BCG", "PESTEL", "Segmentação"].map((f) => ({
       ferramenta: f,
@@ -607,6 +624,18 @@ export async function montarRelatorioGerencial(storage: IStorage, classData: Cla
     );
   }
 
+  // ---------- Resumo de uma página ----------
+  const valorEm = (n: number | null, f: (n: number) => number | null) => (n == null ? null : f(n));
+  const linhasResumo: LinhaResumo[] = [
+    { indicador: "Receita bruta (R$)", casas: 0, moeda: true, anterior: valorEm(anteriorN, (n) => receitaDe(minha(n))), atual: receitaDe(atual) },
+    { indicador: "Lucro antes do IR (R$)", casas: 0, moeda: true, anterior: valorEm(anteriorN, (n) => campo(minha(n), "profit")), atual: campo(atual, "profit") },
+    { indicador: "Participação média (%)", casas: 2, anterior: valorEm(anteriorN, (n) => campo(minha(n), "marketShare")), atual: campo(atual, "marketShare") },
+    { indicador: "Verba de marketing usada (%)", casas: 1, anterior: valorEm(anteriorN, (n) => verbaUsada(n)), atual: verbaUsada(round.roundNumber) },
+    { indicador: "Verba de marketing da rodada seguinte (R$)", casas: 0, moeda: true, anterior: valorEm(anteriorN, (n) => campo(minha(n), "budgetAfter")), atual: campo(atual, "budgetAfter") },
+  ];
+  const incoerencias: IncoerenciaResumo[] = alinhamento.flatMap((a) => a.alertas.map((al) => ({ produto: a.produto, ferramenta: al.ferramenta, titulo: al.titulo, repetida: al.repetida })));
+  const resumo: ResumoRodada = { rodadaAnterior: anteriorN, linhas: linhasResumo, incoerencias, repetidas: incoerencias.filter((i) => i.repetida).length };
+
   return {
     empresa,
     turma: classData.name,
@@ -632,6 +661,7 @@ export async function montarRelatorioGerencial(storage: IStorage, classData: Cla
     limiteComunicacao: verbaProduto * 0.15,
     nota,
     formulas,
+    resumo,
   };
 }
 

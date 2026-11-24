@@ -282,6 +282,66 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
   }
   doc.moveDown(0.6);
 
+  // =================== Resumo da rodada (sem número) ===================
+  // Aprovado pelo professor em 24/11/2026: uma página com os cinco números
+  // principais e as incoerências do alinhamento, marcando as repetidas.
+  // Fica antes da seção 1, como elemento sem número, para não alterar a
+  // numeração das seções citadas no texto. Só fatos, sem conselho.
+  {
+    const rs = r.resumo;
+    const ant = rs.rodadaAnterior;
+    secao("Resumo da rodada");
+    paragrafo(`Os cinco números principais da Rodada ${r.rodada}${ant != null ? ` ao lado da Rodada ${ant}` : ""} e as incoerências entre as análises e as decisões registradas pelo alinhamento estratégico. Os detalhes estão nas seções seguintes.`, { recuo: false });
+    const fmtR = (l: (typeof rs.linhas)[number], v: number | null) => (v == null ? "–" : l.moeda ? reais(v) : num(v, l.casas));
+    const varR = (l: (typeof rs.linhas)[number]) => {
+      if (l.anterior == null || l.atual == null) return "–";
+      // Com prejuízo, a variação percentual engana; mostra a diferença em reais.
+      if (l.moeda) {
+        if (l.anterior <= 0 || l.atual < 0) { const d = l.atual - l.anterior; return Math.round(d) === 0 ? "0" : (d > 0 ? "+" : "-") + reais(Math.abs(d)); }
+        return sinal(((l.atual - l.anterior) / Math.abs(l.anterior)) * 100, 1, "%");
+      }
+      return sinal(l.atual - l.anterior, l.casas, " p.p.");
+    };
+    tabela(
+      `Números principais da ${r.empresa}${ant != null ? ` nas Rodadas ${ant} e ${r.rodada}` : ` na Rodada ${r.rodada}`}`,
+      [
+        { titulo: "Indicador", largura: 150, alinhar: "left" },
+        ...(ant != null ? [{ titulo: `Rodada ${ant}`, largura: 80 }] : []),
+        { titulo: `Rodada ${r.rodada}`, largura: 80 },
+        ...(ant != null ? [{ titulo: "Variação", largura: 60 }] : []),
+      ],
+      rs.linhas.map((l) => [l.indicador.replace(" (R$)", ""), ...(ant != null ? [fmtR(l, l.anterior)] : []), fmtR(l, l.atual), ...(ant != null ? [varR(l)] : [])]),
+      `${fonteRodadas(ant != null ? [ant, r.rodada] : [r.rodada])} Notas: p.p. = pontos percentuais. Lucro antes do imposto de renda. A verba da rodada seguinte acompanha a receita (Manual do Aluno, A.8).`,
+    );
+    doc.font("Helvetica-Bold").fontSize(12).fillColor(COR.texto);
+    espaco(40);
+    doc.text(t("Incoerências desta rodada"), M.left, doc.y, { width: W, lineGap: 4 });
+    doc.moveDown(0.3);
+    if (rs.incoerencias.length === 0) {
+      paragrafo("Nenhuma incoerência foi registrada nesta rodada.", { recuo: false });
+    } else {
+      if (ant != null) {
+        const tot = rs.incoerencias.length;
+        paragrafo(
+          tot === 1
+            ? `A incoerência desta rodada ${rs.repetidas === 1 ? "já tinha aparecido" : "não tinha aparecido"} na Rodada ${ant}.`
+            : rs.repetidas === 0
+              ? `Nenhuma das ${tot} incoerências desta rodada tinha aparecido na Rodada ${ant}.`
+              : `${rs.repetidas} das ${tot} incoerências desta rodada já ${rs.repetidas === 1 ? "tinha aparecido" : "tinham aparecido"} na Rodada ${ant}.`,
+          { recuo: false },
+        );
+      }
+      for (const i of rs.incoerencias) {
+        espaco(30);
+        doc.font("Helvetica").fontSize(12).fillColor(COR.texto);
+        const y0 = doc.y;
+        doc.text("•", M.left + 0.6 * CM, y0, { lineBreak: false });
+        doc.text(t(`${i.produto}: ${i.titulo}${i.repetida && ant != null ? ` (repetida da Rodada ${ant})` : ""}`), M.left + 1.25 * CM, y0, { width: W - 1.25 * CM, lineGap: 4, paragraphGap: 2 });
+      }
+      paragrafo("O que cada análise diz, o que a empresa decidiu e por que as duas coisas não combinam estão na seção 9.2.", { recuo: false });
+    }
+  }
+
   // =================== 1 Apresentação ===================
   secao("1 Apresentação");
   paragrafo("Este relatório reúne os resultados da empresa na rodada, comparados com as rodadas anteriores e com as concorrentes da turma. Ele segue o controle do plano de marketing descrito por Kotler e Keller (2019, p. 746-747): mostrar o que está acontecendo e por que está acontecendo, com análises de vendas, de participação de mercado, das despesas de marketing em relação às vendas e da lucratividade. A decisão sobre o que fazer a seguir cabe à equipe.");
@@ -608,12 +668,12 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
 
   subsecao("9.2 Os alertas desta rodada");
   // agrupa alertas iguais entre produtos
-  const grupos = new Map<string, { titulo: string; ferramenta: string; itens: { produto: string; analise: string; decisao: string; porque: string; efeito: number }[] }>();
+  const grupos = new Map<string, { titulo: string; ferramenta: string; itens: { produto: string; analise: string; decisao: string; porque: string; efeito: number; repetida: boolean }[] }>();
   for (const a of r.alinhamento) {
     for (const al of a.alertas) {
       const k = al.ferramenta + "|" + al.titulo;
       if (!grupos.has(k)) grupos.set(k, { titulo: al.titulo, ferramenta: al.ferramenta, itens: [] });
-      grupos.get(k)!.itens.push({ produto: a.produto, analise: al.analise, decisao: al.decisao, porque: al.porque, efeito: al.efeitoNaNota });
+      grupos.get(k)!.itens.push({ produto: a.produto, analise: al.analise, decisao: al.decisao, porque: al.porque, efeito: al.efeitoNaNota, repetida: al.repetida });
     }
   }
   const nProdutos = r.alinhamento.length;
@@ -632,7 +692,10 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
       espaco(110);
       const quais = g.itens.length === nProdutos && nProdutos > 1 ? "" : ` (${listaE(g.itens.map((i) => i.produto))})`;
       doc.moveDown(0.3);
-      doc.font("Helvetica-Bold").fontSize(12).fillColor(COR.texto).text(t(`Alerta ${k}. ${g.titulo}${quais}`), M.left, doc.y, { width: W, lineGap: 4 });
+      const rep = g.itens.filter((i) => i.repetida);
+      const antR = r.resumo.rodadaAnterior;
+      const marca = rep.length === 0 || antR == null ? "" : rep.length === g.itens.length ? ` – repetido da Rodada ${antR}` : ` – repetido da Rodada ${antR} no ${listaE(rep.map((i) => i.produto))}`;
+      doc.font("Helvetica-Bold").fontSize(12).fillColor(COR.texto).text(t(`Alerta ${k}. ${g.titulo}${quais}${marca}`), M.left, doc.y, { width: W, lineGap: 4 });
       doc.moveDown(0.2);
       const junta = (campo: "analise" | "decisao" | "porque") => {
         const unicos = Array.from(new Set(g.itens.map((i) => i[campo])));

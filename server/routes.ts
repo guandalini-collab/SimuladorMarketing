@@ -5377,6 +5377,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(lista);
   });
 
+  // Nov/2026 (aprovado pelo professor em 24/11): incoerências da última rodada
+  // encerrada, marcando as que se repetem da anterior. Mesmos dados do resumo
+  // do relatório gerencial; só leitura.
+  app.get("/api/team/incoerencias-repetidas", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: "Não autenticado" });
+    const team = await storage.getTeamByUser(req.session.userId);
+    if (!team) return res.json(null);
+    const classData = await storage.getClass(team.classId);
+    if (!classData) return res.json(null);
+    try {
+      const rodadas = (await storage.getRoundsByClass(team.classId))
+        .filter((r) => r.status === "completed" && !r.isPractice)
+        .sort((a, b) => b.roundNumber - a.roundNumber);
+      for (const r of rodadas) {
+        const tem = (await storage.getResultsByRound(r.id)).some((x: any) => x.teamId === team.id);
+        if (!tem) continue;
+        const { montarRelatorioGerencial } = await import("./services/relatorioGerencial");
+        const dados = await montarRelatorioGerencial(storage, classData, team, r);
+        return res.json({ rodada: r.roundNumber, ...dados.resumo });
+      }
+      res.json(null);
+    } catch (error: any) {
+      console.error("Erro ao montar as incoerências repetidas:", error);
+      res.json(null);
+    }
+  });
+
   app.get("/api/team/relatorio-gerencial/:roundId", async (req, res) => {
     if (!req.session.userId) return res.status(401).json({ error: "Não autenticado" });
     const team = await storage.getTeamByUser(req.session.userId);

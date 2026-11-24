@@ -29,6 +29,7 @@ import {
   MapPin, Map as MapIcon, Flag, Globe,
   TrendingDown, Scale, Crown, Gem, Volume, Volume1, Volume2, Megaphone as MegaphoneIcon,
 } from "lucide-react";
+import { AvisoAntesDeDecidir } from "@/components/aviso-decisao";
 
 // Opções das decisões de Produto e Praça. Os "value" são exatamente os
 // valores já aceitos pelo servidor/motor (shared/schema.ts → marketing_mix);
@@ -744,6 +745,7 @@ export default function Decisoes() {
   return (
     <div className="space-y-8">
       {roundChecklist?.isPractice && <AvisoRodadaTeste className="mt-0" />}
+      <AvisoAntesDeDecidir />
 
       {/* Hero Section */}
       <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-[#0a1830] via-[#0d2348] to-[#0a1830] p-8">
