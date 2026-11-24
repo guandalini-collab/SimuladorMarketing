@@ -3106,9 +3106,18 @@ export default function Professor() {
 
   // Sempre que trocar de turma ou a rodada anterior mudar, a sugestão volta a
   // ser "manter a mesma quantidade de produtos da rodada anterior".
+  // Nov/2026 (pedido do professor, 23/11): se a próxima rodada já está
+  // agendada, o seletor começa com a quantidade gravada nela (é a que vale na
+  // abertura automática), e não com a da rodada anterior.
+  const scheduledNextProductCount = useMemo(() => {
+    const agendadas = rounds
+      .filter((r: any) => r.status === "locked" && r.scheduledStartAt)
+      .sort((a: any, b: any) => a.roundNumber - b.roundNumber);
+    return agendadas[0]?.productCount ?? null;
+  }, [rounds]);
   useEffect(() => {
-    setNextRoundProductCount(previousRoundProductCount);
-  }, [selectedClass, previousRoundProductCount]);
+    setNextRoundProductCount(scheduledNextProductCount ?? previousRoundProductCount);
+  }, [selectedClass, previousRoundProductCount, scheduledNextProductCount]);
 
   const scheduleRoundMutation = useMutation({
     mutationFn: async (data: { roundId: string; inicio?: string; fim?: string; clear?: boolean; isPractice?: boolean; productCount?: number }) => {

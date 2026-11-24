@@ -464,13 +464,24 @@ export function gerarRelatorioGerencialPDF(r: RelatorioGerencial): InstanceType<
     `Demonstração do resultado por produto, ${anterior != null ? `Rodadas ${anterior} e ${r.rodada}` : `Rodada ${r.rodada}`} (R$)`,
     [{ titulo: "Linha", largura: blocos.length > 5 ? 118 : 150, alinhar: "left" }, ...blocos.map((b) => ({ titulo: b.titulo, largura: 62 }))],
     [
-      ...colDre.map((c) => {
+      ...colDre.flatMap((c): Linha[] => {
         const linha = [c.nome, ...blocos.map((b) => (b.dre ? num(c.d(b.dre)) : NV))];
-        return c.nome.startsWith("(=) Lucro antes") ? { destaque: linha } : linha;
+        if (c.nome.startsWith("(=) Lucro antes")) return [{ destaque: linha }];
+        // Nov/2026 (pedido do professor, 23/11): unidades vendidas e custo de
+        // produção por unidade logo abaixo do CPV. Só exibição. Na coluna da
+        // empresa, o custo por unidade não se aplica (produtos diferentes).
+        if (c.nome.startsWith("(-) Custo de produção")) {
+          return [
+            linha,
+            ["Unidades vendidas", ...blocos.map((b) => (b.dre ? num(b.dre.unidades) : NV))],
+            ["Custo de produção por unidade", ...blocos.map((b) => (!b.dre ? NV : b.titulo.startsWith("Empresa") ? "—" : num(b.dre.custoUnidade, 2)))],
+          ];
+        }
+        return [linha];
       }),
       ["Margem (%)", ...blocos.map((b) => (b.dre ? num(b.dre.margem, 1) : NV))],
     ],
-    `Fonte: Simula+, resultados ${anterior != null ? `das Rodadas ${anterior} e ${r.rodada}` : `da Rodada ${r.rodada}`} (${ano}).` +
+    `Fonte: Simula+, resultados ${anterior != null ? `das Rodadas ${anterior} e ${r.rodada}` : `da Rodada ${r.rodada}`} (${ano}). Custo de produção por unidade já com o efeito do dólar e da inflação da semana.` +
       (blocos.some((b) => !b.dre) ? NOTA_NV : ""),
     tamDre,
   );

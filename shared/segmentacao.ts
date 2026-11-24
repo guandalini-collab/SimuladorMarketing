@@ -51,7 +51,8 @@ export const CONSUMIDOR_DIGITAL_CODIGOS = ["estilo:conectado", "interesses:redes
 export type CriterioSegmentacao = "geographic" | "demographic" | "psychographic" | "behavioral";
 
 export interface OpcaoTopico { id: string; label: string }
-export interface TopicoSegmentacao { id: string; label: string; opcoes: OpcaoTopico[] }
+/** `nota`: linha curta mostrada abaixo do nome do tópico (nov/2026). */
+export interface TopicoSegmentacao { id: string; label: string; nota?: string; opcoes: OpcaoTopico[] }
 
 /** Máximo de opções marcadas por tópico e mínimo de tópicos por critério. */
 export const MAX_OPCOES_POR_TOPICO = 2;
@@ -68,7 +69,7 @@ const o = (id: string, label: string): OpcaoTopico => ({ id, label });
 
 export const TOPICOS_B2C: Record<CriterioSegmentacao, TopicoSegmentacao[]> = {
   geographic: [
-    { id: "porte", label: "Porte da cidade", opcoes: [o("capital", "Capital ou metrópole"), o("metropolitana", "Região metropolitana"), o("media", "Cidade média (100 a 500 mil hab.)"), o("pequena", "Cidade pequena (até 100 mil hab.)")] },
+    { id: "porte", label: "Porte da cidade", opcoes: [o("capital", "Capital ou metrópole"), o("metropolitana", "Região metropolitana (cidades vizinhas da capital)"), o("media", "Cidade média (100 a 500 mil hab.)"), o("pequena", "Cidade pequena (até 100 mil hab.)")] },
     { id: "regiao", label: "Região", opcoes: [o("rs", "Rio Grande do Sul"), o("sul", "Região Sul"), o("sudeste", "Sudeste"), o("nordeste", "Nordeste"), o("co_norte", "Centro-Oeste e Norte"), o("exterior", "Exterior (Mercosul)")] },
     { id: "zona", label: "Zona", opcoes: [o("central", "Urbana central"), o("periferica", "Urbana periférica"), o("rural", "Rural")] },
     { id: "internet", label: "Acesso à internet", opcoes: [o("fibra5g", "Fibra ou 5G"), o("4g", "4G"), o("limitada", "Conexão limitada")] },
@@ -76,8 +77,13 @@ export const TOPICOS_B2C: Record<CriterioSegmentacao, TopicoSegmentacao[]> = {
   ],
   demographic: [
     { id: "idade", label: "Idade", opcoes: [o("16_24", "16–24"), o("25_34", "25–34"), o("35_44", "35–44"), o("45_59", "45–59"), o("60_mais", "60+")] },
-    { id: "classe", label: "Classe econômica (Critério Brasil/ABEP)", opcoes: [o("a", "A"), o("b1", "B1"), o("b2", "B2"), o("c1", "C1"), o("c2", "C2"), o("de", "D-E")] },
-    { id: "ocupacao", label: "Ocupação", opcoes: [o("estudante", "Estudante"), o("clt", "Assalariado (CLT)"), o("servidor", "Servidor público"), o("autonomo", "Autônomo ou empresário"), o("aposentado", "Aposentado")] },
+    // Nov/2026 (pedido do professor, 24/11): a classe mostra a renda média
+    // do domicílio (ABEP, Critério Brasil 2026, dados da PNADC 2025), e o
+    // tópico "renda" traz a renda individual (da pessoa), em salários mínimos
+    // (SM de 2026: R$ 1.621, Decreto 12.797/2025; atualizar quando mudar).
+    { id: "classe", label: "Classe econômica do domicílio (Critério Brasil/ABEP)", nota: "Renda média mensal do domicílio (soma de todos os moradores), Critério Brasil/ABEP 2026", opcoes: [o("a", "A · R$ 28.331"), o("b1", "B1 · R$ 13.636"), o("b2", "B2 · R$ 7.875"), o("c1", "C1 · R$ 4.527"), o("c2", "C2 · R$ 2.648"), o("de", "D-E · R$ 1.178")] },
+    { id: "renda", label: "Renda individual mensal (da pessoa)", nota: "Salário mínimo de 2026: R$ 1.621", opcoes: [o("ate1", "Até 1 salário mínimo (até R$ 1.621)"), o("1a2", "De 1 a 2 salários mínimos (R$ 1.622 a R$ 3.242)"), o("2a5", "De 2 a 5 salários mínimos (R$ 3.243 a R$ 8.105)"), o("5a10", "De 5 a 10 salários mínimos (R$ 8.106 a R$ 16.210)"), o("mais10", "Mais de 10 salários mínimos (acima de R$ 16.210)")] },
+    { id: "ocupacao", label: "Ocupação", opcoes: [o("estudante", "Estudante"), o("clt", "Empregado com carteira assinada (CLT)"), o("servidor", "Servidor público"), o("autonomo", "Autônomo ou empresário"), o("aposentado", "Aposentado")] },
     { id: "escolaridade", label: "Escolaridade", opcoes: [o("fundamental", "Fundamental"), o("medio", "Médio"), o("sup_curso", "Superior em curso"), o("sup_completo", "Superior completo"), o("pos", "Pós-graduação")] },
     { id: "ciclo", label: "Ciclo de vida familiar", opcoes: [o("solteiro", "Solteiro sem filhos"), o("casal", "Casal sem filhos"), o("filhos_peq", "Família com filhos pequenos"), o("filhos_adol", "Família com filhos adolescentes"), o("ninho_vazio", "Filhos já saíram de casa")] },
     { id: "genero", label: "Gênero", opcoes: [o("feminino", "Feminino"), o("masculino", "Masculino"), o("todos", "Todos")] },
@@ -91,11 +97,11 @@ export const TOPICOS_B2C: Record<CriterioSegmentacao, TopicoSegmentacao[]> = {
   ],
   behavioral: [
     { id: "beneficio", label: "Benefício buscado", opcoes: [o("preco", "Preço baixo"), o("durabilidade", "Durabilidade"), o("desempenho", "Desempenho"), o("design_marca", "Design e marca"), o("garantia", "Garantia e assistência")] },
-    { id: "troca", label: "Frequência de troca", opcoes: [o("anual", "Todo ano"), o("2anos", "A cada 2 anos"), o("3_4anos", "A cada 3–4 anos"), o("quando_quebra", "Só quando quebra")] },
-    { id: "usuario", label: "Status de usuário", opcoes: [o("primeira", "Primeira compra"), o("regular", "Usuário regular"), o("concorrente", "Cliente de concorrente"), o("ex_usuario", "Ex-usuário")] },
+    { id: "troca", label: "Frequência de troca do aparelho", opcoes: [o("anual", "Todo ano"), o("2anos", "A cada 2 anos"), o("3_4anos", "A cada 3–4 anos"), o("quando_quebra", "Só quando quebra")] },
+    { id: "usuario", label: "Status de usuário", opcoes: [o("primeira", "Vai comprar o produto pela primeira vez"), o("regular", "Já é cliente da nossa marca"), o("concorrente", "Hoje compra de outra marca"), o("ex_usuario", "Deixou de usar o produto")] },
     { id: "fidelidade", label: "Fidelidade", opcoes: [o("fiel", "Fiel a uma marca"), o("duas_marcas", "Divide entre duas marcas"), o("promocao", "Troca por promoção"), o("sem_preferencia", "Sem preferência")] },
-    { id: "ocasiao", label: "Ocasião de compra", opcoes: [o("datas", "Datas comemorativas"), o("black_friday", "Black Friday"), o("presente", "Presente"), o("reposicao", "Reposição imediata"), o("lancamento", "Lançamento")] },
-    { id: "pagamento", label: "Forma de pagamento", opcoes: [o("pix", "À vista ou Pix"), o("sem_juros", "Parcelado sem juros"), o("crediario", "Crediário"), o("cartao_juros", "Cartão com juros")] },
+    { id: "ocasiao", label: "Ocasião de compra", opcoes: [o("datas", "Datas comemorativas"), o("black_friday", "Black Friday"), o("presente", "Presente"), o("reposicao", "Reposição imediata (o aparelho quebrou ou foi perdido)"), o("lancamento", "Lançamento")] },
+    { id: "pagamento", label: "Forma de pagamento", opcoes: [o("pix", "À vista ou Pix"), o("sem_juros", "Parcelado sem juros"), o("crediario", "Crediário da loja"), o("cartao_juros", "Cartão com juros")] },
   ],
 };
 
@@ -178,7 +184,7 @@ export const SEGMENTOS_ELETRONICOS: SegmentoConsumidor[] = [
     descricao: "16 a 24 anos, classes B2 e C, estudante, gamer e redes sociais; busca desempenho por preço justo e troca a cada 2 anos; compra em marketplace e online.",
     perfil: {
       porte: ["capital", "metropolitana", "media"], zona: ["central", "periferica"], internet: ["fibra5g", "4g"],
-      idade: ["16_24", "25_34"], classe: ["b2", "c1", "c2"], ocupacao: ["estudante", "clt"], escolaridade: ["medio", "sup_curso"], ciclo: ["solteiro"],
+      idade: ["16_24", "25_34"], classe: ["b2", "c1", "c2"], renda: ["ate1", "1a2", "2a5"], ocupacao: ["estudante", "clt"], escolaridade: ["medio", "sup_curso"], ciclo: ["solteiro"],
       estilo: ["conectado"], inovacao: ["adotante_inicial", "maioria_inicial"], valores: ["status", "praticidade", "economia"], interesses: ["games", "redes_sociais", "streaming", "foto_video"], personalidade: ["sociavel", "impulsivo", "criativo"],
       beneficio: ["desempenho", "preco", "design_marca"], troca: ["anual", "2anos"], usuario: ["primeira", "concorrente", "regular"], fidelidade: ["promocao", "sem_preferencia", "duas_marcas"], ocasiao: ["black_friday", "lancamento", "presente"], pagamento: ["cartao_juros", "sem_juros", "pix"],
     },
@@ -193,7 +199,7 @@ export const SEGMENTOS_ELETRONICOS: SegmentoConsumidor[] = [
     descricao: "25 a 44 anos, classes A e B1, superior completo, adotante inicial; busca desempenho e marca; compra no e-commerce da marca e no varejo.",
     perfil: {
       porte: ["capital", "metropolitana"], zona: ["central"], internet: ["fibra5g"],
-      idade: ["25_34", "35_44", "45_59"], classe: ["a", "b1"], ocupacao: ["clt", "servidor", "autonomo"], escolaridade: ["sup_completo", "pos"], ciclo: ["solteiro", "casal", "filhos_peq", "filhos_adol"],
+      idade: ["25_34", "35_44", "45_59"], classe: ["a", "b1"], renda: ["5a10", "mais10"], ocupacao: ["clt", "servidor", "autonomo"], escolaridade: ["sup_completo", "pos"], ciclo: ["solteiro", "casal", "filhos_peq", "filhos_adol"],
       estilo: ["ocupado", "viajante", "saude"], inovacao: ["inovador", "adotante_inicial"], valores: ["status", "praticidade", "seguranca"], interesses: ["trabalho_estudo", "foto_video", "esportes"], personalidade: ["racional", "sociavel"],
       beneficio: ["desempenho", "design_marca", "garantia"], troca: ["anual", "2anos"], usuario: ["regular", "concorrente"], fidelidade: ["fiel", "duas_marcas"], ocasiao: ["lancamento", "reposicao"], pagamento: ["sem_juros", "pix"],
     },
@@ -208,7 +214,7 @@ export const SEGMENTOS_ELETRONICOS: SegmentoConsumidor[] = [
     descricao: "30 a 49 anos, classes B2 e C1, com filhos; busca durabilidade e praticidade, parcela sem juros; compra no varejo físico e em marketplace.",
     perfil: {
       porte: ["metropolitana", "media", "pequena"], zona: ["central", "periferica"], internet: ["fibra5g", "4g"],
-      idade: ["25_34", "35_44", "45_59"], classe: ["b2", "c1"], ocupacao: ["clt", "servidor", "autonomo"], escolaridade: ["medio", "sup_completo"], ciclo: ["filhos_peq", "filhos_adol", "casal"],
+      idade: ["25_34", "35_44", "45_59"], classe: ["b2", "c1"], renda: ["1a2", "2a5"], ocupacao: ["clt", "servidor", "autonomo"], escolaridade: ["medio", "sup_completo"], ciclo: ["filhos_peq", "filhos_adol", "casal"],
       estilo: ["caseiro", "ocupado"], inovacao: ["maioria_inicial", "maioria_tardia"], valores: ["praticidade", "seguranca", "economia"], interesses: ["streaming", "trabalho_estudo", "redes_sociais"], personalidade: ["racional", "cauteloso"],
       beneficio: ["durabilidade", "preco", "garantia"], troca: ["3_4anos", "2anos"], usuario: ["regular", "concorrente"], fidelidade: ["duas_marcas", "promocao", "fiel"], ocasiao: ["datas", "black_friday", "presente"], pagamento: ["sem_juros", "crediario"],
     },
@@ -223,7 +229,7 @@ export const SEGMENTOS_ELETRONICOS: SegmentoConsumidor[] = [
     descricao: "Classes C2 e D-E; busca preço baixo, troca só quando quebra, usa crediário e gasta até R$ 1 mil; compra no varejo físico e no pequeno varejo abastecido pelo atacado.",
     perfil: {
       porte: ["media", "pequena", "metropolitana"], zona: ["periferica", "rural"], internet: ["4g", "limitada"],
-      idade: ["16_24", "25_34", "35_44", "45_59"], classe: ["c2", "de"], ocupacao: ["clt", "autonomo", "estudante"], escolaridade: ["fundamental", "medio"], ciclo: ["solteiro", "filhos_peq", "filhos_adol"],
+      idade: ["16_24", "25_34", "35_44", "45_59"], classe: ["c2", "de"], renda: ["ate1", "1a2"], ocupacao: ["clt", "autonomo", "estudante"], escolaridade: ["fundamental", "medio"], ciclo: ["solteiro", "filhos_peq", "filhos_adol"],
       estilo: ["caseiro", "conectado"], inovacao: ["maioria_tardia", "retardatario"], valores: ["economia", "praticidade"], interesses: ["redes_sociais", "streaming"], personalidade: ["cauteloso", "impulsivo"],
       beneficio: ["preco", "durabilidade"], troca: ["quando_quebra", "3_4anos"], usuario: ["primeira", "regular"], fidelidade: ["promocao", "sem_preferencia"], ocasiao: ["reposicao", "black_friday", "datas"], pagamento: ["crediario", "cartao_juros", "pix"],
     },
@@ -238,7 +244,7 @@ export const SEGMENTOS_ELETRONICOS: SegmentoConsumidor[] = [
     descricao: "60 anos ou mais, classes B e C, cauteloso; busca garantia e assistência; compra no varejo físico e por venda direta.",
     perfil: {
       porte: ["capital", "metropolitana", "media", "pequena"], zona: ["central", "periferica"], internet: ["4g", "fibra5g", "limitada"],
-      idade: ["60_mais"], classe: ["b1", "b2", "c1"], ocupacao: ["aposentado", "autonomo"], escolaridade: ["fundamental", "medio", "sup_completo"], ciclo: ["ninho_vazio", "casal"],
+      idade: ["60_mais"], classe: ["b1", "b2", "c1"], renda: ["1a2", "2a5"], ocupacao: ["aposentado", "autonomo"], escolaridade: ["fundamental", "medio", "sup_completo"], ciclo: ["ninho_vazio", "casal"],
       estilo: ["caseiro", "saude", "viajante"], inovacao: ["maioria_tardia", "retardatario"], valores: ["seguranca", "praticidade"], interesses: ["streaming", "esportes", "redes_sociais"], personalidade: ["cauteloso", "racional"],
       beneficio: ["garantia", "durabilidade"], troca: ["quando_quebra", "3_4anos"], usuario: ["regular", "primeira", "ex_usuario"], fidelidade: ["fiel"], ocasiao: ["reposicao", "presente", "datas"], pagamento: ["pix", "sem_juros"],
     },
@@ -280,6 +286,7 @@ const CONTRADICOES: { teste: (s: Map<string, Set<string>>) => boolean; descricao
     { teste: (s) => so(s, "classe", ["c2", "de"]) && tem(s, "troca", "anual"), descricao: "classe C2/D-E trocando de aparelho todo ano" },
     { teste: (s) => so(s, "classe", ["a", "b1"]) && so(s, "beneficio", ["preco"]), descricao: "classe A/B1 buscando só preço baixo" },
     { teste: (s) => so(s, "classe", ["a"]) && tem(s, "pagamento", "crediario"), descricao: "classe A pagando no crediário" },
+    { teste: (s) => so(s, "classe", ["de"]) && tem(s, "renda", "mais10"), descricao: "classe D-E com renda individual acima de 10 salários mínimos" },
     { teste: (s) => so(s, "idade", ["60_mais"]) && tem(s, "ocupacao", "estudante"), descricao: "60+ como estudante" },
     { teste: (s) => so(s, "idade", ["16_24"]) && (tem(s, "ciclo", "ninho_vazio") || tem(s, "ocupacao", "aposentado")), descricao: "16–24 anos aposentado ou com filhos já fora de casa" },
     { teste: (s) => so(s, "inovacao", ["maioria_tardia", "retardatario"]) && (tem(s, "troca", "anual") || tem(s, "ocasiao", "lancamento")), descricao: "maioria tardia/retardatário comprando no lançamento ou todo ano" },

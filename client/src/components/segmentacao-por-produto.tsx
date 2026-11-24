@@ -155,6 +155,7 @@ export function SegmentacaoPorProduto({
                   return (
                     <div key={t.id} className="space-y-2">
                       <p className="text-sm font-medium">{t.label}</p>
+                      {t.nota && <p className="text-xs font-medium text-[#1447e6] dark:text-blue-300">{t.nota}</p>}
                       <div className="flex flex-wrap gap-2">
                         {t.opcoes.map((op) => {
                           const ativo = selecoes[crit.key].includes(codigoOpcao(t.id, op.id));
