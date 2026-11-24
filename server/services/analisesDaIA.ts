@@ -220,23 +220,104 @@ async function contextoDaEquipe(storage: IStorage, classData: Class, round: Roun
 
 // ---------------------------------------------------------------- IA
 
+// Nov/2026 (pedido do professor, 24/11): as análises são diagnóstico, nunca
+// recomendação. Depois de gerado, cada texto é conferido contra expressões
+// típicas de recomendação; o que for encontrado volta para a IA reescrever
+// (até 2 vezes) e, se continuar, o item é retirado da lista.
+const PADROES_RECOMENDACAO: RegExp[] = [
+  /\bdeve(m|ria|riam)?\b/i,
+  /\bprecisa(m|r)?\b/i,
+  // "necessidade de" só como conclusão sobre a empresa; barreiras de entrada
+  // ("necessidade de investimento inicial") são diagnóstico e ficam.
+  /\b(indicando|indica|sugerindo|sugere|evidenciando|evidencia|mostrando|revelando)( uma| a)? necessidade de\b/i,
+  /\bnecessidade de (melhor|reavali|ajust|rev[eiê]|repens|reduzir|aumentar)/i,
+  /\brecomend/i,
+  /\bsugere-se\b|\bsugerimos\b|\bconvém\b|\bvale a pena\b/i,
+  /\bé (importante|fundamental|essencial|necessário|recomendável|aconselhável)\b/i,
+  /\bo ideal\b/i,
+  /\bpode(m)? ser (utilizad|usad|aproveitad)/i,
+  /\b(explorar|apostar em|focar em|investir em|aproveitar|reavaliar|rever sua|ajustar sua|melhorar sua)\b/i,
+  /\bexig(e|em|indo) que (as|a) empresas?\b/i,
+  /\b(as|a) empresas? que se adapta/i,
+  /\bque (ajustarem|adaptarem|investirem|souberem)\b/i,
+];
+
+export function temRecomendacao(texto: string): boolean {
+  return PADROES_RECOMENDACAO.some((r) => r.test(texto));
+}
+
+/** Todos os textos com recomendação encontrados em qualquer nível do objeto. */
+export function itensComRecomendacao(valor: unknown): string[] {
+  if (typeof valor === "string") return temRecomendacao(valor) ? [valor] : [];
+  if (Array.isArray(valor)) return valor.flatMap(itensComRecomendacao);
+  if (valor && typeof valor === "object") return Object.values(valor as Record<string, unknown>).flatMap(itensComRecomendacao);
+  return [];
+}
+
+/** Retira das listas os itens com recomendação, mantendo ao menos 1 item em cada lista. */
+export function retirarItensComRecomendacao<T>(valor: T): T {
+  if (Array.isArray(valor)) {
+    const limpos = valor.filter((v) => !(typeof v === "string" && temRecomendacao(v)));
+    return (limpos.length > 0 ? limpos : valor) as unknown as T;
+  }
+  if (valor && typeof valor === "object") {
+    const saida: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(valor as Record<string, unknown>)) saida[k] = retirarItensComRecomendacao(v);
+    return saida as T;
+  }
+  return valor;
+}
+
 async function pedirJson<T>(sistema: string, usuario: string, schema: z.ZodType<T>): Promise<T> {
   let ultimoErro: unknown;
   for (let tentativa = 1; tentativa <= 2; tentativa++) {
     try {
+      const mensagens: { role: "system" | "user" | "assistant"; content: string }[] = [
+        { role: "system", content: sistema },
+        { role: "user", content: usuario },
+      ];
       const completion = await ia().chat.completions.create({
         model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: sistema },
-          { role: "user", content: usuario },
-        ],
+        messages: mensagens,
         response_format: { type: "json_object" },
         temperature: 0.4,
         max_tokens: 2000,
       });
       const texto = completion.choices[0]?.message?.content;
       if (!texto) throw new Error("Resposta vazia");
-      return schema.parse(JSON.parse(texto));
+      let resultado = schema.parse(JSON.parse(texto));
+      let ultimoTexto = texto;
+      for (let revisao = 1; revisao <= 2; revisao++) {
+        const achados = itensComRecomendacao(resultado);
+        if (achados.length === 0) break;
+        try {
+          mensagens.push({ role: "assistant", content: ultimoTexto });
+          mensagens.push({
+            role: "user",
+            content: `Os itens abaixo dizem o que a empresa ou o setor deve fazer, o que é proibido pelas regras. Reescreva cada um como diagnóstico neutro (o que está acontecendo, com os dados do contexto), sem verbos de recomendação como "deve", "precisa", "é importante", "explorar", "investir em", "aproveitar". Devolva o JSON completo, no mesmo formato, com os demais itens iguais.\n${achados.map((a) => `- ${a}`).join("\n")}`,
+          });
+          const rev = await ia().chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: mensagens,
+            response_format: { type: "json_object" },
+            temperature: 0.2,
+            max_tokens: 2000,
+          });
+          const textoRev = rev.choices[0]?.message?.content;
+          if (!textoRev) break;
+          resultado = schema.parse(JSON.parse(textoRev));
+          ultimoTexto = textoRev;
+        } catch (e) {
+          console.error("[ANALISES-IA] Falha na reescrita sem recomendação:", e);
+          break;
+        }
+      }
+      const restantes = itensComRecomendacao(resultado);
+      if (restantes.length > 0) {
+        console.warn(`[ANALISES-IA] ${restantes.length} item(ns) com recomendação após as reescritas; retirando das listas.`);
+        resultado = retirarItensComRecomendacao(resultado);
+      }
+      return resultado;
     } catch (e) {
       ultimoErro = e;
     }

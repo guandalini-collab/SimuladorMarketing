@@ -73,7 +73,7 @@ ${numeros}
 
 ${conj.texto}
 
-Regras para a conjuntura: baseie os fatores político-econômicos nestes fatos e números; não contradiga nem invente indicadores além deles; trate temas políticos e eleitorais de forma estritamente neutra e apartidária, apenas pelos efeitos sobre mercado, consumo e negócios.`;
+Regras para a conjuntura: baseie os fatores político-econômicos nestes fatos e números; não contradiga nem invente indicadores além deles; quando um número do texto acima for diferente do indicador oficial da lista (por exemplo, a cotação do dólar), use sempre o indicador oficial, que é o mais recente, e trate o número do texto como dado de uma data passada; trate temas políticos e eleitorais de forma estritamente neutra e apartidária, apenas pelos efeitos sobre mercado, consumo e negócios.`;
   } catch (e) {
     console.error("[CONJUNTURA] Falha ao montar o bloco do prompt:", e);
     return "";
